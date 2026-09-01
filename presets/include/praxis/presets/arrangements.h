@@ -1,6 +1,8 @@
 #ifndef HPP_GUARD_PRAXIS_PRESETS_ARRANGEMENTS_H
 #define HPP_GUARD_PRAXIS_PRESETS_ARRANGEMENTS_H
 
+#include "praxis/rigid_motion/capabilities.h"
+
 #include "praxis/scene/preset_registry.h"
 
 #include "praxis/config/store.h"
@@ -59,6 +61,12 @@ using composed_route = std::function<void(const config::binding &, const config:
 // taken is left out and named.
 std::vector<std::string> register_arrangements(const std::shared_ptr<scene::preset_registry> &registry, std::span<const config::location> documents, document_route located,
                                                composed_route announced);
+
+// The same, over the spatial capabilities every registered scenario composes against. The overload
+// above binds rigid_motion::baseline(). The capabilities are copied into each composer, so the
+// argument need not outlive the call.
+std::vector<std::string> register_arrangements(const std::shared_ptr<scene::preset_registry> &registry, std::span<const config::location> documents, document_route located,
+                                               composed_route announced, const rigid_motion::capabilities &motions);
 
 }
 

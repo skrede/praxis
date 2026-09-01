@@ -1,4 +1,4 @@
-#include "arrangement_scenarios.h"
+#include "praxis/presets/arrangement_scenarios.h"
 
 #include "praxis/presets/arrangements.h"
 
@@ -117,6 +117,12 @@ config::binding arrangement_binding(const std::filesystem::path &named, const st
 std::vector<std::string> register_arrangements(const std::shared_ptr<scene::preset_registry> &registry, std::span<const config::location> documents, document_route located,
                                                composed_route announced)
 {
+    return register_arrangements(registry, documents, std::move(located), std::move(announced), rigid_motion::baseline());
+}
+
+std::vector<std::string> register_arrangements(const std::shared_ptr<scene::preset_registry> &registry, std::span<const config::location> documents, document_route located,
+                                               composed_route announced, const rigid_motion::capabilities &motions)
+{
     std::vector<std::string> registered;
     for(const config::location &at : documents)
     {
@@ -128,7 +134,7 @@ std::vector<std::string> register_arrangements(const std::shared_ptr<scene::pres
             continue;
 
         registered.push_back(*named);
-        registry->register_preset(*named, arrangement_factory(at, located, announced, composer_for(read_scenario(read.values))));
+        registry->register_preset(*named, arrangement_factory(at, located, announced, composer_for(read_scenario(read.values), motions)));
     }
 
     return registered;

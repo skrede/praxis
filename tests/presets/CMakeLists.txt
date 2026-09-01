@@ -16,6 +16,7 @@ praxis_add_test(rotation_axis_preset_test.cpp HEADERS drawn_lines.h labeled_pane
 praxis_add_test(two_pose_preset_test.cpp HEADERS drawn_lines.h composed_panels.h opened_two_pose.h substituted_rigid_motion.h LIBS praxis::rigid_presets praxis::rigid_motion praxis::scene praxis_test_support)
 praxis_add_test(scenario_defaults_test.cpp LIBS praxis::manipulator_presets praxis::manipulator)
 praxis_add_test(registered_presets_test.cpp HEADERS scratch_directory.h LIBS praxis::rigid_presets praxis::scene praxis::rigid_motion praxis::config)
+praxis_add_test(arrangement_capability_binding_test.cpp HEADERS scratch_directory.h LIBS praxis::rigid_presets praxis::scene praxis::rigid_motion praxis::config)
 praxis_add_test(seam_routing_test.cpp HEADERS substituted_rigid_motion.h LIBS praxis::scene praxis::manipulator praxis::trajectory praxis::rigid_motion praxis_test_support)
 praxis_add_test(body_frame_routing_test.cpp HEADERS substituted_rigid_motion.h LIBS praxis::manipulator praxis::rigid_motion praxis_test_support)
 

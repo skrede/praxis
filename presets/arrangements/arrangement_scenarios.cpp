@@ -1,5 +1,3 @@
-#include "arrangement_scenarios.h"
-
 #include "praxis/presets/screw.h"
 #include "praxis/presets/two_pose.h"
 #include "praxis/presets/twist_axis.h"
@@ -7,6 +5,7 @@
 #include "praxis/presets/arrangements.h"
 #include "praxis/presets/rotation_axis.h"
 #include "praxis/presets/frame_workbench.h"
+#include "praxis/presets/arrangement_scenarios.h"
 
 #include "praxis/rigid_motion/capabilities.h"
 
@@ -74,11 +73,14 @@ std::span<const char *const> arrangement_scenario_labels()
     return scenario_spellings;
 }
 
+arrangement_composer composer_for(arrangement_scenario scenario, const rigid_motion::capabilities &motions)
+{
+    return offered_scenarios[static_cast<std::size_t>(scenario)](motions);
+}
+
 arrangement_composer composer_for(arrangement_scenario scenario)
 {
-    const rigid_motion::capabilities motions = rigid_motion::baseline();
-
-    return offered_scenarios[static_cast<std::size_t>(scenario)](motions);
+    return composer_for(scenario, rigid_motion::baseline());
 }
 
 }

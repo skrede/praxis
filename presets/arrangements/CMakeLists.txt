@@ -1,1 +1,1 @@
-target_sources(praxis_rigid_presets PRIVATE arrangements.cpp arrangement_scenarios.h arrangement_scenarios.cpp)
+target_sources(praxis_rigid_presets PRIVATE arrangements.cpp arrangement_scenarios.cpp)

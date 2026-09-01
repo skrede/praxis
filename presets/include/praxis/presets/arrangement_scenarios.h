@@ -1,5 +1,7 @@
-#ifndef HPP_GUARD_PRAXIS_PRESETS_ARRANGEMENTS_ARRANGEMENT_SCENARIOS_H
-#define HPP_GUARD_PRAXIS_PRESETS_ARRANGEMENTS_ARRANGEMENT_SCENARIOS_H
+#ifndef HPP_GUARD_PRAXIS_PRESETS_ARRANGEMENT_SCENARIOS_H
+#define HPP_GUARD_PRAXIS_PRESETS_ARRANGEMENT_SCENARIOS_H
+
+#include "praxis/rigid_motion/capabilities.h"
 
 #include "praxis/scene/preset.h"
 #include "praxis/scene/preset_site.h"
@@ -31,6 +33,9 @@ enum class arrangement_scenario : std::uint8_t
 // The arrangement's own document is read where the arrangement is composed and handed to the
 // composer, which owns what that document means for the scenario it builds.
 using arrangement_composer = std::function<std::shared_ptr<scene::preset>(const scene::preset_site &, const config::document &)>;
+
+// The capabilities are copied into the composer, so the argument need not outlive the call.
+arrangement_composer composer_for(arrangement_scenario scenario, const rigid_motion::capabilities &motions);
 
 arrangement_composer composer_for(arrangement_scenario scenario);
 

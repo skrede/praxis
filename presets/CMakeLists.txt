@@ -25,7 +25,8 @@ target_link_libraries(praxis_manipulator_presets PUBLIC praxis::praxis praxis::r
 
 target_sources(praxis_rigid_presets PRIVATE include/praxis/presets/screw.h include/praxis/presets/euler_rungs.h
     include/praxis/presets/arrangements.h include/praxis/presets/rotation_axis.h include/praxis/presets/frame_workbench.h
-    include/praxis/presets/twist_axis.h include/praxis/presets/two_pose.h)
+    include/praxis/presets/twist_axis.h include/praxis/presets/two_pose.h
+    include/praxis/presets/arrangement_scenarios.h)
 
 target_sources(praxis_manipulator_presets PRIVATE include/praxis/presets/arm.h include/praxis/presets/screw_table.h)
 

@@ -3056,6 +3056,19 @@ presets/include/praxis/presets/arm.h	arm_windows_path_comparison	prototype	(arm_
 presets/include/praxis/presets/arm.h	arm_windows_analytic_ik	prototype	(arm_scenario chosen)	typename:manipulator::arm_composition
 presets/include/praxis/presets/arm.h	arm_windows_velocity_kinematics	prototype	(arm_scenario chosen)	typename:manipulator::arm_composition
 presets/include/praxis/presets/arm.h	arm_preset	prototype	(const scene::preset_site & site,const manipulator::capabilities & arm,const trajectory::capabilities & shapes,const rigid_motion::capabilities & motions,const arm_scenario & chosen,const manipulator::arm_composition & composed)	typename:std::shared_ptr<scene::preset>
+presets/include/praxis/presets/arrangement_scenarios.h	praxis	namespace	-	-
+presets/include/praxis/presets/arrangement_scenarios.h	presets	namespace	-	-
+presets/include/praxis/presets/arrangement_scenarios.h	arrangement_scenario	enum	-	typename:std::uint8_t
+presets/include/praxis/presets/arrangement_scenarios.h	euler_pose	enumerator	-	-
+presets/include/praxis/presets/arrangement_scenarios.h	euler_relative	enumerator	-	-
+presets/include/praxis/presets/arrangement_scenarios.h	frame_workbench	enumerator	-	-
+presets/include/praxis/presets/arrangement_scenarios.h	screw	enumerator	-	-
+presets/include/praxis/presets/arrangement_scenarios.h	twist_axis	enumerator	-	-
+presets/include/praxis/presets/arrangement_scenarios.h	two_pose	enumerator	-	-
+presets/include/praxis/presets/arrangement_scenarios.h	rotation_axis	enumerator	-	-
+presets/include/praxis/presets/arrangement_scenarios.h	arrangement_composer	typedef	-	-
+presets/include/praxis/presets/arrangement_scenarios.h	composer_for	prototype	(arrangement_scenario scenario,const rigid_motion::capabilities & motions)	typename:arrangement_composer
+presets/include/praxis/presets/arrangement_scenarios.h	composer_for	prototype	(arrangement_scenario scenario)	typename:arrangement_composer
 presets/include/praxis/presets/arrangements.h	praxis	namespace	-	-
 presets/include/praxis/presets/arrangements.h	presets	namespace	-	-
 presets/include/praxis/presets/arrangements.h	arrangement_path	variable	-	typename:const char *
@@ -3068,6 +3081,7 @@ presets/include/praxis/presets/arrangements.h	arrangement_binding	prototype	(con
 presets/include/praxis/presets/arrangements.h	document_route	typedef	-	-
 presets/include/praxis/presets/arrangements.h	composed_route	typedef	-	-
 presets/include/praxis/presets/arrangements.h	register_arrangements	prototype	(const std::shared_ptr<scene::preset_registry> & registry,std::span<const config::location> documents,document_route located,composed_route announced)	typename:std::vector<std::string>
+presets/include/praxis/presets/arrangements.h	register_arrangements	prototype	(const std::shared_ptr<scene::preset_registry> & registry,std::span<const config::location> documents,document_route located,composed_route announced,const rigid_motion::capabilities & motions)	typename:std::vector<std::string>
 presets/include/praxis/presets/euler_rungs.h	praxis	namespace	-	-
 presets/include/praxis/presets/euler_rungs.h	presets	namespace	-	-
 presets/include/praxis/presets/euler_rungs.h	euler_rung	enum	-	typename:std::uint8_t
