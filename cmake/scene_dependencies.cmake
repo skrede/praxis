@@ -7,6 +7,18 @@ include(FetchContent)
 # define. A project consuming that interface includes this file to obtain them; the revisions are
 # written here and in no other listfile.
 
+# Where the formatting library is already present -- fetched by nucleus into its own public link
+# interface on a toolchain whose standard library lacks the formatting header, or imported from the
+# generated dependency file by a consuming project -- the log library is pointed at that copy. Its
+# bundled copy shares include guards with the external one, so a translation unit reaching both
+# keeps whichever came first and calls constructors the compiled log library never defined.
+if (TARGET fmt)
+    set(SPDLOG_FMT_EXTERNAL ON)
+    if (NOT TARGET fmt::fmt)
+        add_library(fmt::fmt ALIAS fmt)
+    endif ()
+endif ()
+
 FetchContent_Declare(
     spdlog
     GIT_REPOSITORY https://github.com/gabime/spdlog.git

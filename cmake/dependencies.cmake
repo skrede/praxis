@@ -59,8 +59,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(pugixml)
 
-include(${CMAKE_CURRENT_LIST_DIR}/scene_dependencies.cmake)
-
 if (PRAXIS_BUILD_TESTS)
     FetchContent_Declare(
         Catch2
@@ -98,6 +96,11 @@ FetchContent_Declare(
     GIT_TAG 94d760cda2dba91baaec0789062f876f5d29c204  # milestone/v0.4.2
 )
 FetchContent_MakeAvailable(nucleus)
+
+# The scene stack is acquired after nucleus so that the formatting library nucleus fetches on a
+# toolchain whose standard library lacks the formatting header already exists when the log library
+# configures, and the log library can be pointed at that same copy rather than at its bundled one.
+include(${CMAKE_CURRENT_LIST_DIR}/scene_dependencies.cmake)
 
 # Declaring a resource resolves and downloads it on the spot, and only the demonstration deploys
 # either one, so a configure without it acquires neither.
