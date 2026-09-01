@@ -1,7 +1,17 @@
 cmake_minimum_required(VERSION 3.28)
 project(praxis VERSION 0.1.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+set(PRAXIS_CXX_STANDARD 20 CACHE STRING
+    "The language standard this tree compiles at; 20 is the floor, the default, and the only value this tree is tested at")
+set_property(CACHE PRAXIS_CXX_STANDARD PROPERTY STRINGS 20)
+
+if (PRAXIS_CXX_STANDARD LESS 20)
+    message(FATAL_ERROR "praxis: the language standard ${PRAXIS_CXX_STANDARD} is below the C++20 floor, and the floor does not move")
+elseif (NOT PRAXIS_CXX_STANDARD EQUAL 20)
+    message(FATAL_ERROR "praxis: the language standard ${PRAXIS_CXX_STANDARD} is not a configuration this tree is tested at; C++20 is the floor and the only accepted value")
+endif ()
+
+set(CMAKE_CXX_STANDARD ${PRAXIS_CXX_STANDARD})
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
