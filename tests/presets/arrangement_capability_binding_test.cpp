@@ -25,6 +25,7 @@
 #include <Eigen/Core>
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 #include <fstream>
@@ -34,10 +35,8 @@ using namespace praxis;
 
 namespace {
 
-// How many times the substituted slot answered. A scenario composed against the baseline leaves it
-// at zero, which is how a case tells the capabilities it passed from the ones the no-capability
-// overload binds itself. The count rather than the value, because the composition asks this slot
-// for the resting pose and would ask the reference for the same one.
+// How many times the substituted slot answered. The composition asks it for the resting pose, and
+// asks the reference for the same one, so the count carries the substitution and the value does not.
 int answered = 0;
 
 transform counting_pose(const Eigen::Vector3d &p)
@@ -82,9 +81,9 @@ scene::preset_site headless(threepp::Scene &target)
     return scene::preset_site{target, scheduler::strand{}, scheduler::strand{}, [] {}, nowhere, nowhere, {}};
 }
 
-// The screw scenario names its axis while it composes, so the slot answers before the preset is
+// The screw scenario places its body while it composes, so the slot answers before the preset is
 // handed back and a case needs nothing running to read it.
-constexpr std::size_t screw_scenario = 3u;
+constexpr presets::arrangement_scenario screw_scenario = presets::arrangement_scenario::screw;
 
 }
 
@@ -93,22 +92,30 @@ TEST_CASE("the_capabilities_a_composer_is_asked_for_are_what_the_scenario_compos
     answered = 0;
     threepp::Scene target;
 
-    const presets::arrangement_composer compose = presets::composer_for(presets::arrangement_scenario::screw, recording_capabilities());
+    const presets::arrangement_composer compose = presets::composer_for(screw_scenario, recording_capabilities());
     const std::shared_ptr<scene::preset> built  = compose(headless(target), nothing_carried());
 
     REQUIRE(built != nullptr);
     REQUIRE(answered > 0);
 }
 
+// Both compositions stand in one case, because a case that only asserts the count stayed at zero
+// passes whenever nothing has installed the slot yet, whatever the overload does with it.
 TEST_CASE("the_composer_asked_for_no_capabilities_binds_the_baseline_and_not_a_caller_s")
 {
     answered = 0;
-    threepp::Scene target;
+    threepp::Scene mine;
+    const presets::arrangement_composer asked = presets::composer_for(screw_scenario, recording_capabilities());
+    REQUIRE(asked(headless(mine), nothing_carried()) != nullptr);
 
-    const presets::arrangement_composer compose = presets::composer_for(presets::arrangement_scenario::screw);
-    const std::shared_ptr<scene::preset> built  = compose(headless(target), nothing_carried());
+    const int under_the_caller_s = answered;
 
-    REQUIRE(built != nullptr);
+    answered = 0;
+    threepp::Scene theirs;
+    const presets::arrangement_composer unasked = presets::composer_for(screw_scenario);
+    REQUIRE(unasked(headless(theirs), nothing_carried()) != nullptr);
+
+    REQUIRE(under_the_caller_s > 0);
     CHECK(answered == 0);
 }
 
@@ -117,7 +124,7 @@ TEST_CASE("register_arrangements_composes_a_registered_preset_against_the_capabi
     answered                              = 0;
     const std::filesystem::path directory = scratch();
 
-    const std::string named{presets::arrangement_scenario_labels()[screw_scenario]};
+    const std::string named{presets::arrangement_scenario_labels()[static_cast<std::size_t>(screw_scenario)]};
     std::ofstream out(directory / "screw.xml", std::ios::binary | std::ios::trunc);
     out << "<arrangement><preset name=\"Screw motion: parameters\" scenario=\"" << named << "\"/></arrangement>\n";
     out.close();
@@ -136,4 +143,14 @@ TEST_CASE("register_arrangements_composes_a_registered_preset_against_the_capabi
 
     REQUIRE(built != nullptr);
     REQUIRE(answered > 0);
+}
+
+// The scenario is a consumer's argument now that the header is published, and an enumeration with a
+// fixed underlying type carries values no enumerator names.
+TEST_CASE("a_scenario_no_enumerator_names_is_refused_rather_than_read_past_the_table")
+{
+    const presets::arrangement_scenario past_the_table = static_cast<presets::arrangement_scenario>(200);
+
+    CHECK_THROWS_AS(presets::composer_for(past_the_table), std::out_of_range);
+    CHECK_THROWS_AS(presets::composer_for(past_the_table, recording_capabilities()), std::out_of_range);
 }

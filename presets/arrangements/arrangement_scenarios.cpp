@@ -75,7 +75,7 @@ std::span<const char *const> arrangement_scenario_labels()
 
 arrangement_composer composer_for(arrangement_scenario scenario, const rigid_motion::capabilities &motions)
 {
-    return offered_scenarios[static_cast<std::size_t>(scenario)](motions);
+    return offered_scenarios.at(static_cast<std::size_t>(scenario))(motions);
 }
 
 arrangement_composer composer_for(arrangement_scenario scenario)

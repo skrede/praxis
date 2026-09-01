@@ -1,10 +1,10 @@
-#include "praxis/presets/arrangement_scenarios.h"
-
 #include "praxis/presets/arrangements.h"
+#include "praxis/presets/arrangement_scenarios.h"
 
 #include "praxis/scene/preset.h"
 #include "praxis/scene/preset_site.h"
 
+#include "praxis/rigid_motion/capabilities.h"
 #include "praxis/rigid_motion/configuration.h"
 
 #include "praxis/config/error.h"
