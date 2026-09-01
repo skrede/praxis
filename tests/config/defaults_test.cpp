@@ -26,7 +26,10 @@ std::filesystem::path scratch()
 {
     const std::filesystem::path directory = std::filesystem::temp_directory_path() / "praxis-config-defaults";
     std::filesystem::create_directories(directory);
-    return directory;
+    // The library answers resolved paths, and a temporary directory is not always its own resolved
+    // form: macOS reaches it through a symlink and Windows through an abbreviated component. A
+    // fixture comparing against the raw path would fail on those two and pass here for no reason.
+    return std::filesystem::weakly_canonical(directory);
 }
 
 std::filesystem::path written(const std::string &name, std::string_view text)

@@ -32,6 +32,11 @@ public:
     {
         std::filesystem::remove_all(m_root);
         std::filesystem::create_directories(seeds());
+
+        // The library answers resolved paths, and a temporary directory is not always its own
+        // resolved form: macOS reaches it through a symlink and Windows through an abbreviated
+        // component. A fixture holding the raw path would compare two spellings of one place.
+        m_root = std::filesystem::weakly_canonical(m_root);
     }
 
     scratch(const scratch &)            = delete;

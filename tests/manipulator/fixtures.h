@@ -157,6 +157,11 @@ public:
         std::error_code ignored;
         std::filesystem::remove_all(m_root, ignored);
         std::filesystem::create_directories(m_root);
+
+        // The library answers resolved paths, and a temporary directory is not always its own
+        // resolved form: macOS reaches it through a symlink and Windows through an abbreviated
+        // component. A fixture holding the raw path would compare two spellings of one place.
+        m_root = std::filesystem::weakly_canonical(m_root);
     }
 
     scratch_tree(const scratch_tree &)            = delete;
