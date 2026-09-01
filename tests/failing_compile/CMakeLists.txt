@@ -45,9 +45,11 @@ endif ()
 # Registration is a non-static member function and the registry publishes no instance of its own, so
 # a namespace-scope initializer has nothing to register into and the call is the rejection. The
 # families word the missing object differently, and the source line echoed under the caret names only
-# the call, so the wording is the one text no other failure in this unit composes.
+# the call, so the wording is the one text no other failure in this unit composes. GCC writes "called
+# without object", Clang "call to non-static member function without an object argument" and MSVC "a
+# call of a non-static member function requires an object".
 if (TARGET praxis_scene)
-    praxis_add_failing_compile(namespace_scope_preset_registrar.cpp DIAGNOSTIC "without object|without an object|illegal call of non-static member function" LIBS praxis::scene)
+    praxis_add_failing_compile(namespace_scope_preset_registrar.cpp DIAGNOSTIC "without object|without an object|requires an object" LIBS praxis::scene)
 endif ()
 
 if (TARGET praxis_evaluation)
