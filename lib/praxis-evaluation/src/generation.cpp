@@ -48,6 +48,38 @@ std::uint64_t mixed(std::uint64_t seed, std::string_view name, spread drawn_from
     return hash;
 }
 
+// A standard-library distribution, like a standard-library hash, is not required to draw the same
+// values on every implementation, while the engine's own output sequence is specified exactly. The
+// draws below are therefore written out over raw engine output, so a recorded seed names one corpus
+// everywhere rather than one corpus per standard library.
+
+// The engine's top 53 bits scaled into [0, 1): uniformly spaced, and never reaching one.
+double unit_interval(std::mt19937_64 &engine)
+{
+    return static_cast<double>(engine() >> 11) * 0x1.0p-53;
+}
+
+double drawn_between(std::mt19937_64 &engine, double lower, double upper)
+{
+    return lower + (upper - lower) * unit_interval(engine);
+}
+
+// The remainder's bias is one part in 2^60 at the widest count drawn here, beneath anything a
+// consumer of these draws could observe.
+int drawn_below(std::mt19937_64 &engine, int count)
+{
+    return static_cast<int>(engine() % static_cast<std::uint64_t>(count));
+}
+
+// Box-Muller from two uniform draws, the first taken from (0, 1] so its logarithm is finite.
+double drawn_normal(std::mt19937_64 &engine)
+{
+    const double radius = std::sqrt(-2.0 * std::log(1.0 - unit_interval(engine)));
+    const double angle  = 2.0 * half_turn * unit_interval(engine);
+
+    return radius * std::cos(angle);
+}
+
 }
 
 case_source::case_source(std::uint64_t seed, spread drawn_from)
@@ -79,19 +111,19 @@ spread case_source::drawn_from() const
 
 bool case_source::half_the_time()
 {
-    return std::uniform_int_distribution<int>(0, 1)(m_engine) == 1;
+    return drawn_below(m_engine, 2) == 1;
 }
 
 double case_source::standard_normal()
 {
-    return std::normal_distribution<double>(0.0, 1.0)(m_engine);
+    return drawn_normal(m_engine);
 }
 
 // The decades between the comparison tolerance and unity are where a comparison stops behaving as it
 // does in the bulk, so the displacement is log-uniform over them rather than uniform.
 double case_source::offset_from_singular()
 {
-    const double decades  = std::uniform_real_distribution<double>(std::log10(default_tolerance), 0.0)(m_engine);
+    const double decades  = drawn_between(m_engine, std::log10(default_tolerance), 0.0);
     const double distance = std::pow(10.0, decades);
 
     return half_the_time() ? distance : -distance;
@@ -100,10 +132,10 @@ double case_source::offset_from_singular()
 double case_source::angle_radians()
 {
     if(m_spread != spread::near_singular)
-        return std::uniform_real_distribution<double>(-half_turn, half_turn)(m_engine);
+        return drawn_between(m_engine, -half_turn, half_turn);
 
     constexpr std::array<double, 3> singular{0.0, half_turn, -half_turn};
-    const auto which = static_cast<std::size_t>(std::uniform_int_distribution<int>(0, 2)(m_engine));
+    const auto which = static_cast<std::size_t>(drawn_below(m_engine, 3));
 
     return singular[which] + offset_from_singular();
 }
@@ -113,7 +145,7 @@ double case_source::pitch()
     if(m_spread == spread::near_singular)
         return offset_from_singular();
 
-    return std::uniform_real_distribution<double>(-pitch_extent, pitch_extent)(m_engine);
+    return drawn_between(m_engine, -pitch_extent, pitch_extent);
 }
 
 Eigen::Vector3d case_source::normal_triple()
@@ -136,11 +168,9 @@ Eigen::Vector3d case_source::unit_direction()
 
 Eigen::Vector3d case_source::position_metres()
 {
-    std::uniform_real_distribution<double> over_the_range(-position_extent, position_extent);
-
-    const double x = over_the_range(m_engine);
-    const double y = over_the_range(m_engine);
-    const double z = over_the_range(m_engine);
+    const double x = drawn_between(m_engine, -position_extent, position_extent);
+    const double y = drawn_between(m_engine, -position_extent, position_extent);
+    const double z = drawn_between(m_engine, -position_extent, position_extent);
 
     return Eigen::Vector3d(x, y, z);
 }
@@ -148,12 +178,11 @@ Eigen::Vector3d case_source::position_metres()
 Eigen::Vector3d case_source::euler_triple_radians()
 {
     constexpr std::array<double, 4> singular{0.0, quarter_turn, -quarter_turn, half_turn};
-    std::uniform_real_distribution<double> over_a_turn(-half_turn, half_turn);
 
-    const double first = over_a_turn(m_engine);
-    const double middle =
-            m_spread == spread::near_singular ? singular[static_cast<std::size_t>(std::uniform_int_distribution<int>(0, 3)(m_engine))] + offset_from_singular() : over_a_turn(m_engine);
-    const double last = over_a_turn(m_engine);
+    const double first = drawn_between(m_engine, -half_turn, half_turn);
+    const double middle = m_spread == spread::near_singular ? singular[static_cast<std::size_t>(drawn_below(m_engine, 4))] + offset_from_singular()
+                                                            : drawn_between(m_engine, -half_turn, half_turn);
+    const double last = drawn_between(m_engine, -half_turn, half_turn);
 
     return Eigen::Vector3d(first, middle, last);
 }
@@ -173,12 +202,12 @@ Eigen::Vector3d case_source::linear_part()
 
 std::uint8_t case_source::axis_order_index()
 {
-    return static_cast<std::uint8_t>(std::uniform_int_distribution<int>(0, rotation_orders - 1)(m_engine));
+    return static_cast<std::uint8_t>(drawn_below(m_engine, rotation_orders));
 }
 
 std::size_t case_source::axis_count()
 {
-    return static_cast<std::size_t>(std::uniform_int_distribution<int>(fewest_axes, most_axes)(m_engine));
+    return static_cast<std::size_t>(fewest_axes + drawn_below(m_engine, most_axes - fewest_axes + 1));
 }
 
 }
