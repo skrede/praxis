@@ -192,7 +192,16 @@ void visualizer::load(const preset_registry::factory &builder, const std::string
 {
     const expected<void, load_refusal> loaded = m_composition.load(builder);
     if(!loaded.has_value())
+    {
         report_load_refusal(loaded.error(), name);
+        return;
+    }
+
+    // A composition that answered can still have been released again by a refused initialization, so
+    // what is announced is what the composition is holding rather than what it accepted. The overload
+    // taking a factory carries no name and announces nothing.
+    if(m_composition.loaded() && !name.empty())
+        spdlog::info("Showing preset '{}'", name);
 }
 
 void visualizer::unload()
