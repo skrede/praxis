@@ -72,9 +72,18 @@ add_subdirectory(presets)
 # that is not published under this repository's namespace -- the carrier the linear-algebra headers
 # travel on among them, because the dependencies' own interfaces name it. That file names nothing out
 # of the namespaced one, so a consumer reads it first and the namespaced one after.
-export(TARGETS imgui implot threepp glfw spdlog pugixml pugixml-static praxis_eigen_headers
+set(praxis_dependency_targets imgui implot threepp glfw spdlog pugixml pugixml-static praxis_eigen_headers
     cartan_lie cartan_serial_chain cartan_analytical ctrlpp nucleus_core nucleus_xml
-    meios_urdf meios_core meios_io meios_model meios_xacro meios_yaml yaml-cpp
+    meios_urdf meios_core meios_io meios_model meios_xacro meios_yaml yaml-cpp)
+
+# The formatting library enters a dependency's public link interface only on a toolchain whose
+# standard library does not supply the formatting header, so which set this target belongs to is
+# decided by the toolchain rather than by this file.
+if (TARGET fmt)
+    list(APPEND praxis_dependency_targets fmt)
+endif ()
+
+export(TARGETS ${praxis_dependency_targets}
     FILE ${CMAKE_BINARY_DIR}/praxis-dependency-targets.cmake)
 
 export(TARGETS praxis_compat praxis_config praxis_extension praxis_scheduler praxis_scene praxis_evaluation
