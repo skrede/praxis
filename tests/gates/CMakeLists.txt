@@ -16,3 +16,14 @@ if (PRAXIS_ENABLE_CTAGS_GATES)
         -DPRAXIS_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}
         -P ${PROJECT_SOURCE_DIR}/cmake/verify_public_surface.cmake)
 endif ()
+
+# This one configures and builds a consuming project of its own before it can read anything, so it is
+# registered only where it is asked for. The tree it drives is that project's, not the one every
+# failing-compile probe shares, and it takes none of their lock.
+if (PRAXIS_BUILD_CONSUMER_TESTS)
+    add_test(NAME rebuild_avoidance_gate COMMAND ${CMAKE_COMMAND}
+        -DPRAXIS_SOURCE_DIR=${PROJECT_SOURCE_DIR}
+        -DPRAXIS_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}/rebuild-avoidance
+        -P ${PROJECT_SOURCE_DIR}/cmake/verify_rebuild_avoidance.cmake)
+    set_tests_properties(rebuild_avoidance_gate PROPERTIES TIMEOUT 2400)
+endif ()

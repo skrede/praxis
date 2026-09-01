@@ -22,6 +22,7 @@ option(PRAXIS_BUILD_TESTS "Build unit tests" ${PROJECT_IS_TOP_LEVEL})
 option(PRAXIS_BUILD_EXAMPLES "Build the demo application" ${PROJECT_IS_TOP_LEVEL})
 option(PRAXIS_BUILD_DISPLAY_TESTS "Build the tests that need a display" OFF)
 option(PRAXIS_ENABLE_CTAGS_GATES "Check the public surface, which needs Universal Ctags" ${PROJECT_IS_TOP_LEVEL})
+option(PRAXIS_BUILD_CONSUMER_TESTS "Check what a consuming project rebuilds, which configures and builds a project of its own" OFF)
 
 # These read this tree, not a consumer's, so a project that adds praxis runs none of them. None needs
 # an extraction tool. The scripts stay usable on their own from a hook or a pipeline.
