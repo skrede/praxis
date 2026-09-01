@@ -54,7 +54,7 @@ namespace {
 // resolved where they were deployed.
 struct offered
 {
-    explicit offered(const scratch &where)
+    explicit offered(const scratch &where, const std::filesystem::path &descriptions = PRAXIS_DEMO_RESOURCE_DIR)
             : loop(scheduler::inline_workers)
             , scene(threepp::Scene::create())
             , registry(std::make_shared<scene::preset_registry>())
@@ -63,7 +63,7 @@ struct offered
                 demo::demonstration_keyspace(), config::resolve(std::filesystem::path(PRAXIS_SHIPPED_MACHINE_DIR) / "praxis-manipulator.xml", PRAXIS_SHIPPED_MACHINE_DIR));
         REQUIRE_FALSE(answered.failure.has_value());
 
-        names = demo::register_arm_presets(registry, answered.values, demo::documents(PRAXIS_SHIPPED_MACHINE_DIR, where.state()), PRAXIS_DEMO_RESOURCE_DIR, nullptr);
+        names = demo::register_arm_presets(registry, answered.values, demo::documents(PRAXIS_SHIPPED_MACHINE_DIR, where.state()), descriptions, nullptr);
     }
 
     // One composition, torn down the way the application tears one down, with whatever a case wants
@@ -84,6 +84,16 @@ struct offered
         REQUIRE(loop.drain().has_value());
 
         return answered;
+    }
+
+    // What the factory answers, which is nothing at all when the description the machine names could
+    // not be read.
+    std::shared_ptr<scene::preset> composed_or_nothing(const std::string &named)
+    {
+        const scene::window_route nowhere = [](const std::shared_ptr<scene::imgui_window> &) {};
+        const scene::preset_site site{*scene, loop.main_strand(), *loop.make_strand(), [] {}, nowhere, nowhere, {}};
+
+        return registry->load_preset(named)(site);
     }
 
     std::vector<std::string> windows_of(const std::string &named)
@@ -193,4 +203,20 @@ TEST_CASE("a preset saved into for the first time composes from the copy", "[exa
 
     REQUIRE(opened.size() == 1u);
     REQUIRE(opened.front().isApprox(typed_row(), 1e-5));
+}
+
+// The names come from the shipped documents and the models from a directory beside the executable, so
+// a copy of the application whose models never arrived still offers every name and can compose none
+// of them. Composing one has to answer nothing rather than end the run.
+TEST_CASE("a machine whose description is not there is refused by name rather than composed", "[examples][registry]")
+{
+    const scratch where("absent-descriptions");
+    offered demonstration(where, where.state() / "descriptions-that-are-not-there");
+
+    REQUIRE_FALSE(demonstration.names.empty());
+
+    for(const std::string &named : demonstration.names)
+        CHECK(demonstration.composed_or_nothing(named) == nullptr);
+
+    SUCCEED("every name was refused and the run carried on to the end");
 }
