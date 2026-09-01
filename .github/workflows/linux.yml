@@ -38,7 +38,37 @@ jobs:
           set -eu
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev pkg-config
+            libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev pkg-config \
+            autoconf automake
+
+      # The golden surface record and this extractor version are a matched pair; the archive's
+      # package is older, and the gate refuses it by name.
+      - name: Pin the surface extractor
+        run: |
+          set -eu
+          version=$(sed -n 's/^set(PRAXIS_CTAGS_VERSION \([0-9.]*\))$/\1/p' cmake/verify_public_surface.cmake)
+          test -n "$version"
+          echo "CTAGS_VERSION=$version" >> "$GITHUB_ENV"
+          echo "$RUNNER_TEMP/ctags/bin" >> "$GITHUB_PATH"
+
+      - name: Cache the surface extractor
+        id: extractor
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ runner.temp }}/ctags
+          key: ctags-${{ runner.os }}-${{ env.CTAGS_VERSION }}
+
+      - name: Build the surface extractor
+        if: steps.extractor.outputs.cache-hit != 'true'
+        run: |
+          set -eu
+          git clone --depth 1 --branch "v$CTAGS_VERSION" \
+            https://github.com/universal-ctags/ctags.git "$RUNNER_TEMP/ctags-src"
+          cd "$RUNNER_TEMP/ctags-src"
+          ./autogen.sh
+          ./configure --prefix="$RUNNER_TEMP/ctags"
+          make -j 4
+          make install
 
       - name: Cache the dependency sources
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
@@ -56,7 +86,7 @@ jobs:
             -DPRAXIS_BUILD_TESTS=ON \
             -DPRAXIS_BUILD_EXAMPLES=ON \
             -DPRAXIS_BUILD_DISPLAY_TESTS=OFF \
-            -DPRAXIS_ENABLE_CTAGS_GATES=OFF
+            -DPRAXIS_ENABLE_CTAGS_GATES=ON
 
       - name: Build
         run: |
@@ -67,3 +97,64 @@ jobs:
         run: |
           set -eu
           ctest --test-dir build --output-on-failure --no-tests=error
+
+  display:
+    runs-on: ubuntu-24.04
+
+    env:
+      FETCHCONTENT_BASE_DIR: ${{ github.workspace }}/.deps
+      LIBGL_ALWAYS_SOFTWARE: "1"
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Record the toolchain
+        run: |
+          set -eu
+          cc --version
+          cmake --version
+          ninja --version
+          uname -m
+
+      - name: Install the window and rendering headers
+        run: |
+          set -eu
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev pkg-config \
+            libgl1-mesa-dri mesa-utils
+
+      - name: Record the graphics context
+        run: |
+          set -eu
+          xvfb-run -a -s "-screen 0 1280x1024x24" glxinfo -B
+
+      - name: Cache the dependency sources
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ env.FETCHCONTENT_BASE_DIR }}
+          key: deps-${{ runner.os }}-${{ hashFiles('cmake/dependencies.cmake', 'cmake/scene_dependencies.cmake') }}
+
+      # FetchContent reads the base directory from the cache variable, not from the environment.
+      - name: Configure
+        run: |
+          set -eu
+          cmake -S . -B build -G Ninja \
+            -DFETCHCONTENT_BASE_DIR="$FETCHCONTENT_BASE_DIR" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DPRAXIS_BUILD_TESTS=ON \
+            -DPRAXIS_BUILD_EXAMPLES=OFF \
+            -DPRAXIS_BUILD_DISPLAY_TESTS=ON \
+            -DPRAXIS_ENABLE_CTAGS_GATES=OFF
+
+      - name: Build the tests that need a display
+        run: |
+          set -eu
+          cmake --build build -j 4 \
+            --target display_teardown_test display_visualizer_test display_plot_window_test
+
+      - name: Test
+        run: |
+          set -eu
+          xvfb-run -a -s "-screen 0 1280x1024x24" \
+            ctest --test-dir build -R '^display_' --output-on-failure --no-tests=error

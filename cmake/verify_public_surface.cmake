@@ -13,6 +13,36 @@ if (NOT PRAXIS_CTAGS)
         "configure with -DPRAXIS_ENABLE_CTAGS_GATES=OFF to run everything else without it.")
 endif ()
 
+# The record and the extractor are a matched pair; another version diverges from it without the
+# surface having changed.
+set(PRAXIS_CTAGS_VERSION 6.2.1)
+
+execute_process(
+    COMMAND ${PRAXIS_CTAGS} --version
+    OUTPUT_VARIABLE reported
+    ERROR_VARIABLE ignored
+    RESULT_VARIABLE status
+)
+# Only the first line names the running tool; the two below it name Exuberant Ctags and its version.
+string(REGEX MATCH "^[^\n]*" identity "${reported}")
+if (NOT status EQUAL 0 OR NOT identity MATCHES "^Universal Ctags ([^(,]+)")
+    message(FATAL_ERROR
+        "praxis: the ctags at ${PRAXIS_CTAGS} is not Universal Ctags; it identifies itself as "
+        "\"${identity}\". The public surface record is extracted by Universal Ctags "
+        "${PRAXIS_CTAGS_VERSION}. Install that, or configure with -DPRAXIS_ENABLE_CTAGS_GATES=OFF to "
+        "run everything else without it.")
+endif ()
+set(PRAXIS_CTAGS_FOUND_VERSION "${CMAKE_MATCH_1}")
+if (NOT PRAXIS_CTAGS_FOUND_VERSION STREQUAL PRAXIS_CTAGS_VERSION)
+    message(FATAL_ERROR
+        "praxis: the ctags at ${PRAXIS_CTAGS} is Universal Ctags ${PRAXIS_CTAGS_FOUND_VERSION}, and "
+        "the public surface record was extracted by Universal Ctags ${PRAXIS_CTAGS_VERSION}. What "
+        "the two extract differs whether or not the surface changed, so this gate will not report "
+        "on it. "
+        "Install Universal Ctags ${PRAXIS_CTAGS_VERSION}, or configure with "
+        "-DPRAXIS_ENABLE_CTAGS_GATES=OFF to run everything else without it.")
+endif ()
+
 include("${CMAKE_CURRENT_LIST_DIR}/listfile.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/surface_record.cmake")
 
