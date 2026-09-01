@@ -180,8 +180,8 @@ Eigen::Vector3d case_source::euler_triple_radians()
     constexpr std::array<double, 4> singular{0.0, quarter_turn, -quarter_turn, half_turn};
 
     const double first = drawn_between(m_engine, -half_turn, half_turn);
-    const double middle = m_spread == spread::near_singular ? singular[static_cast<std::size_t>(drawn_below(m_engine, 4))] + offset_from_singular()
-                                                            : drawn_between(m_engine, -half_turn, half_turn);
+    const double middle =
+            m_spread == spread::near_singular ? singular[static_cast<std::size_t>(drawn_below(m_engine, 4))] + offset_from_singular() : drawn_between(m_engine, -half_turn, half_turn);
     const double last = drawn_between(m_engine, -half_turn, half_turn);
 
     return Eigen::Vector3d(first, middle, last);
