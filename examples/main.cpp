@@ -19,6 +19,8 @@
 #include <string>
 #include <memory>
 #include <vector>
+#include <optional>
+#include <exception>
 #include <filesystem>
 #include <system_error>
 
@@ -31,6 +33,9 @@
 #endif
 
 namespace {
+
+// Below the 128 a shell adds to a signal number, so a refusal does not read as a signalled end.
+constexpr int renderer_unavailable = 3;
 
 // Where the application keeps what it writes for itself. It is created here because a save against a
 // directory that is not there fails, and nothing else in the run creates it.
@@ -90,6 +95,28 @@ praxis::scene::visualizer::geometry run_until_closed(const std::shared_ptr<praxi
     return view.window_geometry();
 }
 
+// The renderer throws out of the canvas construction the visualizer's constructor reaches.
+std::optional<praxis::scene::visualizer::geometry> run_and_report(const std::shared_ptr<praxis::scene::preset_registry> &registry,
+                                                                  const std::shared_ptr<praxis::demo::write_back> &writing, const std::shared_ptr<praxis::scene::log_buffer> &messages,
+                                                                  const std::vector<std::string> &machines, const praxis::scene::visualizer::geometry &window,
+                                                                  const std::filesystem::path &root)
+{
+    try
+    {
+        return run_until_closed(registry, writing, messages, machines, window, root);
+    }
+    catch(const std::exception &failed)
+    {
+        spdlog::error(std::format("The renderer could not be started, so there is nothing to show: {}", failed.what()));
+    }
+    catch(...)
+    {
+        spdlog::error("The renderer could not be started, so there is nothing to show");
+    }
+
+    return std::nullopt;
+}
+
 }
 
 int main(int, char **argv)
@@ -111,9 +138,12 @@ int main(int, char **argv)
     const auto registry                     = std::make_shared<praxis::scene::preset_registry>();
     const std::vector<std::string> machines = praxis::demo::register_offered(registry, mine, configured.values, beside / "urdf", writing);
 
-    const praxis::scene::visualizer::geometry left =
-            run_until_closed(registry, writing, messages, machines, praxis::demo::preferred_geometry(preferred.values), prefs.at.resolved.parent_path());
-    static_cast<void>(praxis::config::save(prefs, praxis::demo::preferences_edits(left, praxis::scene::reporting_level())));
+    const std::optional<praxis::scene::visualizer::geometry> left =
+            run_and_report(registry, writing, messages, machines, praxis::demo::preferred_geometry(preferred.values), prefs.at.resolved.parent_path());
+    if(!left)
+        return renderer_unavailable;
+
+    static_cast<void>(praxis::config::save(prefs, praxis::demo::preferences_edits(*left, praxis::scene::reporting_level())));
 
     return 0;
 }
