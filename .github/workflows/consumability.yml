@@ -135,3 +135,146 @@ jobs:
             -DRECIPE_MODE=coordinates \
             -DRECIPE_OUT="$RUNNER_TEMP/coordinates" \
             -P tests/consumability/run_recipe.cmake
+
+  rehearsal:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+
+    env:
+      LIBGL_ALWAYS_SOFTWARE: "1"
+      PRAXIS_ADDRESS: https://github.com/skrede/praxis.git
+      PRAXIS_REFERENCE: ${{ github.ref_name }}
+      REHEARSAL_TREE: ${{ runner.temp }}/rehearsal
+
+    steps:
+      - name: Record the toolchain
+        run: |
+          set -eu
+          cc --version
+          cmake --version
+          ninja --version
+          uname -m
+
+      - name: Install the window and rendering headers
+        run: |
+          set -eu
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev pkg-config \
+            libgl1-mesa-dri mesa-utils xvfb
+
+      - name: Obtain the repository from its published address
+        run: |
+          set -eu
+          rm -rf "$REHEARSAL_TREE"
+          start=$(date +%s)
+          git clone --branch "$PRAXIS_REFERENCE" "$PRAXIS_ADDRESS" "$REHEARSAL_TREE"
+          echo "CLONE_SECONDS=$(( $(date +%s) - start ))" >> "$GITHUB_ENV"
+          git -C "$REHEARSAL_TREE" log --oneline -1
+
+      - name: Configure
+        run: |
+          set -eu
+          cd "$REHEARSAL_TREE"
+          start=$(date +%s)
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          echo "CONFIGURE_SECONDS=$(( $(date +%s) - start ))" >> "$GITHUB_ENV"
+
+      - name: Build the demonstration
+        run: |
+          set -eu
+          cd "$REHEARSAL_TREE"
+          start=$(date +%s)
+          cmake --build build --target manipulator_demo
+          echo "BUILD_SECONDS=$(( $(date +%s) - start ))" >> "$GITHUB_ENV"
+          echo "TREE_SIZE=$(du -sh . | cut -f1)" >> "$GITHUB_ENV"
+
+      - name: Run the demonstration under a virtual framebuffer
+        run: |
+          set -eu
+          cd "$REHEARSAL_TREE/build/examples/manipulator"
+          shown="$RUNNER_TEMP/framebuffer.log"
+          : > "$shown"
+          start=$(date +%s)
+          timeout 45 xvfb-run -a -s "-screen 0 1280x1024x24" ./manipulator_demo > "$shown" 2>&1 &
+          demonstration=$!
+          startup=""
+          while kill -0 "$demonstration" 2>/dev/null; do
+            if [ -z "$startup" ] && grep -q "Showing preset" "$shown"; then
+              startup=$(( $(date +%s) - start ))
+            fi
+            sleep 1
+          done
+          status=0
+          wait "$demonstration" || status=$?
+          cat "$shown"
+          test "$status" -eq 124
+          grep -q "Showing preset" "$shown"
+          echo "STARTUP_SECONDS=${startup:-0}" >> "$GITHUB_ENV"
+
+      - name: Run the demonstration with no display
+        run: |
+          set -eu
+          cd "$REHEARSAL_TREE/build/examples/manipulator"
+          refused="$RUNNER_TEMP/no-display.log"
+          status=0
+          env -u DISPLAY -u WAYLAND_DISPLAY ./manipulator_demo > "$refused" 2>&1 || status=$?
+          cat "$refused"
+          test "$status" -ne 0
+          test "$status" -lt 128
+          test "$status" -eq 3
+          grep -q "The renderer could not be started" "$refused"
+
+      - name: Report the wall clock
+        run: |
+          set -eu
+          {
+            echo "| Phase | Wall clock |"
+            echo "| --- | --- |"
+            echo "| Clone | ${CLONE_SECONDS} s |"
+            echo "| Configure | ${CONFIGURE_SECONDS} s |"
+            echo "| Build | ${BUILD_SECONDS} s |"
+            echo "| Start-up | ${STARTUP_SECONDS} s |"
+            echo "| Tree on disk | ${TREE_SIZE} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  published:
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.ref == 'refs/heads/master'
+
+    env:
+      FETCHCONTENT_BASE_DIR: ${{ github.workspace }}/.deps
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Record the toolchain
+        run: |
+          set -eu
+          cc --version
+          cmake --version
+          ninja --version
+          uname -m
+
+      - name: Install the window and rendering headers
+        run: |
+          set -eu
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev pkg-config
+
+      - name: Cache the dependency sources
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ env.FETCHCONTENT_BASE_DIR }}
+          key: deps-${{ runner.os }}-${{ hashFiles('cmake/dependencies.cmake', 'cmake/scene_dependencies.cmake') }}
+
+      - name: Consume the published reference through the recipe
+        run: |
+          set -eu
+          cmake -DPRAXIS_SOURCE_DIR="$PWD" \
+            -DRECIPE_MODE=published \
+            -DRECIPE_OUT="$RUNNER_TEMP/published" \
+            -DFETCHCONTENT_BASE_DIR="$FETCHCONTENT_BASE_DIR" \
+            -P tests/consumability/run_recipe.cmake
