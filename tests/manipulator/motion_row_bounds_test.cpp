@@ -95,25 +95,25 @@ std::size_t how_many(const std::vector<agreement> &seen, agreement which)
 
 }
 
-// The displacement standing at the bound and the one a decade beneath it, written out rather than
-// derived from the bounds, so a bound moved up past the first or down onto the second fails here.
-// The decade beneath is also the solve's own convergence tolerance, so a displacement standing on
-// the bound can leave every case unanswered. A row folds to agreement only where a case had both
-// sides answer and none of them differed, so a run standing at the bound is held to not folding
-// that way rather than to agreeing.
-constexpr double at_the_bound      = 1.0e-6;
+// The displacement standing twice the bound and the one a decade beneath it, written out rather
+// than derived from the bounds, so a bound doubled past the first or lowered onto the second fails
+// here. The first stands a factor two rather than exactly at the bound because the solve's own
+// convergence residual stands a decade beneath it and lands with either sign: a displacement at the
+// bound itself crosses only where the residual happens to add, which is the toolchain's coin to
+// flip, while one standing clear of the residual is reported on every case both sides answered.
+constexpr double above_the_bound   = 2.0e-6;
 constexpr double beneath_the_bound = 1.0e-7;
 
 // Each row is asked for a pose and answers a configuration, so the displacement that decides the
 // verdict is the one between the pose the answer reaches and the pose the row was asked for.
-TEST_CASE("each_motion_row_reports_a_pose_standing_at_the_bound_it_carries_and_leaves_one_a_decade_beneath")
+TEST_CASE("each_motion_row_reports_a_pose_standing_above_the_bound_it_carries_and_leaves_one_a_decade_beneath")
 {
     const motion_ops reference = baseline().motion;
 
     for(const bool angular : {true, false})
         for(const bool above : {true, false})
         {
-            const double displaced = above ? at_the_bound : beneath_the_bound;
+            const double displaced = above ? above_the_bound : beneath_the_bound;
             off_target_radians     = angular ? displaced : 0.0;
             off_target_metres      = angular ? 0.0 : displaced;
 
@@ -122,8 +122,12 @@ TEST_CASE("each_motion_row_reports_a_pose_standing_at_the_bound_it_carries_and_l
                 INFO("row " << row.name << ", angular " << angular << ", above " << above);
                 const std::vector<agreement> seen = over_the_run(row, reference, standing_off_target);
 
+                // Above the bound every case both sides answered is a difference, so agreement is
+                // asserted only where the displacement stands beneath; that the two sides agree at
+                // all when nothing stands between them is the next case's business.
+                REQUIRE(how_many(seen, agreement::agreed) + how_many(seen, agreement::differed) > 0u);
                 if(above)
-                    REQUIRE((how_many(seen, agreement::differed) > 0u || how_many(seen, agreement::agreed) == 0u));
+                    REQUIRE(how_many(seen, agreement::differed) > 0u);
                 else
                 {
                     REQUIRE(how_many(seen, agreement::agreed) > 0u);
