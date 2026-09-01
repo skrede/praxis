@@ -41,6 +41,13 @@ location resolve(const std::filesystem::path &given, const std::filesystem::path
 {
     const std::filesystem::path wanted = expanded(given);
     const std::filesystem::path joined = wanted.is_absolute() ? wanted : base / wanted;
+
+    // Nothing against nothing resolves to nothing. Canonicalizing an empty path is not portable:
+    // one standard library returns it unchanged where another answers the working directory, which
+    // would turn a path nobody named into a place on disk.
+    if(joined.empty())
+        return location{given, joined};
+
     std::error_code failed;
     const std::filesystem::path resolved = std::filesystem::weakly_canonical(joined, failed);
     return location{given, failed ? joined.lexically_normal() : resolved};
