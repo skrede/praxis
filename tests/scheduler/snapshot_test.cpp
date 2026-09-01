@@ -75,13 +75,13 @@ bool whole(const marked_sample &sample)
 // reader started after the last publication would pass having examined one value. The floor cannot
 // be a fraction of a fixed count: how far the publisher gets before the reader's thread first runs
 // is the scheduler's business, and a lock handed back is not handed over -- an unfair lock lets the
-// publisher retake it before a waiting reader wakes, for as long as the publisher never leaves a
-// gap. So the flood is followed by as many publications as the floor still needs, each yielding the
-// processor so the reader's next read is admitted, under a patience that fits the suite's own limit
-// on this binary.
+// publisher retake it before a waiting reader wakes, for as long as the publisher keeps asking. So
+// the flood is followed by publications offered one at a time, the publisher standing clear of the
+// lock until the reader has witnessed each, under a patience that fits the suite's own limit on
+// this binary.
 constexpr std::uint64_t publications  = 1000000;
 constexpr std::uint64_t least_changes = 100000;
-constexpr std::chrono::seconds patience{5};
+constexpr std::chrono::seconds patience{7};
 
 struct observation_report
 {
@@ -119,18 +119,25 @@ observation_report publish_against_a_reader()
     observation_report report{0, 0, 0, 0};
     std::thread watcher([&] { report = read_while_publishing(source.reader(), publishing, witnessed); });
 
-    // The clock is consulted once in a while rather than every publication, so waiting on the
-    // reader does not slow the flood the reader is being held against.
-    const std::chrono::steady_clock::time_point give_up = std::chrono::steady_clock::now() + patience;
-    std::uint64_t sequence                              = 1;
-    bool patient                                        = true;
-    while(sequence < publications || (patient && witnessed.load(std::memory_order_relaxed) < least_changes))
-    {
+    std::uint64_t sequence = 1;
+    while(sequence < publications)
         source.publish(marked(++sequence));
-        if(sequence >= publications)
+
+    // One witnessed change per publication from here: the value is published and the publisher
+    // then stands clear of the lock until the reader has seen it, so a lock that favors whoever
+    // asks last cannot keep the reader out, and reaching the floor is a count of round trips
+    // rather than a race the scheduler referees.
+    const std::chrono::steady_clock::time_point give_up = std::chrono::steady_clock::now() + patience;
+    bool patient                                        = true;
+    while(patient && witnessed.load(std::memory_order_relaxed) < least_changes)
+    {
+        const std::uint64_t seen = witnessed.load(std::memory_order_relaxed);
+        source.publish(marked(++sequence));
+        while(patient && witnessed.load(std::memory_order_relaxed) == seen)
+        {
             std::this_thread::yield();
-        if((sequence & 0xFFFu) == 0u)
             patient = std::chrono::steady_clock::now() < give_up;
+        }
     }
     publishing.store(false);
     watcher.join();
