@@ -5,5 +5,6 @@ set(PRAXIS_WARNING_FLAGS
 
 function(praxis_target_warnings TARGET)
     target_compile_options(${TARGET} PRIVATE ${PRAXIS_WARNING_FLAGS})
-    target_compile_definitions(${TARGET} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS>)
+    target_compile_options(${TARGET} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/bigobj>)
+    target_compile_definitions(${TARGET} PRIVATE $<$<CXX_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS;NOMINMAX>)
 endfunction()

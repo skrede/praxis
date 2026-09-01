@@ -62,9 +62,10 @@ if (TARGET praxis_rigid_motion)
     # test red: a roster given no noun to generate names from, and one given no way to read and write
     # the selection it stands on. The construction is the only rejected expression in either unit, so
     # overload resolution finding no constructor is the one wording no other failure there composes.
-    # GCC writes "no matching function for call to" and Clang "no matching constructor".
-    praxis_add_failing_compile(rigid_motion_unnamed_roster.cpp DIAGNOSTIC "no matching" LIBS praxis::rigid_motion)
-    praxis_add_failing_compile(rigid_motion_unrouted_roster.cpp DIAGNOSTIC "no matching" LIBS praxis::rigid_motion)
+    # GCC writes "no matching function for call to", Clang "no matching constructor" and MSVC
+    # "no overloaded function takes N arguments".
+    praxis_add_failing_compile(rigid_motion_unnamed_roster.cpp DIAGNOSTIC "no matching|no overloaded function" LIBS praxis::rigid_motion)
+    praxis_add_failing_compile(rigid_motion_unrouted_roster.cpp DIAGNOSTIC "no matching|no overloaded function" LIBS praxis::rigid_motion)
 endif ()
 
 if (TARGET praxis_trajectory)
@@ -83,7 +84,7 @@ if (TARGET praxis_manipulator)
     praxis_add_failing_compile(manipulator_inverse_kinematics_view.cpp DIAGNOSTIC "deleted function" LIBS praxis::manipulator)
     praxis_add_failing_compile(manipulator_trajectory_view.cpp DIAGNOSTIC "deleted function" LIBS praxis::manipulator)
     praxis_add_failing_compile(manipulator_evaluation_view_over_temporary.cpp DIAGNOSTIC "deleted function" LIBS praxis::manipulator)
-    praxis_add_failing_compile(capability_view_mismatch.cpp DIAGNOSTIC "no matching" LIBS praxis::manipulator)
+    praxis_add_failing_compile(capability_view_mismatch.cpp DIAGNOSTIC "no matching|no overloaded function" LIBS praxis::manipulator)
 
     # One probe per solve. A bound solve is handed the maps its own mathematics reads and the chain it
     # solves over, and none of those carries a solve, so a slot body asking one of them for one names

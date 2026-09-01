@@ -1,0 +1,82 @@
+name: Windows
+
+on:
+  push:
+    branches: [master, develop, 'milestone/**']
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.planning/**'
+  pull_request:
+    branches: [master]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.planning/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+
+    strategy:
+      fail-fast: false
+
+    env:
+      # Short, and on the drive the runner workspace and temp live on; the generated object paths
+      # and the fetched renderer tree run close to the 260-character path limit.
+      FETCHCONTENT_BASE_DIR: 'C:\d'
+
+    steps:
+      - name: Allow long paths
+        run: git config --system core.longpaths true
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Record the toolchain
+        run: |
+          cmake --version
+          ninja --version
+          git --version
+          Write-Host "free bytes on C: $((Get-PSDrive C).Free)"
+
+      - name: Enter the compiler environment
+        run: |
+          $locator = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $installation = & $locator -latest -products * `
+            -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
+            -property installationPath
+          if (-not $installation) { throw "no Visual Studio installation carries the x64 tools" }
+          # Called from its own directory: a quoted path in a cmd /c string arrives backslash-escaped.
+          Push-Location (Join-Path $installation 'VC\Auxiliary\Build')
+          $environment = cmd /c "call vcvars64.bat && set"
+          $status = $LASTEXITCODE
+          Pop-Location
+          if ($status -ne 0) { $environment | Write-Host; throw "vcvars64.bat exited $status" }
+          $environment |
+            Where-Object { $_ -match '^[A-Za-z_][A-Za-z0-9_()]*=' } |
+            Add-Content -Path $env:GITHUB_ENV -Encoding utf8
+
+      - name: Cache the dependency sources
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ env.FETCHCONTENT_BASE_DIR }}
+          key: deps-${{ runner.os }}-${{ hashFiles('cmake/dependencies.cmake', 'cmake/scene_dependencies.cmake') }}
+
+      # The generator is single-configuration: cmake/verify_failing_compile.cmake builds its target
+      # with no --config, and a multi-configuration generator answers that with Debug.
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja `
+            "-DFETCHCONTENT_BASE_DIR=$env:FETCHCONTENT_BASE_DIR" `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DPRAXIS_BUILD_TESTS=ON `
+            -DPRAXIS_BUILD_EXAMPLES=ON `
+            -DPRAXIS_BUILD_DISPLAY_TESTS=OFF `
+            -DPRAXIS_ENABLE_CTAGS_GATES=OFF
+
+      - name: Build
+        run: cmake --build build -j 4
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure --no-tests=error
