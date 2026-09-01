@@ -4,6 +4,7 @@
 
 #include <array>
 #include <atomic>
+#include <chrono>
 #include <thread>
 #include <cstddef>
 #include <cstdint>
@@ -68,12 +69,19 @@ bool whole(const marked_sample &sample)
     return true;
 }
 
-// The run length, and the floor on how much of it the reader has to have witnessed: a million
-// publications offered at the highest rate one thread produces them, against a reader that never
-// pauses, and at least a tenth of them observed as a change of value. Without the floor a run whose
-// reader started after the last publication would pass having examined one value.
+// The run length, and the floor on how much of it the reader has to have witnessed: at least a
+// million publications offered at the highest rate one thread produces them, against a reader that
+// never pauses, and a hundred thousand changes of value observed. Without the floor a run whose
+// reader started after the last publication would pass having examined one value. The floor cannot
+// be a fraction of a fixed count: how far the publisher gets before the reader's thread first runs
+// is the scheduler's business, and a lock handed back is not handed over -- an unfair lock lets the
+// publisher retake it before a waiting reader wakes, for as long as the publisher never leaves a
+// gap. So the flood is followed by as many publications as the floor still needs, each yielding the
+// processor so the reader's next read is admitted, under a patience that fits the suite's own limit
+// on this binary.
 constexpr std::uint64_t publications  = 1000000;
 constexpr std::uint64_t least_changes = 100000;
+constexpr std::chrono::seconds patience{5};
 
 struct observation_report
 {
@@ -83,7 +91,7 @@ struct observation_report
     std::uint64_t regressed;
 };
 
-observation_report read_while_publishing(snapshot_reader<marked_sample> view, const std::atomic<bool> &publishing)
+observation_report read_while_publishing(snapshot_reader<marked_sample> view, const std::atomic<bool> &publishing, std::atomic<std::uint64_t> &witnessed)
 {
     observation_report report{0, 0, 0, 0};
     std::uint64_t previous = 0;
@@ -95,6 +103,7 @@ observation_report read_while_publishing(snapshot_reader<marked_sample> view, co
         report.torn += whole(seen) ? std::uint64_t{0} : std::uint64_t{1};
         report.regressed += seen.sequence < previous ? std::uint64_t{1} : std::uint64_t{0};
         previous = seen.sequence;
+        witnessed.store(report.changes, std::memory_order_relaxed);
     }
 
     return report;
@@ -106,11 +115,23 @@ observation_report publish_against_a_reader()
     source.publish(marked(1));
 
     std::atomic<bool> publishing(true);
+    std::atomic<std::uint64_t> witnessed(0);
     observation_report report{0, 0, 0, 0};
-    std::thread watcher([&] { report = read_while_publishing(source.reader(), publishing); });
+    std::thread watcher([&] { report = read_while_publishing(source.reader(), publishing, witnessed); });
 
-    for(std::uint64_t sequence = 2; sequence <= publications; ++sequence)
-        source.publish(marked(sequence));
+    // The clock is consulted once in a while rather than every publication, so waiting on the
+    // reader does not slow the flood the reader is being held against.
+    const std::chrono::steady_clock::time_point give_up = std::chrono::steady_clock::now() + patience;
+    std::uint64_t sequence                              = 1;
+    bool patient                                        = true;
+    while(sequence < publications || (patient && witnessed.load(std::memory_order_relaxed) < least_changes))
+    {
+        source.publish(marked(++sequence));
+        if(sequence >= publications)
+            std::this_thread::yield();
+        if((sequence & 0xFFFu) == 0u)
+            patient = std::chrono::steady_clock::now() < give_up;
+    }
     publishing.store(false);
     watcher.join();
 
