@@ -97,15 +97,10 @@ std::size_t how_many(const std::vector<agreement> &seen, agreement which)
 
 // The displacement standing at the bound and the one a decade beneath it, written out rather than
 // derived from the bounds, so a bound moved up past the first or down onto the second fails here.
-// A binding standing at the bound off the pose is reported because the solve's own convergence
-// residual stands beside the displacement and the two together cross; one a decade beneath is
-// reported on none of the run, because the two together stay under. A row folds to agreement only
-// where a case had both sides answer and none of them differed, so the bound is held at the
-// displacement standing on it by the run not folding that way: either a case differed, or the
-// displacement stood so far outside the solve's own tolerance, which is the decade beneath it, that
-// no case answered at all and the row is not exercised. Which of the two a run reaches is decided by
-// the cases it drew and by the arithmetic that solved them, and both of those are the platform's
-// rather than the row's.
+// The decade beneath is also the solve's own convergence tolerance, so a displacement standing on
+// the bound can leave every case unanswered. A row folds to agreement only where a case had both
+// sides answer and none of them differed, so a run standing at the bound is held to not folding
+// that way rather than to agreeing.
 constexpr double at_the_bound      = 1.0e-6;
 constexpr double beneath_the_bound = 1.0e-7;
 
