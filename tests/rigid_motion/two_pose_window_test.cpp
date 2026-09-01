@@ -30,7 +30,7 @@ expected<std::pair<screw_axis, double>, refusal> reversed_screw(const transform 
 
 expected<std::pair<screw_axis, double>, refusal> refusing_screw(const transform &)
 {
-    return unexpected(refusal::degenerate);
+    return praxis::unexpected(refusal::degenerate);
 }
 
 transform turned_further(const screw_axis &s, double theta)

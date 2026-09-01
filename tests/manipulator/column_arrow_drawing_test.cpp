@@ -180,7 +180,7 @@ TEST_CASE("a Jacobian the arm declines to publish leaves every arrow undrawn", "
 {
     column_stage headless;
     REQUIRE(headless.shown.set_jacobian_columns(2u).has_value());
-    headless.put(published_columns(unexpected(refusal::not_implemented), two_columns(1.0), Eigen::Vector3d(Eigen::Vector3d::Zero())));
+    headless.put(published_columns(praxis::unexpected(refusal::not_implemented), two_columns(1.0), Eigen::Vector3d(Eigen::Vector3d::Zero())));
     headless.draw();
 
     CHECK_FALSE(drawn(headless.arrow(0u, jacobian_block::angular)));
@@ -192,7 +192,7 @@ TEST_CASE("a publication carrying no tool position leaves the body columns undra
     column_stage headless;
     headless.shown.set_jacobian_frame(jacobian_frame::body);
     REQUIRE(headless.shown.set_jacobian_columns(2u).has_value());
-    headless.put(published_columns(two_columns(1.0), two_columns(1.0), unexpected(refusal::not_implemented)));
+    headless.put(published_columns(two_columns(1.0), two_columns(1.0), praxis::unexpected(refusal::not_implemented)));
     headless.draw();
 
     CHECK_FALSE(drawn(headless.arrow(0u, jacobian_block::linear)));

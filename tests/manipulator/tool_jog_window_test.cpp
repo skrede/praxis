@@ -88,7 +88,7 @@ arm_snapshot chosen_snapshot()
 
 arm_snapshot poseless_snapshot()
 {
-    return at_rest(configuration(0.0, 0.0), unexpected(refusal::no_solution), unexpected(refusal::no_solution));
+    return at_rest(configuration(0.0, 0.0), praxis::unexpected(refusal::no_solution), praxis::unexpected(refusal::no_solution));
 }
 
 std::shared_ptr<edited_pose> holding(const Eigen::Vector3d &position, const Eigen::Vector3d &euler_degrees)

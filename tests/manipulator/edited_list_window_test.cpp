@@ -53,7 +53,7 @@ arm_snapshot jointless_arm_at_rest()
 
 arm_snapshot arm_without_a_tool_pose()
 {
-    return at_rest(configuration(0.0, 0.0), unexpected(refusal::not_implemented), unexpected(refusal::not_implemented));
+    return at_rest(configuration(0.0, 0.0), praxis::unexpected(refusal::not_implemented), praxis::unexpected(refusal::not_implemented));
 }
 
 joint_vector row_at(double first, double second)

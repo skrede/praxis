@@ -44,10 +44,10 @@ arm_snapshot published_at(const expected<Eigen::Vector3d, refusal> &position, co
                         false,
                         scheduler::task_counters{},
                         {},
-                        unexpected(refusal::not_implemented),
-                        unexpected(refusal::not_implemented),
-                        jacobian_manipulability{unexpected(refusal::not_implemented), unexpected(refusal::not_implemented)},
-                        jacobian_manipulability{unexpected(refusal::not_implemented), unexpected(refusal::not_implemented)},
+                        praxis::unexpected(refusal::not_implemented),
+                        praxis::unexpected(refusal::not_implemented),
+                        jacobian_manipulability{praxis::unexpected(refusal::not_implemented), praxis::unexpected(refusal::not_implemented)},
+                        jacobian_manipulability{praxis::unexpected(refusal::not_implemented), praxis::unexpected(refusal::not_implemented)},
                         {},
                         {},
                         nullptr,
@@ -99,8 +99,8 @@ TEST_CASE("seeding from a publication carrying no tool pose leaves the pose as i
     edited.position      = chosen_position.cast<float>();
     edited.euler_degrees = chosen_euler_degrees.cast<float>();
 
-    const arm_snapshot no_position    = published_at(unexpected(refusal::no_solution), rotation::Identity());
-    const arm_snapshot no_orientation = published_at(Eigen::Vector3d::Zero(), unexpected(refusal::no_solution));
+    const arm_snapshot no_position    = published_at(praxis::unexpected(refusal::no_solution), rotation::Identity());
+    const arm_snapshot no_orientation = published_at(Eigen::Vector3d::Zero(), praxis::unexpected(refusal::no_solution));
 
     CHECK_FALSE(seed_from(edited, no_position, reference));
     CHECK_FALSE(seed_from(edited, no_orientation, reference));

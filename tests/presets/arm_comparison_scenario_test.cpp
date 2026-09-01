@@ -87,14 +87,14 @@ expected<void, refusal> recorded_search(const manipulator::forward_kinematics_op
 {
     ++solves_entered;
 
-    return unexpected(refusal::not_implemented);
+    return praxis::unexpected(refusal::not_implemented);
 }
 
 expected<void, refusal> recorded_closed_form(const manipulator::forward_kinematics_ops &, const manipulator::screw_chain &, const transform &, manipulator::ik_result &)
 {
     ++solves_entered;
 
-    return unexpected(refusal::not_implemented);
+    return praxis::unexpected(refusal::not_implemented);
 }
 
 manipulator::capabilities recording_solves()

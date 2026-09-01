@@ -177,7 +177,7 @@ TEST_CASE("a window over an arm that has published nothing answers a message and
 TEST_CASE("a chosen Jacobian that is a refusal is named, and the other frame still reads its matrix", "[manipulator][window]")
 {
     velocity_stage headless;
-    headless.put(reading_of(unexpected(refusal::not_implemented), six_by(2u, 100.0), refused(), decomposed_both(Eigen::Vector3d(1.0, 0.5, 0.25))));
+    headless.put(reading_of(praxis::unexpected(refusal::not_implemented), six_by(2u, 100.0), refused(), decomposed_both(Eigen::Vector3d(1.0, 0.5, 0.25))));
 
     velocity_kinematics_window space(panel_title, headless.source->reader(), headless.arm(), headless.shown);
     velocity_kinematics_window body(panel_title, headless.source->reader(), headless.arm(), headless.shown, controls(), opening{jacobian_frame::body});
@@ -281,7 +281,7 @@ TEST_CASE("a block that is a refusal says so instead of standing a zero, and the
 {
     velocity_stage headless;
     const Eigen::Vector3d values(2.0, 1.0, 0.5);
-    const jacobian_manipulability halved{unexpected(refusal::unsupported_input), decomposed(values)};
+    const jacobian_manipulability halved{praxis::unexpected(refusal::unsupported_input), decomposed(values)};
     headless.put(reading_of(six_by(2u, 1.0), six_by(2u, 100.0), halved, halved));
 
     velocity_kinematics_window panel(panel_title, headless.source->reader(), headless.arm(), headless.shown);

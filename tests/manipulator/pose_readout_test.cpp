@@ -81,10 +81,10 @@ arm_snapshot showing(const expected<Eigen::Vector3d, refusal> &position, const e
                         false,
                         scheduler::task_counters{},
                         {},
-                        unexpected(refusal::not_implemented),
-                        unexpected(refusal::not_implemented),
-                        jacobian_manipulability{unexpected(refusal::not_implemented), unexpected(refusal::not_implemented)},
-                        jacobian_manipulability{unexpected(refusal::not_implemented), unexpected(refusal::not_implemented)},
+                        praxis::unexpected(refusal::not_implemented),
+                        praxis::unexpected(refusal::not_implemented),
+                        jacobian_manipulability{praxis::unexpected(refusal::not_implemented), praxis::unexpected(refusal::not_implemented)},
+                        jacobian_manipulability{praxis::unexpected(refusal::not_implemented), praxis::unexpected(refusal::not_implemented)},
                         {},
                         {},
                         nullptr,
@@ -225,7 +225,7 @@ TEST_CASE("a readout whose arm has published nothing draws its own account of th
 TEST_CASE("a readout answers each state that is not a value as its own sentence and no values at all", "[manipulator]")
 {
     arm_publisher nothing;
-    const std::shared_ptr<arm_publisher> refusing = publishing(showing(unexpected(refusal::not_implemented), unexpected(refusal::not_implemented)));
+    const std::shared_ptr<arm_publisher> refusing = publishing(showing(praxis::unexpected(refusal::not_implemented), praxis::unexpected(refusal::not_implemented)));
     const std::shared_ptr<arm_publisher> valuing  = publishing(valued(posed()));
 
     CHECK(worded(nothing, robot_slot_set()) == "The arm has published nothing yet.");

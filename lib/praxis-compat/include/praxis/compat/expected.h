@@ -15,6 +15,8 @@ namespace praxis {
 // A class template with a deduction guide rather than an alias template: alias-template class
 // template argument deduction (P1814) is GCC-only, so unexpected(err) written through an alias
 // fails to compile on Clang.
+// MSVC's <eh.h> declares a global unexpected(), so a translation unit carrying a using-directive
+// for this namespace must qualify the call.
 template<typename E>
 class unexpected
 {

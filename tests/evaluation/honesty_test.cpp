@@ -56,7 +56,7 @@ rigid_motion::capabilities bound_wrongly()
 
 expected<adjoint, refusal> declines_as_degenerate(const transform &)
 {
-    return unexpected(refusal::degenerate);
+    return praxis::unexpected(refusal::degenerate);
 }
 
 rigid_motion::capabilities declining_by(expected<adjoint, refusal> (*how)(const transform &tf))

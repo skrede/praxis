@@ -51,7 +51,7 @@ expected<joint_vector, refusal> screw_standing_off(const rigid_motion::screw_ops
 {
     const expected<screw_axis, refusal> axis = screw.screw_axis_from_point_direction_pitch(q, w, h);
     if(!axis)
-        return unexpected(axis.error());
+        return praxis::unexpected(axis.error());
 
     return task_space_pose(solver, standing_off(screw.matrix_exponential_screw(*axis, theta_radians) * start_pose), j0);
 }

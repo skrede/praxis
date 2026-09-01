@@ -41,7 +41,7 @@ answer measured_apart(double radians)
 answer declines_a_positive_angle(double radians)
 {
     if(radians > 0.0)
-        return unexpected(refusal::degenerate);
+        return praxis::unexpected(refusal::degenerate);
 
     return Eigen::Vector3d(radians, 0.0, 0.0);
 }
@@ -49,14 +49,14 @@ answer declines_a_positive_angle(double radians)
 answer declines_a_positive_angle_and_bends_the_rest(double radians)
 {
     if(radians > 0.0)
-        return unexpected(refusal::degenerate);
+        return praxis::unexpected(refusal::degenerate);
 
     return Eigen::Vector3d(radians + 1.0, 0.0, 0.0);
 }
 
 answer declines_everything(double)
 {
-    return unexpected(refusal::not_implemented);
+    return praxis::unexpected(refusal::not_implemented);
 }
 
 residual compared(const Eigen::Vector3d &first, const Eigen::Vector3d &second)

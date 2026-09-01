@@ -39,22 +39,22 @@ constexpr std::size_t wider_run = 200u;
 
 expected<trajectory::scaling_sample, refusal> degenerate_scaling(double, double)
 {
-    return unexpected(refusal::degenerate);
+    return praxis::unexpected(refusal::degenerate);
 }
 
 expected<trajectory::scaling_sample, refusal> degenerate_trapezoidal(double, double, double, double)
 {
-    return unexpected(refusal::degenerate);
+    return praxis::unexpected(refusal::degenerate);
 }
 
 expected<trajectory::configuration, refusal> degenerate_joint_path(const trajectory::configuration &, const trajectory::configuration &, double)
 {
-    return unexpected(refusal::degenerate);
+    return praxis::unexpected(refusal::degenerate);
 }
 
 expected<transform, refusal> degenerate_pose_path(const transform &, const transform &, double)
 {
-    return unexpected(refusal::degenerate);
+    return praxis::unexpected(refusal::degenerate);
 }
 
 // Every slot declines, and every one of them declines for a reason the inert bindings never give.

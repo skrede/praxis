@@ -139,7 +139,7 @@ TEST_CASE("a block of rank two answers a smallest value of zero, a measure of ze
 
 TEST_CASE("a Jacobian that is a refusal carries that refusal into both of its ellipsoids", "[manipulator][manipulability]")
 {
-    const jacobian_manipulability answered = manipulability_of(unexpected(refusal::no_solution));
+    const jacobian_manipulability answered = manipulability_of(praxis::unexpected(refusal::no_solution));
 
     REQUIRE_FALSE(answered.angular.has_value());
     REQUIRE_FALSE(answered.linear.has_value());
