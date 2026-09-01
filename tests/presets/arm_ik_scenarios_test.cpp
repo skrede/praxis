@@ -63,16 +63,17 @@ std::shared_ptr<scene::preset> composed_arm(const scene::preset_site &site, cons
 }
 
 // Where each window of one composition keeps its settings, with the windows keeping none left out. A
-// path two windows answered would make one of them write over the other's values.
-// The views name storage the panels own, so the composition has to outlive the answer.
-std::vector<std::string_view> settings_paths(const std::shared_ptr<scene::preset> &composed)
+// path two windows answered would make one of them write over the other's values. The paths are
+// copied out because the views the windows answer point into the windows themselves, and the
+// composition a caller hands over as a temporary is gone before the caller reads the result.
+std::vector<std::string> settings_paths(const std::shared_ptr<scene::preset> &composed)
 {
     REQUIRE(composed != nullptr);
 
-    std::vector<std::string_view> named;
+    std::vector<std::string> named;
     for(const std::shared_ptr<scene::imgui_window> &panel : composed->windows)
         if(const config::configurable *carried = panel->as_configurable(); carried != nullptr)
-            named.push_back(carried->settings_path());
+            named.emplace_back(carried->settings_path());
 
     return named;
 }
@@ -129,14 +130,12 @@ TEST_CASE("no two windows of one scenario keep their settings under the same key
     const presets::arm_scenario chosen = described_by(described.where);
 
     threepp::Scene searched;
-    const std::shared_ptr<scene::preset> solving  = composed_arm(unwired(searched), chosen, presets::arm_windows_numerical_ik(chosen));
-    const std::vector<std::string_view> numerical = settings_paths(solving);
+    const std::vector<std::string> numerical = settings_paths(composed_arm(unwired(searched), chosen, presets::arm_windows_numerical_ik(chosen)));
     REQUIRE(numerical.size() == numerical_windows().size());
     REQUIRE(std::set<std::string_view>(numerical.begin(), numerical.end()).size() == numerical.size());
 
     threepp::Scene closed;
-    const std::shared_ptr<scene::preset> solved  = composed_arm(unwired(closed), chosen, presets::arm_windows_analytic_ik(chosen));
-    const std::vector<std::string_view> analytic = settings_paths(solved);
+    const std::vector<std::string> analytic = settings_paths(composed_arm(unwired(closed), chosen, presets::arm_windows_analytic_ik(chosen)));
     REQUIRE(analytic.size() == analytic_windows().size());
     REQUIRE(std::set<std::string_view>(analytic.begin(), analytic.end()).size() == analytic.size());
 }
