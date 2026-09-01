@@ -64,6 +64,7 @@ std::shared_ptr<scene::preset> composed_arm(const scene::preset_site &site, cons
 
 // Where each window of one composition keeps its settings, with the windows keeping none left out. A
 // path two windows answered would make one of them write over the other's values.
+// The views name storage the panels own, so the composition has to outlive the answer.
 std::vector<std::string_view> settings_paths(const std::shared_ptr<scene::preset> &composed)
 {
     REQUIRE(composed != nullptr);
@@ -128,12 +129,14 @@ TEST_CASE("no two windows of one scenario keep their settings under the same key
     const presets::arm_scenario chosen = described_by(described.where);
 
     threepp::Scene searched;
-    const std::vector<std::string_view> numerical = settings_paths(composed_arm(unwired(searched), chosen, presets::arm_windows_numerical_ik(chosen)));
+    const std::shared_ptr<scene::preset> solving  = composed_arm(unwired(searched), chosen, presets::arm_windows_numerical_ik(chosen));
+    const std::vector<std::string_view> numerical = settings_paths(solving);
     REQUIRE(numerical.size() == numerical_windows().size());
     REQUIRE(std::set<std::string_view>(numerical.begin(), numerical.end()).size() == numerical.size());
 
     threepp::Scene closed;
-    const std::vector<std::string_view> analytic = settings_paths(composed_arm(unwired(closed), chosen, presets::arm_windows_analytic_ik(chosen)));
+    const std::shared_ptr<scene::preset> solved  = composed_arm(unwired(closed), chosen, presets::arm_windows_analytic_ik(chosen));
+    const std::vector<std::string_view> analytic = settings_paths(solved);
     REQUIRE(analytic.size() == analytic_windows().size());
     REQUIRE(std::set<std::string_view>(analytic.begin(), analytic.end()).size() == analytic.size());
 }

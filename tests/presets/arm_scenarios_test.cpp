@@ -70,6 +70,7 @@ threepp::Object3D *first_drawn_axis(threepp::Scene &target)
 
 // What a composition drew, reached through the stencil it composed rather than through the scene:
 // a model nothing installed is absent from both, and only the stencil says which of the two it is.
+// The reference names what the composition owns, so the caller has to be holding the composition.
 manipulator::loadable_robot_stencil &drawn_by(const std::shared_ptr<scene::preset> &composed)
 {
     REQUIRE(composed != nullptr);
@@ -212,7 +213,8 @@ TEST_CASE("the forward-kinematics scenario carries a frame marker at the flange 
     const presets::arm_scenario chosen = described_by(described.where);
 
     opened_arm built;
-    manipulator::loadable_robot_stencil &drawn = drawn_by(built.open(chosen, presets::arm_windows_forward(chosen)));
+    const std::shared_ptr<scene::preset> composed = built.open(chosen, presets::arm_windows_forward(chosen));
+    manipulator::loadable_robot_stencil &drawn    = drawn_by(composed);
 
     REQUIRE(drawn.attached_at(manipulator::flange_attachment::frame_marker) != nullptr);
     CHECK(drawn.attached_at(manipulator::flange_attachment::tool) == nullptr);
@@ -459,7 +461,8 @@ TEST_CASE("the supplied-chain scenario carries a frame marker at the flange and 
     const presets::arm_scenario chosen = described_by(described.where);
 
     opened_arm built;
-    manipulator::loadable_robot_stencil &drawn = drawn_by(built.open(chosen, presets::arm_windows_modeling(chosen, presets::screw_table_source{})));
+    const std::shared_ptr<scene::preset> composed = built.open(chosen, presets::arm_windows_modeling(chosen, presets::screw_table_source{}));
+    manipulator::loadable_robot_stencil &drawn    = drawn_by(composed);
 
     REQUIRE(drawn.attached_at(manipulator::flange_attachment::frame_marker) != nullptr);
     CHECK(drawn.attached_at(manipulator::flange_attachment::tool) == nullptr);
@@ -525,12 +528,14 @@ TEST_CASE("the compositions that compose a tool window and a world-object window
     const presets::arm_scenario chosen = carrying_models(described.where, tool.where, world.where);
 
     opened_arm shown;
-    manipulator::loadable_robot_stencil &demonstrated = drawn_by(shown.open(chosen, presets::arm_windows(chosen)));
+    const std::shared_ptr<scene::preset> opened       = shown.open(chosen, presets::arm_windows(chosen));
+    manipulator::loadable_robot_stencil &demonstrated = drawn_by(opened);
     CHECK(demonstrated.attached_at(manipulator::flange_attachment::tool) != nullptr);
     CHECK(demonstrated.world_object() != nullptr);
 
     opened_arm tooled;
-    manipulator::loadable_robot_stencil &carried = drawn_by(tooled.open(chosen, presets::arm_windows_tooling(chosen)));
+    const std::shared_ptr<scene::preset> tooling = tooled.open(chosen, presets::arm_windows_tooling(chosen));
+    manipulator::loadable_robot_stencil &carried = drawn_by(tooling);
     CHECK(carried.attached_at(manipulator::flange_attachment::tool) != nullptr);
     CHECK(carried.world_object() != nullptr);
 }
