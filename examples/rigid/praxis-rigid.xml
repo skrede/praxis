@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The presets the demonstration offers and the document each of them reads. Every preset element
+  becomes one entry in the preset selector; its document is resolved against this file's own
+  directory, so adding a preset is a new element here and a new file beside it, and no rebuild is
+  involved. The name attribute here is the key this file addresses a document by; the name a person
+  reads in the selector is the one that document states for itself.
+-->
+<demonstration>
+    <presets>
+        <preset name="euler-pose" document="euler-pose.xml"/>
+        <preset name="euler-relative" document="euler-relative.xml"/>
+        <preset name="frame-workbench" document="frame-workbench.xml"/>
+        <preset name="screw" document="screw.xml"/>
+        <preset name="twist-axis" document="twist-axis.xml"/>
+        <preset name="rotation-axis" document="rotation-axis.xml"/>
+        <preset name="two-pose" document="two-pose.xml"/>
+    </presets>
+</demonstration>

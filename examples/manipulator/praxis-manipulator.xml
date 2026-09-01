@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The presets the demonstration offers and the document each of them reads. Every preset element
+  becomes one entry in the preset selector; its document is resolved against this file's own
+  directory, so adding a preset is a new element here and a new file beside it, and no rebuild is
+  involved. The name attribute here is the key this file addresses a document by; the name a person
+  reads in the selector is the one that document states for itself.
+-->
+<demonstration>
+    <presets>
+        <preset name="plain-kr6r" document="kr6r.xml"/>
+        <preset name="forward-kr6r" document="kr6r-forward-kinematics.xml"/>
+        <preset name="chain-kr6r" document="kr6r-screw-chain-preview.xml"/>
+        <preset name="forward-ur3e" document="ur3e-forward-kinematics.xml"/>
+        <preset name="chain-ur3e" document="ur3e-screw-chain-preview.xml"/>
+        <preset name="numerical-kr6r" document="kr6r-inverse-kinematics-numerical.xml"/>
+        <preset name="analytic-kr6r" document="kr6r-inverse-kinematics-analytic.xml"/>
+        <preset name="numerical-ur3e" document="ur3e-inverse-kinematics-numerical.xml"/>
+        <preset name="point-to-point-kr6r" document="kr6r-point-to-point.xml"/>
+        <preset name="via-point-kr6r" document="kr6r-via-point.xml"/>
+        <preset name="path-comparison-kr6r" document="kr6r-path-comparison.xml"/>
+        <preset name="velocity-kr6r" document="kr6r-velocity-kinematics.xml"/>
+    </presets>
+</demonstration>

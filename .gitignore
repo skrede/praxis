@@ -1,0 +1,58 @@
+.DS_Store
+.vscode
+.cache
+build/
+build-*/
+compile_commands.json
+.idea/
+cmake-build-*
+*.dylib*
+*.ilk
+*.obj
+*.pdb
+*.exp
+*.lib
+*.dll
+
+*.o
+*.a
+*.so*
+*.so
+*.exe
+
+Makefile
+Makefile.*
+
+*.orig
+*_LOCAL_*
+*.LOCAL*
+*.BACKUP*
+*_BACKUP_*
+*_REMOTE_*
+*.BACKUP*
+*_REMOTE_*
+*.BASE*
+*_BASE_*
+*.autosave
+
+.planning/
+
+# ImGui writes its layout file into the working directory it is run from.
+imgui.ini
+
+# What the application writes for itself, and the directory the build points it at by default.
+praxis-preferences.xml
+.praxis/
+
+# The arrangement documents a run writes for the scenarios it opens.
+arrangement-*.xml
+
+# The supplied chains a run writes for the scenarios that keep one.
+screw-table-*.xml
+
+# What the agent harness writes for itself.
+.claude/
+
+# The instruction files the agent harness reads.
+AGENTS.md
+CLAUDE.md

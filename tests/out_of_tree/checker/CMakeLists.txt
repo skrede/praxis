@@ -1,0 +1,31 @@
+cmake_minimum_required(VERSION 3.28)
+project(praxis_out_of_tree_checker LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+if (NOT DEFINED PRAXIS_TARGETS)
+    message(FATAL_ERROR "praxis: run with -DPRAXIS_TARGETS=<generated targets file>")
+endif ()
+if (NOT DEFINED PRAXIS_DEPENDENCIES)
+    message(FATAL_ERROR "praxis: run with -DPRAXIS_DEPENDENCIES=<generated dependency targets file>")
+endif ()
+if (NOT DEFINED PRAXIS_TEST_FRAMEWORK)
+    message(FATAL_ERROR "praxis: run with -DPRAXIS_TEST_FRAMEWORK=<generated test-framework targets file>")
+endif ()
+
+# The targets file references every dependency the modules link by its plain name without defining
+# it, and stops on any that is missing, so they are acquired before it is read. The thread library
+# arrives from a find module rather than from that file, so the consumer asks for it itself.
+find_package(Threads REQUIRED)
+
+include(${PRAXIS_DEPENDENCIES})
+include(${PRAXIS_TARGETS})
+include(${PRAXIS_TEST_FRAMEWORK})
+
+add_executable(out_of_tree_checker
+    main.cpp
+)
+
+target_link_libraries(out_of_tree_checker PRIVATE praxis::evaluation praxis::rigid_motion Catch2::Catch2WithMain)

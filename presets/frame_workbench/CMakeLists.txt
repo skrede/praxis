@@ -1,0 +1,1 @@
+target_sources(praxis_rigid_presets PRIVATE frame_workbench.cpp)

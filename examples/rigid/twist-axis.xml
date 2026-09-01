@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The values one preset of the demonstration composes from, read when that preset loads. The name is
+  what the preset selector shows it as, and the scenario is which arrangement it composes. This file
+  ships with the repository and is read until the preset has been saved; a save writes a copy of it
+  under the directory the application keeps its state in, and that copy is what is read from then on.
+-->
+<arrangement>
+    <preset name="Screw motion: twist interpolation" scenario="twist axis"/>
+</arrangement>

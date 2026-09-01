@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The values one preset of the demonstration composes from, read when that preset loads. This file
+  ships with the repository and is read until the preset has been saved; a save writes a copy of it
+  under the directory the application keeps its state in, and that copy is what is read from then on.
+  The description path is relative to the description directory the application resolves.
+-->
+<machine>
+    <preset name="kr6r: screw chain preview" scenario="supplied chain"/>
+
+    <description path="kuka_kr6_support/urdf/kr6r900sixx.xacro" evaluation="fail" missing_asset="fail"/>
+
+    <!-- Where a chain supplied by hand rather than derived from the description above is kept, and
+         opened from again. Naming nothing keeps nothing: the scenario still runs and forgets. -->
+    <screw_table document="screw-table-kr6r.xml"/>
+
+    <initial>
+        <joint index="0" degrees="0"/>
+        <joint index="1" degrees="0"/>
+        <joint index="2" degrees="0"/>
+        <joint index="3" degrees="0"/>
+        <joint index="4" degrees="0"/>
+        <joint index="5" degrees="0"/>
+    </initial>
+
+    <joint_control mode="simulation"/>
+
+    <!-- A reach of zero names no reach, and the axes then run as far as the arm's own size gives
+         them. Any other value is a half-length in metres. -->
+    <robot_view model="Meshes" screw_axes="true" axis_reach="0"/>
+</machine>

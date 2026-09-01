@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The values one preset of the demonstration composes from, read when that preset loads. This file
+  ships with the repository and is read until the preset has been saved; a save writes a copy of it
+  under the directory the application keeps its state in, and that copy is what is read from then on.
+  The description path is relative to the description directory the application resolves.
+-->
+<machine>
+    <preset name="kr6r: point to point motion" scenario="point to point motion"/>
+
+    <description path="kuka_kr6_support/urdf/kr6r900sixx.xacro" evaluation="fail" missing_asset="fail"/>
+
+    <initial>
+        <joint index="0" degrees="0"/>
+        <joint index="1" degrees="0"/>
+        <joint index="2" degrees="0"/>
+        <joint index="3" degrees="0"/>
+        <joint index="4" degrees="0"/>
+        <joint index="5" degrees="0"/>
+    </initial>
+
+    <joint_control mode="simulation"/>
+
+    <!-- No waypoint is named, so the list opens at the run the joint count answers. A waypoint
+         written here is one this document adds to that run rather than a change to it. -->
+
+    <!-- A path rate at or below zero leaves a trapezoidal motion at the bounds the motion's own
+         extent gives, which is what the two zeros say. -->
+    <parameters velocity_factor="0.3" time_scaling="Quintic" path_rate="0" path_rate_change="0"/>
+
+    <trajectory_preview parameter="true" rate="true" rate_change="true"/>
+
+    <!-- A reach of zero names no reach, and the axes then run as far as the arm's own size gives
+         them. Any other value is a half-length in metres. -->
+    <robot_view model="Meshes" screw_axes="false" axis_reach="0"/>
+</machine>

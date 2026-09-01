@@ -1,0 +1,5 @@
+praxis_add_test(document_test.cpp LIBS praxis::config praxis_test_support)
+praxis_add_test(scoped_instances_test.cpp LIBS praxis::config)
+praxis_add_test(write_back_test.cpp LIBS praxis::config spdlog::spdlog praxis_test_support)
+praxis_add_test(defaults_test.cpp LIBS praxis::config praxis::scene)
+praxis_add_test(binding_test.cpp LIBS praxis::config spdlog::spdlog praxis_test_support)
