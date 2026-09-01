@@ -107,7 +107,7 @@ std::shared_ptr<scene::preset> frame_workbench_preset(const scene::preset_site &
 {
     const rigid_motion::frame_window::settings opening = workbench_opening(arrangement);
 
-    auto body = std::make_shared<rigid_motion::frame_stencil>(site.scene, workbench_stencil(), motions.frame, rigid_motion::fixed_frame{"Reference", rigid_motion::axes_settings{}});
+    auto body = std::make_shared<rigid_motion::frame_stencil>(site.scene, workbench_stencil(), motions.frame, rigid_motion::fixed_frame{"Space", rigid_motion::axes_settings{}});
     const auto selector                       = std::make_shared<rigid_motion::frame_selector_window>("Frame selector", *body);
     const std::function<std::size_t()> chosen = [selector] { return selector->selected_object(); };
     const rigid_motion::frame_roster_window::selection_route standing{chosen, [selector](std::size_t index) { selector->select_object(index); }};

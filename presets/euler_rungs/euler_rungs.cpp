@@ -111,8 +111,8 @@ std::shared_ptr<scene::preset> euler_rung_preset(const scene::preset_site &site,
 {
     const rigid_motion::frame_window::settings opening = rung_opening(rung, arrangement);
 
-    auto body                                 = std::make_shared<rigid_motion::frame_stencil>(site.scene, rung_stencil(rung), motions.frame,
-                                                                                              rigid_motion::fixed_frame{"Reference", rigid_motion::axes_settings{paired(rung)}});
+    auto body =
+            std::make_shared<rigid_motion::frame_stencil>(site.scene, rung_stencil(rung), motions.frame, rigid_motion::fixed_frame{"Space", rigid_motion::axes_settings{paired(rung)}});
     const auto selector                       = std::make_shared<rigid_motion::frame_selector_window>("Frame selector", *body);
     const std::function<std::size_t()> chosen = [selector] { return selector->selected_object(); };
     body->follow_selection(chosen);
