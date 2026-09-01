@@ -99,16 +99,20 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(nucleus)
 
-meios_declare_resource(
-    NAME kuka_experimental
-    GITHUB ros-industrial/kuka_experimental
-    REF 8d9292b04a22628b1b78d989e2ddd3abb913bf92
-    HASH SHA256=02f299d967868fb32022617429ddede3a197fb8f18e09b88f88732e11a78bf79
-)
+# Declaring a resource resolves and downloads it on the spot, and only the demonstration deploys
+# either one, so a configure without it acquires neither.
+if (PRAXIS_BUILD_EXAMPLES)
+    meios_declare_resource(
+        NAME kuka_experimental
+        GITHUB ros-industrial/kuka_experimental
+        REF 8d9292b04a22628b1b78d989e2ddd3abb913bf92
+        HASH SHA256=02f299d967868fb32022617429ddede3a197fb8f18e09b88f88732e11a78bf79
+    )
 
-meios_declare_resource(
-    NAME ur_description
-    GITHUB UniversalRobots/Universal_Robots_ROS2_Description
-    REF 4.3.1
-    SPARSE_PATHS urdf config meshes/ur3e
-)
+    meios_declare_resource(
+        NAME ur_description
+        GITHUB UniversalRobots/Universal_Robots_ROS2_Description
+        REF 4.3.1
+        SPARSE_PATHS urdf config meshes/ur3e
+    )
+endif ()

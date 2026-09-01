@@ -1,0 +1,84 @@
+name: Consumability
+
+on:
+  push:
+    branches: [master, develop, 'milestone/**']
+    paths:
+      - 'README.md'
+      - 'CMakeLists.txt'
+      - 'cmake/dependencies.cmake'
+      - 'cmake/scene_dependencies.cmake'
+      - 'tests/consumability/consumer/**'
+      - 'tests/consumability/run_recipe.cmake'
+      - '.github/workflows/consumability.yml'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'README.md'
+      - 'CMakeLists.txt'
+      - 'cmake/dependencies.cmake'
+      - 'cmake/scene_dependencies.cmake'
+      - 'tests/consumability/consumer/**'
+      - 'tests/consumability/run_recipe.cmake'
+      - '.github/workflows/consumability.yml'
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  working-tree:
+    runs-on: ubuntu-24.04
+
+    env:
+      FETCHCONTENT_BASE_DIR: ${{ github.workspace }}/.deps
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Record the toolchain
+        run: |
+          set -eu
+          cc --version
+          cmake --version
+          ninja --version
+          uname -m
+
+      - name: Install the window and rendering headers
+        run: |
+          set -eu
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev pkg-config
+
+      - name: Cache the dependency sources
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ env.FETCHCONTENT_BASE_DIR }}
+          key: deps-${{ runner.os }}-${{ hashFiles('cmake/dependencies.cmake', 'cmake/scene_dependencies.cmake') }}
+
+      - name: Consume this checkout through the recipe
+        run: |
+          set -eu
+          cmake -DPRAXIS_SOURCE_DIR="$PWD" \
+            -DRECIPE_MODE=working-tree \
+            -DRECIPE_OUT="$RUNNER_TEMP/working-tree" \
+            -DFETCHCONTENT_BASE_DIR="$FETCHCONTENT_BASE_DIR" \
+            -P tests/consumability/run_recipe.cmake
+
+  coordinates:
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.ref == 'refs/heads/master'
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Resolve the published reference
+        run: |
+          set -eu
+          cmake -DPRAXIS_SOURCE_DIR="$PWD" \
+            -DRECIPE_MODE=coordinates \
+            -DRECIPE_OUT="$RUNNER_TEMP/coordinates" \
+            -P tests/consumability/run_recipe.cmake
