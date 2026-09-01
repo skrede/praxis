@@ -45,20 +45,39 @@ them in; a consumer wanting one preset links that extension instead.
 
 ## Build
 
+A tree built as the commands below build it — tests and demonstration included — is large: about
+19 GB for a Debug tree and about 5 GB for a Release one. Running the suite adds a few hundred
+megabytes on top of that, because the link-isolation gate configures and builds a tree of its own.
+
+The first build is long: tens of minutes rather than minutes. A Release tree configures, builds and
+runs its whole suite in about a quarter of an hour at four parallel jobs on a recent multi-core
+desktop, and fewer cores take proportionally longer. Almost all of it is compiling every dependency
+from source alongside the library; builds after the first are incremental and far shorter.
+
+Most of what is fetched is cloned by git and goes through git's certificate store, but one robot
+description is downloaded as an archive through CMake's own download path, which verifies against a
+trust store of its own. The two can disagree — behind a TLS-intercepting proxy, or on a CMake that
+ships with no trust store at all — so a machine where `git clone` succeeds can still fail during
+configure with a certificate error. Point the download path at the bundle git already trusts by
+configuring with `-DMEIOS_RESOURCE_TLS_CAINFO=<path to the bundle>`.
+
 ```shell
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build -j
 ```
 
-Four options gate what is built and what is checked. Three default to on when praxis is the top-level
-project, so a project that adds praxis gets none of them:
+Five options gate what is built and what is checked, and one cache value selects the language
+standard. Three of the options default to on when praxis is the top-level project, so a project that
+adds praxis gets none of them:
 
 | Option | Default | Effect |
 | ------ | ------- | ------ |
 | `PRAXIS_BUILD_TESTS` | top-level | the unit tests, run with `ctest --test-dir build` |
 | `PRAXIS_BUILD_EXAMPLES` | top-level | the `rigid_demo` and `manipulator_demo` executables |
 | `PRAXIS_BUILD_DISPLAY_TESTS` | off | the tests that need a display, on top of the rest |
+| `PRAXIS_BUILD_CONSUMER_TESTS` | off | the rebuild-avoidance gate, which configures and builds a consuming project of its own |
 | `PRAXIS_ENABLE_CTAGS_GATES` | top-level | the public-surface gate, which needs Universal Ctags |
+| `PRAXIS_CXX_STANDARD` | `20` | the language standard this tree compiles at; 20 is the floor, the default, and the only value this tree is tested at |
 
 `rigid_demo` offers the frame workbench, the two Euler-angle scenarios, and the screw, twist-axis,
 two-pose and rotation-axis scenarios. It carries no robot description and no mesh file, and needs
@@ -83,8 +102,8 @@ because both options default off unless praxis is top-level.
 
 ## Checks
 
-Five scripts run the gates the architecture rests on. Each takes the source directory, and the two
-that read a configured build tree take that as well:
+Six scripts run the gates the architecture rests on. Each takes the source directory, and the three
+that need a build tree of their own take that as well:
 
 ```shell
 cmake -DPRAXIS_SOURCE_DIR=. -P cmake/verify_conventions.cmake
@@ -92,6 +111,7 @@ cmake -DPRAXIS_SOURCE_DIR=. -P cmake/verify_declared_sources.cmake
 cmake -DPRAXIS_SOURCE_DIR=. -P cmake/verify_snapshot_freshness.cmake
 cmake -DPRAXIS_SOURCE_DIR=. -DPRAXIS_BUILD_DIR=build/gate-probe -P cmake/verify_link_isolation.cmake
 cmake -DPRAXIS_SOURCE_DIR=. -DPRAXIS_BUILD_DIR=build/gate-probe -P cmake/verify_public_surface.cmake
+cmake -DPRAXIS_SOURCE_DIR=. -DPRAXIS_BUILD_DIR=build/consumer-probe -P cmake/verify_rebuild_avoidance.cmake
 ```
 
 The first checks the header-guard form, the file naming, the include mechanism, the repository's root
@@ -101,12 +121,16 @@ nothing — and an entry naming a file that does not exist — stops the configu
 reports whether the public-surface snapshot still describes the tree. All three run on every
 configure of this tree, so a violation stops the build rather than waiting to be asked about. The fourth reads the link graph and asserts what each module may and
 may not reach. The fifth extracts the public declarations and compares them against the snapshot in
-`tests/golden/`, which is what makes a removal from the shipped surface visible.
+`tests/golden/`, which is what makes a removal from the shipped surface visible. The sixth builds a
+project that consumes praxis, edits a source that project owns, and asserts that the rebuild
+recompiles nothing praxis built; it needs Ninja, whose dry run is what that answer is read from.
 
-The last two run as tests rather than at configure: both need a configured tree, and the fourth
-regenerates the link graph, which is a configure and cannot happen inside one. `ctest` gives the
-fourth a build directory of its own for that; run by hand it reconfigures whatever `PRAXIS_BUILD_DIR`
-names, which is why the command above points at a scratch path rather than at `build`.
+The last three run as tests rather than at configure: each needs a build tree it drives itself, and
+the fourth regenerates the link graph, which is a configure and cannot happen inside one. `ctest`
+gives the fourth and the sixth a build directory of their own for that; run by hand each writes under
+whatever `PRAXIS_BUILD_DIR` names, which is why the commands above point at scratch paths rather than
+at `build`. The sixth is registered only where `PRAXIS_BUILD_CONSUMER_TESTS` asks for it, because it
+configures and builds a whole project of its own before it can read anything.
 
 The fifth needs Universal Ctags. Its test is registered whether or not the tool is present and fails
 by name where it is absent, because a test that is not registered is silent in the report and a
@@ -114,14 +138,16 @@ report that says nothing reads as a report that found nothing. The snapshot it c
 only ever written from that extraction: a snapshot assembled by hand cannot be told apart from a real
 one, so a machine without the tool cannot regenerate it.
 
-It is the only one of the five that needs the tool, and it is the only one `PRAXIS_ENABLE_CTAGS_GATES`
+It is the only one of the six that needs the tool, and it is the only one `PRAXIS_ENABLE_CTAGS_GATES`
 governs. The option defaults on for this tree and off for a project that adds praxis. Set it off and
 every other gate and every unit test still runs — **a machine with no Universal Ctags can run the
 suite**, it simply is not checking the shipped surface while it does. Continuous integration is expected to
 set it on explicitly, so a machine missing the tool fails there rather than reporting a green nothing.
 
 The first three read this tree rather than a consumer's, so a project that adds praxis runs none of
-them and none of the two above. **A consumer needs no Universal Ctags and runs no gate.**
+them and none of the three above. The sixth drives a consuming project, but it is this tree checking
+what such a project would rebuild rather than anything that project runs itself.
+**A consumer needs no Universal Ctags and runs no gate.**
 
 `CONVENTIONS.md` is the authoritative style specification, `.clang-format` owns the mechanical rules,
 and `EXCEPTIONS.md` registers every unit that exceeds a size ceiling with the reason it stays whole.
