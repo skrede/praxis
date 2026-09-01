@@ -61,7 +61,7 @@ jobs:
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ env.FETCHCONTENT_BASE_DIR }}
-          key: deps-${{ runner.os }}-${{ hashFiles('cmake/dependencies.cmake', 'cmake/scene_dependencies.cmake') }}
+          key: deps-${{ runner.os }}-${{ github.workflow }}-${{ github.job }}-${{ hashFiles('cmake/dependencies.cmake', 'cmake/scene_dependencies.cmake') }}
 
       - name: Consume this checkout through the recipe
         run: |
@@ -101,7 +101,7 @@ jobs:
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ env.FETCHCONTENT_BASE_DIR }}
-          key: deps-${{ runner.os }}-${{ hashFiles('cmake/dependencies.cmake', 'cmake/scene_dependencies.cmake') }}
+          key: deps-${{ runner.os }}-${{ github.workflow }}-${{ github.job }}-${{ hashFiles('cmake/dependencies.cmake', 'cmake/scene_dependencies.cmake') }}
 
       # FetchContent reads the base directory from the cache variable, not from the environment.
       - name: Configure
@@ -145,9 +145,13 @@ jobs:
       LIBGL_ALWAYS_SOFTWARE: "1"
       PRAXIS_ADDRESS: https://github.com/skrede/praxis.git
       PRAXIS_REFERENCE: ${{ github.ref_name }}
-      REHEARSAL_TREE: ${{ runner.temp }}/rehearsal
 
     steps:
+      # The runner context is unavailable in a job's env block, so the scratch location is named
+      # here, where the runner's own variable is in scope.
+      - name: Name where the rehearsal builds
+        run: echo "REHEARSAL_TREE=$RUNNER_TEMP/rehearsal" >> "$GITHUB_ENV"
+
       - name: Record the toolchain
         run: |
           set -eu
@@ -268,7 +272,7 @@ jobs:
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ env.FETCHCONTENT_BASE_DIR }}
-          key: deps-${{ runner.os }}-${{ hashFiles('cmake/dependencies.cmake', 'cmake/scene_dependencies.cmake') }}
+          key: deps-${{ runner.os }}-${{ github.workflow }}-${{ github.job }}-${{ hashFiles('cmake/dependencies.cmake', 'cmake/scene_dependencies.cmake') }}
 
       - name: Consume the published reference through the recipe
         run: |

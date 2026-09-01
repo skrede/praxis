@@ -61,7 +61,7 @@ jobs:
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ env.FETCHCONTENT_BASE_DIR }}
-          key: deps-${{ runner.os }}-${{ hashFiles('cmake/dependencies.cmake', 'cmake/scene_dependencies.cmake') }}
+          key: deps-${{ runner.os }}-${{ github.workflow }}-${{ github.job }}-${{ hashFiles('cmake/dependencies.cmake', 'cmake/scene_dependencies.cmake') }}
 
       # The generator is single-configuration: cmake/verify_failing_compile.cmake builds its target
       # with no --config, and a multi-configuration generator answers that with Debug.
