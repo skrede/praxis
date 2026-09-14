@@ -36,7 +36,7 @@ using comparator = case_result (*)(const void *, const void *, case_source &, co
 
 // Each row is judged at the bound its own shipped table carries, which for the solve row is not the kind's default.
 constexpr tolerance_pair derived_bound = tolerance_of(residual_kind::element_wise);
-constexpr tolerance_pair built_bound   = tolerance_of(residual_kind::pose);
+constexpr tolerance_pair built_bound{manipulator::accumulated_pose_tolerance_radians, manipulator::accumulated_pose_tolerance_metres};
 constexpr tolerance_pair solved_bound{manipulator::solved_pose_tolerance_radians, manipulator::solved_pose_tolerance_metres};
 
 case_result one_case(comparator compare, std::string_view slot, const void *first, const void *second, const tolerance_pair &allowed, std::size_t index)

@@ -118,19 +118,27 @@ TEST_CASE("a_near_singular_rotation_is_composed_from_an_angle_drawn_the_same_way
     REQUIRE(furthest <= crowding_extent + default_tolerance);
 }
 
-TEST_CASE("a_near_singular_unit_twist_always_takes_the_branch_with_no_angular_part")
+TEST_CASE("a_near_singular_unit_twist_is_unit_and_reaches_both_branches")
 {
     case_source crowded = case_source::for_slot(recorded_seed, "unit_twist", spread::near_singular);
-    bool every_silent   = true;
+    bool every_unit     = true;
+    int turning         = 0;
+    int sliding         = 0;
 
     for(int sample = 0; sample < draws; ++sample)
     {
         const Eigen::Vector<double, 6> axis = crowded.unit_twist();
+        const bool rotates                  = std::fabs(axis.head<3>().norm() - 1.0) <= default_tolerance;
+        const bool translates               = axis.head<3>() == Eigen::Vector3d::Zero() && std::fabs(axis.tail<3>().norm() - 1.0) <= default_tolerance;
 
-        every_silent = every_silent && axis.head<3>() == Eigen::Vector3d::Zero() && std::fabs(axis.tail<3>().norm() - 1.0) <= default_tolerance;
+        every_unit = every_unit && (rotates || translates);
+        turning += rotates ? 1 : 0;
+        sliding += translates ? 1 : 0;
     }
 
-    REQUIRE(every_silent);
+    REQUIRE(every_unit);
+    REQUIRE(turning > 0);
+    REQUIRE(sliding > 0);
 }
 
 TEST_CASE("a_role_with_no_singular_neighbourhood_draws_from_the_same_distribution_under_both_spreads")

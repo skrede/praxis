@@ -43,7 +43,7 @@ Eigen::Vector<double, 6> case_source::unit_twist()
 {
     Eigen::Vector<double, 6> axis = Eigen::Vector<double, 6>::Zero();
 
-    if(m_spread == spread::near_singular || half_the_time())
+    if(half_the_time())
     {
         axis.tail<3>() = unit_direction();
 

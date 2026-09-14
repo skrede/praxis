@@ -14,7 +14,8 @@ namespace {
 // shipped residual vocabulary could not serve, since a chain is judged by what it computes rather
 // than by subtracting its members.
 constexpr std::array modeling_table{
-        evaluation::slot_evaluation{"modeling.build_chain", evaluation::residual_kind::pose, evaluation::tolerance_of(evaluation::residual_kind::pose), &compare_build_chain},
+        evaluation::slot_evaluation{"modeling.build_chain", evaluation::residual_kind::pose,
+                                    evaluation::tolerance_pair{accumulated_pose_tolerance_radians, accumulated_pose_tolerance_metres}, &compare_build_chain},
 };
 
 static_assert(modeling_table.size() == static_cast<std::size_t>(modeling_slot::count));

@@ -86,9 +86,9 @@ public:
     // transpose is exactly the zero matrix.
     Eigen::Matrix3d skew_symmetric_member();
 
-    // An angular part of unit norm over an unconstrained linear part, or -- half the time, and
-    // always under `near_singular` -- an angular part of exactly zero over a linear part of unit
-    // norm. Never entirely zero.
+    // An angular part of unit norm over an unconstrained linear part, or -- half the time, under
+    // either spread -- an angular part of exactly zero over a linear part of unit norm. Never
+    // entirely zero.
     Eigen::Vector<double, 6> unit_twist();
 
     // Six standard normals.
