@@ -222,6 +222,14 @@ TEST_CASE("matrix_exponential_wvt")
     CHECK(is_approx_equal(ops.matrix_exponential_se3(reference.head<3>(), reference.tail<3>(), angle), assembled(reference_rotation(), reference_position())));
 }
 
+TEST_CASE("the_pose_exponential_of_a_scaled_screw_axis_is_the_unit_axis_turned_through_the_scaled_angle")
+{
+    const screw_axis reference = reference_screw();
+    const transform scaled     = ops.matrix_exponential_se3(2.5 * reference.head<3>(), 2.5 * reference.tail<3>(), angle / 2.5);
+
+    CHECK(is_approx_equal(scaled, ops.matrix_exponential_se3(reference.head<3>(), reference.tail<3>(), angle)));
+}
+
 TEST_CASE("matrix_exponential_st")
 {
     CHECK(ops.matrix_exponential_so3(direction, angle).isApprox(reference_rotation(), default_tolerance));

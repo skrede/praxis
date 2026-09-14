@@ -95,7 +95,11 @@ inline constexpr std::array screw_bend_probes{
         bend_probe{[](const rigid_motion::capabilities &held, const rigid_motion::capabilities &bent, evaluation::case_source &drawn)
                    { return answers_differ(held.screw.matrix_exponential_so3, bent.screw.matrix_exponential_so3, drawn.unit_direction(), drawn.angle_radians()); }},
         bend_probe{[](const rigid_motion::capabilities &held, const rigid_motion::capabilities &bent, evaluation::case_source &drawn)
-                   { return answers_differ(held.screw.matrix_exponential_se3, bent.screw.matrix_exponential_se3, drawn.angular_part(), drawn.linear_part(), drawn.angle_radians()); }},
+                   {
+                       const screw_axis axis = drawn.unit_twist();
+
+                       return answers_differ(held.screw.matrix_exponential_se3, bent.screw.matrix_exponential_se3, axis.head<3>(), axis.tail<3>(), drawn.angle_radians());
+                   }},
         bend_probe{[](const rigid_motion::capabilities &held, const rigid_motion::capabilities &bent, evaluation::case_source &drawn)
                    { return answers_differ(held.screw.matrix_exponential_screw, bent.screw.matrix_exponential_screw, drawn.unit_twist(), drawn.angle_radians()); }},
         bend_probe{[](const rigid_motion::capabilities &held, const rigid_motion::capabilities &bent, evaluation::case_source &drawn)

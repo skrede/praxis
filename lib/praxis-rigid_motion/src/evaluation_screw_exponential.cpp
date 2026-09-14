@@ -42,11 +42,10 @@ evaluation::case_result compare_matrix_exponential_so3(const void *first, const 
 
 evaluation::case_result compare_matrix_exponential_se3(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed)
 {
-    const Eigen::Vector3d angular = drawn.angular_part();
-    const Eigen::Vector3d linear  = drawn.linear_part();
-    const double radians          = drawn.angle_radians();
-    const transform held          = screw_of(first).matrix_exponential_se3(angular, linear, radians);
-    const transform against       = screw_of(second).matrix_exponential_se3(angular, linear, radians);
+    const screw_axis axis   = drawn.unit_twist();
+    const double radians    = drawn.angle_radians();
+    const transform held    = screw_of(first).matrix_exponential_se3(axis.head<3>(), axis.tail<3>(), radians);
+    const transform against = screw_of(second).matrix_exponential_se3(axis.head<3>(), axis.tail<3>(), radians);
 
     return judged(evaluation::pose_residual(held, against), allowed);
 }
