@@ -59,7 +59,8 @@ constexpr std::array screw_table{
 
                                         return evaluation::agreed_or_refused(held, against, evaluation::element_wise_residual, allowed);
                                     }},
-        evaluation::slot_evaluation{"screw.adjoint_map", evaluation::residual_kind::element_wise, evaluation::tolerance_of(evaluation::residual_kind::element_wise),
+        evaluation::slot_evaluation{"screw.adjoint_map", evaluation::residual_kind::element_wise,
+                                    evaluation::tolerance_pair{adjoint_map_element_wise_tolerance, adjoint_map_element_wise_tolerance},
                                     [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result
                                     {
                                         const twist moved                      = drawn.twist_member();

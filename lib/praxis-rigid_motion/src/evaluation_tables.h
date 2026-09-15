@@ -8,6 +8,10 @@
 
 namespace praxis::rigid_motion {
 
+// The bound the adjoint map is judged at, in the dimensionless unit an element-wise difference carries:
+// its answer is a product of a six-by-six adjoint with a twist, one multiplication past the adjoint itself.
+inline constexpr double adjoint_map_element_wise_tolerance = 1.0e-12;
+
 const evaluation::capability_evaluations<frame_ops> &frame_evaluations();
 const evaluation::capability_evaluations<screw_ops> &screw_evaluations();
 
