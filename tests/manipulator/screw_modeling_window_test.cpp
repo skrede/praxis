@@ -24,6 +24,7 @@
 #include "praxis/scheduler/scheduler.h"
 
 #include "praxis/rigid_motion/capabilities.h"
+#include "praxis/rigid_motion/baseline/screw.h"
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
@@ -209,6 +210,23 @@ rigid_motion::screw_ops without_the_construction()
     const rigid_motion::screw_ops inert;
     rigid_motion::screw_ops composed        = turning();
     composed.screw_axis_from_angular_linear = inert.screw_axis_from_angular_linear;
+
+    return composed;
+}
+
+expected<screw_axis, refusal> a_zero_axis_rather_than_a_refusal(const Eigen::Vector3d &q, const Eigen::Vector3d &s, double h)
+{
+    const expected<screw_axis, refusal> built = rigid_motion::screw_axis_from_point_direction_pitch(q, s, h);
+    if(built)
+        return built;
+
+    return screw_axis(screw_axis::Zero());
+}
+
+rigid_motion::screw_ops answering_every_direction()
+{
+    rigid_motion::screw_ops composed               = turning();
+    composed.screw_axis_from_point_direction_pitch = &a_zero_axis_rather_than_a_refusal;
 
     return composed;
 }
@@ -540,6 +558,19 @@ TEST_CASE("a direction of no length names no axis, so the screw the row carried 
     stage headless(described_chain(), at_rest());
     screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{});
     const screw_axis opened     = panel.state().screws.front();
+
+    const std::string said = reported_by([&panel] { type_component(panel, direction_row, 2u, "0"); });
+
+    CHECK((panel.state().screws.front() - opened).norm() < exactly);
+    CHECK(said.find("named no axis for joint 1") != std::string::npos);
+}
+
+TEST_CASE("a direction of no length is refused by the window whatever the construction it is built through answers", "[manipulator][modeling]")
+{
+    stage headless(described_chain(), at_rest());
+    screw_modeling_window panel(panel_title, headless.shown, headless.published->reader(), answering_every_direction(), framing(), solving(), headless.chain, only_the_rows(), opening{},
+                                writer(), route());
+    const screw_axis opened = panel.state().screws.front();
 
     const std::string said = reported_by([&panel] { type_component(panel, direction_row, 2u, "0"); });
 

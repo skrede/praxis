@@ -183,7 +183,7 @@ private:
 
     void render_row(std::size_t joint);
 
-    void refuse(std::size_t joint);
+    void refuse(std::size_t joint, const char *what);
 
     void canonicalize(std::size_t joint);
 

@@ -12,6 +12,9 @@
 
 #include "praxis/trajectory/capabilities.h"
 
+#include "praxis/rigid_motion/capabilities.h"
+#include "praxis/rigid_motion/baseline/screw.h"
+
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 
@@ -91,6 +94,23 @@ expected<joint_vector, refusal> screw_angle_as_configuration(const rigid_motion:
                                                              double theta, double, const joint_vector &)
 {
     return configuration(theta, -theta);
+}
+
+expected<screw_axis, refusal> a_zero_axis_rather_than_a_refusal(const Eigen::Vector3d &q, const Eigen::Vector3d &s, double h)
+{
+    const expected<screw_axis, refusal> built = rigid_motion::screw_axis_from_point_direction_pitch(q, s, h);
+    if(built)
+        return built;
+
+    return screw_axis(screw_axis::Zero());
+}
+
+rigid_motion::screw_ops answering_every_direction()
+{
+    rigid_motion::screw_ops composed               = rigid_motion::baseline().screw;
+    composed.screw_axis_from_point_direction_pitch = &a_zero_axis_rather_than_a_refusal;
+
+    return composed;
 }
 
 motion_ops previewing_motion()
@@ -338,6 +358,19 @@ TEST_CASE("the_second_of_two_previewed_screw_angles_is_the_one_the_arm_is_left_a
     CHECK(is_approx_equal(controller.joint_positions(), configuration(0.9, -0.9), round_trip));
 }
 
+TEST_CASE("a_previewed_screw_whose_direction_names_no_axis_is_refused_whatever_the_motion_binding_answers")
+{
+    scene_robot robot = adapter(robot_ops{});
+    robot_controller controller(robot, previewing_motion(), composing_path(), task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, rigid_motion::screw_ops{});
+    robot.set_joint_positions(configuration(0.15, 0.25));
+    const joint_vector before = robot.joint_positions();
+
+    const std::string reported = reported_by([&] { controller.preview_task_space_screw(transform::Identity(), Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero(), 0.3, 0.0); });
+
+    CHECK((robot.joint_positions().array() == before.array()).all());
+    CHECK_THAT(reported, Catch::Matchers::ContainsSubstring("robot_controller.preview_task_space_screw"));
+}
+
 TEST_CASE("a_point_to_point_command_plays_back_and_leaves_the_arm_at_the_target")
 {
     scene_robot robot = adapter(robot_ops{});
@@ -413,6 +446,20 @@ TEST_CASE("a_screw_command_whose_axis_construction_refuses_stops_there_and_moves
     CHECK_FALSE(controller.executing());
     CHECK((robot.joint_positions().array() == before.array()).all());
     CHECK_THAT(reported, Catch::Matchers::ContainsSubstring("screw_axis_from_point_direction_pitch"));
+}
+
+TEST_CASE("a_screw_command_whose_direction_names_no_axis_is_refused_whatever_the_construction_answers")
+{
+    scene_robot robot = adapter(robot_ops{});
+    robot_controller controller(robot, composing_motion(), composing_path(), task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, answering_every_direction());
+    robot.set_joint_positions(configuration(0.15, 0.25));
+    const joint_vector before = robot.joint_positions();
+
+    const std::string reported = reported_by([&] { controller.task_space_screw(Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero(), 0.3, 0.0); });
+
+    CHECK_FALSE(controller.executing());
+    CHECK((robot.joint_positions().array() == before.array()).all());
+    CHECK_THAT(reported, Catch::Matchers::ContainsSubstring("robot_controller.task_space_screw"));
 }
 
 // The choice reaches a point-to-point command, which is a jog rather than a generated trajectory, so

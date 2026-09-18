@@ -1507,7 +1507,7 @@ lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	assemb
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	seed	prototype	(const settings & opened)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	rebuild_row	prototype	(std::size_t joint)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	render_row	prototype	(std::size_t joint)	typename:void
-lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	refuse	prototype	(std::size_t joint)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	refuse	prototype	(std::size_t joint,const char * what)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	canonicalize	prototype	(std::size_t joint)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	render_canonicalize	prototype	(std::size_t joint)	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	stored_point	prototype	(std::size_t joint) const	typename:Eigen::Vector3f

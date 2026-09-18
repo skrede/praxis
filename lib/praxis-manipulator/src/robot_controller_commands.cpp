@@ -105,6 +105,9 @@ void robot_controller::preview_task_space_screw(const transform &start_pose, con
     if(executing())
         return;
 
+    if(w.isZero())
+        return report_refusal("robot_controller.preview_task_space_screw", refusal::degenerate);
+
     const std::uint64_t before = m_robot.solver().solve_count();
     const expected<joint_vector, refusal> reached =
             kept(before, m_motion.task_space_screw(m_screw, m_robot.solver(), start_pose, w, q, theta_radians, pitch, m_robot.joint_positions()));
@@ -205,6 +208,9 @@ void robot_controller::task_space_screw(const Eigen::Vector3d &w, const Eigen::V
 {
     if(executing())
         return;
+
+    if(w.isZero())
+        return report_refusal("robot_controller.task_space_screw", refusal::degenerate);
 
     const expected<transform, refusal> from = m_robot.tool_pose();
     if(!from)

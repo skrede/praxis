@@ -175,18 +175,20 @@ void screw_modeling_window::rebuild_row(std::size_t joint)
         return push();
     }
 
+    if(shown.direction.isZero())
+        return refuse(joint, "a direction of no length");
     const expected<screw_axis, refusal> built =
             m_screw.screw_axis_from_point_direction_pitch(shown.point.cast<double>(), shown.direction.cast<double>(), static_cast<double>(shown.pitch));
     if(!built)
-        return refuse(joint);
+        return refuse(joint, "'rigid_motion.screw.screw_axis_from_point_direction_pitch'");
 
     m_screws[joint] = built.value();
     push();
 }
 
-void screw_modeling_window::refuse(std::size_t joint)
+void screw_modeling_window::refuse(std::size_t joint, const char *what)
 {
-    spdlog::error("praxis: 'rigid_motion.screw.screw_axis_from_point_direction_pitch' named no axis for joint {} of '{}', so the screw it carried is kept", joint + 1u, display_name());
+    spdlog::error("praxis: {} named no axis for joint {} of '{}', so the screw it carried is kept", what, joint + 1u, display_name());
     canonicalize(joint);
 }
 
