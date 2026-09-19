@@ -3056,6 +3056,28 @@ presets/include/praxis/presets/arm.h	arm_windows_path_comparison	prototype	(arm_
 presets/include/praxis/presets/arm.h	arm_windows_analytic_ik	prototype	(arm_scenario chosen)	typename:manipulator::arm_composition
 presets/include/praxis/presets/arm.h	arm_windows_velocity_kinematics	prototype	(arm_scenario chosen)	typename:manipulator::arm_composition
 presets/include/praxis/presets/arm.h	arm_preset	prototype	(const scene::preset_site & site,const manipulator::capabilities & arm,const trajectory::capabilities & shapes,const rigid_motion::capabilities & motions,const arm_scenario & chosen,const manipulator::arm_composition & composed)	typename:std::shared_ptr<scene::preset>
+presets/include/praxis/presets/arm_registration.h	praxis	namespace	-	-
+presets/include/praxis/presets/arm_registration.h	presets	namespace	-	-
+presets/include/praxis/presets/arm_registration.h	arm_keyspace	prototype	()	typename:config::declaration
+presets/include/praxis/presets/arm_registration.h	arm_scenario_labels	prototype	()	typename:std::span<const char * const>
+presets/include/praxis/presets/arm_registration.h	arm_binding	prototype	(const std::filesystem::path & named,const std::filesystem::path & beside)	typename:config::binding
+presets/include/praxis/presets/arm_registration.h	read_arm	prototype	(const config::document & values,std::span<const std::filesystem::path> roots)	typename:arm_scenario
+presets/include/praxis/presets/arm_registration.h	register_arms	prototype	(const std::shared_ptr<scene::preset_registry> & registry,std::span<const config::location> documents,std::span<const std::filesystem::path> roots,document_route located,composed_route announced)	typename:std::vector<std::string>
+presets/include/praxis/presets/arm_registration.h	register_arms	prototype	(const std::shared_ptr<scene::preset_registry> & registry,std::span<const config::location> documents,std::span<const std::filesystem::path> roots,document_route located,composed_route announced,const manipulator::capabilities & arm,const trajectory::capabilities & shapes,const rigid_motion::capabilities & motions)	typename:std::vector<std::string>
+presets/include/praxis/presets/arm_scenarios.h	praxis	namespace	-	-
+presets/include/praxis/presets/arm_scenarios.h	presets	namespace	-	-
+presets/include/praxis/presets/arm_scenarios.h	arm_scenario_kind	enum	-	typename:std::uint8_t
+presets/include/praxis/presets/arm_scenarios.h	every_window	enumerator	-	-
+presets/include/praxis/presets/arm_scenarios.h	forward_kinematics	enumerator	-	-
+presets/include/praxis/presets/arm_scenarios.h	supplied_chain	enumerator	-	-
+presets/include/praxis/presets/arm_scenarios.h	tooling	enumerator	-	-
+presets/include/praxis/presets/arm_scenarios.h	numerical_ik	enumerator	-	-
+presets/include/praxis/presets/arm_scenarios.h	analytic_ik	enumerator	-	-
+presets/include/praxis/presets/arm_scenarios.h	point_to_point	enumerator	-	-
+presets/include/praxis/presets/arm_scenarios.h	via_point	enumerator	-	-
+presets/include/praxis/presets/arm_scenarios.h	path_comparison	enumerator	-	-
+presets/include/praxis/presets/arm_scenarios.h	velocity_kinematics	enumerator	-	-
+presets/include/praxis/presets/arm_scenarios.h	arm_scenario_named	prototype	(const config::document & values)	typename:std::optional<arm_scenario_kind>
 presets/include/praxis/presets/arrangement_scenarios.h	praxis	namespace	-	-
 presets/include/praxis/presets/arrangement_scenarios.h	presets	namespace	-	-
 presets/include/praxis/presets/arrangement_scenarios.h	arrangement_scenario	enum	-	typename:std::uint8_t
@@ -3078,8 +3100,6 @@ presets/include/praxis/presets/arrangements.h	values	member	-	typename:std::opti
 presets/include/praxis/presets/arrangements.h	arrangement_keyspace	prototype	()	typename:config::declaration
 presets/include/praxis/presets/arrangements.h	arrangement_scenario_labels	prototype	()	typename:std::span<const char * const>
 presets/include/praxis/presets/arrangements.h	arrangement_binding	prototype	(const std::filesystem::path & named,const std::filesystem::path & beside)	typename:config::binding
-presets/include/praxis/presets/arrangements.h	document_route	typedef	-	-
-presets/include/praxis/presets/arrangements.h	composed_route	typedef	-	-
 presets/include/praxis/presets/arrangements.h	register_arrangements	prototype	(const std::shared_ptr<scene::preset_registry> & registry,std::span<const config::location> documents,document_route located,composed_route announced)	typename:std::vector<std::string>
 presets/include/praxis/presets/arrangements.h	register_arrangements	prototype	(const std::shared_ptr<scene::preset_registry> & registry,std::span<const config::location> documents,document_route located,composed_route announced,const rigid_motion::capabilities & motions)	typename:std::vector<std::string>
 presets/include/praxis/presets/euler_rungs.h	praxis	namespace	-	-
@@ -3094,6 +3114,10 @@ presets/include/praxis/presets/frame_workbench.h	frame_workbench_preset	prototyp
 presets/include/praxis/presets/rotation_axis.h	praxis	namespace	-	-
 presets/include/praxis/presets/rotation_axis.h	presets	namespace	-	-
 presets/include/praxis/presets/rotation_axis.h	rotation_axis_preset	prototype	(const scene::preset_site & site,const rigid_motion::capabilities & motions)	typename:std::shared_ptr<scene::preset>
+presets/include/praxis/presets/routes.h	praxis	namespace	-	-
+presets/include/praxis/presets/routes.h	presets	namespace	-	-
+presets/include/praxis/presets/routes.h	document_route	typedef	-	-
+presets/include/praxis/presets/routes.h	composed_route	typedef	-	-
 presets/include/praxis/presets/screw.h	praxis	namespace	-	-
 presets/include/praxis/presets/screw.h	presets	namespace	-	-
 presets/include/praxis/presets/screw.h	screw_preset	prototype	(const scene::preset_site & site,const rigid_motion::capabilities & motions)	typename:std::shared_ptr<scene::preset>
