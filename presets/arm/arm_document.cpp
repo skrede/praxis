@@ -1,4 +1,5 @@
 #include "arm_keys.h"
+#include "arm_windows.h"
 
 #include "praxis/presets/arm.h"
 #include "praxis/presets/arm_registration.h"
@@ -76,6 +77,7 @@ arm_scenario read_arm(const config::document &values, std::span<const std::files
     read.options     = read_options(values, "description", roots);
     read.description = described_at(keys::text_at(values, keys::description_path_key), roots);
     read.initial     = read_initial(values, "initial/joint");
+    read_arm_windows(read, values, static_cast<std::size_t>(read.initial.size()));
 
     return read;
 }

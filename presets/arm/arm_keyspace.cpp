@@ -1,4 +1,5 @@
 #include "arm_keys.h"
+#include "arm_windows.h"
 
 #include "praxis/presets/arm_registration.h"
 
@@ -49,6 +50,7 @@ config::declaration arm_keyspace()
     declare_preset(shape, "preset");
     declare_description(shape, "description");
     declare_initial(shape, "initial");
+    declare_arm_windows(shape);
     shape.group("screw_table");
     shape.field(keys::screw_table_key, config::field_kind::text, "");
 
