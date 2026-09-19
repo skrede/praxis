@@ -1,12 +1,6 @@
 add_executable(manipulator_demo
     ../main.cpp
 
-    ../demo_machine.h
-    ../demo_machines.h
-    ../demo_machine.cpp
-    ../demo_machines.cpp
-    ../demo_machine_shape.cpp
-    ../demo_machine_windows.cpp
     ../demo_documents.h
     ../demo_documents.cpp
     ../demo_write_back.h

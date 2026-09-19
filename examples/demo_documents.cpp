@@ -41,6 +41,26 @@ config::location documents::reading(const std::filesystem::path &named) const
     return std::filesystem::exists(copy.resolved) ? copy : config::resolve(named, m_seeds);
 }
 
+config::location documents::composing(const std::filesystem::path &named) const
+{
+    const config::location copy = config::resolve(named, m_state);
+    if(std::filesystem::exists(copy.resolved))
+        return copy;
+
+    const config::location seed = config::resolve(named, m_seeds);
+    if(std::filesystem::exists(seed.resolved))
+        return seed;
+
+    const std::filesystem::path directory = copy.resolved.parent_path();
+
+    std::error_code failed;
+    std::filesystem::create_directories(directory, failed);
+    if(failed)
+        spdlog::error(std::format("The directory {} could not be created: {}", directory.string(), failed.message()));
+
+    return copy;
+}
+
 config::location documents::writing(const std::filesystem::path &named) const
 {
     const config::location target         = config::resolve(named, m_state);

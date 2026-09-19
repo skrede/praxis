@@ -1,5 +1,10 @@
-#include "demo_machine.h"
+#include "demo_documents.h"
 #include "demo_configuration.h"
+
+#include "praxis/presets/arm_scenarios.h"
+#include "praxis/presets/arm_registration.h"
+
+#include "praxis/scene/preset_registry.h"
 
 #include "praxis/config/store.h"
 #include "praxis/config/document.h"
@@ -7,9 +12,11 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <set>
+#include <memory>
 #include <string>
 #include <vector>
 #include <cstddef>
+#include <optional>
 #include <algorithm>
 #include <filesystem>
 #include <string_view>
@@ -48,7 +55,7 @@ std::vector<shipped> shipped_presets()
             continue;
 
         INFO(entry.path().filename().string());
-        const config::outcome answered = config::load_or_defaults(demo::machine_keyspace(), config::resolve(entry.path(), entry.path().parent_path()), config::expectation::partial);
+        const config::outcome answered = config::load_or_defaults(presets::arm_keyspace(), config::resolve(entry.path(), entry.path().parent_path()), config::expectation::partial);
         REQUIRE_FALSE(answered.failure.has_value());
         read.push_back(shipped{entry.path().filename().string(), answered.values});
     }
@@ -61,7 +68,27 @@ std::vector<shipped> shipped_presets()
 // The values a preset opens the arm at. A package root is not needed to read them, so none is given.
 presets::arm_scenario opened(const config::document &values)
 {
-    return demo::read_machine(values, std::filesystem::path());
+    return presets::read_arm(values, {});
+}
+
+// The names the published registration answers for the documents the demonstration's own document
+// names. No root is supplied and no route is given, so what comes back is what registers rather than
+// what composes, which is the list the run opens on.
+std::vector<std::string> offered_names(const config::document &values)
+{
+    const demo::documents mine(PRAXIS_SHIPPED_MACHINE_DIR, std::filesystem::temp_directory_path() / "praxis-shipped-presets-unwritten");
+
+    return presets::register_arms(std::make_shared<scene::preset_registry>(), demo::preset_locations(values, mine), {}, nullptr, nullptr);
+}
+
+// The demonstration's own document, read against the declaration the application reads it with.
+config::document demonstration()
+{
+    const config::outcome answered = config::load_or_defaults(demo::demonstration_keyspace(),
+                                                              config::resolve(std::filesystem::path(PRAXIS_SHIPPED_MACHINE_DIR) / demonstration_document, PRAXIS_SHIPPED_MACHINE_DIR));
+    REQUIRE_FALSE(answered.failure.has_value());
+
+    return answered.values;
 }
 
 // The scenarios that need the arm somewhere in particular. The two that solve open away from the
@@ -71,7 +98,10 @@ presets::arm_scenario opened(const config::document &values)
 // the arm's own home, so two documents over one machine show it alike.
 bool opens_placed(const config::document &values)
 {
-    const std::string_view scenario = demo::arm_scenario_labels()[demo::preset_scenario(values)];
+    const std::optional<presets::arm_scenario_kind> named = presets::arm_scenario_named(values);
+    REQUIRE(named.has_value());
+
+    const std::string_view scenario = presets::arm_scenario_labels()[static_cast<std::size_t>(*named)];
 
     return scenario == "numerical inverse kinematics" || scenario == "analytic inverse kinematics" || scenario == "velocity kinematics";
 }
@@ -101,10 +131,9 @@ TEST_CASE("every shipped preset document loads against the declaration the appli
 
 TEST_CASE("the names the shipped preset documents state are the ones the demonstration offers", "[examples][documents]")
 {
-    std::vector<std::string> stated;
-    for(const shipped &document : shipped_presets())
-        stated.push_back(demo::preset_name(document.values));
+    std::vector<std::string> stated = offered_names(demonstration());
 
+    REQUIRE(stated.size() == 12u);
     std::ranges::sort(stated);
 
     CHECK(stated ==
@@ -118,7 +147,7 @@ TEST_CASE("every shipped preset document names a description of its own", "[exam
     for(const shipped &document : shipped_presets())
     {
         INFO(document.file);
-        CHECK_FALSE(demo::machine_description(document.values).empty());
+        CHECK_FALSE(presets::read_arm(document.values, {}).description.empty());
     }
 }
 
@@ -131,7 +160,7 @@ TEST_CASE("every shipped preset document states a scenario the declaration admit
     {
         INFO(document.file);
         CHECK(document.values.origin_of("preset/scenario").kind == config::origin_kind::source);
-        CHECK(demo::preset_scenario(document.values) < demo::arm_scenario_labels().size());
+        CHECK(presets::arm_scenario_named(document.values).has_value());
     }
 }
 
@@ -153,11 +182,7 @@ TEST_CASE("each shipped preset opens where its scenario needs it", "[examples][d
 
 TEST_CASE("the demonstration document names exactly the preset documents that are beside it", "[examples][documents]")
 {
-    const config::outcome answered = config::load_or_defaults(demo::demonstration_keyspace(),
-                                                              config::resolve(std::filesystem::path(PRAXIS_SHIPPED_MACHINE_DIR) / demonstration_document, PRAXIS_SHIPPED_MACHINE_DIR));
-    REQUIRE_FALSE(answered.failure.has_value());
-
-    std::vector<std::string> named = named_documents(answered.values);
+    std::vector<std::string> named = named_documents(demonstration());
     std::ranges::sort(named);
 
     std::vector<std::string> present;

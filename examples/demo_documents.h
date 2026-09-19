@@ -21,6 +21,12 @@ public:
 
     config::location reading(const std::filesystem::path &named) const;
 
+    // Where a named document is both read from and saved to: the copy where there is one, the seed
+    // where there is one, and a location under the state directory otherwise, with that directory
+    // made. A name no seed stands behind therefore answers somewhere writable either way, and
+    // answers the same place whether or not a copy is already there.
+    config::location composing(const std::filesystem::path &named) const;
+
     // Always the copy, with the directory it lands in made and the seed reproduced into it where
     // that copy is not there yet. A name carrying a directory part keeps it, beneath the state
     // directory. A name no seed carries is answered without a file being made, and the save that

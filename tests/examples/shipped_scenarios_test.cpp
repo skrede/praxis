@@ -1,5 +1,3 @@
-#include "demo_machine.h"
-#include "demo_machines.h"
 #include "demo_documents.h"
 #include "demo_configuration.h"
 #include "scratch_documents.h"
@@ -10,6 +8,7 @@
 #include "praxis/scene/preset_registry.h"
 
 #include "praxis/presets/arm.h"
+#include "praxis/presets/arm_registration.h"
 
 #include "praxis/manipulator/types.h"
 #include "praxis/manipulator/edited_list_window.h"
@@ -28,6 +27,7 @@
 
 #include <Eigen/Core>
 
+#include <array>
 #include <memory>
 #include <string>
 #include <vector>
@@ -63,7 +63,11 @@ struct offered
                 demo::demonstration_keyspace(), config::resolve(std::filesystem::path(PRAXIS_SHIPPED_MACHINE_DIR) / "praxis-manipulator.xml", PRAXIS_SHIPPED_MACHINE_DIR));
         REQUIRE_FALSE(answered.failure.has_value());
 
-        names = demo::register_arm_presets(registry, answered.values, demo::documents(PRAXIS_SHIPPED_MACHINE_DIR, where.state()), descriptions, nullptr);
+        const demo::documents mine(PRAXIS_SHIPPED_MACHINE_DIR, where.state());
+        const std::array<std::filesystem::path, 1> roots{descriptions};
+
+        names = presets::register_arms(
+                registry, demo::preset_locations(answered.values, mine), roots, [mine](const std::filesystem::path &named) { return mine.composing(named); }, nullptr);
     }
 
     // One composition, torn down the way the application tears one down, with whatever a case wants
@@ -150,10 +154,10 @@ manipulator::joint_vector typed_row()
 }
 
 // A row saved the way the application saves one: into the copy the writing resolver reproduces from
-// the shipped document, over the machine keyspace.
+// the shipped document, over the keyspace the arm documents are declared under.
 void save_joint_waypoint(const demo::documents &mine, const std::filesystem::path &named, const manipulator::joint_vector &row)
 {
-    const config::binding into{demo::machine_keyspace(), mine.writing(named), config::expectation::partial};
+    const config::binding into{presets::arm_keyspace(), mine.writing(named), config::expectation::partial};
     const manipulator::joint_waypoint_list::settings typed{std::vector<manipulator::joint_vector>{row}};
 
     REQUIRE(config::save(into, manipulator::write_joint_waypoints(config::load_or_defaults(into).values, typed, presets::window_paths::joint_waypoints)).has_value());

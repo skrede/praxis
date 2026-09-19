@@ -5,7 +5,7 @@
   under the directory the application keeps its state in, and that copy is what is read from then on.
   The description path is relative to the description directory the application resolves.
 -->
-<machine>
+<arm>
     <preset name="kr6r" scenario="every window"/>
 
     <description path="kuka_kr6_support/urdf/kr6r900sixx.xacro" evaluation="fail" missing_asset="fail"/>
@@ -30,4 +30,4 @@
     <screw_jog mode="simulation"/>
     <parameters velocity_factor="0.3"/>
     <recording active="false" directory=""/>
-</machine>
+</arm>

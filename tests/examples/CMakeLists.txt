@@ -10,8 +10,7 @@ target_sources(demo_write_back_test PRIVATE ../../examples/demo_documents.cpp ..
 target_include_directories(demo_write_back_test PRIVATE ${PROJECT_SOURCE_DIR}/examples)
 
 praxis_add_test(shipped_presets_test.cpp LIBS praxis::scene praxis::manipulator_presets praxis::manipulator praxis::rigid_motion praxis::trajectory praxis::config spdlog::spdlog)
-target_sources(shipped_presets_test PRIVATE ../../examples/demo_documents.cpp ../../examples/demo_write_back.cpp ../../examples/demo_configuration.cpp
-    ../../examples/demo_machine_shape.cpp ../../examples/demo_machine_windows.cpp)
+target_sources(shipped_presets_test PRIVATE ../../examples/demo_documents.cpp ../../examples/demo_write_back.cpp ../../examples/demo_configuration.cpp)
 target_include_directories(shipped_presets_test PRIVATE ${PROJECT_SOURCE_DIR}/examples)
 
 # The documents the demonstration ships sit beside its sources, which is where the application
@@ -19,18 +18,11 @@ target_include_directories(shipped_presets_test PRIVATE ${PROJECT_SOURCE_DIR}/ex
 target_compile_definitions(shipped_presets_test PRIVATE PRAXIS_SHIPPED_MACHINE_DIR="${PROJECT_SOURCE_DIR}/examples/manipulator")
 
 praxis_add_test(demo_machine_test.cpp HEADERS scratch_documents.h LIBS praxis::scene praxis::manipulator_presets praxis::manipulator praxis::rigid_motion praxis::trajectory praxis::config spdlog::spdlog)
-target_sources(demo_machine_test PRIVATE ../../examples/demo_documents.cpp ../../examples/demo_write_back.cpp ../../examples/demo_configuration.cpp ../../examples/demo_machine.cpp
-    ../../examples/demo_machine_shape.cpp ../../examples/demo_machine_windows.cpp)
+target_sources(demo_machine_test PRIVATE ../../examples/demo_documents.cpp)
 target_include_directories(demo_machine_test PRIVATE ${PROJECT_SOURCE_DIR}/examples)
 
-praxis_add_test(window_keyspace_test.cpp HEADERS scratch_documents.h LIBS praxis::scene praxis::manipulator_presets praxis::manipulator praxis::rigid_motion praxis::trajectory praxis::config spdlog::spdlog)
-target_sources(window_keyspace_test PRIVATE ../../examples/demo_documents.cpp ../../examples/demo_write_back.cpp ../../examples/demo_configuration.cpp
-    ../../examples/demo_machine_shape.cpp ../../examples/demo_machine_windows.cpp)
-target_include_directories(window_keyspace_test PRIVATE ${PROJECT_SOURCE_DIR}/examples)
-
 praxis_add_test(shipped_scenarios_test.cpp HEADERS scratch_documents.h LIBS praxis::scene praxis::manipulator_presets praxis::manipulator praxis::rigid_motion praxis::trajectory praxis::config praxis::scheduler spdlog::spdlog)
-target_sources(shipped_scenarios_test PRIVATE ../../examples/demo_documents.cpp ../../examples/demo_write_back.cpp ../../examples/demo_configuration.cpp
-    ../../examples/demo_machine.cpp ../../examples/demo_machine_shape.cpp ../../examples/demo_machine_windows.cpp ../../examples/demo_machines.cpp)
+target_sources(shipped_scenarios_test PRIVATE ../../examples/demo_documents.cpp ../../examples/demo_write_back.cpp ../../examples/demo_configuration.cpp)
 target_include_directories(shipped_scenarios_test PRIVATE ${PROJECT_SOURCE_DIR}/examples)
 target_compile_definitions(shipped_scenarios_test PRIVATE PRAXIS_SHIPPED_MACHINE_DIR="${PROJECT_SOURCE_DIR}/examples/manipulator")
 
