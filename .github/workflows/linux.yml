@@ -98,6 +98,9 @@ jobs:
           set -eu
           ctest --test-dir build --output-on-failure --no-tests=error
 
+      - name: Report the cases this platform guards out
+        run: ctest --test-dir build -R '^(arm_comparison_scenario_test|arm_scenarios_test|arm_tooling_test|baseline_modeling_test|chain_placement_test|csv_write_outcome_test|defaults_test|screw_chain_test|shipped_scenarios_test)$' --verbose --no-tests=error
+
   display:
     runs-on: ubuntu-24.04
 
