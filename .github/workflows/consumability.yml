@@ -3,31 +3,24 @@ name: Consumability
 on:
   push:
     branches: [master, develop, 'milestone/**']
-    paths:
-      - 'README.md'
-      - 'CMakeLists.txt'
-      - 'cmake/dependencies.cmake'
-      - 'cmake/scene_dependencies.cmake'
-      - 'cmake/verify_rebuild_avoidance.cmake'
-      - 'tests/consumability/consumer/**'
-      - 'tests/consumability/run_recipe.cmake'
-      - 'tests/gates/CMakeLists.txt'
-      - '.github/workflows/consumability.yml'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.planning/**'
   pull_request:
     branches: [master]
-    paths:
-      - 'README.md'
-      - 'CMakeLists.txt'
-      - 'cmake/dependencies.cmake'
-      - 'cmake/scene_dependencies.cmake'
-      - 'cmake/verify_rebuild_avoidance.cmake'
-      - 'tests/consumability/consumer/**'
-      - 'tests/consumability/run_recipe.cmake'
-      - 'tests/gates/CMakeLists.txt'
-      - '.github/workflows/consumability.yml'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.planning/**'
   schedule:
     - cron: "17 5 * * 1"
   workflow_dispatch:
+    inputs:
+      reference:
+        description: The reference the consumer acquires; empty means the reference under test
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -63,11 +56,19 @@ jobs:
           path: ${{ env.FETCHCONTENT_BASE_DIR }}
           key: deps-${{ runner.os }}-${{ github.workflow }}-${{ github.job }}-${{ hashFiles('cmake/dependencies.cmake', 'cmake/scene_dependencies.cmake') }}
 
+      - name: Name the reference the consumer acquires
+        env:
+          CHOSEN: ${{ github.event.inputs.reference }}
+        run: |
+          set -eu
+          echo "RECIPE_REFERENCE=${CHOSEN:-$GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+
       - name: Consume this checkout through the recipe
         run: |
           set -eu
           cmake -DPRAXIS_SOURCE_DIR="$PWD" \
             -DRECIPE_MODE=working-tree \
+            -DRECIPE_REF="$RECIPE_REFERENCE" \
             -DRECIPE_OUT="$RUNNER_TEMP/working-tree" \
             -DFETCHCONTENT_BASE_DIR="$FETCHCONTENT_BASE_DIR" \
             -P tests/consumability/run_recipe.cmake
@@ -123,16 +124,24 @@ jobs:
 
   coordinates:
     runs-on: ubuntu-24.04
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.ref == 'refs/heads/master'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'push'
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Name the reference the consumer acquires
+        env:
+          CHOSEN: ${{ github.event.inputs.reference }}
+        run: |
+          set -eu
+          echo "RECIPE_REFERENCE=${CHOSEN:-$GITHUB_REF_NAME}" >> "$GITHUB_ENV"
 
       - name: Resolve the published reference
         run: |
           set -eu
           cmake -DPRAXIS_SOURCE_DIR="$PWD" \
             -DRECIPE_MODE=coordinates \
+            -DRECIPE_REF="$RECIPE_REFERENCE" \
             -DRECIPE_OUT="$RUNNER_TEMP/coordinates" \
             -P tests/consumability/run_recipe.cmake
 
@@ -245,7 +254,7 @@ jobs:
 
   published:
     runs-on: ubuntu-24.04
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.ref == 'refs/heads/master'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'push'
 
     env:
       FETCHCONTENT_BASE_DIR: ${{ github.workspace }}/.deps
@@ -274,11 +283,19 @@ jobs:
           path: ${{ env.FETCHCONTENT_BASE_DIR }}
           key: deps-${{ runner.os }}-${{ github.workflow }}-${{ github.job }}-${{ hashFiles('cmake/dependencies.cmake', 'cmake/scene_dependencies.cmake') }}
 
+      - name: Name the reference the consumer acquires
+        env:
+          CHOSEN: ${{ github.event.inputs.reference }}
+        run: |
+          set -eu
+          echo "RECIPE_REFERENCE=${CHOSEN:-$GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+
       - name: Consume the published reference through the recipe
         run: |
           set -eu
           cmake -DPRAXIS_SOURCE_DIR="$PWD" \
             -DRECIPE_MODE=published \
+            -DRECIPE_REF="$RECIPE_REFERENCE" \
             -DRECIPE_OUT="$RUNNER_TEMP/published" \
             -DFETCHCONTENT_BASE_DIR="$FETCHCONTENT_BASE_DIR" \
             -P tests/consumability/run_recipe.cmake
