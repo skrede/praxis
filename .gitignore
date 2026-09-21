@@ -37,6 +37,9 @@ Makefile.*
 
 .planning/
 
+# The isolation sentinel the planning tooling rewrites on every dispatch.
+.gsd/
+
 # ImGui writes its layout file into the working directory it is run from.
 imgui.ini
 
