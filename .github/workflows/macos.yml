@@ -15,6 +15,9 @@ on:
       - '.planning/**'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build-arm64:
     runs-on: macos-15
@@ -63,6 +66,7 @@ jobs:
 
       # This image has 7 GB of memory across 3 cores.
       - name: Build
+        id: build
         run: |
           set -eu
           cmake --build build -j 3
@@ -73,6 +77,7 @@ jobs:
           ctest --test-dir build --output-on-failure --no-tests=error
 
       - name: Report the cases this platform guards out
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: ctest --test-dir build -R '^(arm_comparison_scenario_test|arm_scenarios_test|arm_tooling_test|baseline_modeling_test|chain_placement_test|csv_write_outcome_test|defaults_test|screw_chain_test|shipped_scenarios_test)$' --verbose --no-tests=error
 
   build-intel:
@@ -120,6 +125,7 @@ jobs:
             -DPRAXIS_ENABLE_CTAGS_GATES=OFF
 
       - name: Build
+        id: build
         run: |
           set -eu
           cmake --build build -j 4
@@ -130,4 +136,5 @@ jobs:
           ctest --test-dir build --output-on-failure --no-tests=error
 
       - name: Report the cases this platform guards out
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: ctest --test-dir build -R '^(arm_comparison_scenario_test|arm_scenarios_test|arm_tooling_test|baseline_modeling_test|chain_placement_test|csv_write_outcome_test|defaults_test|screw_chain_test|shipped_scenarios_test)$' --verbose --no-tests=error

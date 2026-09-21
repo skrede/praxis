@@ -16,8 +16,8 @@ include(FetchContent)
 
 FetchContent_Declare(
     praxis
-    GIT_REPOSITORY ${PRAXIS_REPOSITORY}
-    GIT_TAG ${PRAXIS_REFERENCE}
+    GIT_REPOSITORY "${PRAXIS_REPOSITORY}"
+    GIT_TAG "${PRAXIS_REFERENCE}"
 )
 FetchContent_MakeAvailable(praxis)
 

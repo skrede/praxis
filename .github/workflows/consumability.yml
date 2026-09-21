@@ -61,7 +61,13 @@ jobs:
           CHOSEN: ${{ github.event.inputs.reference }}
         run: |
           set -eu
-          echo "RECIPE_REFERENCE=${CHOSEN:-$GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+          REFERENCE="${CHOSEN:-$GITHUB_REF_NAME}"
+          case "$REFERENCE" in
+            ''|*[!A-Za-z0-9._/-]*)
+              echo "praxis: refusing the reference '$REFERENCE'; a reference carries only letters, digits, dot, underscore, slash and hyphen" >&2
+              exit 1 ;;
+          esac
+          echo "RECIPE_REFERENCE=$REFERENCE" >> "$GITHUB_ENV"
 
       - name: Consume this checkout through the recipe
         run: |
@@ -134,7 +140,13 @@ jobs:
           CHOSEN: ${{ github.event.inputs.reference }}
         run: |
           set -eu
-          echo "RECIPE_REFERENCE=${CHOSEN:-$GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+          REFERENCE="${CHOSEN:-$GITHUB_REF_NAME}"
+          case "$REFERENCE" in
+            ''|*[!A-Za-z0-9._/-]*)
+              echo "praxis: refusing the reference '$REFERENCE'; a reference carries only letters, digits, dot, underscore, slash and hyphen" >&2
+              exit 1 ;;
+          esac
+          echo "RECIPE_REFERENCE=$REFERENCE" >> "$GITHUB_ENV"
 
       - name: Resolve the published reference
         run: |
@@ -153,13 +165,25 @@ jobs:
     env:
       LIBGL_ALWAYS_SOFTWARE: "1"
       PRAXIS_ADDRESS: https://github.com/skrede/praxis.git
-      PRAXIS_REFERENCE: ${{ github.ref_name }}
 
     steps:
       # The runner context is unavailable in a job's env block, so the scratch location is named
       # here, where the runner's own variable is in scope.
       - name: Name where the rehearsal builds
         run: echo "REHEARSAL_TREE=$RUNNER_TEMP/rehearsal" >> "$GITHUB_ENV"
+
+      - name: Name the reference the rehearsal obtains
+        env:
+          CHOSEN: ${{ github.event.inputs.reference }}
+        run: |
+          set -eu
+          REFERENCE="${CHOSEN:-$GITHUB_REF_NAME}"
+          case "$REFERENCE" in
+            ''|*[!A-Za-z0-9._/-]*)
+              echo "praxis: refusing the reference '$REFERENCE'; a reference carries only letters, digits, dot, underscore, slash and hyphen" >&2
+              exit 1 ;;
+          esac
+          echo "PRAXIS_REFERENCE=$REFERENCE" >> "$GITHUB_ENV"
 
       - name: Record the toolchain
         run: |
@@ -288,7 +312,13 @@ jobs:
           CHOSEN: ${{ github.event.inputs.reference }}
         run: |
           set -eu
-          echo "RECIPE_REFERENCE=${CHOSEN:-$GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+          REFERENCE="${CHOSEN:-$GITHUB_REF_NAME}"
+          case "$REFERENCE" in
+            ''|*[!A-Za-z0-9._/-]*)
+              echo "praxis: refusing the reference '$REFERENCE'; a reference carries only letters, digits, dot, underscore, slash and hyphen" >&2
+              exit 1 ;;
+          esac
+          echo "RECIPE_REFERENCE=$REFERENCE" >> "$GITHUB_ENV"
 
       - name: Consume the published reference through the recipe
         run: |
