@@ -45,8 +45,12 @@ struct composed_arm
     std::shared_ptr<owned_arm> owned;
 };
 
-inline composed_arm compose(scheduler::scheduler &loop, const motion_ops &moving, const rigid_motion::screw_ops &turning,
-                            const rigid_motion::frame_ops &framing = rigid_motion::baseline().frame)
+inline rigid_motion::frame_ops reference_framing()
+{
+    return rigid_motion::baseline().frame;
+}
+
+inline composed_arm compose(scheduler::scheduler &loop, const motion_ops &moving, const rigid_motion::screw_ops &turning, rigid_motion::frame_ops framing = reference_framing())
 {
     const trajectory::path_ops along{.joint_straight_line = &straight_line, .screw = &interpolated, .decoupled = &interpolated};
     const scheduler::strand work = *loop.make_strand();
