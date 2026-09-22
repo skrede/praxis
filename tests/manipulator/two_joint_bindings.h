@@ -64,13 +64,13 @@ inline expected<std::vector<screw_axis>, refusal> unreadable_body_screws(const r
     return unexpected(refusal::degenerate);
 }
 
-// Reads the first screw it is handed, and the derived chain's screws differ from the space chain's,
-// so which of the two the holder passed is readable off the answer.
-inline expected<transform, refusal> screw_reading_body_forward_kinematics(const rigid_motion::frame_ops &, const transform &m, std::span<const screw_axis> body_screws,
-                                                                          const joint_vector &)
+// Reads the first screw it is handed. The holder passes the space chain, so an answer carrying that
+// chain's first screw is what says no conversion was performed before the slot was entered.
+inline expected<transform, refusal> screw_reading_body_forward_kinematics(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const transform &m,
+                                                                          std::span<const screw_axis> space_screws, const joint_vector &)
 {
     transform pose = m;
-    pose(2, 3)     = body_screws.empty() ? 0.0 : body_screws.front()[0];
+    pose(2, 3)     = space_screws.empty() ? 0.0 : space_screws.front()[0];
 
     return pose;
 }
@@ -87,7 +87,8 @@ inline expected<jacobian, refusal> unsupported_space_jacobian(const rigid_motion
     return unexpected(refusal::unsupported_input);
 }
 
-inline expected<jacobian, refusal> exhausted_body_jacobian(std::span<const screw_axis>, const joint_vector &)
+inline expected<jacobian, refusal> exhausted_body_jacobian(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const transform &, std::span<const screw_axis>,
+                                                           const joint_vector &)
 {
     return unexpected(refusal::no_solution);
 }

@@ -14,7 +14,8 @@ namespace praxis::manipulator {
 expected<transform, refusal> forward_kinematics(const rigid_motion::screw_ops &screw, const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta);
 
 expected<jacobian, refusal> space_jacobian(const rigid_motion::screw_ops &screw, std::span<const screw_axis> space_screws, const joint_vector &theta);
-expected<jacobian, refusal> body_jacobian(std::span<const screw_axis> body_screws, const joint_vector &theta);
+expected<jacobian, refusal> body_jacobian(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m, std::span<const screw_axis> space_screws,
+                                          const joint_vector &theta);
 
 expected<std::vector<screw_axis>, refusal> body_screws_from_space(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
                                                                   std::span<const screw_axis> space_screws);
@@ -24,7 +25,8 @@ expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &screw,
 expected<void, refusal> analytic_inverse_kinematics(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const screw_chain &chain, const transform &desired,
                                                     ik_result &answer);
 
-expected<transform, refusal> body_forward_kinematics(const rigid_motion::frame_ops &frames, const transform &m, std::span<const screw_axis> body_screws, const joint_vector &theta);
+expected<transform, refusal> body_forward_kinematics(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
+                                                     std::span<const screw_axis> space_screws, const joint_vector &theta);
 
 // A chain held against the bindings the caller hands over, so the choice of them is made where this
 // is called. A chain the solver library cannot represent -- no joints, a home pose that is not a

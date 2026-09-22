@@ -109,7 +109,6 @@ void note_answers_apart(const manipulator::capabilities &held, const manipulator
     const transform pose                       = drawn.transform_member();
     const transform offset                     = drawn.transform_member();
     const meios::model<> machine               = manipulator::drawn_model(drawn);
-    const auto body                            = manipulator::body_screws_from_space(shared_motions().screw, shared_motions().frame, example.chain.home, example.chain.space_screws);
     auto composed                              = manipulator::kinematics::compose(example.chain, held.fk, held.dk, held.ik, shared_motions().screw, shared_motions().frame);
 
     seen[0] = seen[0] ||
@@ -126,13 +125,12 @@ void note_answers_apart(const manipulator::capabilities &held, const manipulator
     seen[8] = seen[8] || apart(held.robot.position_from_pose(pose), bent.robot.position_from_pose(pose));
     seen[9] = seen[9] || apart(held.robot.orientation_from_pose(pose), bent.robot.orientation_from_pose(pose));
 
-    if(body)
-    {
-        seen[1] = seen[1] ||
-                answers_apart(held.fk.body_forward_kinematics(shared_motions().frame, example.chain.home, *body, example.joints),
-                              bent.fk.body_forward_kinematics(shared_motions().frame, example.chain.home, *body, example.joints));
-        seen[4] = seen[4] || answers_apart(held.dk.body_jacobian(*body, example.joints), bent.dk.body_jacobian(*body, example.joints));
-    }
+    seen[1] = seen[1] ||
+            answers_apart(held.fk.body_forward_kinematics(shared_motions().screw, shared_motions().frame, example.chain.home, example.chain.space_screws, example.joints),
+                          bent.fk.body_forward_kinematics(shared_motions().screw, shared_motions().frame, example.chain.home, example.chain.space_screws, example.joints));
+    seen[4] = seen[4] ||
+            answers_apart(held.dk.body_jacobian(shared_motions().screw, shared_motions().frame, example.chain.home, example.chain.space_screws, example.joints),
+                          bent.dk.body_jacobian(shared_motions().screw, shared_motions().frame, example.chain.home, example.chain.space_screws, example.joints));
 
     if(const auto derived = held.modeling.build_chain(machine); derived)
         if(const auto other = bent.modeling.build_chain(machine); other)

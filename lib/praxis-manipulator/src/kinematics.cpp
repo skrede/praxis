@@ -59,11 +59,10 @@ kinematics::kinematics(screw_chain chain, forward_kinematics_ops forward, differ
 }
 
 // The body chain is derived here rather than on demand, so nothing a const answer reads is written
-// later. A derivation that refuses is recorded and carried to the body Jacobian instead of stopping
-// the composition: forward kinematics needs no body screws, so requiring the derivation to compose
-// at all would make one capability the price of another. An empty span of space screws has no
-// adjoint to apply, so the derivation is skipped rather than asked for and the body chain is left as
-// empty as the space chain it would have been taken from.
+// later. It is what body_chain() answers with and the only thing that reads it, so a derivation that
+// refuses is recorded for that accessor instead of stopping the composition. An empty span of space
+// screws has no adjoint to apply, so the derivation is skipped rather than asked for and the body
+// chain is left as empty as the space chain it would have been taken from.
 expected<kinematics, refusal> kinematics::compose(screw_chain chain, forward_kinematics_ops forward, differential_kinematics_ops differential, inverse_kinematics_ops inverse,
                                                   const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames)
 {
@@ -107,10 +106,7 @@ expected<transform, refusal> kinematics::fk_solve(const joint_vector &joint_posi
 
 expected<transform, refusal> kinematics::body_fk_solve(const joint_vector &joint_positions) const
 {
-    if(m_body_unavailable.has_value())
-        return unexpected(*m_body_unavailable);
-
-    return m_fk.body_forward_kinematics(m_frames, m_space.home, m_body.space_screws, joint_positions);
+    return m_fk.body_forward_kinematics(m_screw, m_frames, m_space.home, m_space.space_screws, joint_positions);
 }
 
 expected<jacobian, refusal> kinematics::space_jacobian(const joint_vector &joint_positions) const
@@ -120,10 +116,7 @@ expected<jacobian, refusal> kinematics::space_jacobian(const joint_vector &joint
 
 expected<jacobian, refusal> kinematics::body_jacobian(const joint_vector &joint_positions) const
 {
-    if(m_body_unavailable.has_value())
-        return unexpected(*m_body_unavailable);
-
-    return m_dk.body_jacobian(m_body.space_screws, joint_positions);
+    return m_dk.body_jacobian(m_screw, m_frames, m_space.home, m_space.space_screws, joint_positions);
 }
 
 expected<joint_vector, refusal> kinematics::ik_solve(const transform &desired_pose, const joint_vector &j0, const solver_parameters &parameters) const

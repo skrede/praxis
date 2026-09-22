@@ -55,15 +55,11 @@ expected<std::vector<screw_axis>, refusal> body_screws_under(const rigid_motion:
     return manipulator::baseline().fk.body_screws_from_space(spatial.screw, spatial.frame, arm.home, arm.space_screws);
 }
 
-// The derivation is the rigid-motion baseline's on either side, so what the body form is asked under
-// is the substitution alone rather than a chain the substitution already refused to derive.
+// The slot is handed the space chain and converts it under the frame operations it is handed, so
+// what the body form is asked under is the substitution alone.
 expected<transform, refusal> body_reached_under(const rigid_motion::capabilities &spatial, const screw_chain &arm, const joint_vector &at)
 {
-    const expected<std::vector<screw_axis>, refusal> body = body_screws_under(rigid_motion::baseline(), arm);
-    if(!body)
-        return praxis::unexpected(body.error());
-
-    return manipulator::baseline().fk.body_forward_kinematics(spatial.frame, arm.home, *body, at);
+    return manipulator::baseline().fk.body_forward_kinematics(rigid_motion::baseline().screw, spatial.frame, arm.home, arm.space_screws, at);
 }
 
 // Answers whatever derivation the rigid-motion baseline gives, so a composition binding it stands and

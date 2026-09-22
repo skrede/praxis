@@ -45,8 +45,8 @@ const differential_kinematics_ops &differential_kinematics_of(const void *value)
 
 // The rows are in the enumerator order of forward_kinematics_slot, and each name is spelled exactly
 // as the descriptor table spells it. Every slot this aggregate describes is compared here, which is
-// what the assertion below the table holds. The row asked over body screws derives them once and
-// hands the same derivation to both sides, so it measures its own slot rather than that derivation.
+// what the assertion below the table holds. The row asked in the body frame converts its own screws
+// on each side through one shared aggregate, so it measures its own slot rather than that conversion.
 constexpr std::array forward_kinematics_table{
         evaluation::slot_evaluation{"fk.forward_kinematics", evaluation::residual_kind::pose,
                                     evaluation::tolerance_pair{accumulated_pose_tolerance_radians, accumulated_pose_tolerance_metres},
@@ -64,13 +64,11 @@ constexpr std::array forward_kinematics_table{
                 "fk.body_forward_kinematics", evaluation::residual_kind::pose, evaluation::tolerance_pair{accumulated_pose_tolerance_radians, accumulated_pose_tolerance_metres},
                 [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result
                 {
-                    const evaluation_case example                         = drawn_case(drawn);
-                    const expected<std::vector<screw_axis>, refusal> body = body_screws_from_space(shared_screw(), shared_frames(), example.chain.home, example.chain.space_screws);
-                    if(!body)
-                        return unusable(evaluation::residual_kind::pose);
-
-                    const expected<transform, refusal> held    = forward_kinematics_of(first).body_forward_kinematics(shared_frames(), example.chain.home, *body, example.joints);
-                    const expected<transform, refusal> against = forward_kinematics_of(second).body_forward_kinematics(shared_frames(), example.chain.home, *body, example.joints);
+                    const evaluation_case example = drawn_case(drawn);
+                    const expected<transform, refusal> held =
+                            forward_kinematics_of(first).body_forward_kinematics(shared_screw(), shared_frames(), example.chain.home, example.chain.space_screws, example.joints);
+                    const expected<transform, refusal> against =
+                            forward_kinematics_of(second).body_forward_kinematics(shared_screw(), shared_frames(), example.chain.home, example.chain.space_screws, example.joints);
 
                     return evaluation::agreed_or_refused(held, against, evaluation::pose_residual, allowed);
                 }},
@@ -84,9 +82,9 @@ constexpr evaluation::capability_evaluations<forward_kinematics_ops> evaluated_f
 
 // The rows are in the enumerator order of differential_kinematics_slot, and each name is spelled
 // exactly as the descriptor table spells it. Every slot this aggregate describes is compared here,
-// which is what the assertion below the table holds. The row asked over body screws derives them
-// once and hands the same derivation to both sides, so it measures its own slot rather than that
-// derivation.
+// which is what the assertion below the table holds. The row asked in the body frame converts its own
+// screws on each side through one shared aggregate, so it measures its own slot rather than that
+// conversion.
 constexpr std::array differential_kinematics_table{
         evaluation::slot_evaluation{
                 "dk.space_jacobian", evaluation::residual_kind::element_wise, evaluation::tolerance_pair{accumulated_element_wise_tolerance, accumulated_element_wise_tolerance},
@@ -102,13 +100,11 @@ constexpr std::array differential_kinematics_table{
                 "dk.body_jacobian", evaluation::residual_kind::element_wise, evaluation::tolerance_pair{accumulated_element_wise_tolerance, accumulated_element_wise_tolerance},
                 [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result
                 {
-                    const evaluation_case example                         = drawn_case(drawn);
-                    const expected<std::vector<screw_axis>, refusal> body = body_screws_from_space(shared_screw(), shared_frames(), example.chain.home, example.chain.space_screws);
-                    if(!body)
-                        return unusable(evaluation::residual_kind::element_wise);
-
-                    const expected<jacobian, refusal> held    = differential_kinematics_of(first).body_jacobian(*body, example.joints);
-                    const expected<jacobian, refusal> against = differential_kinematics_of(second).body_jacobian(*body, example.joints);
+                    const evaluation_case example = drawn_case(drawn);
+                    const expected<jacobian, refusal> held =
+                            differential_kinematics_of(first).body_jacobian(shared_screw(), shared_frames(), example.chain.home, example.chain.space_screws, example.joints);
+                    const expected<jacobian, refusal> against =
+                            differential_kinematics_of(second).body_jacobian(shared_screw(), shared_frames(), example.chain.home, example.chain.space_screws, example.joints);
 
                     return evaluation::agreed_or_refused(held, against, evaluation::element_wise_residual, allowed);
                 }},

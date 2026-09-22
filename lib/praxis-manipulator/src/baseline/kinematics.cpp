@@ -199,15 +199,23 @@ expected<jacobian, refusal> space_jacobian(const rigid_motion::screw_ops &, std:
     return jacobian(columns.value());
 }
 
-// Lynch & Park, Modern Robotics, chapter 5.
-expected<jacobian, refusal> body_jacobian(std::span<const screw_axis> body_screws, const joint_vector &theta)
+// Lynch & Park, Modern Robotics, chapter 5. The columns are taken in the body frame, so the screws
+// are seen through the inverse adjoint of the home pose first.
+expected<jacobian, refusal> body_jacobian(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m, std::span<const screw_axis> space_screws,
+                                          const joint_vector &theta)
 {
-    if(theta.size() != static_cast<Eigen::Index>(body_screws.size()))
+    if(theta.size() != static_cast<Eigen::Index>(space_screws.size()))
         return unexpected(refusal::unsupported_input);
-    if(body_screws.empty())
+    if(space_screws.empty())
         return jacobian(jacobian::Zero(6, 0));
+    if(!is_a_rigid_motion(frames, m))
+        return unexpected(refusal::degenerate);
 
-    const expected<chain_reach, refusal> solved = forward_over(transform::Identity(), body_screws, theta);
+    const expected<std::vector<screw_axis>, refusal> body_screws = to_body_screws(screw, m, space_screws);
+    if(!body_screws)
+        return unexpected(body_screws.error());
+
+    const expected<chain_reach, refusal> solved = forward_over(transform::Identity(), *body_screws, theta);
     if(!solved)
         return unexpected(solved.error());
 
@@ -220,16 +228,21 @@ expected<jacobian, refusal> body_jacobian(std::span<const screw_axis> body_screw
 
 // The body form composes the home pose first, so the product the dependency accumulates is taken over
 // a chain carrying no home and the home is applied here. Lynch & Park, Modern Robotics, chapter 4.
-expected<transform, refusal> body_forward_kinematics(const rigid_motion::frame_ops &frames, const transform &m, std::span<const screw_axis> body_screws, const joint_vector &theta)
+expected<transform, refusal> body_forward_kinematics(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
+                                                     std::span<const screw_axis> space_screws, const joint_vector &theta)
 {
-    if(theta.size() != static_cast<Eigen::Index>(body_screws.size()))
+    if(theta.size() != static_cast<Eigen::Index>(space_screws.size()))
         return unexpected(refusal::unsupported_input);
-    if(body_screws.empty())
+    if(space_screws.empty())
         return transform(m);
     if(!is_a_rigid_motion(frames, m))
         return unexpected(refusal::degenerate);
 
-    const expected<chain_reach, refusal> solved = forward_over(transform::Identity(), body_screws, theta);
+    const expected<std::vector<screw_axis>, refusal> body_screws = to_body_screws(screw, m, space_screws);
+    if(!body_screws)
+        return unexpected(body_screws.error());
+
+    const expected<chain_reach, refusal> solved = forward_over(transform::Identity(), *body_screws, theta);
     if(!solved)
         return unexpected(solved.error());
 

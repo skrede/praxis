@@ -41,21 +41,17 @@ TEST_CASE("a composition binding forward kinematics alone answers with it and re
 }
 
 // The derivation is a capability like any other: a composition that leaves it unbound is composed,
-// and what is missing surfaces at both answers that need a body chain rather than at the
+// and what is missing surfaces at the accessor that reads what it derived rather than at the
 // composition, which needs none.
 TEST_CASE("the body chain is derived through the slot that derives it")
 {
     const kinematics unbound    = holding({}, {}, {});
     const kinematics overridden = holding(forward_kinematics_ops{.body_screws_from_space = &mirrored_body_screws}, {}, {});
-    const joint_vector theta    = joint_vector::Constant(2, 0.5);
 
     const expected<std::reference_wrapper<const screw_chain>, refusal> unavailable_chain = unbound.body_chain();
-    const expected<jacobian, refusal> unavailable_frame                                  = unbound.body_jacobian(theta);
 
     REQUIRE_FALSE(unavailable_chain.has_value());
-    REQUIRE_FALSE(unavailable_frame.has_value());
     CHECK(unavailable_chain.error() == refusal::not_implemented);
-    CHECK(unavailable_frame.error() == refusal::not_implemented);
 
     const expected<std::reference_wrapper<const screw_chain>, refusal> derived = overridden.body_chain();
     REQUIRE(derived.has_value());
@@ -63,10 +59,10 @@ TEST_CASE("the body chain is derived through the slot that derives it")
     CHECK(is_approx_equal(derived->get().space_screws.front()[0], 3.0));
 }
 
-// The derived body chain has a second reader. What says the holder passed that chain and not the space
-// chain is the screw the bound slot reads back: the derivation here answers threes and the space chain
-// carries zeros.
-TEST_CASE("the body form is asked over the derived body chain rather than over the space chain")
+// What says no conversion was performed before the slot was entered is the screw the bound slot reads
+// back: the derivation here answers threes and the space chain carries zeros, so a three would mean
+// the holder had converted first.
+TEST_CASE("the body form is handed the space chain and sees it through the adjoint itself")
 {
     const kinematics solver =
             holding(forward_kinematics_ops{.body_forward_kinematics = &screw_reading_body_forward_kinematics, .body_screws_from_space = &mirrored_body_screws}, {}, {});
@@ -74,13 +70,14 @@ TEST_CASE("the body form is asked over the derived body chain rather than over t
 
     const expected<transform, refusal> reached = solver.body_fk_solve(theta);
     REQUIRE(reached.has_value());
-    CHECK(is_approx_equal((*reached)(2, 3), 3.0));
+    CHECK(is_approx_equal((*reached)(2, 3), 0.0));
 }
 
-// The slot bound here answers whatever it is handed, so the refusal that comes out is the derivation's
-// and the slot was never reached. The space form over the same composition needs no body chain and
-// answers, which is what keeps one capability from being the price of another.
-TEST_CASE("a derivation that refused is carried to the body form rather than to a slot that would answer")
+// The body form is handed the space chain, so a derivation that refused is not between it and the
+// answer: the slot is entered and reads that chain's first screw. The refusal reaches the accessor
+// the derivation exists for, and the space form over the same composition answers as well, which is
+// what keeps one capability from being the price of another.
+TEST_CASE("a derivation that refused leaves the body form to be asked and refuses only the chain accessor")
 {
     const kinematics refused = holding(forward_kinematics_ops{.forward_kinematics      = &lifting_forward_kinematics,
                                                               .body_forward_kinematics = &screw_reading_body_forward_kinematics,
@@ -89,8 +86,12 @@ TEST_CASE("a derivation that refused is carried to the body form rather than to 
     const joint_vector theta = joint_vector::Constant(2, 0.5);
 
     const expected<transform, refusal> from_body = refused.body_fk_solve(theta);
-    REQUIRE_FALSE(from_body.has_value());
-    CHECK(from_body.error() == refusal::degenerate);
+    REQUIRE(from_body.has_value());
+    CHECK(is_approx_equal((*from_body)(2, 3), 0.0));
+
+    const expected<std::reference_wrapper<const screw_chain>, refusal> chain = refused.body_chain();
+    REQUIRE_FALSE(chain.has_value());
+    CHECK(chain.error() == refusal::degenerate);
 
     const expected<transform, refusal> from_space = refused.fk_solve(theta);
     REQUIRE(from_space.has_value());
@@ -113,11 +114,12 @@ TEST_CASE("a chain with no screws answers the body form rather than refusing it"
     CHECK(is_approx_equal((*reached)(2, 3), 0.0));
 }
 
-// Four enumerators are in play and the derivation's is a fourth one, so an accessor that classified
-// the absence itself would report the wrong one rather than merely reporting.
-TEST_CASE("a derivation that refused is answered for with its own refusal, not one invented for it")
+// Three enumerators are in play and no answer may borrow another's: the bound slot's own, the unbound
+// default's, and the derivation's, which reaches the accessor it was derived for and nothing else.
+TEST_CASE("every refusal is the one its own answer produced, not one invented for it")
 {
-    const kinematics refused = holding(forward_kinematics_ops{.body_screws_from_space = &unreadable_body_screws}, {}, {});
+    const kinematics refused =
+            holding(forward_kinematics_ops{.body_screws_from_space = &unreadable_body_screws}, differential_kinematics_ops{.body_jacobian = &exhausted_body_jacobian}, {});
     const kinematics unbound = holding({}, {}, {});
     const joint_vector theta = joint_vector::Constant(2, 0.5);
 
@@ -128,7 +130,7 @@ TEST_CASE("a derivation that refused is answered for with its own refusal, not o
     REQUIRE_FALSE(from_refusal.has_value());
     REQUIRE_FALSE(from_unbound.has_value());
     REQUIRE_FALSE(chain_from_refusal.has_value());
-    CHECK(from_refusal.error() == refusal::degenerate);
+    CHECK(from_refusal.error() == refusal::no_solution);
     CHECK(from_unbound.error() == refusal::not_implemented);
     CHECK(chain_from_refusal.error() == refusal::degenerate);
 }

@@ -45,9 +45,10 @@ inline expected<transform, refusal> displaced_forward(const rigid_motion::screw_
     return displaced(reached.value());
 }
 
-inline expected<transform, refusal> displaced_body_forward(const rigid_motion::frame_ops &frames, const transform &m, std::span<const screw_axis> body_screws, const joint_vector &theta)
+inline expected<transform, refusal> displaced_body_forward(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
+                                                           std::span<const screw_axis> space_screws, const joint_vector &theta)
 {
-    const expected<transform, refusal> reached = body_forward_kinematics(frames, m, body_screws, theta);
+    const expected<transform, refusal> reached = body_forward_kinematics(screw, frames, m, space_screws, theta);
     if(!reached)
         return reached;
 
@@ -65,9 +66,10 @@ inline expected<jacobian, refusal> moved_space_jacobian(const rigid_motion::scre
     return columns;
 }
 
-inline expected<jacobian, refusal> moved_body_jacobian(std::span<const screw_axis> body_screws, const joint_vector &theta)
+inline expected<jacobian, refusal> moved_body_jacobian(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
+                                                       std::span<const screw_axis> space_screws, const joint_vector &theta)
 {
-    expected<jacobian, refusal> columns = body_jacobian(body_screws, theta);
+    expected<jacobian, refusal> columns = body_jacobian(screw, frames, m, space_screws, theta);
     if(!columns)
         return columns;
 

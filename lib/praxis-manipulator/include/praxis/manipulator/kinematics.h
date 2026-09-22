@@ -59,10 +59,12 @@ namespace praxis::manipulator::inert {
 
 expected<transform, refusal> forward_kinematics(const rigid_motion::screw_ops &screw, const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta);
 expected<jacobian, refusal> space_jacobian(const rigid_motion::screw_ops &screw, std::span<const screw_axis> space_screws, const joint_vector &theta);
-expected<jacobian, refusal> body_jacobian(std::span<const screw_axis> body_screws, const joint_vector &theta);
+expected<jacobian, refusal> body_jacobian(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m, std::span<const screw_axis> space_screws,
+                                          const joint_vector &theta);
 expected<std::vector<screw_axis>, refusal> body_screws_from_space(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
                                                                   std::span<const screw_axis> space_screws);
-expected<transform, refusal> body_forward_kinematics(const rigid_motion::frame_ops &frames, const transform &m, std::span<const screw_axis> body_screws, const joint_vector &theta);
+expected<transform, refusal> body_forward_kinematics(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
+                                                     std::span<const screw_axis> space_screws, const joint_vector &theta);
 
 }
 
@@ -70,27 +72,29 @@ namespace praxis::manipulator {
 
 // Declaration order is frozen: a designated initializer must name members in declaration order, so
 // reordering a slot breaks every project that already composes this aggregate. Appending is safe.
-// The two forward maps are here, one over the space screws and one over the body screws, together
-// with the derivation that carries a chain from the first frame to the second: each is a function of
-// a chain and a configuration alone.
+// The two forward maps are here, both taken over the space screws, together with the derivation that
+// carries a chain from the first frame to the second. The body form is handed the home pose as well
+// and sees the screws through its inverse adjoint itself.
 struct forward_kinematics_ops
 {
     expected<transform, refusal> (*forward_kinematics)(const rigid_motion::screw_ops &screw, const transform &m, std::span<const screw_axis> space_screws,
-                                                       const joint_vector &theta)                                  = &inert::forward_kinematics;
-    expected<transform, refusal> (*body_forward_kinematics)(const rigid_motion::frame_ops &frames, const transform &m, std::span<const screw_axis> body_screws,
-                                                            const joint_vector &theta)                             = &inert::body_forward_kinematics;
+                                                       const joint_vector &theta)                                                = &inert::forward_kinematics;
+    expected<transform, refusal> (*body_forward_kinematics)(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
+                                                            std::span<const screw_axis> space_screws, const joint_vector &theta) = &inert::body_forward_kinematics;
     expected<std::vector<screw_axis>, refusal> (*body_screws_from_space)(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
-                                                                         std::span<const screw_axis> space_screws) = &inert::body_screws_from_space;
+                                                                         std::span<const screw_axis> space_screws)               = &inert::body_screws_from_space;
 };
 
 // Declaration order is frozen: a designated initializer must name members in declaration order, so
 // reordering a slot breaks every project that already composes this aggregate. Appending is safe.
 // The two Jacobians are here: each maps joint rates to a twist, one expressed in the space frame and
-// one in the body frame, over the screws it is handed and the configuration it is asked at.
+// one in the body frame. Both are taken over the space screws; the body form is handed the home pose
+// as well and sees them through its inverse adjoint itself.
 struct differential_kinematics_ops
 {
     expected<jacobian, refusal> (*space_jacobian)(const rigid_motion::screw_ops &screw, std::span<const screw_axis> space_screws, const joint_vector &theta) = &inert::space_jacobian;
-    expected<jacobian, refusal> (*body_jacobian)(std::span<const screw_axis> body_screws, const joint_vector &theta)                                         = &inert::body_jacobian;
+    expected<jacobian, refusal> (*body_jacobian)(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
+                                                 std::span<const screw_axis> space_screws, const joint_vector &theta)                                        = &inert::body_jacobian;
 };
 
 }
@@ -138,16 +142,16 @@ public:
 
     const screw_chain &space_chain() const;
 
-    // The body chain is derived once, at composition, from the slot that derives it. A derivation
-    // that refused leaves no chain and no Jacobian to take in one, and the refusal it produced is
-    // what both of these answer with. A chain with no screws needs no derivation, so its empty body
-    // chain is an answer rather than a refusal.
+    // The body chain is derived once, at composition, from the slot that derives it, and this is the
+    // one answer that reads it. A derivation that refused leaves no chain, and the refusal it
+    // produced is what this answers with. A chain with no screws needs no derivation, so its empty
+    // body chain is an answer rather than a refusal.
     expected<std::reference_wrapper<const screw_chain>, refusal> body_chain() const;
 
     expected<transform, refusal> fk_solve(const joint_vector &joint_positions) const;
 
-    // Asked over the derived body chain, so a derivation that refused is answered for here with the
-    // refusal it produced, as it is at the body Jacobian.
+    // Asked over the space chain and the home pose, which the bound slot sees through its own
+    // inverse adjoint, so a derivation that refused at composition does not answer here.
     expected<transform, refusal> body_fk_solve(const joint_vector &joint_positions) const;
 
     expected<jacobian, refusal> space_jacobian(const joint_vector &joint_positions) const;
