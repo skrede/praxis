@@ -66,10 +66,10 @@ inline expected<jacobian, refusal> moved_space_jacobian(const rigid_motion::scre
     return columns;
 }
 
-inline expected<jacobian, refusal> moved_body_jacobian(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
-                                                       std::span<const screw_axis> space_screws, const joint_vector &theta)
+inline expected<jacobian, refusal> moved_body_jacobian(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward,
+                                                       const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta)
 {
-    expected<jacobian, refusal> columns = body_jacobian(screw, frames, m, space_screws, theta);
+    expected<jacobian, refusal> columns = body_jacobian(screw, frames, forward, m, space_screws, theta);
     if(!columns)
         return columns;
 

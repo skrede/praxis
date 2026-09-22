@@ -116,7 +116,7 @@ expected<jacobian, refusal> kinematics::space_jacobian(const joint_vector &joint
 
 expected<jacobian, refusal> kinematics::body_jacobian(const joint_vector &joint_positions) const
 {
-    return m_dk.body_jacobian(m_screw, m_frames, m_space.home, m_space.space_screws, joint_positions);
+    return m_dk.body_jacobian(m_screw, m_frames, m_fk, m_space.home, m_space.space_screws, joint_positions);
 }
 
 expected<joint_vector, refusal> kinematics::ik_solve(const transform &desired_pose, const joint_vector &j0, const solver_parameters &parameters) const

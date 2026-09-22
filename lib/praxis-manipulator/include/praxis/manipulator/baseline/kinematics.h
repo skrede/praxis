@@ -14,8 +14,8 @@ namespace praxis::manipulator {
 expected<transform, refusal> forward_kinematics(const rigid_motion::screw_ops &screw, const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta);
 
 expected<jacobian, refusal> space_jacobian(const rigid_motion::screw_ops &screw, std::span<const screw_axis> space_screws, const joint_vector &theta);
-expected<jacobian, refusal> body_jacobian(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m, std::span<const screw_axis> space_screws,
-                                          const joint_vector &theta);
+expected<jacobian, refusal> body_jacobian(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward, const transform &m,
+                                          std::span<const screw_axis> space_screws, const joint_vector &theta);
 
 expected<std::vector<screw_axis>, refusal> body_screws_from_space(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
                                                                   std::span<const screw_axis> space_screws);

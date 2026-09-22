@@ -87,8 +87,8 @@ inline expected<jacobian, refusal> unsupported_space_jacobian(const rigid_motion
     return unexpected(refusal::unsupported_input);
 }
 
-inline expected<jacobian, refusal> exhausted_body_jacobian(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const transform &, std::span<const screw_axis>,
-                                                           const joint_vector &)
+inline expected<jacobian, refusal> exhausted_body_jacobian(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const forward_kinematics_ops &, const transform &,
+                                                           std::span<const screw_axis>, const joint_vector &)
 {
     return unexpected(refusal::no_solution);
 }

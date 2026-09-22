@@ -129,8 +129,8 @@ void note_answers_apart(const manipulator::capabilities &held, const manipulator
             answers_apart(held.fk.body_forward_kinematics(shared_motions().screw, shared_motions().frame, example.chain.home, example.chain.space_screws, example.joints),
                           bent.fk.body_forward_kinematics(shared_motions().screw, shared_motions().frame, example.chain.home, example.chain.space_screws, example.joints));
     seen[4] = seen[4] ||
-            answers_apart(held.dk.body_jacobian(shared_motions().screw, shared_motions().frame, example.chain.home, example.chain.space_screws, example.joints),
-                          bent.dk.body_jacobian(shared_motions().screw, shared_motions().frame, example.chain.home, example.chain.space_screws, example.joints));
+            answers_apart(held.dk.body_jacobian(shared_motions().screw, shared_motions().frame, held.fk, example.chain.home, example.chain.space_screws, example.joints),
+                          bent.dk.body_jacobian(shared_motions().screw, shared_motions().frame, held.fk, example.chain.home, example.chain.space_screws, example.joints));
 
     if(const auto derived = held.modeling.build_chain(machine); derived)
         if(const auto other = bent.modeling.build_chain(machine); other)

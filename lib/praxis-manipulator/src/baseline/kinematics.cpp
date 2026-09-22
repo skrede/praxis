@@ -210,8 +210,8 @@ expected<jacobian, refusal> space_jacobian(const rigid_motion::screw_ops &, std:
 
 // Lynch & Park, Modern Robotics, chapter 5. The columns are taken in the body frame, so the screws
 // are seen through the inverse adjoint of the home pose first.
-expected<jacobian, refusal> body_jacobian(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m, std::span<const screw_axis> space_screws,
-                                          const joint_vector &theta)
+expected<jacobian, refusal> body_jacobian(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward, const transform &m,
+                                          std::span<const screw_axis> space_screws, const joint_vector &theta)
 {
     if(theta.size() != static_cast<Eigen::Index>(space_screws.size()))
         return unexpected(refusal::unsupported_input);
@@ -220,7 +220,7 @@ expected<jacobian, refusal> body_jacobian(const rigid_motion::screw_ops &screw, 
     if(space_screws.empty())
         return jacobian(jacobian::Zero(6, 0));
 
-    const expected<std::vector<screw_axis>, refusal> body_screws = to_body_screws(screw, m, space_screws);
+    const expected<std::vector<screw_axis>, refusal> body_screws = forward.body_screws_from_space(screw, frames, m, space_screws);
     if(!body_screws)
         return unexpected(body_screws.error());
 

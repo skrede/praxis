@@ -53,14 +53,16 @@ struct ik_result
     std::vector<iteration_state> iterations;
 };
 
+struct forward_kinematics_ops;
+
 }
 
 namespace praxis::manipulator::inert {
 
 expected<transform, refusal> forward_kinematics(const rigid_motion::screw_ops &screw, const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta);
 expected<jacobian, refusal> space_jacobian(const rigid_motion::screw_ops &screw, std::span<const screw_axis> space_screws, const joint_vector &theta);
-expected<jacobian, refusal> body_jacobian(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m, std::span<const screw_axis> space_screws,
-                                          const joint_vector &theta);
+expected<jacobian, refusal> body_jacobian(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward, const transform &m,
+                                          std::span<const screw_axis> space_screws, const joint_vector &theta);
 expected<std::vector<screw_axis>, refusal> body_screws_from_space(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
                                                                   std::span<const screw_axis> space_screws);
 expected<transform, refusal> body_forward_kinematics(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
@@ -89,11 +91,12 @@ struct forward_kinematics_ops
 // reordering a slot breaks every project that already composes this aggregate. Appending is safe.
 // The two Jacobians are here: each maps joint rates to a twist, one expressed in the space frame and
 // one in the body frame. Both are taken over the space screws; the body form is handed the home pose
-// as well and sees them through its inverse adjoint itself.
+// and the forward maps as well, and derives the screws it is taken over through the derivation bound
+// there.
 struct differential_kinematics_ops
 {
     expected<jacobian, refusal> (*space_jacobian)(const rigid_motion::screw_ops &screw, std::span<const screw_axis> space_screws, const joint_vector &theta) = &inert::space_jacobian;
-    expected<jacobian, refusal> (*body_jacobian)(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
+    expected<jacobian, refusal> (*body_jacobian)(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward, const transform &m,
                                                  std::span<const screw_axis> space_screws, const joint_vector &theta)                                        = &inert::body_jacobian;
 };
 

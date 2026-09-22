@@ -62,6 +62,14 @@ expected<transform, refusal> body_reached_under(const rigid_motion::capabilities
     return manipulator::baseline().fk.body_forward_kinematics(rigid_motion::baseline().screw, spatial.frame, arm.home, arm.space_screws, at);
 }
 
+// Hands back the space screws rather than the screws seen from the home pose, so a chain whose home
+// pose is not the identity is derived to something the baseline's derivation never answers.
+expected<std::vector<screw_axis>, refusal> body_screws_left_unconverted(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const transform &,
+                                                                        std::span<const screw_axis> space_screws)
+{
+    return std::vector<screw_axis>(space_screws.begin(), space_screws.end());
+}
+
 // Answers whatever derivation the rigid-motion baseline gives, so a composition binding it stands and
 // the body forward map is left as the only reader of the frame operations that composition named.
 expected<std::vector<screw_axis>, refusal> body_screws_of_the_baseline(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const transform &m,
@@ -167,4 +175,22 @@ TEST_CASE("the body form a solver answers is taken under the frame operations it
 
     REQUIRE_FALSE(reached.has_value());
     CHECK(reached.error() == refusal::degenerate);
+}
+
+TEST_CASE("the body Jacobian is taken over the screws the derivation beside it answered", "[seam][routing]")
+{
+    const capabilities arm                   = manipulator::baseline();
+    const rigid_motion::capabilities spatial = rigid_motion::baseline();
+    const screw_chain limb                   = three_link_arm();
+    const joint_vector at                    = posed_arm();
+
+    forward_kinematics_ops unconverted = arm.fk;
+    unconverted.body_screws_from_space = &body_screws_left_unconverted;
+
+    const expected<jacobian, refusal> derived = arm.dk.body_jacobian(spatial.screw, spatial.frame, arm.fk, limb.home, limb.space_screws, at);
+    const expected<jacobian, refusal> raw     = arm.dk.body_jacobian(spatial.screw, spatial.frame, unconverted, limb.home, limb.space_screws, at);
+
+    REQUIRE(derived.has_value());
+    REQUIRE(raw.has_value());
+    REQUIRE((*derived - *raw).cwiseAbs().maxCoeff() > axes_apart_by);
 }

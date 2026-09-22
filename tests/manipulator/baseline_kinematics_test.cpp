@@ -31,6 +31,7 @@ constexpr double forearm   = 0.4;
 
 const rigid_motion::screw_ops reference_screw  = rigid_motion::baseline().screw;
 const rigid_motion::frame_ops reference_frames = rigid_motion::baseline().frame;
+const forward_kinematics_ops reference_forward = manipulator::baseline().fk;
 
 // A planar two-link arm: both joints rotate about the world z, the second sits at the far end of the
 // first link, and the tool frame is the far end of the second. Lynch & Park, Modern Robotics,
@@ -196,7 +197,7 @@ TEST_CASE("a_joint_vector_the_screw_span_does_not_cover_is_refused_by_every_dele
     const expected<transform, refusal> pose       = manipulator::forward_kinematics(reference_screw, chain.home, chain.space_screws, wrong);
     const expected<transform, refusal> body_pose  = manipulator::body_forward_kinematics(reference_screw, reference_frames, chain.home, chain.space_screws, wrong);
     const expected<jacobian, refusal> space_frame = manipulator::space_jacobian(reference_screw, chain.space_screws, wrong);
-    const expected<jacobian, refusal> body_frame  = manipulator::body_jacobian(reference_screw, reference_frames, chain.home, chain.space_screws, wrong);
+    const expected<jacobian, refusal> body_frame  = manipulator::body_jacobian(reference_screw, reference_frames, reference_forward, chain.home, chain.space_screws, wrong);
 
     REQUIRE_FALSE(pose.has_value());
     REQUIRE_FALSE(body_pose.has_value());
@@ -229,7 +230,7 @@ TEST_CASE("a_span_of_no_screws_is_answered_rather_than_refused")
     const expected<transform, refusal> pose       = manipulator::forward_kinematics(reference_screw, home, {}, none);
     const expected<transform, refusal> body_pose  = manipulator::body_forward_kinematics(reference_screw, reference_frames, home, {}, none);
     const expected<jacobian, refusal> space_frame = manipulator::space_jacobian(reference_screw, {}, none);
-    const expected<jacobian, refusal> body_frame  = manipulator::body_jacobian(reference_screw, reference_frames, home, {}, none);
+    const expected<jacobian, refusal> body_frame  = manipulator::body_jacobian(reference_screw, reference_frames, reference_forward, home, {}, none);
 
     REQUIRE(pose);
     REQUIRE(body_pose);
@@ -257,7 +258,7 @@ TEST_CASE("a_chain_carrying_a_nonfinite_value_is_refused_rather_than_thrown_over
     const expected<transform, refusal> pose       = manipulator::forward_kinematics(reference_screw, unbounded, chain.space_screws, q);
     const expected<transform, refusal> body_pose  = manipulator::body_forward_kinematics(reference_screw, reference_frames, chain.home, blunted, q);
     const expected<jacobian, refusal> space_frame = manipulator::space_jacobian(reference_screw, blunted, q);
-    const expected<jacobian, refusal> body_frame  = manipulator::body_jacobian(reference_screw, reference_frames, chain.home, blunted, q);
+    const expected<jacobian, refusal> body_frame  = manipulator::body_jacobian(reference_screw, reference_frames, reference_forward, chain.home, blunted, q);
 
     REQUIRE_FALSE(pose.has_value());
     REQUIRE_FALSE(body_pose.has_value());
@@ -368,7 +369,7 @@ TEST_CASE("a_home_pose_that_is_not_a_rigid_motion_is_refused_whatever_frame_oper
 
     const expected<std::vector<screw_axis>, refusal> derived = manipulator::body_screws_from_space(reference_screw, rigid_motion::frame_ops{}, skewed, chain.space_screws);
     const expected<transform, refusal> composed              = manipulator::body_forward_kinematics(reference_screw, rigid_motion::frame_ops{}, skewed, chain.space_screws, q);
-    const expected<jacobian, refusal> body_frame             = manipulator::body_jacobian(reference_screw, rigid_motion::frame_ops{}, skewed, chain.space_screws, q);
+    const expected<jacobian, refusal> body_frame             = manipulator::body_jacobian(reference_screw, rigid_motion::frame_ops{}, reference_forward, skewed, chain.space_screws, q);
 
     REQUIRE_FALSE(derived.has_value());
     REQUIRE_FALSE(composed.has_value());
@@ -388,7 +389,7 @@ TEST_CASE("a_home_pose_that_is_not_a_rigid_motion_is_refused_over_a_span_of_no_s
     skewed(0, 1)     = 0.5;
 
     const expected<transform, refusal> composed  = manipulator::body_forward_kinematics(reference_screw, reference_frames, skewed, {}, none);
-    const expected<jacobian, refusal> body_frame = manipulator::body_jacobian(reference_screw, reference_frames, skewed, {}, none);
+    const expected<jacobian, refusal> body_frame = manipulator::body_jacobian(reference_screw, reference_frames, reference_forward, skewed, {}, none);
     const expected<transform, refusal> pose      = manipulator::forward_kinematics(reference_screw, skewed, {}, none);
 
     REQUIRE_FALSE(composed.has_value());
