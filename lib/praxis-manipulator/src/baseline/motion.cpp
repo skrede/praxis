@@ -1,7 +1,5 @@
 #include "praxis/manipulator/baseline/motion.h"
 
-#include "praxis/rigid_motion/baseline/frame.h"
-
 #include <Eigen/Core>
 
 namespace praxis::manipulator {
@@ -29,10 +27,10 @@ expected<joint_vector, refusal> task_space_screw(const rigid_motion::screw_ops &
 }
 
 // The displacement is read in the tool frame, so it postmultiplies the start pose.
-expected<joint_vector, refusal> tool_frame_displace(const kinematics &solver, const transform &start_pose, const Eigen::Vector3d &offset, const rotation &orientation,
-                                                    const joint_vector &j0)
+expected<joint_vector, refusal> tool_frame_displace(const rigid_motion::frame_ops &frames, const kinematics &solver, const transform &start_pose, const Eigen::Vector3d &offset,
+                                                    const rotation &orientation, const joint_vector &j0)
 {
-    return task_space_pose(solver, start_pose * rigid_motion::transformation_matrix_from_rotation_position(orientation, offset), j0);
+    return task_space_pose(solver, start_pose * frames.transformation_matrix_from_rotation_position(orientation, offset), j0);
 }
 
 }

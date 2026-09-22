@@ -111,8 +111,8 @@ evaluation::case_result compare_tool_frame_displace(const void *first, const voi
     const rotation turned(Eigen::AngleAxisd(drawn_within(drawn, displacement_turn_radians), drawn.unit_direction()).toRotationMatrix());
     const transform asked_for = solved->reached * rigid_motion::transformation_matrix_from_rotation_position(turned, offset);
 
-    return reaching(*solved, motions_of(first).tool_frame_displace(solved->solver, solved->reached, offset, turned, solved->standing),
-                    motions_of(second).tool_frame_displace(solved->solver, solved->reached, offset, turned, solved->standing), asked_for, allowed);
+    return reaching(*solved, motions_of(first).tool_frame_displace(rigid_motion::baseline().frame, solved->solver, solved->reached, offset, turned, solved->standing),
+                    motions_of(second).tool_frame_displace(rigid_motion::baseline().frame, solved->solver, solved->reached, offset, turned, solved->standing), asked_for, allowed);
 }
 
 // The rows are in the enumerator order of motion_slot, and each name is spelled exactly as the

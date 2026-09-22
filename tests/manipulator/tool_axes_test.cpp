@@ -180,7 +180,7 @@ double placement_departure(threepp::Object3D &drawn, const threepp::Matrix4 &rul
 std::shared_ptr<robot_controller> controlling(scene_robot &driven)
 {
     return std::make_shared<robot_controller>(driven, composing_motion(), composing_path(), task_trajectory_ops{}, composing_time_scaling(), praxis::trajectory::trajectory_ops{},
-                                              praxis::rigid_motion::screw_ops{});
+                                              praxis::rigid_motion::screw_ops{}, praxis::rigid_motion::frame_ops{});
 }
 
 // The order a preset composes in: the stencil is built, the windows over it are built, and only then

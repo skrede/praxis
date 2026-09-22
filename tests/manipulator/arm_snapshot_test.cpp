@@ -122,10 +122,11 @@ arm_pipe pipe(scheduler &loop, const forward_kinematics_ops &forward = counting(
                     .value());
     robot->set_joint_positions(configuration(0.25, -0.5));
 
-    auto controller = std::make_shared<robot_controller>(*robot, motion_ops{.task_space_pose = &solving_task_space_pose}, composing_path(), task_trajectory_ops{},
-                                                         composing_time_scaling(), praxis::trajectory::trajectory_ops{}, praxis::rigid_motion::screw_ops{});
-    auto published  = std::make_shared<arm_publisher>();
-    auto owned      = std::make_shared<owned_arm>(work, work, robot, controller, published);
+    auto controller =
+            std::make_shared<robot_controller>(*robot, motion_ops{.task_space_pose = &solving_task_space_pose}, composing_path(), task_trajectory_ops{}, composing_time_scaling(),
+                                               praxis::trajectory::trajectory_ops{}, praxis::rigid_motion::screw_ops{}, praxis::rigid_motion::frame_ops{});
+    auto published = std::make_shared<arm_publisher>();
+    auto owned     = std::make_shared<owned_arm>(work, work, robot, controller, published);
 
     return arm_pipe{work, owned, published->reader()};
 }

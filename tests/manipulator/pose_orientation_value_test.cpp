@@ -78,7 +78,7 @@ rigid_motion::frame_ops framing()
 
 // A jog is answered with the configuration it started from: the case reads the angles arriving at
 // the seam, and an unbound slot would report a refusal on every frame the drive types into.
-expected<joint_vector, refusal> unmoved(const kinematics &, const transform &, const Eigen::Vector3d &, const rotation &, const joint_vector &j0)
+expected<joint_vector, refusal> unmoved(const rigid_motion::frame_ops &, const kinematics &, const transform &, const Eigen::Vector3d &, const rotation &, const joint_vector &j0)
 {
     return j0;
 }

@@ -115,7 +115,7 @@ bare_arm compose_arm(const forward_kinematics_ops &forward, const differential_k
     robot->set_joint_positions(configuration(0.25, -0.5));
 
     auto control = std::make_unique<robot_controller>(*robot, motion_ops{.task_space_pose = &solving_task_space_pose}, composing_path(), task_trajectory_ops{}, composing_time_scaling(),
-                                                      praxis::trajectory::trajectory_ops{}, praxis::rigid_motion::screw_ops{});
+                                                      praxis::trajectory::trajectory_ops{}, praxis::rigid_motion::screw_ops{}, praxis::rigid_motion::frame_ops{});
 
     return bare_arm{std::move(robot), std::move(control)};
 }

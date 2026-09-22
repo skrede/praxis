@@ -113,7 +113,7 @@ previewed_arm arm_at(const joint_vector &start)
     robot->set_joint_positions(start);
 
     auto control = std::make_unique<robot_controller>(*robot, motion_ops{.task_space_pose = &solving_task_space_pose}, trajectory::baseline().path, task_trajectory_ops{},
-                                                      trajectory::baseline().time_scaling, trajectory::baseline().trajectory, rigid_motion::screw_ops{});
+                                                      trajectory::baseline().time_scaling, trajectory::baseline().trajectory, rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
 
     return previewed_arm{std::move(robot), std::move(control)};
 }
@@ -776,11 +776,11 @@ TEST_CASE("a queued run whose next target the composition refuses stops there, n
     previewed_arm built = arm_at(configuration(0.0, 0.0));
     auto published      = std::make_shared<arm_publisher>();
 
-    bool unloaded = false;
-    auto control =
-            std::make_shared<robot_controller>(*built.robot, motion_ops{.task_space_pose = &solving_task_space_pose}, trajectory::baseline().path, task_trajectory_ops{},
-                                               trajectory::baseline().time_scaling, trajectory::baseline().trajectory, rigid_motion::screw_ops{}, [&unloaded] { unloaded = true; });
-    const auto owned                        = std::make_shared<owned_arm>(work, work, built.robot, control, published);
+    bool unloaded    = false;
+    auto control     = std::make_shared<robot_controller>(*built.robot, motion_ops{.task_space_pose = &solving_task_space_pose}, trajectory::baseline().path, task_trajectory_ops{},
+                                                          trajectory::baseline().time_scaling, trajectory::baseline().trajectory, rigid_motion::screw_ops{}, rigid_motion::frame_ops{},
+                                                          [&unloaded] { unloaded = true; });
+    const auto owned = std::make_shared<owned_arm>(work, work, built.robot, control, published);
     const std::weak_ptr<owned_arm> observer = owned;
 
     joint_vector too_wide(3);

@@ -237,8 +237,8 @@ std::shared_ptr<scene::preset> compose_arm(const meios::model<> &description, co
 
     robot->set_joint_positions(*opening);
 
-    auto controller =
-            std::make_shared<robot_controller>(*robot, arm.motion, shapes.path, arm.trajectory, shapes.time_scaling, shapes.trajectory, motions.screw, site.ask_unload, site.root);
+    auto controller = std::make_shared<robot_controller>(*robot, arm.motion, shapes.path, arm.trajectory, shapes.time_scaling, shapes.trajectory, motions.screw, motions.frame,
+                                                         site.ask_unload, site.root);
 
     return composed_preset(site, *handle, std::move(attached), robot, controller, motions, arm.fk, arm.dk, shapes.path, defaulted_robot_slots(arm.robot), windows);
 }

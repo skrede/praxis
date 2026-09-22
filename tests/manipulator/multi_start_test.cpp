@@ -107,7 +107,8 @@ struct standing_arm
                                                   .value(),
                                           robot_ops{}, rigid_motion::baseline().frame, 2u)
                              .value())
-            , control(driven, motion_ops{}, composing_path(), task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, rigid_motion::screw_ops{})
+            , control(driven, motion_ops{}, composing_path(), task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, rigid_motion::screw_ops{},
+                      rigid_motion::frame_ops{})
     {
         driven.set_joint_positions(configuration(0.25, -0.5));
         control.set_velocity_factor(1.0);

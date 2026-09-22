@@ -76,8 +76,9 @@ composed_arm composing(praxis::scheduler::scheduler &loop)
     const strand work    = *loop.make_strand();
     const auto driven    = std::make_shared<scene_robot>(two_joint_arm(robot_ops{}));
     const auto published = std::make_shared<arm_publisher>();
-    const auto control   = std::make_shared<robot_controller>(*driven, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{},
-                                                              trajectory::trajectory_ops{.joint_space_waypoints = &recorded_waypoints}, rigid_motion::screw_ops{});
+    const auto control =
+            std::make_shared<robot_controller>(*driven, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{},
+                                               trajectory::trajectory_ops{.joint_space_waypoints = &recorded_waypoints}, rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
 
     return composed_arm{published->reader(), published, std::make_shared<owned_arm>(work, work, driven, control, published)};
 }

@@ -230,7 +230,7 @@ TEST_CASE("the_controller_reports_what_the_adapter_reports")
     scene_robot robot = adapter(robot_ops{});
     robot.set_joint_positions(configuration(0.3, -0.1));
     const robot_controller controller(robot, composing_motion(), composing_path(), task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{},
-                                      rigid_motion::screw_ops{});
+                                      rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
 
     CHECK(controller.joint_count() == robot.joint_count());
     CHECK(is_approx_equal(controller.joint_positions(), robot.joint_positions()));
@@ -245,7 +245,7 @@ TEST_CASE("the_recording_names_no_directory_until_one_is_given")
     const scratch_tree scratch("robot_controller");
     scene_robot robot = adapter(robot_ops{});
     robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{}, trajectory::trajectory_ops{},
-                                rigid_motion::screw_ops{});
+                                rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
 
     CHECK_FALSE(controller.recording().active);
     CHECK(controller.recording().directory.empty());
@@ -263,7 +263,7 @@ TEST_CASE("recording settings that name no folder are accepted with nothing prep
 {
     scene_robot robot = adapter(robot_ops{});
     robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{}, trajectory::trajectory_ops{},
-                                rigid_motion::screw_ops{});
+                                rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
 
     const recording_outcome outcome = recording_to(controller, std::filesystem::path());
 
@@ -279,7 +279,7 @@ TEST_CASE("a recording folder that does not exist yet is created before the sett
     scene_robot robot                  = adapter(robot_ops{});
     const std::filesystem::path folder = scratch.root() / "runs" / "today";
     robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{}, trajectory::trajectory_ops{},
-                                rigid_motion::screw_ops{});
+                                rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
 
     CHECK(recording_to(controller, folder).answer.has_value());
     CHECK(std::filesystem::is_directory(folder));
@@ -293,7 +293,7 @@ TEST_CASE("a recording folder that already exists is accepted")
     const std::filesystem::path folder = scratch.root() / "existing";
     std::filesystem::create_directories(folder);
     robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{}, trajectory::trajectory_ops{},
-                                rigid_motion::screw_ops{});
+                                rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
 
     CHECK(recording_to(controller, folder).answer.has_value());
     CHECK(controller.recording().directory == std::filesystem::weakly_canonical(folder));
@@ -310,7 +310,7 @@ TEST_CASE("a recording folder that cannot be prepared is refused and leaves the 
     std::ofstream(occupied) << "a regular file, not a folder";
     const std::filesystem::path beneath = occupied / "beneath";
     robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{}, trajectory::trajectory_ops{},
-                                rigid_motion::screw_ops{});
+                                rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
 
     REQUIRE(recording_to(controller, settled).answer.has_value());
 
@@ -327,7 +327,7 @@ TEST_CASE("the_velocity_factor_lives_on_the_controller")
 {
     scene_robot robot = adapter(robot_ops{});
     robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{}, trajectory::trajectory_ops{},
-                                rigid_motion::screw_ops{});
+                                rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
 
     CHECK(is_approx_equal(controller.velocity_factor(), 0.3));
     controller.set_velocity_factor(0.75);
@@ -338,7 +338,7 @@ TEST_CASE("a_previewed_configuration_moves_the_arm_without_running_a_motion")
 {
     scene_robot robot = adapter(robot_ops{});
     robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{}, trajectory::trajectory_ops{},
-                                rigid_motion::screw_ops{});
+                                rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
 
     controller.preview_joint_configuration(configuration(0.2, -0.4));
 
@@ -349,7 +349,8 @@ TEST_CASE("a_previewed_configuration_moves_the_arm_without_running_a_motion")
 TEST_CASE("the_second_of_two_previewed_screw_angles_is_the_one_the_arm_is_left_at")
 {
     scene_robot robot = adapter(robot_ops{});
-    robot_controller controller(robot, previewing_motion(), composing_path(), task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, rigid_motion::screw_ops{});
+    robot_controller controller(robot, previewing_motion(), composing_path(), task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, rigid_motion::screw_ops{},
+                                rigid_motion::frame_ops{});
 
     controller.preview_task_space_screw(transform::Identity(), Eigen::Vector3d::UnitZ(), Eigen::Vector3d::Zero(), 0.3, 0.0);
     controller.preview_task_space_screw(transform::Identity(), Eigen::Vector3d::UnitZ(), Eigen::Vector3d::Zero(), 0.9, 0.0);
@@ -361,7 +362,8 @@ TEST_CASE("the_second_of_two_previewed_screw_angles_is_the_one_the_arm_is_left_a
 TEST_CASE("a_previewed_screw_whose_direction_names_no_axis_is_refused_whatever_the_motion_binding_answers")
 {
     scene_robot robot = adapter(robot_ops{});
-    robot_controller controller(robot, previewing_motion(), composing_path(), task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, rigid_motion::screw_ops{});
+    robot_controller controller(robot, previewing_motion(), composing_path(), task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, rigid_motion::screw_ops{},
+                                rigid_motion::frame_ops{});
     robot.set_joint_positions(configuration(0.15, 0.25));
     const joint_vector before = robot.joint_positions();
 
@@ -374,7 +376,8 @@ TEST_CASE("a_previewed_screw_whose_direction_names_no_axis_is_refused_whatever_t
 TEST_CASE("a_point_to_point_command_plays_back_and_leaves_the_arm_at_the_target")
 {
     scene_robot robot = adapter(robot_ops{});
-    robot_controller controller(robot, composing_motion(), composing_path(), task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, rigid_motion::screw_ops{});
+    robot_controller controller(robot, composing_motion(), composing_path(), task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, rigid_motion::screw_ops{},
+                                rigid_motion::frame_ops{});
     controller.set_velocity_factor(8.0);
 
     controller.task_space_ptp(planar_pose(0.4, -0.3));
@@ -389,7 +392,7 @@ TEST_CASE("a_refused_sample_stops_the_playback_and_leaves_the_arm_where_it_is")
 {
     scene_robot robot = adapter(robot_ops{});
     robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{},
-                                trajectory::trajectory_ops{.joint_space_waypoints = &refusing_waypoints}, rigid_motion::screw_ops{});
+                                trajectory::trajectory_ops{.joint_space_waypoints = &refusing_waypoints}, rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
     robot.set_joint_positions(configuration(0.15, 0.25));
 
     controller.joint_space_trajectory(std::array<joint_vector, 1>{configuration(0.9, -0.9)});
@@ -402,7 +405,7 @@ TEST_CASE("a_waypoint_factory_that_refuses_commands_no_motion_at_all")
 {
     scene_robot robot = adapter(robot_ops{});
     robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{},
-                                trajectory::trajectory_ops{.joint_space_waypoints = &refused_waypoints}, rigid_motion::screw_ops{});
+                                trajectory::trajectory_ops{.joint_space_waypoints = &refused_waypoints}, rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
     robot.set_joint_positions(configuration(0.15, 0.25));
 
     controller.joint_space_trajectory(std::array<joint_vector, 1>{configuration(0.9, -0.9)});
@@ -418,7 +421,7 @@ TEST_CASE("a_preview_a_slot_refuses_leaves_the_arm_at_exactly_the_configuration_
 {
     scene_robot robot = adapter(robot_ops{});
     robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{}, trajectory::trajectory_ops{},
-                                rigid_motion::screw_ops{});
+                                rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
     robot.set_joint_positions(configuration(0.15, 0.25));
     const joint_vector before = robot.joint_positions();
 
@@ -437,7 +440,8 @@ TEST_CASE("a_preview_a_slot_refuses_leaves_the_arm_at_exactly_the_configuration_
 TEST_CASE("a_screw_command_whose_axis_construction_refuses_stops_there_and_moves_the_arm_by_nothing")
 {
     scene_robot robot = adapter(robot_ops{});
-    robot_controller controller(robot, composing_motion(), composing_path(), task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, rigid_motion::screw_ops{});
+    robot_controller controller(robot, composing_motion(), composing_path(), task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, rigid_motion::screw_ops{},
+                                rigid_motion::frame_ops{});
     robot.set_joint_positions(configuration(0.15, 0.25));
     const joint_vector before = robot.joint_positions();
 
@@ -451,7 +455,8 @@ TEST_CASE("a_screw_command_whose_axis_construction_refuses_stops_there_and_moves
 TEST_CASE("a_screw_command_whose_direction_names_no_axis_is_refused_whatever_the_construction_answers")
 {
     scene_robot robot = adapter(robot_ops{});
-    robot_controller controller(robot, composing_motion(), composing_path(), task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, answering_every_direction());
+    robot_controller controller(robot, composing_motion(), composing_path(), task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, answering_every_direction(),
+                                rigid_motion::frame_ops{});
     robot.set_joint_positions(configuration(0.15, 0.25));
     const joint_vector before = robot.joint_positions();
 
@@ -467,7 +472,8 @@ TEST_CASE("a_screw_command_whose_direction_names_no_axis_is_refused_whatever_the
 TEST_CASE("the_three_time_scalings_give_three_durations_over_the_same_pair_of_configurations")
 {
     scene_robot robot = adapter(robot_ops{});
-    robot_controller controller(robot, composing_motion(), composing_path(), task_trajectory_ops{}, recording_time_scaling(), trajectory::trajectory_ops{}, rigid_motion::screw_ops{});
+    robot_controller controller(robot, composing_motion(), composing_path(), task_trajectory_ops{}, recording_time_scaling(), trajectory::trajectory_ops{}, rigid_motion::screw_ops{},
+                                rigid_motion::frame_ops{});
     controller.set_velocity_factor(8.0);
 
     CHECK(controller.time_scaling() == time_scaling_choice::quintic);
@@ -489,7 +495,8 @@ TEST_CASE("the_three_time_scalings_give_three_durations_over_the_same_pair_of_co
 TEST_CASE("an_overridden_trapezoid_bound_reaches_the_motion_the_controller_commands")
 {
     scene_robot robot = adapter(robot_ops{});
-    robot_controller controller(robot, composing_motion(), composing_path(), task_trajectory_ops{}, recording_time_scaling(), trajectory::trajectory_ops{}, rigid_motion::screw_ops{});
+    robot_controller controller(robot, composing_motion(), composing_path(), task_trajectory_ops{}, recording_time_scaling(), trajectory::trajectory_ops{}, rigid_motion::screw_ops{},
+                                rigid_motion::frame_ops{});
     controller.set_velocity_factor(8.0);
 
     const double derived = span_under(controller, robot, time_scaling_choice::trapezoidal);
@@ -507,7 +514,7 @@ TEST_CASE("a_via_point_factory_that_refuses_commands_no_task_space_motion_at_all
 {
     scene_robot robot = adapter(robot_ops{});
     robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{}, trajectory::trajectory_ops{},
-                                rigid_motion::screw_ops{});
+                                rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
     robot.set_joint_positions(configuration(0.15, 0.25));
     const joint_vector before = robot.joint_positions();
 
@@ -520,7 +527,8 @@ TEST_CASE("a_via_point_factory_that_refuses_commands_no_task_space_motion_at_all
 TEST_CASE("a_point_to_point_command_a_resolution_refuses_starts_no_motion_and_moves_nothing")
 {
     scene_robot robot = adapter(robot_ops{});
-    robot_controller controller(robot, motion_ops{}, composing_path(), task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, rigid_motion::screw_ops{});
+    robot_controller controller(robot, motion_ops{}, composing_path(), task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, rigid_motion::screw_ops{},
+                                rigid_motion::frame_ops{});
     robot.set_joint_positions(configuration(0.15, 0.25));
     const joint_vector before = robot.joint_positions();
 
@@ -534,7 +542,7 @@ TEST_CASE("a_command_on_unbound_capabilities_is_accepted_and_the_arm_does_not_mo
 {
     scene_robot robot = adapter(robot_ops{});
     robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{}, trajectory::trajectory_ops{},
-                                rigid_motion::screw_ops{});
+                                rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
     robot.set_joint_positions(configuration(0.15, 0.25));
 
     controller.task_space_ptp(planar_pose(0.9, 0.9));
@@ -551,7 +559,7 @@ TEST_CASE("a command refused over and over is one ring entry carrying its count,
 {
     scene_robot robot = adapter(robot_ops{});
     robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{}, trajectory::trajectory_ops{},
-                                rigid_motion::screw_ops{});
+                                rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
 
     const captured_log terminal;
     const std::shared_ptr<scene::log_buffer> messages = ring_on_the_current_logger();
@@ -571,7 +579,7 @@ TEST_CASE("a differently named refusal between the repeats starts a new entry ra
 {
     scene_robot robot = adapter(robot_ops{});
     robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{}, trajectory::trajectory_ops{},
-                                rigid_motion::screw_ops{});
+                                rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
 
     const captured_log terminal;
     const std::shared_ptr<scene::log_buffer> messages = ring_on_the_current_logger();

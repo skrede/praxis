@@ -130,9 +130,9 @@ composed_arm solving_arm(praxis::scheduler::scheduler &loop)
                                  robot_ops{}, rigid_motion::baseline().frame, 2u)
                     .value());
     const auto published = std::make_shared<arm_publisher>();
-    const auto control =
-            std::make_shared<robot_controller>(*driven, motion_ops{.task_space_pose = &solving_task_space_pose}, trajectory::path_ops{}, task_trajectory_ops{},
-                                               trajectory::time_scaling_ops{}, trajectory::trajectory_ops{.joint_space_waypoints = &recorded_waypoints}, rigid_motion::screw_ops{});
+    const auto control   = std::make_shared<robot_controller>(*driven, motion_ops{.task_space_pose = &solving_task_space_pose}, trajectory::path_ops{}, task_trajectory_ops{},
+                                                              trajectory::time_scaling_ops{}, trajectory::trajectory_ops{.joint_space_waypoints = &recorded_waypoints},
+                                                              rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
 
     return composed_arm{published->reader(), published, std::make_shared<owned_arm>(work, work, driven, control, published)};
 }

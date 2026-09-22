@@ -166,7 +166,8 @@ void note_answers_apart(const manipulator::capabilities &held, const manipulator
             answers_apart(held.motion.task_space_screw(screw, *composed, *reached, direction, point, turn, travel, start),
                           bent.motion.task_space_screw(screw, *composed, *reached, direction, point, turn, travel, start));
     seen[14] = seen[14] ||
-            answers_apart(held.motion.tool_frame_displace(*composed, *reached, shift, turning, start), bent.motion.tool_frame_displace(*composed, *reached, shift, turning, start));
+            answers_apart(held.motion.tool_frame_displace(shared_motions().frame, *composed, *reached, shift, turning, start),
+                          bent.motion.tool_frame_displace(shared_motions().frame, *composed, *reached, shift, turning, start));
 
     const expected<transform, refusal> stepped = composed->fk_solve(manipulator::joint_vector(start + manipulator::joint_vector::Constant(start.size(), waypoint_step_radians)));
     if(!stepped)

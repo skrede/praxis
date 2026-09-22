@@ -98,7 +98,7 @@ struct velocity_stage
         const scheduler::strand work = *loop.make_strand();
         const auto driven            = std::make_shared<scene_robot>(two_joint_arm(robot_ops{}));
         const auto commanded         = std::make_shared<robot_controller>(*driven, composing_motion(), composing_path(), task_trajectory_ops{}, composing_time_scaling(),
-                                                                          trajectory::trajectory_ops{}, rigid_motion::baseline().screw);
+                                                                          trajectory::trajectory_ops{}, rigid_motion::baseline().screw, rigid_motion::baseline().frame);
         owned                        = std::make_shared<owned_arm>(work, work, driven, commanded, driving);
 
         return owned;

@@ -20,7 +20,7 @@ TEST_CASE("the_motion_resolution_slots_default_to_refusing_rather_than_to_the_se
     const expected<joint_vector, refusal> to_pose = ops.task_space_pose(solver, transform::Identity(), j0);
     const expected<joint_vector, refusal> to_screw =
             ops.task_space_screw(rigid_motion::screw_ops{}, solver, transform::Identity(), Eigen::Vector3d::UnitZ(), Eigen::Vector3d::UnitX(), 1.5, 0.5, j0);
-    const expected<joint_vector, refusal> jogged = ops.tool_frame_displace(solver, transform::Identity(), Eigen::Vector3d::UnitX(), rotation::Identity(), j0);
+    const expected<joint_vector, refusal> jogged = ops.tool_frame_displace(rigid_motion::frame_ops{}, solver, transform::Identity(), Eigen::Vector3d::UnitX(), rotation::Identity(), j0);
 
     REQUIRE_FALSE(to_pose.has_value());
     REQUIRE_FALSE(to_screw.has_value());

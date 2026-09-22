@@ -13,7 +13,9 @@
 
 #include "praxis/scheduler/scheduler.h"
 
+#include "praxis/rigid_motion/frame.h"
 #include "praxis/rigid_motion/screw.h"
+#include "praxis/rigid_motion/capabilities.h"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -43,13 +45,14 @@ struct composed_arm
     std::shared_ptr<owned_arm> owned;
 };
 
-inline composed_arm compose(scheduler::scheduler &loop, const motion_ops &moving, const rigid_motion::screw_ops &turning)
+inline composed_arm compose(scheduler::scheduler &loop, const motion_ops &moving, const rigid_motion::screw_ops &turning,
+                            const rigid_motion::frame_ops &framing = rigid_motion::baseline().frame)
 {
     const trajectory::path_ops along{.joint_straight_line = &straight_line, .screw = &interpolated, .decoupled = &interpolated};
     const scheduler::strand work = *loop.make_strand();
     const auto driven            = std::make_shared<scene_robot>(two_joint_arm(robot_ops{}));
     const auto published         = std::make_shared<arm_publisher>();
-    const auto control           = std::make_shared<robot_controller>(*driven, moving, along, task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, turning);
+    const auto control = std::make_shared<robot_controller>(*driven, moving, along, task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, turning, framing);
 
     return composed_arm{published->reader(), published, std::make_shared<owned_arm>(work, work, driven, control, published)};
 }

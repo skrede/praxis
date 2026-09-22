@@ -23,7 +23,8 @@ namespace {
 constexpr double turn = 0.3;
 constexpr double step = 0.05;
 
-const rigid_motion::screw_ops reference_screw = rigid_motion::baseline().screw;
+const rigid_motion::screw_ops reference_screw  = rigid_motion::baseline().screw;
+const rigid_motion::frame_ops reference_frames = rigid_motion::baseline().frame;
 
 // The turn reversed, which no correct exponential answers.
 transform turned_the_other_way(const screw_axis &s, double theta_radians)
@@ -93,7 +94,7 @@ TEST_CASE("displacing_the_tool_frame_along_its_own_axis_moves_the_origin_there_a
     const joint_vector at   = posed_arm();
     const transform start   = solver.fk_solve(at).value();
 
-    const expected<joint_vector, refusal> moved = tool_frame_displace(solver, start, Eigen::Vector3d(step, 0.0, 0.0), rotation::Identity(), at);
+    const expected<joint_vector, refusal> moved = tool_frame_displace(reference_frames, solver, start, Eigen::Vector3d(step, 0.0, 0.0), rotation::Identity(), at);
     REQUIRE(moved.has_value());
 
     const transform reached = solver.fk_solve(*moved).value();
@@ -129,7 +130,7 @@ TEST_CASE("a_seed_of_a_size_the_chain_does_not_have_is_refused_by_every_motion_r
 
     const expected<joint_vector, refusal> to_pose  = task_space_pose(solver, start, at);
     const expected<joint_vector, refusal> to_screw = task_space_screw(reference_screw, solver, start, Eigen::Vector3d::UnitZ(), position_from_pose(start), turn, 0.0, at);
-    const expected<joint_vector, refusal> jogged   = tool_frame_displace(solver, start, Eigen::Vector3d(step, 0.0, 0.0), rotation::Identity(), at);
+    const expected<joint_vector, refusal> jogged   = tool_frame_displace(reference_frames, solver, start, Eigen::Vector3d(step, 0.0, 0.0), rotation::Identity(), at);
 
     REQUIRE_FALSE(to_pose.has_value());
     REQUIRE_FALSE(to_screw.has_value());

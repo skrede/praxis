@@ -46,10 +46,10 @@ inline expected<joint_vector, refusal> nudged_task_space_screw(const rigid_motio
     return nudged(answer.value());
 }
 
-inline expected<joint_vector, refusal> nudged_tool_frame_displace(const kinematics &solver, const transform &start_pose, const Eigen::Vector3d &offset, const rotation &orientation,
-                                                                  const joint_vector &j0)
+inline expected<joint_vector, refusal> nudged_tool_frame_displace(const rigid_motion::frame_ops &frames, const kinematics &solver, const transform &start_pose,
+                                                                  const Eigen::Vector3d &offset, const rotation &orientation, const joint_vector &j0)
 {
-    const expected<joint_vector, refusal> answer = tool_frame_displace(solver, start_pose, offset, orientation, j0);
+    const expected<joint_vector, refusal> answer = tool_frame_displace(frames, solver, start_pose, offset, orientation, j0);
     if(!answer)
         return answer;
 

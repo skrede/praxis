@@ -412,7 +412,7 @@ lib/praxis-manipulator/include/praxis/manipulator/baseline/motion.h	manipulator	
 lib/praxis-manipulator/include/praxis/manipulator/baseline/motion.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/baseline/motion.h	task_space_pose	prototype	(const kinematics & solver,const transform & pose,const joint_vector & j0)	typename:expected<joint_vector,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/baseline/motion.h	task_space_screw	prototype	(const rigid_motion::screw_ops & screw,const kinematics & solver,const transform & start_pose,const Eigen::Vector3d & w,const Eigen::Vector3d & q,double theta_radians,double h,const joint_vector & j0)	typename:expected<joint_vector,refusal>
-lib/praxis-manipulator/include/praxis/manipulator/baseline/motion.h	tool_frame_displace	prototype	(const kinematics & solver,const transform & start_pose,const Eigen::Vector3d & offset,const rotation & orientation,const joint_vector & j0)	typename:expected<joint_vector,refusal>
+lib/praxis-manipulator/include/praxis/manipulator/baseline/motion.h	tool_frame_displace	prototype	(const rigid_motion::frame_ops & frames,const kinematics & solver,const transform & start_pose,const Eigen::Vector3d & offset,const rotation & orientation,const joint_vector & j0)	typename:expected<joint_vector,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/baseline/robot.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/baseline/robot.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/baseline/robot.h	tool_pose_from_flange_pose	prototype	(const transform & flange_pose,const transform & tool_offset)	typename:transform
@@ -1010,13 +1010,13 @@ lib/praxis-manipulator/include/praxis/manipulator/motion.h	manipulator	namespace
 lib/praxis-manipulator/include/praxis/manipulator/motion.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/motion.h	task_space_pose	prototype	(const kinematics & solver,const transform & pose,const joint_vector & j0)	typename:expected<joint_vector,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/motion.h	task_space_screw	prototype	(const rigid_motion::screw_ops & screw,const kinematics & solver,const transform & start_pose,const Eigen::Vector3d & w,const Eigen::Vector3d & q,double theta_radians,double h,const joint_vector & j0)	typename:expected<joint_vector,refusal>
-lib/praxis-manipulator/include/praxis/manipulator/motion.h	tool_frame_displace	prototype	(const kinematics & solver,const transform & start_pose,const Eigen::Vector3d & offset,const rotation & orientation,const joint_vector & j0)	typename:expected<joint_vector,refusal>
+lib/praxis-manipulator/include/praxis/manipulator/motion.h	tool_frame_displace	prototype	(const rigid_motion::frame_ops & frames,const kinematics & solver,const transform & start_pose,const Eigen::Vector3d & offset,const rotation & orientation,const joint_vector & j0)	typename:expected<joint_vector,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/motion.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/motion.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/motion.h	motion_ops	struct	-	-
 lib/praxis-manipulator/include/praxis/manipulator/motion.h	task_space_pose	member	-	typename:expected<joint_vector,refusal> (*)(const kinematics & solver,const transform & pose,const joint_vector & j0)
 lib/praxis-manipulator/include/praxis/manipulator/motion.h	task_space_screw	member	-	typename:expected<joint_vector,refusal> (*)(const rigid_motion::screw_ops & screw,const kinematics & solver,const transform & start_pose,const Eigen::Vector3d & w,const Eigen::Vector3d & q,double theta_radians,double h,const joint_vector & j0)
-lib/praxis-manipulator/include/praxis/manipulator/motion.h	tool_frame_displace	member	-	typename:expected<joint_vector,refusal> (*)(const kinematics & solver,const transform & start_pose,const Eigen::Vector3d & offset,const rotation & orientation,const joint_vector & j0)
+lib/praxis-manipulator/include/praxis/manipulator/motion.h	tool_frame_displace	member	-	typename:expected<joint_vector,refusal> (*)(const rigid_motion::frame_ops & frames,const kinematics & solver,const transform & start_pose,const Eigen::Vector3d & offset,const rotation & orientation,const joint_vector & j0)
 lib/praxis-manipulator/include/praxis/manipulator/motion_commands.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/motion_commands.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/motion_commands.h	task_space_path	typedef	-	-
@@ -1223,7 +1223,7 @@ lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	operator =	
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	operator =	prototype	(command_extent &&)	typename:command_extent &
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	~command_extent	prototype	()	-
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	m_commanded	member	-	typename:robot_controller &
-lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	robot_controller	prototype	(scene_robot & driven,const motion_ops & injected_motion,const trajectory::path_ops & injected_path,const task_trajectory_ops & injected_task_trajectory,const trajectory::time_scaling_ops & injected_time_scaling,const trajectory::trajectory_ops & injected_joint_trajectory,const rigid_motion::screw_ops & injected_screw,std::function<void ()> ask_unload={},std::filesystem::path root={})	-
+lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	robot_controller	prototype	(scene_robot & driven,const motion_ops & injected_motion,const trajectory::path_ops & injected_path,const task_trajectory_ops & injected_task_trajectory,const trajectory::time_scaling_ops & injected_time_scaling,const trajectory::trajectory_ops & injected_joint_trajectory,const rigid_motion::screw_ops & injected_screw,const rigid_motion::frame_ops & injected_frames,std::function<void ()> ask_unload={},std::filesystem::path root={})	-
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	~robot_controller	prototype	()	-
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	recording	prototype	() const	typename:recording_parameters
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	set_recording	prototype	(const recording_parameters & parameters)	typename:expected<std::filesystem::path,refusal>
@@ -1282,6 +1282,7 @@ lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	m_scaling_c
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	m_scaling_bounds	member	-	typename:std::optional<path_parameter_bounds>
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	m_joint_trajectory	member	-	typename:trajectory::trajectory_ops
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	m_screw	member	-	typename:rigid_motion::screw_ops
+lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	m_frames	member	-	typename:rigid_motion::frame_ops
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	m_velocity	member	-	typename:double
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	m_queued_at	member	-	typename:std::size_t
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	m_reached	member	-	typename:std::vector<std::size_t>

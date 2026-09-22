@@ -77,7 +77,7 @@ struct arm_pipe
 std::shared_ptr<robot_controller> controlling(scene_robot &driven, const std::filesystem::path &root)
 {
     return std::make_shared<robot_controller>(driven, composing_motion(), composing_path(), task_trajectory_ops{}, composing_time_scaling(), praxis::trajectory::trajectory_ops{},
-                                              praxis::rigid_motion::screw_ops{}, std::function<void()>{}, root);
+                                              praxis::rigid_motion::screw_ops{}, praxis::rigid_motion::frame_ops{}, std::function<void()>{}, root);
 }
 
 arm_pipe pipe(scheduler &loop, const std::filesystem::path &root)

@@ -52,7 +52,7 @@ std::size_t resolved(const praxis::manipulator::robot_ops &robot, const praxis::
     reached += robot.ik_solve_flange_pose(solver, transform::Identity(), seed).value_or(seed).size();
     reached += motion.task_space_pose(solver, transform::Identity(), seed).value_or(seed).size();
     reached += motion.task_space_screw(praxis::rigid_motion::screw_ops{}, solver, transform::Identity(), axis, axis, 0.0, 0.0, seed).value_or(seed).size();
-    reached += motion.tool_frame_displace(solver, transform::Identity(), axis, rotation::Identity(), seed).value_or(seed).size();
+    reached += motion.tool_frame_displace(praxis::rigid_motion::frame_ops{}, solver, transform::Identity(), axis, rotation::Identity(), seed).value_or(seed).size();
 
     return static_cast<std::size_t>(reached);
 }

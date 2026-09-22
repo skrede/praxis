@@ -47,9 +47,9 @@ expected<joint_vector, refusal> swept_under(const rigid_motion::capabilities &sp
     return manipulator::baseline().motion.task_space_screw(spatial.screw, solver, start, Eigen::Vector3d::UnitZ(), arm.position_from_pose(start), turn, 0.0, at);
 }
 
-expected<joint_vector, refusal> displaced_under(const rigid_motion::capabilities &, const kinematics &solver, const transform &start, const joint_vector &at)
+expected<joint_vector, refusal> displaced_under(const rigid_motion::capabilities &spatial, const kinematics &solver, const transform &start, const joint_vector &at)
 {
-    return manipulator::baseline().motion.tool_frame_displace(solver, start, Eigen::Vector3d(0.05, 0.0, 0.0), rigid_motion::rotate_z(0.1), at);
+    return manipulator::baseline().motion.tool_frame_displace(spatial.frame, solver, start, Eigen::Vector3d(0.05, 0.0, 0.0), rigid_motion::rotate_z(0.1), at);
 }
 
 }
@@ -108,7 +108,11 @@ TEST_CASE("the screw-swept task-space motion answers under the screw operations 
     REQUIRE((*under_substitution - *under_the_reference).cwiseAbs().maxCoeff() > apart_by_radians);
 }
 
-TEST_CASE("the offset task-space motion answers the same under a composition whose operations it does not reach", "[seam][routing]")
+// The displacement is built through the frame operations the composition hands the slot, so
+// substituting them moves the pose the solve is asked for. The substituted construction offsets that
+// pose a metre off the plane this arm works in, which is why the answer moves from a configuration to
+// a refusal rather than to a configuration standing apart.
+TEST_CASE("the offset task-space motion answers under the frame operations the composition hands it", "[seam][routing]")
 {
     const rigid_motion::capabilities reference = rigid_motion::baseline();
     const rigid_motion::capabilities perturbed = substituted_everywhere();
@@ -118,13 +122,10 @@ TEST_CASE("the offset task-space motion answers the same under a composition who
 
     REQUIRE(every_substituted_slot_differs(reference, perturbed));
 
-    SECTION("the offset task-space motion")
-    {
-        const expected<joint_vector, refusal> under_the_reference = displaced_under(reference, solver, start, at);
-        const expected<joint_vector, refusal> under_substitution  = displaced_under(perturbed, solver, start, at);
+    const expected<joint_vector, refusal> under_the_reference = displaced_under(reference, solver, start, at);
+    const expected<joint_vector, refusal> under_substitution  = displaced_under(perturbed, solver, start, at);
 
-        REQUIRE(under_the_reference.has_value());
-        REQUIRE(under_substitution.has_value());
-        REQUIRE(*under_substitution == *under_the_reference);
-    }
+    REQUIRE(under_the_reference.has_value());
+    REQUIRE_FALSE(under_substitution.has_value());
+    REQUIRE(under_substitution.error() == refusal::no_solution);
 }

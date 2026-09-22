@@ -80,7 +80,7 @@ void robot_controller::preview_tool_frame_jog(const transform &start_pose, const
         return;
 
     const std::uint64_t before                    = m_robot.solver().solve_count();
-    const expected<joint_vector, refusal> reached = kept(before, m_motion.tool_frame_displace(m_robot.solver(), start_pose, offset, orientation, m_robot.joint_positions()));
+    const expected<joint_vector, refusal> reached = kept(before, m_motion.tool_frame_displace(m_frames, m_robot.solver(), start_pose, offset, orientation, m_robot.joint_positions()));
     if(reached)
         m_robot.set_joint_positions(*reached);
     else

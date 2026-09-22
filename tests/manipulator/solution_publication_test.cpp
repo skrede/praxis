@@ -113,7 +113,7 @@ struct stage
         driven->set_joint_positions(configuration(0.25, -0.5));
 
         auto control = std::make_shared<robot_controller>(*driven, motion_ops{}, composing_path(), task_trajectory_ops{}, composing_time_scaling(), praxis::trajectory::trajectory_ops{},
-                                                          praxis::rigid_motion::screw_ops{});
+                                                          praxis::rigid_motion::screw_ops{}, praxis::rigid_motion::frame_ops{});
 
         arm = std::make_shared<owned_arm>(loop.main_strand(), loop.main_strand(), driven, control, published);
         REQUIRE(shown.initialize().has_value());

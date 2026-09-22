@@ -37,7 +37,7 @@ expected<joint_vector, refusal> unreachable(const kinematics &, const transform 
 robot_controller controlling(scene_robot &driven, const motion_ops &injected, std::function<void()> ask_unload)
 {
     return robot_controller(driven, injected, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{}, trajectory::trajectory_ops{}, rigid_motion::screw_ops{},
-                            std::move(ask_unload));
+                            rigid_motion::frame_ops{}, std::move(ask_unload));
 }
 
 // The factories a preset ships rather than a stub written to refuse, so what a case reads is the
@@ -46,7 +46,7 @@ robot_controller controlling(scene_robot &driven, const motion_ops &injected, st
 robot_controller shipping_waypoints(scene_robot &driven, std::function<void()> ask_unload)
 {
     return robot_controller(driven, motion_ops{}, trajectory::path_ops{}, manipulator::baseline().trajectory, trajectory::time_scaling_ops{}, trajectory::baseline().trajectory,
-                            rigid_motion::screw_ops{}, std::move(ask_unload));
+                            rigid_motion::screw_ops{}, rigid_motion::frame_ops{}, std::move(ask_unload));
 }
 
 struct outcome

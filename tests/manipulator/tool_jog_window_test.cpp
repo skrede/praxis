@@ -69,7 +69,8 @@ struct displacement
 
 std::vector<displacement> jogged;
 
-expected<joint_vector, refusal> recorded_jog(const kinematics &, const transform &start, const Eigen::Vector3d &offset, const rotation &turned, const joint_vector &j0)
+expected<joint_vector, refusal> recorded_jog(const rigid_motion::frame_ops &, const kinematics &, const transform &start, const Eigen::Vector3d &offset, const rotation &turned,
+                                             const joint_vector &j0)
 {
     jogged.push_back(displacement{start, offset, turned});
 

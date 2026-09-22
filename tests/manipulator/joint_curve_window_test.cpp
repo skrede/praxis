@@ -61,7 +61,7 @@ struct stage
             , robot(std::make_shared<scene_robot>(two_joint_arm(robot_ops{})))
             , published(std::make_shared<arm_publisher>())
             , control(std::make_shared<robot_controller>(*robot, motion_ops{}, trajectory::baseline().path, task_trajectory_ops{}, trajectory::baseline().time_scaling,
-                                                         trajectory::baseline().trajectory, rigid_motion::screw_ops{}))
+                                                         trajectory::baseline().trajectory, rigid_motion::screw_ops{}, rigid_motion::frame_ops{}))
             , owned(std::make_shared<owned_arm>(work, work, robot, control, published))
             , panel(panel_title, published->reader(), joint_curve_window::settings{}, curves_at)
     {

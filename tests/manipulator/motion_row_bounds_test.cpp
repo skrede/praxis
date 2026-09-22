@@ -56,10 +56,10 @@ expected<joint_vector, refusal> screw_standing_off(const rigid_motion::screw_ops
     return task_space_pose(solver, standing_off(screw.matrix_exponential_screw(*axis, theta_radians) * start_pose), j0);
 }
 
-expected<joint_vector, refusal> displace_standing_off(const kinematics &solver, const transform &start_pose, const Eigen::Vector3d &offset, const rotation &orientation,
-                                                      const joint_vector &j0)
+expected<joint_vector, refusal> displace_standing_off(const rigid_motion::frame_ops &frames, const kinematics &solver, const transform &start_pose, const Eigen::Vector3d &offset,
+                                                      const rotation &orientation, const joint_vector &j0)
 {
-    return task_space_pose(solver, standing_off(start_pose * rigid_motion::transformation_matrix_from_rotation_position(orientation, offset)), j0);
+    return task_space_pose(solver, standing_off(start_pose * frames.transformation_matrix_from_rotation_position(orientation, offset)), j0);
 }
 
 constexpr motion_ops standing_off_target{

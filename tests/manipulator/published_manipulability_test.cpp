@@ -86,7 +86,7 @@ arm_pipe pipe(scheduler &loop, const screw_chain &chain, std::uint32_t joints, c
                     .value());
 
     auto controller = std::make_shared<robot_controller>(*robot, motion_ops{}, composing_path(), task_trajectory_ops{}, composing_time_scaling(), praxis::trajectory::trajectory_ops{},
-                                                         praxis::rigid_motion::screw_ops{});
+                                                         praxis::rigid_motion::screw_ops{}, praxis::rigid_motion::frame_ops{});
     auto published  = std::make_shared<arm_publisher>();
     auto owned      = std::make_shared<owned_arm>(work, work, robot, controller, published);
 

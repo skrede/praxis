@@ -46,8 +46,8 @@ recording_parameters::recording_parameters()
 
 robot_controller::robot_controller(scene_robot &driven, const motion_ops &injected_motion, const trajectory::path_ops &injected_path,
                                    const task_trajectory_ops &injected_task_trajectory, const trajectory::time_scaling_ops &injected_time_scaling,
-                                   const trajectory::trajectory_ops &injected_joint_trajectory, const rigid_motion::screw_ops &injected_screw, std::function<void()> ask_unload,
-                                   std::filesystem::path root)
+                                   const trajectory::trajectory_ops &injected_joint_trajectory, const rigid_motion::screw_ops &injected_screw,
+                                   const rigid_motion::frame_ops &injected_frames, std::function<void()> ask_unload, std::filesystem::path root)
         : m_motion(injected_motion)
         , m_path(injected_path)
         , m_task_trajectory(injected_task_trajectory)
@@ -56,6 +56,7 @@ robot_controller::robot_controller(scene_robot &driven, const motion_ops &inject
         , m_scaling_bounds(std::nullopt)
         , m_joint_trajectory(injected_joint_trajectory)
         , m_screw(injected_screw)
+        , m_frames(injected_frames)
         , m_velocity(0.3)
         , m_queued_at(0)
         , m_reached()

@@ -36,7 +36,7 @@ clock_source dictating()
 std::shared_ptr<robot_controller> controlling(scene_robot &driven)
 {
     return std::make_shared<robot_controller>(driven, composing_motion(), composing_path(), task_trajectory_ops{}, composing_time_scaling(), praxis::trajectory::trajectory_ops{},
-                                              praxis::rigid_motion::screw_ops{});
+                                              praxis::rigid_motion::screw_ops{}, praxis::rigid_motion::frame_ops{});
 }
 
 struct arm_pipe

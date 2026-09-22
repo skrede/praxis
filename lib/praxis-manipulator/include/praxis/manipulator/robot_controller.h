@@ -17,6 +17,7 @@
 #include "praxis/trajectory/trajectory.h"
 #include "praxis/trajectory/time_scaling.h"
 
+#include "praxis/rigid_motion/frame.h"
 #include "praxis/rigid_motion/screw.h"
 #include "praxis/rigid_motion/types.h"
 
@@ -68,7 +69,8 @@ public:
 
     robot_controller(scene_robot &driven, const motion_ops &injected_motion, const trajectory::path_ops &injected_path, const task_trajectory_ops &injected_task_trajectory,
                      const trajectory::time_scaling_ops &injected_time_scaling, const trajectory::trajectory_ops &injected_joint_trajectory,
-                     const rigid_motion::screw_ops &injected_screw, std::function<void()> ask_unload = {}, std::filesystem::path root = {});
+                     const rigid_motion::screw_ops &injected_screw, const rigid_motion::frame_ops &injected_frames, std::function<void()> ask_unload = {},
+                     std::filesystem::path root = {});
     ~robot_controller();
 
     recording_parameters recording() const;
@@ -221,6 +223,7 @@ private:
     std::optional<path_parameter_bounds> m_scaling_bounds;
     trajectory::trajectory_ops m_joint_trajectory;
     rigid_motion::screw_ops m_screw;
+    rigid_motion::frame_ops m_frames;
     double m_velocity;
     std::size_t m_queued_at;
     std::vector<std::size_t> m_reached;
