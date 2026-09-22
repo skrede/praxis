@@ -96,8 +96,8 @@ expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> recorded_wa
 
 // The steps one solve reports: as many as the target's second component names, both errors halving
 // each step, and the posture the first component names.
-expected<void, refusal> stepping_inverse_kinematics(const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &, const transform &desired,
-                                                    const joint_vector &, const solver_parameters &, ik_result &answer)
+expected<void, refusal> stepping_inverse_kinematics(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &,
+                                                    const transform &desired, const joint_vector &, const solver_parameters &, ik_result &answer)
 {
     answer.iterations = stepping(desired(0, 3), static_cast<std::uint32_t>(std::lround(desired(1, 3))));
     answer.solutions.push_back(configuration(desired(0, 3), 0.0));

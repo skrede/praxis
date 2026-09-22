@@ -36,22 +36,24 @@ inline transform off_target(const transform &desired)
     return moved;
 }
 
-inline expected<void, refusal> solves_for_a_displaced_target(const forward_kinematics_ops &forward, const differential_kinematics_ops &differential, const screw_chain &chain,
-                                                             const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer)
+inline expected<void, refusal> solves_for_a_displaced_target(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward,
+                                                             const differential_kinematics_ops &differential, const screw_chain &chain, const transform &desired, const joint_vector &j0,
+                                                             const solver_parameters &parameters, ik_result &answer)
 {
-    return inverse_kinematics(forward, differential, chain, off_target(desired), j0, parameters, answer);
+    return inverse_kinematics(screw, forward, differential, chain, off_target(desired), j0, parameters, answer);
 }
 
 // The search started from the seed reflected through the origin of joint space, which reaches the pose
 // it was asked for along a branch the seed itself does not lead to.
-inline expected<void, refusal> solves_from_a_reflected_seed(const forward_kinematics_ops &forward, const differential_kinematics_ops &differential, const screw_chain &chain,
-                                                            const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer)
+inline expected<void, refusal> solves_from_a_reflected_seed(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const differential_kinematics_ops &differential,
+                                                            const screw_chain &chain, const transform &desired, const joint_vector &j0, const solver_parameters &parameters,
+                                                            ik_result &answer)
 {
-    return inverse_kinematics(forward, differential, chain, desired, joint_vector(-j0), parameters, answer);
+    return inverse_kinematics(screw, forward, differential, chain, desired, joint_vector(-j0), parameters, answer);
 }
 
-inline expected<void, refusal> answers_one_joint_too_many(const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &, const transform &,
-                                                          const joint_vector &j0, const solver_parameters &, ik_result &answer)
+inline expected<void, refusal> answers_one_joint_too_many(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &,
+                                                          const transform &, const joint_vector &j0, const solver_parameters &, ik_result &answer)
 {
     answer.solutions.emplace_back(joint_vector::Zero(j0.size() + 1));
 

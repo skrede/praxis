@@ -104,7 +104,7 @@ std::optional<solve_request> drawn_request(evaluation::case_source &drawn, const
 
 expected<void, refusal> solved_by(const inverse_kinematics_ops &bound, const screw_chain &chain, const solve_request &asked, ik_result &answer)
 {
-    return bound.inverse_kinematics(asked.forward, asked.differential, chain, asked.target, asked.seed, solver_parameters(), answer);
+    return bound.inverse_kinematics(shared_screw(), asked.forward, asked.differential, chain, asked.target, asked.seed, solver_parameters(), answer);
 }
 
 // A pose a chain can reach is reached by more than one configuration, so an answer is read back

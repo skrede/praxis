@@ -36,7 +36,7 @@ time_point reading()
 
 // Six rows and one column per joint, the rows scaled apart so the top three and the bottom three
 // carry different singular values and a decomposition taken over the wrong rows is visible.
-praxis::expected<jacobian, praxis::refusal> answering_space_jacobian(std::span<const praxis::screw_axis>, const joint_vector &theta)
+praxis::expected<jacobian, praxis::refusal> answering_space_jacobian(const praxis::rigid_motion::screw_ops &, std::span<const praxis::screw_axis>, const joint_vector &theta)
 {
     jacobian columns(6, theta.size());
     for(Eigen::Index joint = 0; joint < theta.size(); ++joint)
@@ -48,9 +48,9 @@ praxis::expected<jacobian, praxis::refusal> answering_space_jacobian(std::span<c
 
 // The value the mathematics cannot be taken over reaches the decomposition through a slot that
 // answered, so nothing above it has refused and this is the only place the fault can be named.
-praxis::expected<jacobian, praxis::refusal> deranged_space_jacobian(std::span<const praxis::screw_axis> screws, const joint_vector &theta)
+praxis::expected<jacobian, praxis::refusal> deranged_space_jacobian(const praxis::rigid_motion::screw_ops &screw, std::span<const praxis::screw_axis> screws, const joint_vector &theta)
 {
-    jacobian columns = answering_space_jacobian(screws, theta).value();
+    jacobian columns = answering_space_jacobian(screw, screws, theta).value();
     columns(1, 0)    = std::numeric_limits<double>::quiet_NaN();
 
     return columns;

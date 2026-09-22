@@ -398,11 +398,11 @@ lib/praxis-manipulator/include/praxis/manipulator/arm_state.h	__anon2dcb6ff40102
 lib/praxis-manipulator/include/praxis/manipulator/baseline/kinematics.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/baseline/kinematics.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/baseline/kinematics.h	forward_kinematics	prototype	(const transform & m,std::span<const screw_axis> space_screws,const joint_vector & theta)	typename:expected<transform,refusal>
-lib/praxis-manipulator/include/praxis/manipulator/baseline/kinematics.h	space_jacobian	prototype	(std::span<const screw_axis> space_screws,const joint_vector & theta)	typename:expected<jacobian,refusal>
+lib/praxis-manipulator/include/praxis/manipulator/baseline/kinematics.h	space_jacobian	prototype	(const rigid_motion::screw_ops & screw,std::span<const screw_axis> space_screws,const joint_vector & theta)	typename:expected<jacobian,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/baseline/kinematics.h	body_jacobian	prototype	(std::span<const screw_axis> body_screws,const joint_vector & theta)	typename:expected<jacobian,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/baseline/kinematics.h	body_screws_from_space	prototype	(const rigid_motion::screw_ops & screw,const rigid_motion::frame_ops & frames,const transform & m,std::span<const screw_axis> space_screws)	typename:expected<std::vector<screw_axis>,refusal>
-lib/praxis-manipulator/include/praxis/manipulator/baseline/kinematics.h	inverse_kinematics	prototype	(const forward_kinematics_ops & forward,const differential_kinematics_ops & differential,const screw_chain & chain,const transform & desired,const joint_vector & j0,const solver_parameters & parameters,ik_result & answer)	typename:expected<void,refusal>
-lib/praxis-manipulator/include/praxis/manipulator/baseline/kinematics.h	analytic_inverse_kinematics	prototype	(const forward_kinematics_ops & forward,const screw_chain & chain,const transform & desired,ik_result & answer)	typename:expected<void,refusal>
+lib/praxis-manipulator/include/praxis/manipulator/baseline/kinematics.h	inverse_kinematics	prototype	(const rigid_motion::screw_ops & screw,const forward_kinematics_ops & forward,const differential_kinematics_ops & differential,const screw_chain & chain,const transform & desired,const joint_vector & j0,const solver_parameters & parameters,ik_result & answer)	typename:expected<void,refusal>
+lib/praxis-manipulator/include/praxis/manipulator/baseline/kinematics.h	analytic_inverse_kinematics	prototype	(const rigid_motion::screw_ops & screw,const forward_kinematics_ops & forward,const screw_chain & chain,const transform & desired,ik_result & answer)	typename:expected<void,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/baseline/kinematics.h	body_forward_kinematics	prototype	(const rigid_motion::frame_ops & frames,const transform & m,std::span<const screw_axis> body_screws,const joint_vector & theta)	typename:expected<transform,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/baseline/kinematics.h	make_kinematics	prototype	(const screw_chain & chain,forward_kinematics_ops forward,differential_kinematics_ops differential,inverse_kinematics_ops inverse,const rigid_motion::screw_ops & screw,const rigid_motion::frame_ops & frames)	typename:expected<kinematics,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/baseline/modeling.h	manipulator	namespace	-	-
@@ -772,7 +772,7 @@ lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	inert	namespace	-
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	forward_kinematics	prototype	(const transform & m,std::span<const screw_axis> space_screws,const joint_vector & theta)	typename:expected<transform,refusal>
-lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	space_jacobian	prototype	(std::span<const screw_axis> space_screws,const joint_vector & theta)	typename:expected<jacobian,refusal>
+lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	space_jacobian	prototype	(const rigid_motion::screw_ops & screw,std::span<const screw_axis> space_screws,const joint_vector & theta)	typename:expected<jacobian,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	body_jacobian	prototype	(std::span<const screw_axis> body_screws,const joint_vector & theta)	typename:expected<jacobian,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	body_screws_from_space	prototype	(const rigid_motion::screw_ops & screw,const rigid_motion::frame_ops & frames,const transform & m,std::span<const screw_axis> space_screws)	typename:expected<std::vector<screw_axis>,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	body_forward_kinematics	prototype	(const rigid_motion::frame_ops & frames,const transform & m,std::span<const screw_axis> body_screws,const joint_vector & theta)	typename:expected<transform,refusal>
@@ -783,18 +783,18 @@ lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	forward_kinematic
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	body_forward_kinematics	member	-	typename:expected<transform,refusal> (*)(const rigid_motion::frame_ops & frames,const transform & m,std::span<const screw_axis> body_screws,const joint_vector & theta)
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	body_screws_from_space	member	-	typename:expected<std::vector<screw_axis>,refusal> (*)(const rigid_motion::screw_ops & screw,const rigid_motion::frame_ops & frames,const transform & m,std::span<const screw_axis> space_screws)
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	differential_kinematics_ops	struct	-	-
-lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	space_jacobian	member	-	typename:expected<jacobian,refusal> (*)(std::span<const screw_axis> space_screws,const joint_vector & theta)
+lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	space_jacobian	member	-	typename:expected<jacobian,refusal> (*)(const rigid_motion::screw_ops & screw,std::span<const screw_axis> space_screws,const joint_vector & theta)
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	body_jacobian	member	-	typename:expected<jacobian,refusal> (*)(std::span<const screw_axis> body_screws,const joint_vector & theta)
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	inert	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	praxis	namespace	-	-
-lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	inverse_kinematics	prototype	(const forward_kinematics_ops & forward,const differential_kinematics_ops & differential,const screw_chain & chain,const transform & desired,const joint_vector & j0,const solver_parameters & parameters,ik_result & answer)	typename:expected<void,refusal>
-lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	analytic_inverse_kinematics	prototype	(const forward_kinematics_ops & forward,const screw_chain & chain,const transform & desired,ik_result & answer)	typename:expected<void,refusal>
+lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	inverse_kinematics	prototype	(const rigid_motion::screw_ops & screw,const forward_kinematics_ops & forward,const differential_kinematics_ops & differential,const screw_chain & chain,const transform & desired,const joint_vector & j0,const solver_parameters & parameters,ik_result & answer)	typename:expected<void,refusal>
+lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	analytic_inverse_kinematics	prototype	(const rigid_motion::screw_ops & screw,const forward_kinematics_ops & forward,const screw_chain & chain,const transform & desired,ik_result & answer)	typename:expected<void,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	inverse_kinematics_ops	struct	-	-
-lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	inverse_kinematics	member	-	typename:expected<void,refusal> (*)(const forward_kinematics_ops & forward,const differential_kinematics_ops & differential,const screw_chain & chain,const transform & desired,const joint_vector & j0,const solver_parameters & parameters,ik_result & answer)
-lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	analytic_inverse_kinematics	member	-	typename:expected<void,refusal> (*)(const forward_kinematics_ops & forward,const screw_chain & chain,const transform & desired,ik_result & answer)
+lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	inverse_kinematics	member	-	typename:expected<void,refusal> (*)(const rigid_motion::screw_ops & screw,const forward_kinematics_ops & forward,const differential_kinematics_ops & differential,const screw_chain & chain,const transform & desired,const joint_vector & j0,const solver_parameters & parameters,ik_result & answer)
+lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	analytic_inverse_kinematics	member	-	typename:expected<void,refusal> (*)(const rigid_motion::screw_ops & screw,const forward_kinematics_ops & forward,const screw_chain & chain,const transform & desired,ik_result & answer)
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	kinematics	class	-	-
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	kinematics	prototype	()	-
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	compose	prototype	(screw_chain chain,forward_kinematics_ops forward,differential_kinematics_ops differential,inverse_kinematics_ops inverse,const rigid_motion::screw_ops & screw,const rigid_motion::frame_ops & frames)	typename:expected<kinematics,refusal>
@@ -811,13 +811,14 @@ lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	configurations_re
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	solutions	prototype	() const	typename:std::span<const joint_vector>
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	iterations	prototype	() const	typename:std::span<const iteration_state>
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	solve_count	prototype	() const	typename:std::uint64_t
-lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	kinematics	prototype	(screw_chain chain,forward_kinematics_ops forward,differential_kinematics_ops differential,inverse_kinematics_ops inverse,const rigid_motion::frame_ops & frames)	-
+lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	kinematics	prototype	(screw_chain chain,forward_kinematics_ops forward,differential_kinematics_ops differential,inverse_kinematics_ops inverse,const rigid_motion::screw_ops & screw,const rigid_motion::frame_ops & frames)	-
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	m_space	member	-	typename:screw_chain
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	m_body	member	-	typename:screw_chain
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	m_body_unavailable	member	-	typename:std::optional<refusal>
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	m_fk	member	-	typename:forward_kinematics_ops
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	m_dk	member	-	typename:differential_kinematics_ops
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	m_ik	member	-	typename:inverse_kinematics_ops
+lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	m_screw	member	-	typename:rigid_motion::screw_ops
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	m_frames	member	-	typename:rigid_motion::frame_ops
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	m_last	member	-	typename:ik_result
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	m_solve_tally	member	-	typename:std::uint64_t

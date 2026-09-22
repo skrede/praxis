@@ -180,7 +180,7 @@ expected<transform, refusal> forward_kinematics(const transform &m, std::span<co
 
 // The home pose does not enter, so the chain the columns are taken over carries none. Lynch & Park,
 // Modern Robotics, chapter 5.
-expected<jacobian, refusal> space_jacobian(std::span<const screw_axis> space_screws, const joint_vector &theta)
+expected<jacobian, refusal> space_jacobian(const rigid_motion::screw_ops &, std::span<const screw_axis> space_screws, const joint_vector &theta)
 {
     if(theta.size() != static_cast<Eigen::Index>(space_screws.size()))
         return unexpected(refusal::unsupported_input);
@@ -247,8 +247,8 @@ expected<std::vector<screw_axis>, refusal> body_screws_from_space(const rigid_mo
 }
 
 // The iterate sequence is taken from the solve policy one work unit at a time.
-expected<void, refusal> inverse_kinematics(const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &chain, const transform &desired,
-                                           const joint_vector &j0, const solver_parameters &parameters, ik_result &answer)
+expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &chain,
+                                           const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer)
 {
     const std::optional<chain_type> solved_over = to_cartan_chain(chain);
     const auto target                           = cartan::se3<double>::from_matrix(desired);
@@ -275,7 +275,8 @@ expected<void, refusal> inverse_kinematics(const forward_kinematics_ops &, const
 // The closed form for an ortho-parallel basis with a spherical wrist: Brandstotter, Angerer &
 // Hofbaur (2014). Every branch it names is answered for, and the answer carries no iterates because
 // none were taken.
-expected<void, refusal> analytic_inverse_kinematics(const forward_kinematics_ops &forward, const screw_chain &chain, const transform &desired, ik_result &answer)
+expected<void, refusal> analytic_inverse_kinematics(const rigid_motion::screw_ops &, const forward_kinematics_ops &forward, const screw_chain &chain, const transform &desired,
+                                                    ik_result &answer)
 {
     const expected<cartan::opw_parameters<double>, refusal> geometry = admitted_geometry(forward, chain);
     if(!geometry)

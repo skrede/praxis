@@ -58,7 +58,7 @@ struct ik_result
 namespace praxis::manipulator::inert {
 
 expected<transform, refusal> forward_kinematics(const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta);
-expected<jacobian, refusal> space_jacobian(std::span<const screw_axis> space_screws, const joint_vector &theta);
+expected<jacobian, refusal> space_jacobian(const rigid_motion::screw_ops &screw, std::span<const screw_axis> space_screws, const joint_vector &theta);
 expected<jacobian, refusal> body_jacobian(std::span<const screw_axis> body_screws, const joint_vector &theta);
 expected<std::vector<screw_axis>, refusal> body_screws_from_space(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
                                                                   std::span<const screw_axis> space_screws);
@@ -85,20 +85,21 @@ struct forward_kinematics_ops
 // Declaration order is frozen: a designated initializer must name members in declaration order, so
 // reordering a slot breaks every project that already composes this aggregate. Appending is safe.
 // The two Jacobians are here: each maps joint rates to a twist, one expressed in the space frame and
-// one in the body frame, and each is taken over the screws it is handed and the configuration alone.
+// one in the body frame, over the screws it is handed and the configuration it is asked at.
 struct differential_kinematics_ops
 {
-    expected<jacobian, refusal> (*space_jacobian)(std::span<const screw_axis> space_screws, const joint_vector &theta) = &inert::space_jacobian;
-    expected<jacobian, refusal> (*body_jacobian)(std::span<const screw_axis> body_screws, const joint_vector &theta)   = &inert::body_jacobian;
+    expected<jacobian, refusal> (*space_jacobian)(const rigid_motion::screw_ops &screw, std::span<const screw_axis> space_screws, const joint_vector &theta) = &inert::space_jacobian;
+    expected<jacobian, refusal> (*body_jacobian)(std::span<const screw_axis> body_screws, const joint_vector &theta)                                         = &inert::body_jacobian;
 };
 
 }
 
 namespace praxis::manipulator::inert {
 
-expected<void, refusal> inverse_kinematics(const forward_kinematics_ops &forward, const differential_kinematics_ops &differential, const screw_chain &chain, const transform &desired,
-                                           const joint_vector &j0, const solver_parameters &parameters, ik_result &answer);
-expected<void, refusal> analytic_inverse_kinematics(const forward_kinematics_ops &forward, const screw_chain &chain, const transform &desired, ik_result &answer);
+expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const differential_kinematics_ops &differential,
+                                           const screw_chain &chain, const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer);
+expected<void, refusal> analytic_inverse_kinematics(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const screw_chain &chain, const transform &desired,
+                                                    ik_result &answer);
 
 }
 
@@ -107,14 +108,15 @@ namespace praxis::manipulator {
 // Declaration order is frozen: a designated initializer must name members in declaration order, so
 // reordering a slot breaks every project that already composes this aggregate. Appending is safe.
 // The solves are here, and each receives what its own mathematics consumes and nothing else: the
-// chain it is to solve over, the pose it is to reach, and the maps it reads along the way. Nothing
-// any of them is handed carries a way to ask for a solve.
+// chain it is to solve over, the pose it is to reach, and the operations and maps it reads along the
+// way. Nothing any of them is handed carries a way to ask for a solve.
 struct inverse_kinematics_ops
 {
-    expected<void, refusal> (*inverse_kinematics)(const forward_kinematics_ops &forward, const differential_kinematics_ops &differential, const screw_chain &chain,
-                                                  const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer) = &inert::inverse_kinematics;
-    expected<void, refusal> (*analytic_inverse_kinematics)(const forward_kinematics_ops &forward, const screw_chain &chain, const transform &desired,
-                                                           ik_result &answer) = &inert::analytic_inverse_kinematics;
+    expected<void, refusal> (*inverse_kinematics)(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const differential_kinematics_ops &differential,
+                                                  const screw_chain &chain, const transform &desired, const joint_vector &j0, const solver_parameters &parameters,
+                                                  ik_result &answer)                                    = &inert::inverse_kinematics;
+    expected<void, refusal> (*analytic_inverse_kinematics)(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const screw_chain &chain,
+                                                           const transform &desired, ik_result &answer) = &inert::analytic_inverse_kinematics;
 };
 
 // Holds the chain the bound implementations are asked about and routes every question to them. It is
@@ -176,7 +178,8 @@ public:
     std::uint64_t solve_count() const;
 
 private:
-    kinematics(screw_chain chain, forward_kinematics_ops forward, differential_kinematics_ops differential, inverse_kinematics_ops inverse, const rigid_motion::frame_ops &frames);
+    kinematics(screw_chain chain, forward_kinematics_ops forward, differential_kinematics_ops differential, inverse_kinematics_ops inverse, const rigid_motion::screw_ops &screw,
+               const rigid_motion::frame_ops &frames);
 
     screw_chain m_space;
     screw_chain m_body;
@@ -184,6 +187,7 @@ private:
     forward_kinematics_ops m_fk;
     differential_kinematics_ops m_dk;
     inverse_kinematics_ops m_ik;
+    rigid_motion::screw_ops m_screw;
     rigid_motion::frame_ops m_frames;
     mutable ik_result m_last;
     mutable std::uint64_t m_solve_tally;

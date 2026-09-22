@@ -73,8 +73,8 @@ transform offset_tool_pose(const transform &pose, const transform &offset)
 
 // The answer is the desired pose's own translation, so a resolved path reaches a configuration the
 // case can name, and each entry into the solver leaves one iterate behind.
-expected<void, refusal> recording_inverse_kinematics(const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &, const transform &desired,
-                                                     const joint_vector &j0, const solver_parameters &, ik_result &answer)
+expected<void, refusal> recording_inverse_kinematics(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &,
+                                                     const transform &desired, const joint_vector &j0, const solver_parameters &, ik_result &answer)
 {
     answer.iterations.push_back(iteration_state{j0, 0.5, 0.25, 0.125, 7u});
     answer.solutions.push_back(configuration(desired(0, 3), desired(1, 3)));

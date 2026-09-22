@@ -25,11 +25,12 @@ TEST_CASE("every slot of a value-initialized composition refuses rather than ans
     ik_result answer;
 
     const expected<transform, refusal> reached               = forward.forward_kinematics(transform::Identity(), {}, j0);
-    const expected<jacobian, refusal> space_frame            = differential.space_jacobian({}, j0);
+    const expected<jacobian, refusal> space_frame            = differential.space_jacobian(rigid_motion::screw_ops{}, {}, j0);
     const expected<jacobian, refusal> body_frame             = differential.body_jacobian({}, j0);
     const expected<std::vector<screw_axis>, refusal> derived = forward.body_screws_from_space(rigid_motion::screw_ops{}, rigid_motion::frame_ops{}, transform::Identity(), {});
-    const expected<void, refusal> solved                     = inverse.inverse_kinematics(forward, differential, screw_chain(), transform::Identity(), j0, solver_parameters(), answer);
-    const expected<transform, refusal> body_reached          = forward.body_forward_kinematics(rigid_motion::frame_ops{}, transform::Identity(), {}, j0);
+    const expected<void, refusal> solved =
+            inverse.inverse_kinematics(rigid_motion::screw_ops{}, forward, differential, screw_chain(), transform::Identity(), j0, solver_parameters(), answer);
+    const expected<transform, refusal> body_reached = forward.body_forward_kinematics(rigid_motion::frame_ops{}, transform::Identity(), {}, j0);
 
     REQUIRE_FALSE(reached.has_value());
     REQUIRE_FALSE(space_frame.has_value());

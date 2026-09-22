@@ -95,7 +95,7 @@ std::vector<manipulator::joint_vector> solved_by(const manipulator::capabilities
                                                  const transform &target, const manipulator::joint_vector &seed)
 {
     manipulator::ik_result answer;
-    static_cast<void>(solving.inverse_kinematics(held.fk, held.dk, chain, target, seed, manipulator::solver_parameters(), answer));
+    static_cast<void>(solving.inverse_kinematics(shared_motions().screw, held.fk, held.dk, chain, target, seed, manipulator::solver_parameters(), answer));
 
     return answer.solutions;
 }
@@ -118,7 +118,9 @@ void note_answers_apart(const manipulator::capabilities &held, const manipulator
     seen[2] = seen[2] ||
             answers_apart(held.fk.body_screws_from_space(shared_motions().screw, shared_motions().frame, example.chain.home, example.chain.space_screws),
                           bent.fk.body_screws_from_space(shared_motions().screw, shared_motions().frame, example.chain.home, example.chain.space_screws));
-    seen[3] = seen[3] || answers_apart(held.dk.space_jacobian(example.chain.space_screws, example.joints), bent.dk.space_jacobian(example.chain.space_screws, example.joints));
+    seen[3] = seen[3] ||
+            answers_apart(held.dk.space_jacobian(shared_motions().screw, example.chain.space_screws, example.joints),
+                          bent.dk.space_jacobian(shared_motions().screw, example.chain.space_screws, example.joints));
     seen[6] = seen[6] || apart(held.robot.tool_pose_from_flange_pose(pose, offset), bent.robot.tool_pose_from_flange_pose(pose, offset));
     seen[7] = seen[7] || apart(held.robot.flange_pose_from_tool_pose(shared_motions().frame, pose, offset), bent.robot.flange_pose_from_tool_pose(shared_motions().frame, pose, offset));
     seen[8] = seen[8] || apart(held.robot.position_from_pose(pose), bent.robot.position_from_pose(pose));

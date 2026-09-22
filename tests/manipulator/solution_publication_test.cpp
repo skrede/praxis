@@ -64,8 +64,8 @@ screw_chain reaching_chain()
 
 // Three answers for one target, in an order that is not their order of nearness to where the arm
 // stands: the second is the nearest and the first is what taking the front of the set would give.
-praxis::expected<void, praxis::refusal> three_branches(const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &, const praxis::transform &,
-                                                       const joint_vector &, const solver_parameters &, ik_result &answer)
+praxis::expected<void, praxis::refusal> three_branches(const praxis::rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &,
+                                                       const praxis::transform &, const joint_vector &, const solver_parameters &, ik_result &answer)
 {
     answer.solutions.push_back(configuration(1.0, 1.0));
     answer.solutions.push_back(configuration(0.5, -0.25));
@@ -77,8 +77,8 @@ praxis::expected<void, praxis::refusal> three_branches(const forward_kinematics_
 // One answer names the posture the arm already holds a full turn along the first joint and the other
 // a fraction of a turn away. Wrapped, the first is the nearer; unwrapped it is the farther by a wide
 // margin, so which the arm takes says which metric decided.
-praxis::expected<void, praxis::refusal> a_turn_and_a_fraction(const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &, const praxis::transform &,
-                                                              const joint_vector &, const solver_parameters &, ik_result &answer)
+praxis::expected<void, praxis::refusal> a_turn_and_a_fraction(const praxis::rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &,
+                                                              const screw_chain &, const praxis::transform &, const joint_vector &, const solver_parameters &, ik_result &answer)
 {
     answer.solutions.push_back(configuration(0.25 + 2.0 * std::numbers::pi, -0.5));
     answer.solutions.push_back(configuration(0.9, -0.5));

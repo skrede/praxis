@@ -54,9 +54,9 @@ inline expected<transform, refusal> displaced_body_forward(const rigid_motion::f
     return displaced(reached.value());
 }
 
-inline expected<jacobian, refusal> moved_space_jacobian(std::span<const screw_axis> space_screws, const joint_vector &theta)
+inline expected<jacobian, refusal> moved_space_jacobian(const rigid_motion::screw_ops &screw, std::span<const screw_axis> space_screws, const joint_vector &theta)
 {
-    expected<jacobian, refusal> columns = space_jacobian(space_screws, theta);
+    expected<jacobian, refusal> columns = space_jacobian(screw, space_screws, theta);
     if(!columns)
         return columns;
 
@@ -129,10 +129,10 @@ inline expected<std::vector<screw_axis>, refusal> displaced_body_screws(const ri
     return derived;
 }
 
-inline expected<void, refusal> nudged_iterative_solve(const forward_kinematics_ops &forward, const differential_kinematics_ops &differential, const screw_chain &chain,
-                                                      const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer)
+inline expected<void, refusal> nudged_iterative_solve(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const differential_kinematics_ops &differential,
+                                                      const screw_chain &chain, const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer)
 {
-    const expected<void, refusal> solved = inverse_kinematics(forward, differential, chain, desired, j0, parameters, answer);
+    const expected<void, refusal> solved = inverse_kinematics(screw, forward, differential, chain, desired, j0, parameters, answer);
     if(!solved)
         return solved;
 

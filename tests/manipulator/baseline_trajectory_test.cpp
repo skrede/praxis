@@ -46,8 +46,8 @@ transform at_height(double z)
 // plain function, so the record it keeps is file-local rather than a member of a solver object.
 std::vector<joint_vector> recorded_seeds;
 
-expected<void, refusal> recording_inverse_kinematics(const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &, const transform &desired_pose,
-                                                     const joint_vector &j0, const solver_parameters &, ik_result &answer)
+expected<void, refusal> recording_inverse_kinematics(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &,
+                                                     const transform &desired_pose, const joint_vector &j0, const solver_parameters &, ik_result &answer)
 {
     recorded_seeds.push_back(j0);
     answer.solutions.push_back(j0 + joint_vector::Constant(j0.size(), desired_pose(2, 3)));

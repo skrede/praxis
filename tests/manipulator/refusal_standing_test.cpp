@@ -35,7 +35,7 @@ namespace {
 // Six rows and one column per joint, so either block is three by six and an ellipsoid can be taken
 // from it. One entry is not a number past a first joint value, so one composition is decomposable at
 // some of its configurations and not at others.
-expected<jacobian, refusal> banded_space_jacobian(std::span<const screw_axis>, const joint_vector &theta)
+expected<jacobian, refusal> banded_space_jacobian(const rigid_motion::screw_ops &, std::span<const screw_axis>, const joint_vector &theta)
 {
     constexpr double deranged_beyond = 0.5;
     jacobian columns(6, theta.size());

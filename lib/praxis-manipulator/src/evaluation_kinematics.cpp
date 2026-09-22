@@ -86,16 +86,16 @@ constexpr evaluation::capability_evaluations<forward_kinematics_ops> evaluated_f
 // once and hands the same derivation to both sides, so it measures its own slot rather than that
 // derivation.
 constexpr std::array differential_kinematics_table{
-        evaluation::slot_evaluation{"dk.space_jacobian", evaluation::residual_kind::element_wise,
-                                    evaluation::tolerance_pair{accumulated_element_wise_tolerance, accumulated_element_wise_tolerance},
-                                    [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result
-                                    {
-                                        const evaluation_case example             = drawn_case(drawn);
-                                        const expected<jacobian, refusal> held    = differential_kinematics_of(first).space_jacobian(example.chain.space_screws, example.joints);
-                                        const expected<jacobian, refusal> against = differential_kinematics_of(second).space_jacobian(example.chain.space_screws, example.joints);
+        evaluation::slot_evaluation{
+                "dk.space_jacobian", evaluation::residual_kind::element_wise, evaluation::tolerance_pair{accumulated_element_wise_tolerance, accumulated_element_wise_tolerance},
+                [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result
+                {
+                    const evaluation_case example             = drawn_case(drawn);
+                    const expected<jacobian, refusal> held    = differential_kinematics_of(first).space_jacobian(shared_screw(), example.chain.space_screws, example.joints);
+                    const expected<jacobian, refusal> against = differential_kinematics_of(second).space_jacobian(shared_screw(), example.chain.space_screws, example.joints);
 
-                                        return evaluation::agreed_or_refused(held, against, evaluation::element_wise_residual, allowed);
-                                    }},
+                    return evaluation::agreed_or_refused(held, against, evaluation::element_wise_residual, allowed);
+                }},
         evaluation::slot_evaluation{
                 "dk.body_jacobian", evaluation::residual_kind::element_wise, evaluation::tolerance_pair{accumulated_element_wise_tolerance, accumulated_element_wise_tolerance},
                 [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result

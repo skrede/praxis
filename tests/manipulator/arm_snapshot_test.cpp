@@ -46,8 +46,9 @@ praxis::expected<praxis::transform, praxis::refusal> counting_forward_kinematics
 
 // The answer is the desired pose's own translation, so a command reaches a configuration the case
 // can name, and the one recorded step is what the published trace is compared against.
-praxis::expected<void, praxis::refusal> recording_inverse_kinematics(const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &,
-                                                                     const praxis::transform &desired, const joint_vector &j0, const solver_parameters &, ik_result &answer)
+praxis::expected<void, praxis::refusal> recording_inverse_kinematics(const praxis::rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &,
+                                                                     const screw_chain &, const praxis::transform &desired, const joint_vector &j0, const solver_parameters &,
+                                                                     ik_result &answer)
 {
     answer.iterations.push_back(iteration_state{j0, 0.5, 0.25, 0.125, 7u});
     answer.solutions.push_back(configuration(desired(0, 3), desired(1, 3)));
@@ -62,7 +63,7 @@ praxis::expected<joint_vector, praxis::refusal> solving_task_space_pose(const ki
 
 // Six rows and one column per joint, every entry a value single precision carries exactly, so the
 // published matrix is compared against the answered one without a tolerance to hide inside.
-praxis::expected<jacobian, praxis::refusal> answering_space_jacobian(std::span<const praxis::screw_axis>, const joint_vector &theta)
+praxis::expected<jacobian, praxis::refusal> answering_space_jacobian(const praxis::rigid_motion::screw_ops &, std::span<const praxis::screw_axis>, const joint_vector &theta)
 {
     jacobian columns(6, theta.size());
     for(Eigen::Index joint = 0; joint < theta.size(); ++joint)
@@ -301,7 +302,7 @@ TEST_CASE("one publication carries the space Jacobian a bound slot answers and a
     REQUIRE_FALSE(seen->body_jacobian.has_value());
     CHECK(seen->body_jacobian.error() == praxis::refusal::not_implemented);
 
-    const jacobian answered = answering_space_jacobian({}, seen->joints).value();
+    const jacobian answered = answering_space_jacobian(praxis::rigid_motion::baseline().screw, {}, seen->joints).value();
 
     REQUIRE(seen->space_jacobian->rows() == 6);
     REQUIRE(seen->space_jacobian->cols() == seen->joints.size());

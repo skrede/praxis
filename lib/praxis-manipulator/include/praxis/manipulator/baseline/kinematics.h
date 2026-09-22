@@ -13,15 +13,16 @@ namespace praxis::manipulator {
 
 expected<transform, refusal> forward_kinematics(const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta);
 
-expected<jacobian, refusal> space_jacobian(std::span<const screw_axis> space_screws, const joint_vector &theta);
+expected<jacobian, refusal> space_jacobian(const rigid_motion::screw_ops &screw, std::span<const screw_axis> space_screws, const joint_vector &theta);
 expected<jacobian, refusal> body_jacobian(std::span<const screw_axis> body_screws, const joint_vector &theta);
 
 expected<std::vector<screw_axis>, refusal> body_screws_from_space(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
                                                                   std::span<const screw_axis> space_screws);
 
-expected<void, refusal> inverse_kinematics(const forward_kinematics_ops &forward, const differential_kinematics_ops &differential, const screw_chain &chain, const transform &desired,
-                                           const joint_vector &j0, const solver_parameters &parameters, ik_result &answer);
-expected<void, refusal> analytic_inverse_kinematics(const forward_kinematics_ops &forward, const screw_chain &chain, const transform &desired, ik_result &answer);
+expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const differential_kinematics_ops &differential,
+                                           const screw_chain &chain, const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer);
+expected<void, refusal> analytic_inverse_kinematics(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const screw_chain &chain, const transform &desired,
+                                                    ik_result &answer);
 
 expected<transform, refusal> body_forward_kinematics(const rigid_motion::frame_ops &frames, const transform &m, std::span<const screw_axis> body_screws, const joint_vector &theta);
 
