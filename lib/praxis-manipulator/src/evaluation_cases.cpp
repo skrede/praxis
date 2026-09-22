@@ -65,11 +65,39 @@ meios::joint<> revolute(std::size_t index, evaluation::case_source &drawn)
 // One screw implementation, one frame implementation and one set of each kinematics aggregate serve
 // every row in the module, so a row measures its own slot rather than a capability neither side is
 // under test for. Each is built once on first use and outlives every caller.
+const rigid_motion::screw_ops &shared_screw()
+{
+    static const rigid_motion::screw_ops screw = rigid_motion::baseline().screw;
+
+    return screw;
+}
+
+const rigid_motion::frame_ops &shared_frames()
+{
+    static const rigid_motion::frame_ops frames = rigid_motion::baseline().frame;
+
+    return frames;
+}
+
 const forward_kinematics_ops &shared_forward()
 {
     static const forward_kinematics_ops forward = baseline().fk;
 
     return forward;
+}
+
+const differential_kinematics_ops &shared_differential()
+{
+    static const differential_kinematics_ops differential = baseline().dk;
+
+    return differential;
+}
+
+const inverse_kinematics_ops &shared_inverse()
+{
+    static const inverse_kinematics_ops inverse = baseline().ik;
+
+    return inverse;
 }
 
 joint_vector drawn_joints(evaluation::case_source &drawn, std::size_t joints)
@@ -97,10 +125,9 @@ evaluation_case drawn_case(evaluation::case_source &drawn)
 
 std::optional<solve_case> drawn_solve(evaluation::case_source &drawn)
 {
-    const evaluation_case example = drawn_case(drawn);
-    const joint_vector seed       = drawn_joints(drawn, example.chain.joint_count());
-    expected<kinematics, refusal> solver =
-            kinematics::compose(example.chain, shared_forward(), baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame);
+    const evaluation_case example        = drawn_case(drawn);
+    const joint_vector seed              = drawn_joints(drawn, example.chain.joint_count());
+    expected<kinematics, refusal> solver = kinematics::compose(example.chain, shared_forward(), shared_differential(), shared_inverse(), shared_screw(), shared_frames());
     if(!solver)
         return std::nullopt;
 

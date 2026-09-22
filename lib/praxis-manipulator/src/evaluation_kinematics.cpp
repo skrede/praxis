@@ -2,12 +2,9 @@
 #include "evaluation_tables.h"
 
 #include "praxis/manipulator/slots.h"
-#include "praxis/manipulator/capabilities.h"
 #include "praxis/manipulator/baseline/kinematics.h"
 
 #include "praxis/evaluation/comparators.h"
-
-#include "praxis/rigid_motion/capabilities.h"
 
 #include <span>
 #include <array>
@@ -17,23 +14,6 @@
 namespace praxis::manipulator {
 
 namespace {
-
-// One screw implementation, one frame implementation and one set of forward maps serve both sides of
-// every row that reaches them, so a row measures its own slot rather than a capability neither side
-// is under test for.
-const rigid_motion::screw_ops &shared_screw()
-{
-    static const rigid_motion::screw_ops screw = rigid_motion::baseline().screw;
-
-    return screw;
-}
-
-const rigid_motion::frame_ops &shared_frames()
-{
-    static const rigid_motion::frame_ops frames = rigid_motion::baseline().frame;
-
-    return frames;
-}
 
 const forward_kinematics_ops &forward_kinematics_of(const void *value)
 {

@@ -50,7 +50,11 @@ const evaluation::capability_evaluations<forward_kinematics_ops> &forward_kinema
 const evaluation::capability_evaluations<differential_kinematics_ops> &differential_kinematics_evaluations();
 const evaluation::capability_evaluations<inverse_kinematics_ops> &inverse_kinematics_evaluations();
 
+const rigid_motion::screw_ops &shared_screw();
+const rigid_motion::frame_ops &shared_frames();
 const forward_kinematics_ops &shared_forward();
+const differential_kinematics_ops &shared_differential();
+const inverse_kinematics_ops &shared_inverse();
 
 inline evaluation::case_result judged(const evaluation::residual &difference, const evaluation::tolerance_pair &allowed)
 {

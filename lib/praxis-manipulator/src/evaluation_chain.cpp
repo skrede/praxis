@@ -1,12 +1,9 @@
 #include "evaluation_cases.h"
 #include "evaluation_tables.h"
 
-#include "praxis/manipulator/capabilities.h"
 #include "praxis/manipulator/baseline/kinematics.h"
 
 #include "praxis/evaluation/comparators.h"
-
-#include "praxis/rigid_motion/capabilities.h"
 
 #include <span>
 #include <vector>
@@ -22,22 +19,6 @@ namespace {
 // How many configurations one chain comparison is taken over: a chain of N joints carries 6 + 6N free
 // numbers against six constraints each, so this over-determines every width the source draws (N <= 8).
 constexpr std::size_t configurations_per_chain = 10u;
-
-// One screw implementation and one frame implementation serve both sides of every row that reaches
-// them, so a row measures its own slot rather than a capability neither side is under test for.
-const rigid_motion::screw_ops &shared_screw()
-{
-    static const rigid_motion::screw_ops screw = rigid_motion::baseline().screw;
-
-    return screw;
-}
-
-const rigid_motion::frame_ops &shared_frames()
-{
-    static const rigid_motion::frame_ops frames = rigid_motion::baseline().frame;
-
-    return frames;
-}
 
 const modeling_ops &modeling_of(const void *value)
 {
@@ -90,8 +71,7 @@ struct solve_request
 std::optional<solve_request> drawn_request(evaluation::case_source &drawn, const evaluation_case &example)
 {
     const joint_vector seed                = drawn_joints(drawn, example.chain.joint_count());
-    const capabilities reference           = baseline();
-    expected<kinematics, refusal> composed = kinematics::compose(example.chain, reference.fk, reference.dk, reference.ik, shared_screw(), shared_frames());
+    expected<kinematics, refusal> composed = kinematics::compose(example.chain, shared_forward(), shared_differential(), shared_inverse(), shared_screw(), shared_frames());
     if(!composed)
         return std::nullopt;
 
@@ -99,7 +79,7 @@ std::optional<solve_request> drawn_request(evaluation::case_source &drawn, const
     if(!reached)
         return std::nullopt;
 
-    return solve_request{std::move(*composed), reference.fk, reference.dk, *reached, seed};
+    return solve_request{std::move(*composed), shared_forward(), shared_differential(), *reached, seed};
 }
 
 expected<void, refusal> solved_by(const inverse_kinematics_ops &bound, const screw_chain &chain, const solve_request &asked, ik_result &answer)

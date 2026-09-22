@@ -1,11 +1,9 @@
 #include "evaluation_cases.h"
 #include "evaluation_tables.h"
 
-#include "praxis/manipulator/capabilities.h"
+#include "praxis/manipulator/slots.h"
 
 #include "praxis/evaluation/comparators.h"
-
-#include "praxis/rigid_motion/capabilities.h"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -32,23 +30,6 @@ constexpr double displacement_metres       = 0.1;
 const motion_ops &motions_of(const void *value)
 {
     return *static_cast<const motion_ops *>(value);
-}
-
-// One screw implementation and one frame implementation serve both sides of every row that reaches
-// them and the pose that row is measured against, so a row measures its own slot rather than a
-// capability neither side is under test for.
-const rigid_motion::screw_ops &shared_screw()
-{
-    static const rigid_motion::screw_ops screw = rigid_motion::baseline().screw;
-
-    return screw;
-}
-
-const rigid_motion::frame_ops &shared_frames()
-{
-    static const rigid_motion::frame_ops frames = rigid_motion::baseline().frame;
-
-    return frames;
 }
 
 // A number in the closed range either way of `extent`, taken from the one full-turn draw the source

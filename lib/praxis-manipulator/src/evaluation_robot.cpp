@@ -1,11 +1,9 @@
 #include "evaluation_cases.h"
 #include "evaluation_tables.h"
 
-#include "praxis/manipulator/capabilities.h"
+#include "praxis/manipulator/slots.h"
 
 #include "praxis/evaluation/comparators.h"
-
-#include "praxis/rigid_motion/capabilities.h"
 
 #include <array>
 #include <optional>
@@ -17,15 +15,6 @@ namespace {
 const robot_ops &robot_of(const void *value)
 {
     return *static_cast<const robot_ops *>(value);
-}
-
-// One frame implementation serves both sides of every row that takes one, so a row measures its own
-// slot rather than a frame capability neither side is under test for.
-const rigid_motion::frame_ops &shared_frames()
-{
-    static const rigid_motion::frame_ops frames = rigid_motion::baseline().frame;
-
-    return frames;
 }
 
 // The flange the answer reaches carried out to the tool the row was asked for, along the offset both
