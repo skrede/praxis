@@ -355,6 +355,64 @@ TEST_CASE("a_home_pose_that_is_not_a_rigid_motion_is_refused_by_both_answers_tha
     CHECK(composed.error() == refusal::degenerate);
 }
 
+TEST_CASE("a_home_pose_that_is_not_a_rigid_motion_is_refused_whatever_frame_operations_the_composition_carries")
+{
+    const screw_chain chain = planar_arm();
+    const joint_vector q    = configuration(0.2, -0.4);
+
+    // The rotation block departs from orthonormality by less than the solver library's own validation
+    // tolerance, so the adjoint construction the body screws are derived through accepts it and this
+    // repository's own membership test is the only thing that reads it.
+    transform skewed = transform::Identity();
+    skewed(0, 1)     = 1.0e-9;
+
+    const expected<std::vector<screw_axis>, refusal> derived = manipulator::body_screws_from_space(reference_screw, rigid_motion::frame_ops{}, skewed, chain.space_screws);
+    const expected<transform, refusal> composed              = manipulator::body_forward_kinematics(reference_screw, rigid_motion::frame_ops{}, skewed, chain.space_screws, q);
+    const expected<jacobian, refusal> body_frame             = manipulator::body_jacobian(reference_screw, rigid_motion::frame_ops{}, skewed, chain.space_screws, q);
+
+    REQUIRE_FALSE(derived.has_value());
+    REQUIRE_FALSE(composed.has_value());
+    REQUIRE_FALSE(body_frame.has_value());
+    CHECK(derived.error() == refusal::degenerate);
+    CHECK(composed.error() == refusal::degenerate);
+    CHECK(body_frame.error() == refusal::degenerate);
+}
+
+TEST_CASE("a_home_pose_that_is_not_a_rigid_motion_is_refused_over_a_span_of_no_screws_as_well")
+{
+    const screw_chain chain = planar_arm();
+    const joint_vector none = joint_vector::Zero(0);
+    const joint_vector q    = configuration(0.2, -0.4);
+
+    transform skewed = transform::Identity();
+    skewed(0, 1)     = 0.5;
+
+    const expected<transform, refusal> composed  = manipulator::body_forward_kinematics(reference_screw, reference_frames, skewed, {}, none);
+    const expected<jacobian, refusal> body_frame = manipulator::body_jacobian(reference_screw, reference_frames, skewed, {}, none);
+    const expected<transform, refusal> pose      = manipulator::forward_kinematics(reference_screw, skewed, {}, none);
+
+    REQUIRE_FALSE(composed.has_value());
+    REQUIRE_FALSE(body_frame.has_value());
+    REQUIRE_FALSE(pose.has_value());
+    CHECK(composed.error() == refusal::degenerate);
+    CHECK(body_frame.error() == refusal::degenerate);
+    CHECK(pose.error() == refusal::degenerate);
+
+    // The solver library admits a home pose departing from SE(3) by up to the square root of the
+    // machine epsilon, so a departure this small reaches an answer through the space form unless the
+    // space form reads the pose itself.
+    transform narrowly = transform::Identity();
+    narrowly(0, 1)     = 1.0e-9;
+
+    const expected<transform, refusal> over_screws      = manipulator::forward_kinematics(reference_screw, narrowly, chain.space_screws, q);
+    const expected<transform, refusal> body_over_screws = manipulator::body_forward_kinematics(reference_screw, reference_frames, narrowly, chain.space_screws, q);
+
+    REQUIRE_FALSE(over_screws.has_value());
+    REQUIRE_FALSE(body_over_screws.has_value());
+    CHECK(over_screws.error() == refusal::degenerate);
+    CHECK(body_over_screws.error() == refusal::degenerate);
+}
+
 // The inert adjoint construction answers a refusal rather than a matrix, so the derivation carries
 // that refusal out rather than fabricating a body chain without one.
 TEST_CASE("a_derivation_handed_screw_operations_left_on_their_defaults_answers_on_the_refusal_channel")

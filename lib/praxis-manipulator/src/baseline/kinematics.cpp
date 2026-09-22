@@ -67,12 +67,19 @@ twist body_error(const chain_type &chain, const cartan::se3<double> &target, con
     return (reached->end_effector.inverse() * target).log();
 }
 
-bool is_a_rigid_motion(const rigid_motion::frame_ops &frames, const transform &tf)
+bool is_a_rigid_motion(const transform &tf)
 {
-    const rotation r = frames.rotation_matrix_from_transform(tf);
+    const rotation r = tf.block<3, 3>(0, 0);
 
     return is_approx_equal(rotation(r.transpose() * r), rotation::Identity()) && is_approx_equal(r.determinant(), 1.0) &&
             is_approx_equal((tf.row(3) - Eigen::RowVector4d::UnitW()).cwiseAbs().maxCoeff(), 0.0);
+}
+
+bool is_a_rigid_motion(const rigid_motion::frame_ops &frames, const transform &tf)
+{
+    const rotation seen = frames.rotation_matrix_from_transform(tf);
+
+    return is_a_rigid_motion(tf) && is_approx_equal(rotation(seen.transpose() * seen), rotation::Identity()) && is_approx_equal(seen.determinant(), 1.0);
 }
 
 void record(ik_result &answer, const joint_vector &solution, const twist &error, const joint_vector &previous)
@@ -169,6 +176,8 @@ expected<transform, refusal> forward_kinematics(const rigid_motion::screw_ops &,
 {
     if(theta.size() != static_cast<Eigen::Index>(space_screws.size()))
         return unexpected(refusal::unsupported_input);
+    if(!is_a_rigid_motion(m))
+        return unexpected(refusal::degenerate);
     if(space_screws.empty())
         return transform(m);
 
@@ -206,10 +215,10 @@ expected<jacobian, refusal> body_jacobian(const rigid_motion::screw_ops &screw, 
 {
     if(theta.size() != static_cast<Eigen::Index>(space_screws.size()))
         return unexpected(refusal::unsupported_input);
-    if(space_screws.empty())
-        return jacobian(jacobian::Zero(6, 0));
     if(!is_a_rigid_motion(frames, m))
         return unexpected(refusal::degenerate);
+    if(space_screws.empty())
+        return jacobian(jacobian::Zero(6, 0));
 
     const expected<std::vector<screw_axis>, refusal> body_screws = to_body_screws(screw, m, space_screws);
     if(!body_screws)
@@ -233,10 +242,10 @@ expected<transform, refusal> body_forward_kinematics(const rigid_motion::screw_o
 {
     if(theta.size() != static_cast<Eigen::Index>(space_screws.size()))
         return unexpected(refusal::unsupported_input);
-    if(space_screws.empty())
-        return transform(m);
     if(!is_a_rigid_motion(frames, m))
         return unexpected(refusal::degenerate);
+    if(space_screws.empty())
+        return transform(m);
 
     const expected<std::vector<screw_axis>, refusal> body_screws = to_body_screws(screw, m, space_screws);
     if(!body_screws)
