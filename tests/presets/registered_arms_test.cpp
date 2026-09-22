@@ -82,6 +82,24 @@ config::location authored(const std::filesystem::path &directory, const std::str
     return written(directory, file, "<arm><preset name=\"" + name + "\" scenario=\"" + scenario + "\"/>" + described + keeping + "<initial>" + starting_at(axes) + "</initial></arm>");
 }
 
+// The same document with both model leaves written out, which is the shape the shipped documents
+// arrive in: a model nobody wants is a blank leaf rather than a missing one.
+config::location modeled(const std::filesystem::path &directory, const std::string &file, const std::string &tool, const std::string &world)
+{
+    return written(directory, file,
+                   "<arm><preset name=\"Modeled\" scenario=\"" + spelling(presets::arm_scenario_kind::forward_kinematics) +
+                           "\"/><description path=\"six.urdf\"/><tool active=\"true\" model=\"" + tool + "\"/><world_object active=\"true\" model=\"" + world + "\"/><initial>" +
+                           starting_at(axes) + "</initial></arm>");
+}
+
+// Where a document's leaf is read back from, the scenario read out of it rather than the registry.
+presets::arm_scenario read_back(const config::location &named, const std::vector<std::filesystem::path> &roots)
+{
+    const config::outcome read = config::load_or_defaults(config::binding{presets::arm_keyspace(), named, config::expectation::partial});
+
+    return presets::read_arm(read.values, roots);
+}
+
 // A document offering no preset leaves the registry as it found it and contributes no name.
 void registers_nothing(const std::vector<config::location> &documents)
 {
@@ -408,4 +426,32 @@ TEST_CASE("two arms register and compose against a description no root but the c
 
     const config::outcome read = config::load_or_defaults(config::binding{presets::arm_keyspace(), documents.front(), config::expectation::partial});
     REQUIRE(presets::read_arm(read.values, {}).description == std::filesystem::path("six.urdf"));
+}
+
+// The two models a document names are looked for where its description is looked for, so a scenario
+// read from somewhere other than the directory the binary was started in names files that are there.
+// A leaf written blank stays blank, because a root joined onto nothing is the root directory itself
+// and a directory is not a model.
+TEST_CASE("the model paths a document names resolve against the roots its description does", "[presets][registry]")
+{
+    const std::filesystem::path directory = scratch("arm_model_paths");
+    const std::filesystem::path root      = scratch("arm_model_root");
+    std::filesystem::create_directories(root / "meshes");
+    written(root / "meshes", "gripper.stl", "solid gripper endsolid gripper");
+    written(root / "meshes", "table.stl", "solid table endsolid table");
+
+    const config::location named = modeled(directory, "tooled.xml", "meshes/gripper.stl", "meshes/table.stl");
+    const std::vector<std::filesystem::path> one{root};
+
+    const presets::arm_scenario held = read_back(named, one);
+    REQUIRE(held.tool.model_path == (root / "meshes" / "gripper.stl").string());
+    REQUIRE(held.world_object.model_path == (root / "meshes" / "table.stl").string());
+
+    const presets::arm_scenario unheld = read_back(named, {});
+    REQUIRE(unheld.tool.model_path == "meshes/gripper.stl");
+    REQUIRE(unheld.world_object.model_path == "meshes/table.stl");
+
+    const presets::arm_scenario blank = read_back(modeled(directory, "untooled.xml", "", ""), one);
+    REQUIRE(blank.tool.model_path.empty());
+    REQUIRE(blank.world_object.model_path.empty());
 }

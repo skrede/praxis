@@ -69,6 +69,13 @@ std::filesystem::path described_at(const std::filesystem::path &named, std::span
     return named;
 }
 
+// A model nobody named stays unnamed, since a root joined onto nothing is the root directory, which
+// exists and would resolve to a place no mesh is loaded from.
+std::string model_at(const std::string &named, std::span<const std::filesystem::path> roots)
+{
+    return named.empty() ? named : described_at(named, roots).string();
+}
+
 }
 
 arm_scenario read_arm(const config::document &values, std::span<const std::filesystem::path> roots)
@@ -78,6 +85,9 @@ arm_scenario read_arm(const config::document &values, std::span<const std::files
     read.description = described_at(keys::text_at(values, keys::description_path_key), roots);
     read.initial     = read_initial(values, "initial/joint");
     read_arm_windows(read, values, static_cast<std::size_t>(read.initial.size()));
+
+    read.tool.model_path         = model_at(read.tool.model_path, roots);
+    read.world_object.model_path = model_at(read.world_object.model_path, roots);
 
     return read;
 }
