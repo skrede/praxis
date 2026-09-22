@@ -1,4 +1,5 @@
 #include "evaluation_cases.h"
+#include "evaluation_tables.h"
 
 #include "praxis/manipulator/capabilities.h"
 
@@ -61,6 +62,16 @@ meios::joint<> revolute(std::size_t index, evaluation::case_source &drawn)
 
 }
 
+// One screw implementation, one frame implementation and one set of each kinematics aggregate serve
+// every row in the module, so a row measures its own slot rather than a capability neither side is
+// under test for. Each is built once on first use and outlives every caller.
+const forward_kinematics_ops &shared_forward()
+{
+    static const forward_kinematics_ops forward = baseline().fk;
+
+    return forward;
+}
+
 joint_vector drawn_joints(evaluation::case_source &drawn, std::size_t joints)
 {
     joint_vector theta(static_cast<Eigen::Index>(joints));
@@ -89,7 +100,7 @@ std::optional<solve_case> drawn_solve(evaluation::case_source &drawn)
     const evaluation_case example = drawn_case(drawn);
     const joint_vector seed       = drawn_joints(drawn, example.chain.joint_count());
     expected<kinematics, refusal> solver =
-            kinematics::compose(example.chain, baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame);
+            kinematics::compose(example.chain, shared_forward(), baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame);
     if(!solver)
         return std::nullopt;
 

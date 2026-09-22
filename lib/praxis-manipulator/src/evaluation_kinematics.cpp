@@ -35,13 +35,6 @@ const rigid_motion::frame_ops &shared_frames()
     return frames;
 }
 
-const forward_kinematics_ops &shared_forward()
-{
-    static const forward_kinematics_ops forward = baseline().fk;
-
-    return forward;
-}
-
 const forward_kinematics_ops &forward_kinematics_of(const void *value)
 {
     return *static_cast<const forward_kinematics_ops *>(value);
