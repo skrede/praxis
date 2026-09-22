@@ -27,8 +27,9 @@ const differential_kinematics_ops &differential_kinematics_of(const void *value)
 
 // The rows are in the enumerator order of forward_kinematics_slot, and each name is spelled exactly
 // as the descriptor table spells it. Every slot this aggregate describes is compared here, which is
-// what the assertion below the table holds. The row asked in the body frame converts its own screws
-// on each side through one shared aggregate, so it measures its own slot rather than that conversion.
+// what the assertion below the table holds. The row asked in the body frame is handed the space
+// screws and the home pose, so each side's own conversion to the body frame is part of what that row
+// measures.
 constexpr std::array forward_kinematics_table{
         evaluation::slot_evaluation{"fk.forward_kinematics", evaluation::residual_kind::pose,
                                     evaluation::tolerance_pair{accumulated_pose_tolerance_radians, accumulated_pose_tolerance_metres},
