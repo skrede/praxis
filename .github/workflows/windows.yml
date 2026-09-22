@@ -8,7 +8,7 @@ on:
       - 'docs/**'
       - '.planning/**'
   pull_request:
-    branches: [master]
+    branches: [master, develop]
     paths-ignore:
       - '**.md'
       - 'docs/**'
@@ -18,9 +18,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 jobs:
   build:
     runs-on: windows-2022
+    timeout-minutes: 90
 
     strategy:
       fail-fast: false
@@ -35,6 +40,8 @@ jobs:
         run: git config --system core.longpaths true
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Record the toolchain
         run: |
@@ -52,12 +59,16 @@ jobs:
           if (-not $installation) { throw "no Visual Studio installation carries the x64 tools" }
           # Called from its own directory: a quoted path in a cmd /c string arrives backslash-escaped.
           Push-Location (Join-Path $installation 'VC\Auxiliary\Build')
+          $before = @{}
+          Get-ChildItem env: | ForEach-Object { $before[$_.Name] = $_.Value }
           $environment = cmd /c "call vcvars64.bat && set"
           $status = $LASTEXITCODE
           Pop-Location
           if ($status -ne 0) { $environment | Write-Host; throw "vcvars64.bat exited $status" }
           $environment |
-            Where-Object { $_ -match '^[A-Za-z_][A-Za-z0-9_()]*=' } |
+            ForEach-Object {
+              if ($_ -match '^([A-Za-z_][A-Za-z0-9_()]*)=(.*)$' -and $before[$Matches[1]] -cne $Matches[2]) { $_ }
+            } |
             Add-Content -Path $env:GITHUB_ENV -Encoding utf8
 
       - name: Cache the dependency sources
@@ -87,4 +98,4 @@ jobs:
 
       - name: Report the cases this platform guards out
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
-        run: ctest --test-dir build -R '^(arm_comparison_scenario_test|arm_scenarios_test|arm_tooling_test|baseline_modeling_test|chain_placement_test|csv_write_outcome_test|defaults_test|screw_chain_test|shipped_scenarios_test)$' --verbose --no-tests=error
+        run: cmake -DPRAXIS_BUILD_DIR=build -P cmake/report_guarded_cases.cmake

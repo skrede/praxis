@@ -8,7 +8,7 @@ on:
       - 'docs/**'
       - '.planning/**'
   pull_request:
-    branches: [master]
+    branches: [master, develop]
     paths-ignore:
       - '**.md'
       - 'docs/**'
@@ -25,15 +25,22 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 jobs:
   working-tree:
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
 
     env:
       FETCHCONTENT_BASE_DIR: ${{ github.workspace }}/.deps
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Record the toolchain
         run: |
@@ -56,38 +63,26 @@ jobs:
           path: ${{ env.FETCHCONTENT_BASE_DIR }}
           key: deps-${{ runner.os }}-${{ github.workflow }}-${{ github.job }}-${{ hashFiles('cmake/dependencies.cmake', 'cmake/scene_dependencies.cmake') }}
 
-      - name: Name the reference the consumer acquires
-        env:
-          CHOSEN: ${{ github.event.inputs.reference }}
-        run: |
-          set -eu
-          REFERENCE="${CHOSEN:-$GITHUB_REF_NAME}"
-          case "$REFERENCE" in
-            ''|*[!A-Za-z0-9._/-]*)
-              echo "praxis: refusing the reference '$REFERENCE'; a reference carries only letters, digits, dot, underscore, slash and hyphen" >&2
-              exit 1 ;;
-          esac
-          echo "RECIPE_REFERENCE=$REFERENCE" >> "$GITHUB_ENV"
-
       - name: Consume this checkout through the recipe
         run: |
           set -eu
           cmake -DPRAXIS_SOURCE_DIR="$PWD" \
             -DRECIPE_MODE=working-tree \
-            -DRECIPE_REF="$RECIPE_REFERENCE" \
             -DRECIPE_OUT="$RUNNER_TEMP/working-tree" \
             -DFETCHCONTENT_BASE_DIR="$FETCHCONTENT_BASE_DIR" \
             -P tests/consumability/run_recipe.cmake
 
   rebuild:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     env:
       FETCHCONTENT_BASE_DIR: ${{ github.workspace }}/.deps
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Record the toolchain
         run: |
@@ -130,10 +125,13 @@ jobs:
 
   coordinates:
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'push'
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Name the reference the consumer acquires
         env:
@@ -142,8 +140,8 @@ jobs:
           set -eu
           REFERENCE="${CHOSEN:-$GITHUB_REF_NAME}"
           case "$REFERENCE" in
-            ''|*[!A-Za-z0-9._/-]*)
-              echo "praxis: refusing the reference '$REFERENCE'; a reference carries only letters, digits, dot, underscore, slash and hyphen" >&2
+            ''|-*|*..*|*[!A-Za-z0-9._/-]*)
+              echo "praxis: refusing the reference '$REFERENCE'; a reference carries only letters, digits, dot, underscore, slash and hyphen, does not open with a hyphen and holds no '..'" >&2
               exit 1 ;;
           esac
           echo "RECIPE_REFERENCE=$REFERENCE" >> "$GITHUB_ENV"
@@ -155,6 +153,26 @@ jobs:
             -DRECIPE_MODE=coordinates \
             -DRECIPE_REF="$RECIPE_REFERENCE" \
             -DRECIPE_OUT="$RUNNER_TEMP/coordinates" \
+            -P tests/consumability/run_recipe.cmake
+
+  released:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    if: github.event_name == 'schedule'
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # With no reference named, the recipe derives one from this tree's version, so the scheduled
+      # run resolves the released tag rather than the branch it was dispatched from.
+      - name: Resolve the reference this tree's version names
+        run: |
+          set -eu
+          cmake -DPRAXIS_SOURCE_DIR="$PWD" \
+            -DRECIPE_MODE=coordinates \
+            -DRECIPE_OUT="$RUNNER_TEMP/released" \
             -P tests/consumability/run_recipe.cmake
 
   rehearsal:
@@ -179,8 +197,8 @@ jobs:
           set -eu
           REFERENCE="${CHOSEN:-$GITHUB_REF_NAME}"
           case "$REFERENCE" in
-            ''|*[!A-Za-z0-9._/-]*)
-              echo "praxis: refusing the reference '$REFERENCE'; a reference carries only letters, digits, dot, underscore, slash and hyphen" >&2
+            ''|-*|*..*|*[!A-Za-z0-9._/-]*)
+              echo "praxis: refusing the reference '$REFERENCE'; a reference carries only letters, digits, dot, underscore, slash and hyphen, does not open with a hyphen and holds no '..'" >&2
               exit 1 ;;
           esac
           echo "PRAXIS_REFERENCE=$REFERENCE" >> "$GITHUB_ENV"
@@ -278,6 +296,7 @@ jobs:
 
   published:
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.event_name == 'push'
 
     env:
@@ -285,6 +304,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Record the toolchain
         run: |
@@ -314,8 +335,8 @@ jobs:
           set -eu
           REFERENCE="${CHOSEN:-$GITHUB_REF_NAME}"
           case "$REFERENCE" in
-            ''|*[!A-Za-z0-9._/-]*)
-              echo "praxis: refusing the reference '$REFERENCE'; a reference carries only letters, digits, dot, underscore, slash and hyphen" >&2
+            ''|-*|*..*|*[!A-Za-z0-9._/-]*)
+              echo "praxis: refusing the reference '$REFERENCE'; a reference carries only letters, digits, dot, underscore, slash and hyphen, does not open with a hyphen and holds no '..'" >&2
               exit 1 ;;
           esac
           echo "RECIPE_REFERENCE=$REFERENCE" >> "$GITHUB_ENV"

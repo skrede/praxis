@@ -16,6 +16,7 @@ endif ()
 # The record and the extractor are a matched pair; another version diverges from it without the
 # surface having changed.
 set(PRAXIS_CTAGS_VERSION 6.2.1)
+set(PRAXIS_CTAGS_COMMIT b8eb0da4121372b5d74a90fc36cba6a31f147f3c)  # v6.2.1
 
 execute_process(
     COMMAND ${PRAXIS_CTAGS} --version

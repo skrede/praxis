@@ -8,7 +8,7 @@ on:
       - 'docs/**'
       - '.planning/**'
   pull_request:
-    branches: [master]
+    branches: [master, develop]
     paths-ignore:
       - '**.md'
       - 'docs/**'
@@ -18,15 +18,22 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
 jobs:
   build:
     runs-on: ubuntu-24.04
+    timeout-minutes: 60
 
     env:
       FETCHCONTENT_BASE_DIR: ${{ github.workspace }}/.deps
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Record the toolchain
         run: |
@@ -49,9 +56,9 @@ jobs:
       - name: Pin the surface extractor
         run: |
           set -eu
-          version=$(sed -n 's/^set(PRAXIS_CTAGS_VERSION \([0-9.]*\))$/\1/p' cmake/verify_public_surface.cmake)
-          test -n "$version"
-          echo "CTAGS_VERSION=$version" >> "$GITHUB_ENV"
+          commit=$(sed -n 's/^set(PRAXIS_CTAGS_COMMIT \([0-9a-f]\{40\}\)).*/\1/p' cmake/verify_public_surface.cmake)
+          test -n "$commit"
+          echo "CTAGS_COMMIT=$commit" >> "$GITHUB_ENV"
           echo "$RUNNER_TEMP/ctags/bin" >> "$GITHUB_PATH"
 
       - name: Cache the surface extractor
@@ -59,14 +66,16 @@ jobs:
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ runner.temp }}/ctags
-          key: ctags-${{ runner.os }}-${{ env.CTAGS_VERSION }}
+          key: ctags-${{ runner.os }}-${{ env.CTAGS_COMMIT }}
 
       - name: Build the surface extractor
         if: steps.extractor.outputs.cache-hit != 'true'
         run: |
           set -eu
-          git clone --depth 1 --branch "v$CTAGS_VERSION" \
-            https://github.com/universal-ctags/ctags.git "$RUNNER_TEMP/ctags-src"
+          git init "$RUNNER_TEMP/ctags-src"
+          git -C "$RUNNER_TEMP/ctags-src" fetch --depth 1 \
+            https://github.com/universal-ctags/ctags.git "$CTAGS_COMMIT"
+          git -C "$RUNNER_TEMP/ctags-src" checkout --detach FETCH_HEAD
           cd "$RUNNER_TEMP/ctags-src"
           ./autogen.sh
           ./configure --prefix="$RUNNER_TEMP/ctags"
@@ -104,10 +113,11 @@ jobs:
 
       - name: Report the cases this platform guards out
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
-        run: ctest --test-dir build -R '^(arm_comparison_scenario_test|arm_scenarios_test|arm_tooling_test|baseline_modeling_test|chain_placement_test|csv_write_outcome_test|defaults_test|screw_chain_test|shipped_scenarios_test)$' --verbose --no-tests=error
+        run: cmake -DPRAXIS_BUILD_DIR=build -P cmake/report_guarded_cases.cmake
 
   display:
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
 
     env:
       FETCHCONTENT_BASE_DIR: ${{ github.workspace }}/.deps
@@ -115,6 +125,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Record the toolchain
         run: |
@@ -130,7 +142,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             libxinerama-dev libxcursor-dev xorg-dev libglu1-mesa-dev pkg-config \
-            libgl1-mesa-dri mesa-utils
+            libgl1-mesa-dri mesa-utils xvfb
 
       - name: Record the graphics context
         run: |
