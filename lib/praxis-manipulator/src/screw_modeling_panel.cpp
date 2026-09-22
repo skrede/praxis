@@ -164,8 +164,8 @@ scene::readout screw_modeling_window::reading() const
     if(!share)
         return scene::readout{"The arm has published nothing yet.", {}};
 
-    const expected<transform, refusal> supplied  = m_kinematics.forward_kinematics(m_home, m_screws, share->joints);
-    const expected<transform, refusal> described = m_kinematics.forward_kinematics(m_derived.home, m_derived.space_screws, share->joints);
+    const expected<transform, refusal> supplied  = m_kinematics.forward_kinematics(m_screw, m_home, m_screws, share->joints);
+    const expected<transform, refusal> described = m_kinematics.forward_kinematics(m_screw, m_derived.home, m_derived.space_screws, share->joints);
     if(!supplied || !described)
         return scene::readout{supplied ? "The described chain has no pose here." : "The supplied chain has no pose here.", {}};
 

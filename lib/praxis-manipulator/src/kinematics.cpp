@@ -102,7 +102,7 @@ expected<std::reference_wrapper<const screw_chain>, refusal> kinematics::body_ch
 
 expected<transform, refusal> kinematics::fk_solve(const joint_vector &joint_positions) const
 {
-    return m_fk.forward_kinematics(m_space.home, m_space.space_screws, joint_positions);
+    return m_fk.forward_kinematics(m_screw, m_space.home, m_space.space_screws, joint_positions);
 }
 
 expected<transform, refusal> kinematics::body_fk_solve(const joint_vector &joint_positions) const

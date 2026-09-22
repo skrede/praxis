@@ -38,7 +38,8 @@ praxis::expected<praxis::trajectory::scaling_sample, praxis::refusal> cubic(doub
     return praxis::trajectory::scaling_sample{t / duration, 1.0 / duration, 0.0};
 }
 
-praxis::expected<praxis::transform, praxis::refusal> forward_kinematics(const praxis::transform &m, std::span<const praxis::screw_axis>, const praxis::manipulator::joint_vector &)
+praxis::expected<praxis::transform, praxis::refusal> forward_kinematics(const praxis::rigid_motion::screw_ops &, const praxis::transform &m, std::span<const praxis::screw_axis>,
+                                                                        const praxis::manipulator::joint_vector &)
 {
     return m;
 }

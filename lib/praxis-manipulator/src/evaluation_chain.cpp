@@ -124,8 +124,8 @@ evaluation::case_result agreeing_everywhere(const screw_chain &held, const screw
 
     for(const joint_vector &theta : asked_at)
     {
-        const expected<transform, refusal> here  = forward_kinematics(held.home, held.space_screws, theta);
-        const expected<transform, refusal> there = forward_kinematics(against.home, against.space_screws, theta);
+        const expected<transform, refusal> here  = forward_kinematics(shared_screw(), held.home, held.space_screws, theta);
+        const expected<transform, refusal> there = forward_kinematics(shared_screw(), against.home, against.space_screws, theta);
         if(!here || !there)
             return unusable(evaluation::residual_kind::pose);
 

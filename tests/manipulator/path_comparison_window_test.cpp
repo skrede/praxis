@@ -83,7 +83,7 @@ transform pose_at(const joint_vector &joints)
 {
     const screw_chain chain = planar_chain();
 
-    return baseline().fk.forward_kinematics(chain.home, chain.space_screws, joints).value();
+    return baseline().fk.forward_kinematics(rigid_motion::baseline().screw, chain.home, chain.space_screws, joints).value();
 }
 
 // A run of poses along the space frame's first axis, which is a drawing of at least two poses and
@@ -113,7 +113,8 @@ struct stage
             , scene(threepp::Scene::create())
             , published(publishing(at_rest(configuration(0.0, 0.0), origin, upright)))
             , stencil(two_joint_handle(), attached_models{}, *scene, loop.main_strand(), published->reader(), rigid_motion::baseline().screw, rigid_motion::screw_slot_set{})
-            , panel(panel_title, published->reader(), std::weak_ptr<owned_arm>{}, stencil, baseline().fk, planar_chain(), trajectory::baseline().path, opened, comparison_at)
+            , panel(panel_title, published->reader(), std::weak_ptr<owned_arm>{}, stencil, rigid_motion::baseline().screw, baseline().fk, planar_chain(), trajectory::baseline().path,
+                    opened, comparison_at)
     {
         REQUIRE(stencil.initialize().has_value());
     }

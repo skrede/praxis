@@ -8,7 +8,8 @@ namespace robotics_course {
 
 namespace {
 
-praxis::expected<praxis::transform, praxis::refusal> forward_kinematics(const praxis::transform &m, std::span<const praxis::screw_axis>, const praxis::manipulator::joint_vector &)
+praxis::expected<praxis::transform, praxis::refusal> forward_kinematics(const praxis::rigid_motion::screw_ops &, const praxis::transform &m, std::span<const praxis::screw_axis>,
+                                                                        const praxis::manipulator::joint_vector &)
 {
     return m;
 }

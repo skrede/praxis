@@ -113,8 +113,8 @@ void note_answers_apart(const manipulator::capabilities &held, const manipulator
     auto composed                              = manipulator::kinematics::compose(example.chain, held.fk, held.dk, held.ik, shared_motions().screw, shared_motions().frame);
 
     seen[0] = seen[0] ||
-            answers_apart(held.fk.forward_kinematics(example.chain.home, example.chain.space_screws, example.joints),
-                          bent.fk.forward_kinematics(example.chain.home, example.chain.space_screws, example.joints));
+            answers_apart(held.fk.forward_kinematics(shared_motions().screw, example.chain.home, example.chain.space_screws, example.joints),
+                          bent.fk.forward_kinematics(shared_motions().screw, example.chain.home, example.chain.space_screws, example.joints));
     seen[2] = seen[2] ||
             answers_apart(held.fk.body_screws_from_space(shared_motions().screw, shared_motions().frame, example.chain.home, example.chain.space_screws),
                           bent.fk.body_screws_from_space(shared_motions().screw, shared_motions().frame, example.chain.home, example.chain.space_screws));

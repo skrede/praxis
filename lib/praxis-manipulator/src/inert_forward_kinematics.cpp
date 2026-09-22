@@ -5,7 +5,7 @@
 
 namespace praxis::manipulator::inert {
 
-expected<transform, refusal> forward_kinematics(const transform &, std::span<const screw_axis>, const joint_vector &)
+expected<transform, refusal> forward_kinematics(const rigid_motion::screw_ops &, const transform &, std::span<const screw_axis>, const joint_vector &)
 {
     return unexpected(refusal::not_implemented);
 }

@@ -243,12 +243,13 @@ expected<cartan::opw_parameters<double>, refusal> to_opw_parameters(const screw_
     return assembled(*lines, *frame, arm, reach, wrist);
 }
 
-expected<void, refusal> agrees_with_chain(const forward_kinematics_ops &forward, const screw_chain &chain, const cartan::opw_parameters<double> &parameters)
+expected<void, refusal> agrees_with_chain(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const screw_chain &chain,
+                                          const cartan::opw_parameters<double> &parameters)
 {
     for(const std::array<double, opw_joints> &probed : probed_configurations)
     {
         const Eigen::Vector<double, 6> at          = Eigen::Map<const Eigen::Vector<double, 6>>(probed.data());
-        const expected<transform, refusal> reached = forward.forward_kinematics(chain.home, chain.space_screws, joint_vector(at));
+        const expected<transform, refusal> reached = forward.forward_kinematics(screw, chain.home, chain.space_screws, joint_vector(at));
         if(!reached)
             return unexpected(reached.error());
 

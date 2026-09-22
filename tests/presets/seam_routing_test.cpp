@@ -35,9 +35,9 @@ transform tool_offset()
     return rigid_motion::transformation_matrix_from_rotation_position(rigid_motion::rotate_z(0.3), Eigen::Vector3d(0.1, 0.05, 0.0));
 }
 
-expected<transform, refusal> reached_under(const rigid_motion::capabilities &, const screw_chain &arm, const joint_vector &at)
+expected<transform, refusal> reached_under(const rigid_motion::capabilities &spatial, const screw_chain &arm, const joint_vector &at)
 {
-    return manipulator::baseline().fk.forward_kinematics(arm.home, arm.space_screws, at);
+    return manipulator::baseline().fk.forward_kinematics(spatial.screw, arm.home, arm.space_screws, at);
 }
 
 expected<joint_vector, refusal> swept_under(const rigid_motion::capabilities &spatial, const kinematics &solver, const transform &start, const joint_vector &at)

@@ -37,11 +37,12 @@ clock_source dictating()
 // forward solves is how many publications happened: a mutation that published twice would double it.
 std::uint32_t solves = 0;
 
-praxis::expected<praxis::transform, praxis::refusal> counting_forward_kinematics(const praxis::transform &m, std::span<const praxis::screw_axis> screws, const joint_vector &theta)
+praxis::expected<praxis::transform, praxis::refusal> counting_forward_kinematics(const praxis::rigid_motion::screw_ops &screw, const praxis::transform &m,
+                                                                                 std::span<const praxis::screw_axis> screws, const joint_vector &theta)
 {
     ++solves;
 
-    return sliding_forward_kinematics(m, screws, theta);
+    return sliding_forward_kinematics(screw, m, screws, theta);
 }
 
 // The answer is the desired pose's own translation, so a command reaches a configuration the case

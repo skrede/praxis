@@ -24,7 +24,8 @@ expected<cartan::opw_parameters<double>, refusal> to_opw_parameters(const screw_
 // What the derived parameters are trusted on: the forward map they carry and the chain's own forward
 // map are asked for the same configurations, and a disagreement leaves the parameters describing
 // some arm other than the one the chain describes.
-expected<void, refusal> agrees_with_chain(const forward_kinematics_ops &forward, const screw_chain &chain, const cartan::opw_parameters<double> &parameters);
+expected<void, refusal> agrees_with_chain(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const screw_chain &chain,
+                                          const cartan::opw_parameters<double> &parameters);
 
 // A target outside the workspace, a decomposition that placed no candidate and a candidate no
 // reconstruction accepted are all answers about the request; a geometry the closed form does not

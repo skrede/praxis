@@ -57,7 +57,7 @@ struct ik_result
 
 namespace praxis::manipulator::inert {
 
-expected<transform, refusal> forward_kinematics(const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta);
+expected<transform, refusal> forward_kinematics(const rigid_motion::screw_ops &screw, const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta);
 expected<jacobian, refusal> space_jacobian(const rigid_motion::screw_ops &screw, std::span<const screw_axis> space_screws, const joint_vector &theta);
 expected<jacobian, refusal> body_jacobian(std::span<const screw_axis> body_screws, const joint_vector &theta);
 expected<std::vector<screw_axis>, refusal> body_screws_from_space(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
@@ -75,11 +75,12 @@ namespace praxis::manipulator {
 // a chain and a configuration alone.
 struct forward_kinematics_ops
 {
-    expected<transform, refusal> (*forward_kinematics)(const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta) = &inert::forward_kinematics;
+    expected<transform, refusal> (*forward_kinematics)(const rigid_motion::screw_ops &screw, const transform &m, std::span<const screw_axis> space_screws,
+                                                       const joint_vector &theta)                                  = &inert::forward_kinematics;
     expected<transform, refusal> (*body_forward_kinematics)(const rigid_motion::frame_ops &frames, const transform &m, std::span<const screw_axis> body_screws,
-                                                            const joint_vector &theta)                                                          = &inert::body_forward_kinematics;
+                                                            const joint_vector &theta)                             = &inert::body_forward_kinematics;
     expected<std::vector<screw_axis>, refusal> (*body_screws_from_space)(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
-                                                                         std::span<const screw_axis> space_screws)                              = &inert::body_screws_from_space;
+                                                                         std::span<const screw_axis> space_screws) = &inert::body_screws_from_space;
 };
 
 // Declaration order is frozen: a designated initializer must name members in declaration order, so

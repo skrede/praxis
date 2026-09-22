@@ -109,13 +109,14 @@ std::optional<joint_vector> named_inside_bounds(const joint_limits &bounds, cons
 // A closed form answers over the mechanism's geometry, which says nothing about where the joints are
 // allowed to stand, so a candidate is kept only where the chain's bounds admit a naming of it and the
 // chain's own forward map places that naming at the target. The admitted naming is what is answered.
-std::optional<joint_vector> answered_naming(const forward_kinematics_ops &forward, const screw_chain &chain, const transform &desired, const joint_vector &candidate)
+std::optional<joint_vector> answered_naming(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const screw_chain &chain, const transform &desired,
+                                            const joint_vector &candidate)
 {
     const std::optional<joint_vector> named = named_inside_bounds(chain.limits, candidate);
     if(!named.has_value())
         return std::nullopt;
 
-    const expected<transform, refusal> reached = forward.forward_kinematics(chain.home, chain.space_screws, *named);
+    const expected<transform, refusal> reached = forward.forward_kinematics(screw, chain.home, chain.space_screws, *named);
     if(!reached)
         return std::nullopt;
 
@@ -134,11 +135,11 @@ std::optional<joint_vector> answered_naming(const forward_kinematics_ops &forwar
 
 // The branches the chain's own forward map places at the target, of the up to eight the closed form
 // names; a target every one of them misses has no answer rather than leaving the chain refused.
-expected<void, refusal> kept_branches(const forward_kinematics_ops &forward, const screw_chain &chain, const transform &desired, const cartan::analytical_result<double, 6, 8> &branches,
-                                      ik_result &answer)
+expected<void, refusal> kept_branches(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const screw_chain &chain, const transform &desired,
+                                      const cartan::analytical_result<double, 6, 8> &branches, ik_result &answer)
 {
     for(const Eigen::Vector<double, 6> &branch : branches)
-        if(const std::optional<joint_vector> named = answered_naming(forward, chain, desired, joint_vector(branch)); named.has_value())
+        if(const std::optional<joint_vector> named = answered_naming(screw, forward, chain, desired, joint_vector(branch)); named.has_value())
             answer.solutions.push_back(*named);
     if(answer.solutions.empty())
         return unexpected(refusal::no_solution);
@@ -148,10 +149,10 @@ expected<void, refusal> kept_branches(const forward_kinematics_ops &forward, con
 
 // The parameters the chain's own geometry yields, kept only where the reconstruction against that
 // chain's forward map holds.
-expected<cartan::opw_parameters<double>, refusal> admitted_geometry(const forward_kinematics_ops &forward, const screw_chain &chain)
+expected<cartan::opw_parameters<double>, refusal> admitted_geometry(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const screw_chain &chain)
 {
     const expected<cartan::opw_parameters<double>, refusal> geometry = to_opw_parameters(chain);
-    const expected<void, refusal> reconstructed                      = geometry ? agrees_with_chain(forward, chain, *geometry) : expected<void, refusal>(unexpected(geometry.error()));
+    const expected<void, refusal> reconstructed = geometry ? agrees_with_chain(screw, forward, chain, *geometry) : expected<void, refusal>(unexpected(geometry.error()));
     if(reconstructed)
         return geometry;
 
@@ -164,7 +165,7 @@ expected<cartan::opw_parameters<double>, refusal> admitted_geometry(const forwar
 }
 
 // Lynch & Park, Modern Robotics, chapter 4.
-expected<transform, refusal> forward_kinematics(const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta)
+expected<transform, refusal> forward_kinematics(const rigid_motion::screw_ops &, const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta)
 {
     if(theta.size() != static_cast<Eigen::Index>(space_screws.size()))
         return unexpected(refusal::unsupported_input);
@@ -275,10 +276,10 @@ expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &, cons
 // The closed form for an ortho-parallel basis with a spherical wrist: Brandstotter, Angerer &
 // Hofbaur (2014). Every branch it names is answered for, and the answer carries no iterates because
 // none were taken.
-expected<void, refusal> analytic_inverse_kinematics(const rigid_motion::screw_ops &, const forward_kinematics_ops &forward, const screw_chain &chain, const transform &desired,
+expected<void, refusal> analytic_inverse_kinematics(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const screw_chain &chain, const transform &desired,
                                                     ik_result &answer)
 {
-    const expected<cartan::opw_parameters<double>, refusal> geometry = admitted_geometry(forward, chain);
+    const expected<cartan::opw_parameters<double>, refusal> geometry = admitted_geometry(screw, forward, chain);
     if(!geometry)
         return unexpected(geometry.error());
 
@@ -295,7 +296,7 @@ expected<void, refusal> analytic_inverse_kinematics(const rigid_motion::screw_op
     if(!branches)
         return unexpected(refusal_from(branches.error().reason));
 
-    return kept_branches(forward, chain, desired, branches.value(), answer);
+    return kept_branches(screw, forward, chain, desired, branches.value(), answer);
 }
 
 expected<kinematics, refusal> make_kinematics(const screw_chain &chain, forward_kinematics_ops forward, differential_kinematics_ops differential, inverse_kinematics_ops inverse,

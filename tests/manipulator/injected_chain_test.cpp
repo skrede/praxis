@@ -84,7 +84,7 @@ capabilities deriving_the_supplied_chain()
 
 transform implied_by(const screw_chain &chain, const joint_vector &q)
 {
-    const expected<transform, refusal> pose = baseline().fk.forward_kinematics(chain.home, chain.space_screws, q);
+    const expected<transform, refusal> pose = baseline().fk.forward_kinematics(rigid_motion::baseline().screw, chain.home, chain.space_screws, q);
     REQUIRE(pose.has_value());
 
     return pose.value();

@@ -191,8 +191,8 @@ TEST_CASE("a_chain_agreeing_at_one_drawn_configuration_and_not_the_others_still_
 
         const screw_chain right     = build_chain(machine).value();
         const screw_chain wrong     = agreeing_at_one_configuration(machine).value();
-        const transform here        = forward_kinematics(right.home, right.space_screws, agreeing_configuration).value();
-        const transform there       = forward_kinematics(wrong.home, wrong.space_screws, agreeing_configuration).value();
+        const transform here        = forward_kinematics(rigid_motion::baseline().screw, right.home, right.space_screws, agreeing_configuration).value();
+        const transform there       = forward_kinematics(rigid_motion::baseline().screw, wrong.home, wrong.space_screws, agreeing_configuration).value();
         const residual at_the_first = pose_residual(here, there);
 
         REQUIRE(at_the_first.magnitude <= pose_tolerance_radians);

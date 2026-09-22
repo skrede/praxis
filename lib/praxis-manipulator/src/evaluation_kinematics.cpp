@@ -48,16 +48,18 @@ const differential_kinematics_ops &differential_kinematics_of(const void *value)
 // what the assertion below the table holds. The row asked over body screws derives them once and
 // hands the same derivation to both sides, so it measures its own slot rather than that derivation.
 constexpr std::array forward_kinematics_table{
-        evaluation::slot_evaluation{
-                "fk.forward_kinematics", evaluation::residual_kind::pose, evaluation::tolerance_pair{accumulated_pose_tolerance_radians, accumulated_pose_tolerance_metres},
-                [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result
-                {
-                    const evaluation_case example              = drawn_case(drawn);
-                    const expected<transform, refusal> held    = forward_kinematics_of(first).forward_kinematics(example.chain.home, example.chain.space_screws, example.joints);
-                    const expected<transform, refusal> against = forward_kinematics_of(second).forward_kinematics(example.chain.home, example.chain.space_screws, example.joints);
+        evaluation::slot_evaluation{"fk.forward_kinematics", evaluation::residual_kind::pose,
+                                    evaluation::tolerance_pair{accumulated_pose_tolerance_radians, accumulated_pose_tolerance_metres},
+                                    [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result
+                                    {
+                                        const evaluation_case example = drawn_case(drawn);
+                                        const expected<transform, refusal> held =
+                                                forward_kinematics_of(first).forward_kinematics(shared_screw(), example.chain.home, example.chain.space_screws, example.joints);
+                                        const expected<transform, refusal> against =
+                                                forward_kinematics_of(second).forward_kinematics(shared_screw(), example.chain.home, example.chain.space_screws, example.joints);
 
-                    return evaluation::agreed_or_refused(held, against, evaluation::pose_residual, allowed);
-                }},
+                                        return evaluation::agreed_or_refused(held, against, evaluation::pose_residual, allowed);
+                                    }},
         evaluation::slot_evaluation{
                 "fk.body_forward_kinematics", evaluation::residual_kind::pose, evaluation::tolerance_pair{accumulated_pose_tolerance_radians, accumulated_pose_tolerance_metres},
                 [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result

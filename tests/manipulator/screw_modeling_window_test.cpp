@@ -102,9 +102,9 @@ forward_kinematics_ops solving()
 // A forward map that is not the one a second implementation would answer with, so a difference
 // reading zero is one taken through this map on both sides rather than one that happens to agree
 // with a product of exponentials written somewhere else.
-expected<transform, refusal> lifted_forward_kinematics(const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta)
+expected<transform, refusal> lifted_forward_kinematics(const rigid_motion::screw_ops &screw, const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta)
 {
-    expected<transform, refusal> posed = forward_kinematics(m, space_screws, theta);
+    expected<transform, refusal> posed = forward_kinematics(screw, m, space_screws, theta);
     if(!posed)
         return posed;
 

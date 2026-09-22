@@ -35,12 +35,12 @@ double along(std::size_t step)
     return static_cast<double>(step) / static_cast<double>(path_comparison_window::drawn_points - 1u);
 }
 
-std::vector<transform> mapped(const forward_kinematics_ops &fk, const screw_chain &chain, const std::vector<joint_vector> &through)
+std::vector<transform> mapped(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &fk, const screw_chain &chain, const std::vector<joint_vector> &through)
 {
     std::vector<transform> reached;
     for(const joint_vector &at : through)
     {
-        const expected<transform, refusal> pose = fk.forward_kinematics(chain.home, chain.space_screws, at);
+        const expected<transform, refusal> pose = fk.forward_kinematics(screw, chain.home, chain.space_screws, at);
         if(!pose)
             return {};
 
@@ -111,9 +111,9 @@ std::vector<transform> path_comparison_window::poses_along(compared_path shape) 
     const joint_vector from = m_first.cast<double>() * radians_per_degree;
     const joint_vector to   = m_second.cast<double>() * radians_per_degree;
     if(shape == compared_path::joint_space)
-        return mapped(m_fk, m_chain, configurations_along(m_shapes, from, to));
+        return mapped(m_screw_ops, m_fk, m_chain, configurations_along(m_shapes, from, to));
 
-    const std::vector<transform> ends = mapped(m_fk, m_chain, {from, to});
+    const std::vector<transform> ends = mapped(m_screw_ops, m_fk, m_chain, {from, to});
     if(ends.size() != 2u)
         return {};
 

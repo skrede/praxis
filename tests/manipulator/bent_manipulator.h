@@ -36,9 +36,9 @@ inline transform displaced(const transform &pose)
     return moved;
 }
 
-inline expected<transform, refusal> displaced_forward(const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta)
+inline expected<transform, refusal> displaced_forward(const rigid_motion::screw_ops &screw, const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta)
 {
-    const expected<transform, refusal> reached = forward_kinematics(m, space_screws, theta);
+    const expected<transform, refusal> reached = forward_kinematics(screw, m, space_screws, theta);
     if(!reached)
         return reached;
 

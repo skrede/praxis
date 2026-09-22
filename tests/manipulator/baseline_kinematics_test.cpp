@@ -115,7 +115,7 @@ TEST_CASE("the_body_form_reaches_the_pose_the_space_form_reaches_over_the_same_a
 
     for(const joint_vector &q : {configuration(0.0, 0.0), configuration(0.4, -0.7), configuration(std::numbers::pi / 2.0, 0.3)})
     {
-        const expected<transform, refusal> from_space = manipulator::forward_kinematics(chain.home, chain.space_screws, q);
+        const expected<transform, refusal> from_space = manipulator::forward_kinematics(reference_screw, chain.home, chain.space_screws, q);
         const expected<transform, refusal> from_body  = manipulator::body_forward_kinematics(reference_frames, chain.home, *body, q);
 
         REQUIRE(from_space);
@@ -195,7 +195,7 @@ TEST_CASE("a_joint_vector_the_screw_span_does_not_cover_is_refused_by_every_dele
     const screw_chain chain  = planar_arm();
     const joint_vector wrong = joint_vector::Constant(3, 0.2);
 
-    const expected<transform, refusal> pose       = manipulator::forward_kinematics(chain.home, chain.space_screws, wrong);
+    const expected<transform, refusal> pose       = manipulator::forward_kinematics(reference_screw, chain.home, chain.space_screws, wrong);
     const expected<transform, refusal> body_pose  = manipulator::body_forward_kinematics(reference_frames, chain.home, chain.space_screws, wrong);
     const expected<jacobian, refusal> space_frame = manipulator::space_jacobian(reference_screw, chain.space_screws, wrong);
     const expected<jacobian, refusal> body_frame  = manipulator::body_jacobian(chain.space_screws, wrong);
@@ -214,7 +214,7 @@ TEST_CASE("a_joint_vector_the_screw_span_does_not_cover_is_refused_by_every_dele
     transform unbounded = transform::Identity();
     unbounded(0, 3)     = std::numeric_limits<double>::infinity();
 
-    const expected<transform, refusal> shaped      = manipulator::forward_kinematics(unbounded, chain.space_screws, wrong);
+    const expected<transform, refusal> shaped      = manipulator::forward_kinematics(reference_screw, unbounded, chain.space_screws, wrong);
     const expected<transform, refusal> shaped_body = manipulator::body_forward_kinematics(reference_frames, unbounded, chain.space_screws, wrong);
     REQUIRE_FALSE(shaped.has_value());
     REQUIRE_FALSE(shaped_body.has_value());
@@ -228,7 +228,7 @@ TEST_CASE("a_span_of_no_screws_is_answered_rather_than_refused")
     home(2, 3)     = 0.75;
 
     const joint_vector none                       = joint_vector::Zero(0);
-    const expected<transform, refusal> pose       = manipulator::forward_kinematics(home, {}, none);
+    const expected<transform, refusal> pose       = manipulator::forward_kinematics(reference_screw, home, {}, none);
     const expected<transform, refusal> body_pose  = manipulator::body_forward_kinematics(reference_frames, home, {}, none);
     const expected<jacobian, refusal> space_frame = manipulator::space_jacobian(reference_screw, {}, none);
     const expected<jacobian, refusal> body_frame  = manipulator::body_jacobian({}, none);
@@ -256,7 +256,7 @@ TEST_CASE("a_chain_carrying_a_nonfinite_value_is_refused_rather_than_thrown_over
     std::vector<screw_axis> blunted = chain.space_screws;
     blunted[1]                      = screw_axis::Constant(std::numeric_limits<double>::quiet_NaN());
 
-    const expected<transform, refusal> pose       = manipulator::forward_kinematics(unbounded, chain.space_screws, q);
+    const expected<transform, refusal> pose       = manipulator::forward_kinematics(reference_screw, unbounded, chain.space_screws, q);
     const expected<transform, refusal> body_pose  = manipulator::body_forward_kinematics(reference_frames, chain.home, blunted, q);
     const expected<jacobian, refusal> space_frame = manipulator::space_jacobian(reference_screw, blunted, q);
     const expected<jacobian, refusal> body_frame  = manipulator::body_jacobian(blunted, q);

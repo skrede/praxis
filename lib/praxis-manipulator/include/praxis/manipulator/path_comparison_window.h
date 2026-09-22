@@ -16,6 +16,8 @@
 
 #include "praxis/trajectory/path.h"
 
+#include "praxis/rigid_motion/screw.h"
+
 #include <Eigen/Core>
 
 #include <string>
@@ -74,10 +76,10 @@ public:
     static joint_vector opening_first(std::size_t joints);
     static joint_vector opening_second(std::size_t joints);
 
-    path_comparison_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, loadable_robot_stencil &drawn, forward_kinematics_ops forward, screw_chain chain,
-                           trajectory::path_ops shapes);
-    path_comparison_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, loadable_robot_stencil &drawn, forward_kinematics_ops forward, screw_chain chain,
-                           trajectory::path_ops shapes, const settings &state, std::string at = std::string());
+    path_comparison_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, loadable_robot_stencil &drawn, rigid_motion::screw_ops screw, forward_kinematics_ops forward,
+                           screw_chain chain, trajectory::path_ops shapes);
+    path_comparison_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, loadable_robot_stencil &drawn, rigid_motion::screw_ops screw, forward_kinematics_ops forward,
+                           screw_chain chain, trajectory::path_ops shapes, const settings &state, std::string at = std::string());
 
     settings state() const;
 
@@ -110,6 +112,7 @@ private:
     arm_reader m_seen;
     screw_chain m_chain;
     std::string m_settings_at;
+    rigid_motion::screw_ops m_screw_ops;
     forward_kinematics_ops m_fk;
     trajectory::path_ops m_shapes;
     compared_path_cycle m_played;

@@ -64,7 +64,7 @@ joint_limits bounds_over(Eigen::Index joints)
     return bounds;
 }
 
-expected<transform, refusal> sliding_forward_kinematics(const transform &, std::span<const screw_axis>, const joint_vector &theta)
+expected<transform, refusal> sliding_forward_kinematics(const rigid_motion::screw_ops &, const transform &, std::span<const screw_axis>, const joint_vector &theta)
 {
     transform pose = transform::Identity();
     pose(0, 3)     = theta.size() > 0 ? theta[0] : 0.0;

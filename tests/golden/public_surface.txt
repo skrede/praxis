@@ -397,7 +397,7 @@ lib/praxis-manipulator/include/praxis/manipulator/arm_state.h	command	function	(
 lib/praxis-manipulator/include/praxis/manipulator/arm_state.h	__anon2dcb6ff40102	function	(arm_state &state) 	-
 lib/praxis-manipulator/include/praxis/manipulator/baseline/kinematics.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/baseline/kinematics.h	praxis	namespace	-	-
-lib/praxis-manipulator/include/praxis/manipulator/baseline/kinematics.h	forward_kinematics	prototype	(const transform & m,std::span<const screw_axis> space_screws,const joint_vector & theta)	typename:expected<transform,refusal>
+lib/praxis-manipulator/include/praxis/manipulator/baseline/kinematics.h	forward_kinematics	prototype	(const rigid_motion::screw_ops & screw,const transform & m,std::span<const screw_axis> space_screws,const joint_vector & theta)	typename:expected<transform,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/baseline/kinematics.h	space_jacobian	prototype	(const rigid_motion::screw_ops & screw,std::span<const screw_axis> space_screws,const joint_vector & theta)	typename:expected<jacobian,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/baseline/kinematics.h	body_jacobian	prototype	(std::span<const screw_axis> body_screws,const joint_vector & theta)	typename:expected<jacobian,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/baseline/kinematics.h	body_screws_from_space	prototype	(const rigid_motion::screw_ops & screw,const rigid_motion::frame_ops & frames,const transform & m,std::span<const screw_axis> space_screws)	typename:expected<std::vector<screw_axis>,refusal>
@@ -771,7 +771,7 @@ lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	iterations	member
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	inert	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	praxis	namespace	-	-
-lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	forward_kinematics	prototype	(const transform & m,std::span<const screw_axis> space_screws,const joint_vector & theta)	typename:expected<transform,refusal>
+lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	forward_kinematics	prototype	(const rigid_motion::screw_ops & screw,const transform & m,std::span<const screw_axis> space_screws,const joint_vector & theta)	typename:expected<transform,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	space_jacobian	prototype	(const rigid_motion::screw_ops & screw,std::span<const screw_axis> space_screws,const joint_vector & theta)	typename:expected<jacobian,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	body_jacobian	prototype	(std::span<const screw_axis> body_screws,const joint_vector & theta)	typename:expected<jacobian,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	body_screws_from_space	prototype	(const rigid_motion::screw_ops & screw,const rigid_motion::frame_ops & frames,const transform & m,std::span<const screw_axis> space_screws)	typename:expected<std::vector<screw_axis>,refusal>
@@ -779,7 +779,7 @@ lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	body_forward_kine
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	forward_kinematics_ops	struct	-	-
-lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	forward_kinematics	member	-	typename:expected<transform,refusal> (*)(const transform & m,std::span<const screw_axis> space_screws,const joint_vector & theta)
+lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	forward_kinematics	member	-	typename:expected<transform,refusal> (*)(const rigid_motion::screw_ops & screw,const transform & m,std::span<const screw_axis> space_screws,const joint_vector & theta)
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	body_forward_kinematics	member	-	typename:expected<transform,refusal> (*)(const rigid_motion::frame_ops & frames,const transform & m,std::span<const screw_axis> body_screws,const joint_vector & theta)
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	body_screws_from_space	member	-	typename:expected<std::vector<screw_axis>,refusal> (*)(const rigid_motion::screw_ops & screw,const rigid_motion::frame_ops & frames,const transform & m,std::span<const screw_axis> space_screws)
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	differential_kinematics_ops	struct	-	-
@@ -1096,8 +1096,8 @@ lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	screw
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	drawn_points	member	-	typename:std::size_t
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	opening_first	prototype	(std::size_t joints)	typename:joint_vector
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	opening_second	prototype	(std::size_t joints)	typename:joint_vector
-lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	path_comparison_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,loadable_robot_stencil & drawn,forward_kinematics_ops forward,screw_chain chain,trajectory::path_ops shapes)	-
-lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	path_comparison_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,loadable_robot_stencil & drawn,forward_kinematics_ops forward,screw_chain chain,trajectory::path_ops shapes,const settings & state,std::string at=std::string ())	-
+lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	path_comparison_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,loadable_robot_stencil & drawn,rigid_motion::screw_ops screw,forward_kinematics_ops forward,screw_chain chain,trajectory::path_ops shapes)	-
+lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	path_comparison_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,loadable_robot_stencil & drawn,rigid_motion::screw_ops screw,forward_kinematics_ops forward,screw_chain chain,trajectory::path_ops shapes,const settings & state,std::string at=std::string ())	-
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	state	prototype	() const	typename:settings
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	poses_along	prototype	(compared_path shape) const	typename:std::vector<transform>
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	render	prototype	()	typename:void
@@ -1110,6 +1110,7 @@ lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_joi
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_seen	member	-	typename:arm_reader
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_chain	member	-	typename:screw_chain
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_settings_at	member	-	typename:std::string
+lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_screw_ops	member	-	typename:rigid_motion::screw_ops
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_fk	member	-	typename:forward_kinematics_ops
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_shapes	member	-	typename:trajectory::path_ops
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_played	member	-	typename:compared_path_cycle

@@ -47,14 +47,14 @@ path_comparison_window::settings::settings(joint_vector opening_first, joint_vec
 {
 }
 
-path_comparison_window::path_comparison_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, loadable_robot_stencil &drawn, forward_kinematics_ops forward,
-                                               screw_chain chain, trajectory::path_ops shapes)
-        : path_comparison_window(std::move(name), std::move(seen), std::move(arm), drawn, forward, std::move(chain), shapes, settings{})
+path_comparison_window::path_comparison_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, loadable_robot_stencil &drawn, rigid_motion::screw_ops screw,
+                                               forward_kinematics_ops forward, screw_chain chain, trajectory::path_ops shapes)
+        : path_comparison_window(std::move(name), std::move(seen), std::move(arm), drawn, screw, forward, std::move(chain), shapes, settings{})
 {
 }
 
-path_comparison_window::path_comparison_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, loadable_robot_stencil &drawn, forward_kinematics_ops forward,
-                                               screw_chain chain, trajectory::path_ops shapes, const settings &state, std::string at)
+path_comparison_window::path_comparison_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, loadable_robot_stencil &drawn, rigid_motion::screw_ops screw,
+                                               forward_kinematics_ops forward, screw_chain chain, trajectory::path_ops shapes, const settings &state, std::string at)
         : imgui_window(std::move(name))
         , m_screw(state.screw)
         , m_decoupled(state.decoupled)
@@ -62,6 +62,7 @@ path_comparison_window::path_comparison_window(std::string name, arm_reader seen
         , m_seen(seen)
         , m_chain(std::move(chain))
         , m_settings_at(std::move(at))
+        , m_screw_ops(screw)
         , m_fk(forward)
         , m_shapes(shapes)
         , m_played(every_compared_path(state.played))

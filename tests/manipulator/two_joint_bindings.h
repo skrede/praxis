@@ -39,7 +39,7 @@ inline screw_chain two_joint_chain()
     return screw_chain(transform::Identity(), {screw_axis::Zero(), screw_axis::Zero()}, two_joint_bounds());
 }
 
-inline expected<transform, refusal> lifting_forward_kinematics(const transform &m, std::span<const screw_axis>, const joint_vector &theta)
+inline expected<transform, refusal> lifting_forward_kinematics(const rigid_motion::screw_ops &, const transform &m, std::span<const screw_axis>, const joint_vector &theta)
 {
     transform pose = m;
     pose(2, 3) += theta.size() > 0 ? theta[0] : 0.0;
@@ -77,7 +77,7 @@ inline expected<transform, refusal> screw_reading_body_forward_kinematics(const 
 
 // Four different enumerators, so a forwarder that classified a failure of its own instead of carrying
 // the slot's would report the wrong one rather than merely reporting.
-inline expected<transform, refusal> degenerate_forward_kinematics(const transform &, std::span<const screw_axis>, const joint_vector &)
+inline expected<transform, refusal> degenerate_forward_kinematics(const rigid_motion::screw_ops &, const transform &, std::span<const screw_axis>, const joint_vector &)
 {
     return unexpected(refusal::degenerate);
 }
@@ -100,10 +100,10 @@ inline expected<void, refusal> degenerate_inverse_kinematics(const rigid_motion:
 
 // Shaped the way a solve written against this seam is: it asks the forward maps it was handed rather
 // than computing its own, so what it reads is whatever the composition bound.
-inline expected<void, refusal> fk_reading_inverse_kinematics(const rigid_motion::screw_ops &, const forward_kinematics_ops &forward, const differential_kinematics_ops &,
+inline expected<void, refusal> fk_reading_inverse_kinematics(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const differential_kinematics_ops &,
                                                              const screw_chain &chain, const transform &, const joint_vector &j0, const solver_parameters &, ik_result &answer)
 {
-    const expected<transform, refusal> reached = forward.forward_kinematics(chain.home, chain.space_screws, j0);
+    const expected<transform, refusal> reached = forward.forward_kinematics(screw, chain.home, chain.space_screws, j0);
     if(!reached)
         return unexpected(reached.error());
 

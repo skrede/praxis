@@ -4,6 +4,8 @@
 #include "praxis/manipulator/baseline/modeling.h"
 #include "praxis/manipulator/baseline/kinematics.h"
 
+#include "praxis/rigid_motion/capabilities.h"
+
 #include <meios/model.h>
 
 #include <span>
@@ -85,7 +87,7 @@ inline expected<void, refusal> counts_its_entries(const rigid_motion::screw_ops 
                                                   const screw_chain &chain, const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer)
 {
     ++entries;
-    static_cast<void>(forward.forward_kinematics(chain.home, chain.space_screws, j0));
+    static_cast<void>(forward.forward_kinematics(screw, chain.home, chain.space_screws, j0));
     static_cast<void>(differential.space_jacobian(screw, chain.space_screws, j0));
 
     return inverse_kinematics(screw, forward, differential, chain, desired, j0, parameters, answer);
@@ -131,8 +133,8 @@ inline expected<screw_chain, refusal> agreeing_at_one_configuration(const meios:
     if(!wrong || !right)
         return wrong;
 
-    const transform held = forward_kinematics(transform::Identity(), wrong->space_screws, agreeing_configuration).value();
-    const transform ref  = forward_kinematics(transform::Identity(), right->space_screws, agreeing_configuration).value();
+    const transform held = forward_kinematics(rigid_motion::baseline().screw, transform::Identity(), wrong->space_screws, agreeing_configuration).value();
+    const transform ref  = forward_kinematics(rigid_motion::baseline().screw, transform::Identity(), right->space_screws, agreeing_configuration).value();
 
     return screw_chain(transform(held.inverse() * ref * right->home), wrong->space_screws, wrong->limits);
 }

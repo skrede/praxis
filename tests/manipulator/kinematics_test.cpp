@@ -24,7 +24,7 @@ TEST_CASE("every slot of a value-initialized composition refuses rather than ans
     const joint_vector j0 = joint_vector::Constant(2, 0.25);
     ik_result answer;
 
-    const expected<transform, refusal> reached               = forward.forward_kinematics(transform::Identity(), {}, j0);
+    const expected<transform, refusal> reached               = forward.forward_kinematics(rigid_motion::screw_ops{}, transform::Identity(), {}, j0);
     const expected<jacobian, refusal> space_frame            = differential.space_jacobian(rigid_motion::screw_ops{}, {}, j0);
     const expected<jacobian, refusal> body_frame             = differential.body_jacobian({}, j0);
     const expected<std::vector<screw_axis>, refusal> derived = forward.body_screws_from_space(rigid_motion::screw_ops{}, rigid_motion::frame_ops{}, transform::Identity(), {});

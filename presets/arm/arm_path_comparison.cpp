@@ -19,7 +19,7 @@ manipulator::arm_composition arm_windows_path_comparison(arm_scenario chosen)
     {
         std::vector<std::shared_ptr<scene::imgui_window>> opened;
         opened.push_back(std::make_shared<manipulator::joint_control_window>("Joint control", built.seen, built.arm, state.joint_control, window_paths::joint_control));
-        opened.push_back(std::make_shared<manipulator::path_comparison_window>("Comparison", built.seen, built.arm, built.stencil, built.fk, built.chain, built.path,
+        opened.push_back(std::make_shared<manipulator::path_comparison_window>("Comparison", built.seen, built.arm, built.stencil, built.screw, built.fk, built.chain, built.path,
                                                                                state.path_comparison, window_paths::path_comparison));
         opened.push_back(motion::open_view(built, state));
 

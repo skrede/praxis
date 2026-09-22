@@ -5,6 +5,8 @@
 
 #include "praxis/evaluation/tolerance.h"
 
+#include "praxis/rigid_motion/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <Eigen/Geometry>
@@ -30,6 +32,8 @@ constexpr double pinned_c3 = 0.420;
 constexpr double pinned_c4 = 0.080;
 
 constexpr double derived_tolerance = 1.0e-9;
+
+const rigid_motion::screw_ops reference_screw = rigid_motion::baseline().screw;
 
 forward_kinematics_ops reference_forward()
 {
@@ -136,7 +140,7 @@ TEST_CASE("the derived parameters reconstruct the arm the chain describes")
     const expected<cartan::opw_parameters<double>, refusal> derived = to_opw_parameters(arm);
 
     REQUIRE(derived.has_value());
-    CHECK(agrees_with_chain(reference_forward(), arm, *derived).has_value());
+    CHECK(agrees_with_chain(reference_screw, reference_forward(), arm, *derived).has_value());
 }
 
 // A quarter turn of the home pose is the failure a frame convention read the wrong way round would
@@ -155,9 +159,9 @@ TEST_CASE("parameters describing another arm than the chain does are refused by 
     cartan::opw_parameters<double> mirrored = *derived;
     mirrored.sign_corrections[3]            = 1;
 
-    const expected<void, refusal> against_a_turn = agrees_with_chain(reference_forward(), turned, *derived);
+    const expected<void, refusal> against_a_turn = agrees_with_chain(reference_screw, reference_forward(), turned, *derived);
     REQUIRE_FALSE(against_a_turn.has_value());
     CHECK(against_a_turn.error() == refusal::unsupported_input);
-    CHECK_FALSE(agrees_with_chain(reference_forward(), recorded_arm(), shortened).has_value());
-    CHECK_FALSE(agrees_with_chain(reference_forward(), recorded_arm(), mirrored).has_value());
+    CHECK_FALSE(agrees_with_chain(reference_screw, reference_forward(), recorded_arm(), shortened).has_value());
+    CHECK_FALSE(agrees_with_chain(reference_screw, reference_forward(), recorded_arm(), mirrored).has_value());
 }

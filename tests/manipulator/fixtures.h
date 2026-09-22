@@ -63,7 +63,7 @@ inline std::shared_ptr<threepp::Robot> two_joint_handle()
 
 // Forward kinematics is a pure translation along x by the first joint value, so a pose reported
 // through the adapter can be traced back to the joint values the renderer holds.
-inline expected<transform, refusal> sliding_forward_kinematics(const transform &, std::span<const screw_axis>, const joint_vector &theta)
+inline expected<transform, refusal> sliding_forward_kinematics(const rigid_motion::screw_ops &, const transform &, std::span<const screw_axis>, const joint_vector &theta)
 {
     transform pose = transform::Identity();
     pose(0, 3)     = theta.size() > 0 ? theta[0] : 0.0;
