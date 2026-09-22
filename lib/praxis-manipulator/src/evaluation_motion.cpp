@@ -5,9 +5,6 @@
 
 #include "praxis/evaluation/comparators.h"
 
-#include "praxis/rigid_motion/baseline/frame.h"
-#include "praxis/rigid_motion/baseline/screw.h"
-
 #include "praxis/rigid_motion/capabilities.h"
 
 #include <Eigen/Core>
@@ -37,13 +34,21 @@ const motion_ops &motions_of(const void *value)
     return *static_cast<const motion_ops *>(value);
 }
 
-// One screw implementation serves both sides of the row that takes one, so the row measures its own
-// slot rather than a screw capability neither side is under test for.
+// One screw implementation and one frame implementation serve both sides of every row that reaches
+// them and the pose that row is measured against, so a row measures its own slot rather than a
+// capability neither side is under test for.
 const rigid_motion::screw_ops &shared_screw()
 {
     static const rigid_motion::screw_ops screw = rigid_motion::baseline().screw;
 
     return screw;
+}
+
+const rigid_motion::frame_ops &shared_frames()
+{
+    static const rigid_motion::frame_ops frames = rigid_motion::baseline().frame;
+
+    return frames;
 }
 
 // A number in the closed range either way of `extent`, taken from the one full-turn draw the source
@@ -90,11 +95,11 @@ evaluation::case_result compare_task_space_screw(const void *first, const void *
     const Eigen::Vector3d point              = drawn.position_metres();
     const double turn                        = drawn_within(drawn, displacement_turn_radians);
     const double travel                      = drawn.pitch();
-    const expected<screw_axis, refusal> axis = rigid_motion::screw_axis_from_point_direction_pitch(point, direction, travel);
+    const expected<screw_axis, refusal> axis = shared_screw().screw_axis_from_point_direction_pitch(point, direction, travel);
     if(!axis)
         return unusable(motion_kind);
 
-    const transform asked_for = rigid_motion::matrix_exponential_screw(*axis, turn) * solved->reached;
+    const transform asked_for = shared_screw().matrix_exponential_screw(*axis, turn) * solved->reached;
 
     return reaching(*solved, motions_of(first).task_space_screw(shared_screw(), solved->solver, solved->reached, direction, point, turn, travel, solved->standing),
                     motions_of(second).task_space_screw(shared_screw(), solved->solver, solved->reached, direction, point, turn, travel, solved->standing), asked_for, allowed);
@@ -109,10 +114,10 @@ evaluation::case_result compare_tool_frame_displace(const void *first, const voi
 
     const Eigen::Vector3d offset = drawn.unit_direction() * drawn_within(drawn, displacement_metres);
     const rotation turned(Eigen::AngleAxisd(drawn_within(drawn, displacement_turn_radians), drawn.unit_direction()).toRotationMatrix());
-    const transform asked_for = solved->reached * rigid_motion::transformation_matrix_from_rotation_position(turned, offset);
+    const transform asked_for = solved->reached * shared_frames().transformation_matrix_from_rotation_position(turned, offset);
 
-    return reaching(*solved, motions_of(first).tool_frame_displace(rigid_motion::baseline().frame, solved->solver, solved->reached, offset, turned, solved->standing),
-                    motions_of(second).tool_frame_displace(rigid_motion::baseline().frame, solved->solver, solved->reached, offset, turned, solved->standing), asked_for, allowed);
+    return reaching(*solved, motions_of(first).tool_frame_displace(shared_frames(), solved->solver, solved->reached, offset, turned, solved->standing),
+                    motions_of(second).tool_frame_displace(shared_frames(), solved->solver, solved->reached, offset, turned, solved->standing), asked_for, allowed);
 }
 
 // The rows are in the enumerator order of motion_slot, and each name is spelled exactly as the
