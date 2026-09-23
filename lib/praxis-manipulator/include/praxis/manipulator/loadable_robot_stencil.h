@@ -329,6 +329,9 @@ private:
     std::array<std::shared_ptr<threepp::Object3D>, jacobian_block_count> m_ellipsoid_groups;
     std::shared_ptr<threepp::Object3D> m_columns;
     std::shared_ptr<threepp::Object3D> m_decoration;
+    // Turned like the robot, so a world object's placement is read in the robot's frame rather than
+    // the renderer's.
+    std::shared_ptr<threepp::Object3D> m_world_frame;
     std::shared_ptr<threepp::Object3D> m_world_object;
     std::vector<drawn_path> m_path_lines;
     std::vector<drawn_figure> m_solution_figures;

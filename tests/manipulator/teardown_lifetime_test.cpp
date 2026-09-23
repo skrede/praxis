@@ -298,7 +298,7 @@ TEST_CASE("the world reference object leaves the scene at the withdrawal and the
 {
     standing stage;
 
-    REQUIRE(stage.watched.world.lock()->parent == stage.scene.get());
+    REQUIRE(stage.watched.world.lock()->parent->parent == stage.scene.get());
 
     stage.composed->tear_down();
 
@@ -327,7 +327,7 @@ TEST_CASE("an unload ends the placement and the acknowledgment ends what the arm
     REQUIRE(descendants(*target) > bare);
     REQUIRE(watched.robot.lock()->parent == target.get());
     REQUIRE(watched.tool.lock()->parent == target.get());
-    REQUIRE(watched.world.lock()->parent == target.get());
+    REQUIRE(watched.world.lock()->parent->parent == target.get());
 
     held.unload();
 

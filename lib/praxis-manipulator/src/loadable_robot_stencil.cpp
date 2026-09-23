@@ -92,6 +92,7 @@ loadable_robot_stencil::loadable_robot_stencil(std::shared_ptr<threepp::Robot> r
         , m_ellipsoid_groups{threepp::Group::create(), threepp::Group::create()}
         , m_columns(threepp::Group::create())
         , m_decoration(threepp::Group::create())
+        , m_world_frame(threepp::Group::create())
         , m_ellipsoid_scale{opening_angular_scale, opening_linear_scale}
         , m_column_scale{opening_angular_column_scale, opening_linear_column_scale}
         , m_force_cap_ratio(opening_force_cap_ratio)
@@ -105,6 +106,7 @@ loadable_robot_stencil::loadable_robot_stencil(std::shared_ptr<threepp::Robot> r
 {
     held(m_robot, "the loadable robot stencil", "robot object").rotation.x = -threepp::math::PI / 2.f;
     m_decoration->rotation.x                                               = -threepp::math::PI / 2.f;
+    m_world_frame->rotation.x                                              = -threepp::math::PI / 2.f;
 
     // Seven subtrees under the one root, so that the switch over the axes, the switch over the
     // chain, the switch over any one path, the switch over the figures the stencil was told, the
@@ -128,6 +130,7 @@ expected<void, refusal> loadable_robot_stencil::initialize()
 {
     m_scene.add(m_robot);
     m_scene.add(m_decoration);
+    m_scene.add(m_world_frame);
 
     return {};
 }
@@ -135,8 +138,9 @@ expected<void, refusal> loadable_robot_stencil::initialize()
 void loadable_robot_stencil::tear_down()
 {
     if(m_world_object)
-        m_scene.remove(*m_world_object);
+        m_world_frame->remove(*m_world_object);
     detach_flange_attachments();
+    m_scene.remove(*m_world_frame);
     m_scene.remove(*m_decoration);
     m_scene.remove(*m_robot);
 }
@@ -145,14 +149,14 @@ void loadable_robot_stencil::set_world_object(std::shared_ptr<threepp::Object3D>
 {
     clear_world_object();
     m_world_object = std::move(world_object);
-    m_scene.add(m_world_object);
+    m_world_frame->add(m_world_object);
 }
 
 void loadable_robot_stencil::clear_world_object()
 {
     if(m_world_object)
     {
-        m_scene.remove(*m_world_object);
+        m_world_frame->remove(*m_world_object);
         m_world_object.reset();
     }
 }

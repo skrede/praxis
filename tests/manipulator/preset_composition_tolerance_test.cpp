@@ -39,9 +39,10 @@ using namespace praxis::manipulator;
 
 namespace {
 
-// What one composition puts under the scene: the rendered arm, and the decoration root beside it
-// rather than under it, so that hiding either leaves the other shown.
-constexpr std::size_t composed_nodes = 2;
+// What one composition puts under the scene: the rendered arm, the decoration root beside it rather
+// than under it so that hiding either leaves the other shown, and the frame a world object hangs
+// from.
+constexpr std::size_t composed_nodes = 3;
 
 // The rendered arm the well-formed description builds has one joint, so every chain a case hands the
 // composition is written against that count or deliberately against another.
