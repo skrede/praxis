@@ -1,3 +1,5 @@
+#include "unbound_slots.h"
+
 #include "praxis/presets/arm.h"
 
 #include "praxis/manipulator/robot.h"
@@ -5,8 +7,6 @@
 #include "praxis/manipulator/pose_readout.h"
 #include "praxis/manipulator/robot_view_window.h"
 #include "praxis/manipulator/loadable_robot_stencil.h"
-
-#include "praxis/extension/coverage.h"
 
 #include "praxis/scene/imgui_window.h"
 
@@ -16,7 +16,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <cstddef>
 #include <utility>
 
 namespace praxis::presets {
@@ -31,25 +30,7 @@ using composed_windows = std::vector<std::shared_ptr<scene::imgui_window>>;
 constexpr std::array<manipulator::robot_slot, 4> pose_transformations{manipulator::robot_slot::tool_pose_from_flange_pose, manipulator::robot_slot::flange_pose_from_tool_pose,
                                                                       manipulator::robot_slot::position_from_pose, manipulator::robot_slot::orientation_from_pose};
 
-// The names come from the same descriptor table the coverage report reads, so a slot renamed in one
-// place is named the same way here.
 constexpr manipulator::robot_ops slot_names{};
-
-std::string unbound_among(const manipulator::robot_slot_set &inert)
-{
-    const capability_view described = view_of(slot_names);
-
-    std::string listed;
-    for(const manipulator::robot_slot needed : pose_transformations)
-        if(inert.contains(needed))
-        {
-            if(!listed.empty())
-                listed += ", ";
-            listed += slot_name(described, static_cast<std::size_t>(needed));
-        }
-
-    return listed;
-}
 
 // Said once, at composition, rather than branched on at every read: the four transformations cannot
 // refuse, so a window opened over an unbound one would show a plausible pose forever and no reader
@@ -95,7 +76,7 @@ manipulator::arm_composition arm_windows_tooling(arm_scenario chosen)
     composed.draws_world = true;
     composed.windows     = [state = std::move(chosen)](const manipulator::arm_window_inputs &built)
     {
-        if(const std::string unbound = unbound_among(built.inert); !unbound.empty())
+        if(const std::string unbound = unbound_among(slot_names, built.inert, pose_transformations); !unbound.empty())
             return declined(built.stencil, unbound);
 
         draw_derived_chain(built.stencil, built.chain);

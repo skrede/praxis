@@ -43,6 +43,7 @@ struct arm_window_inputs
     forward_kinematics_ops fk;
     differential_kinematics_ops dk;
     trajectory::path_ops path;
+    differential_kinematics_slot_set dk_inert;
 };
 
 // Invoked once per composition, after the publisher and the gated state exist and before the preset
