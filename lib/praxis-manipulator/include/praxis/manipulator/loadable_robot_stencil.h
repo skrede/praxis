@@ -45,6 +45,15 @@ enum class flange_attachment : std::uint8_t
 // Written out beside the enumeration, so that the set and the count of it cannot disagree.
 inline constexpr std::size_t flange_attachment_count = 2;
 
+// What the marker drawn at the flange does while a tool occupies the flange: it keeps standing
+// beside the tool, or it withholds itself for as long as the tool key is occupied. The set is closed
+// at the two, because that key is either occupied or it is not.
+enum class flange_marker_policy : std::uint8_t
+{
+    stands,
+    yields
+};
+
 // Which of the two Jacobians every drawing taken from one is taken from. A space Jacobian's columns
 // are twists expressed in the space frame and a body Jacobian's are expressed in the tool frame, so
 // the same configuration gives two different matrices. Lynch & Park, Modern Robotics, section 5.1.
@@ -82,13 +91,14 @@ inline constexpr std::size_t jacobian_block_count = 2;
 // stated rather than derived.
 std::shared_ptr<threepp::Object3D> make_flange_marker(threepp::Object3D &arm);
 
-// The two models an arm carries beside the robot itself. A null tool leaves the flange carrying
-// nothing under the tool key until one is installed; a null world reference is no world object at
-// all rather than an empty one.
+// The two models an arm carries beside the robot itself, and the policy the marker at its flange is
+// drawn under. A null tool leaves the flange carrying nothing under the tool key until one is
+// installed; a null world reference is no world object at all rather than an empty one.
 struct attached_models
 {
     std::shared_ptr<threepp::Object3D> tool  = nullptr;
     std::shared_ptr<threepp::Object3D> world = nullptr;
+    flange_marker_policy marker              = flange_marker_policy::stands;
 };
 
 // The rendered arm's single owner. The node mirrors the configuration the arm publishes and is
@@ -157,6 +167,12 @@ public:
     void set_flange_attachment_offset(flange_attachment which, threepp::Matrix4 offset);
 
     void clear_flange_attachment(flange_attachment which);
+
+    // The marker at the flange is drawn only where the switch and the policy both admit it; either
+    // one withholds it, and a switch cannot defeat a policy that yields.
+    void set_flange_marker_policy(flange_marker_policy under);
+    flange_marker_policy flange_marker_policy_held() const;
+    void set_flange_marker_shown(bool shown);
 
     void set_world_object(std::shared_ptr<threepp::Object3D> world_object);
     void clear_world_object();
@@ -348,9 +364,11 @@ private:
     std::array<double, jacobian_block_count> m_column_scale;
     // A multiple of the block's own ellipsoid scale.
     double m_force_cap_ratio;
+    bool m_marker_shown;
     bool m_force_capped;
     jacobian_frame m_frame;
     ellipsoid_view m_view;
+    flange_marker_policy m_marker_policy;
     // One material per step of the condition-number ramp, built once, so a placement running every
     // frame assigns a material rather than constructing one.
     std::vector<std::shared_ptr<threepp::Material>> m_ellipsoid_solid;
@@ -362,6 +380,7 @@ private:
     void apply_published() const;
     void detach_flange_attachments();
     void place_flange_attachments() const;
+    void show_flange_marker() const;
     void rebuild_decoration();
     void rebuild_chain();
     void clear_chain();

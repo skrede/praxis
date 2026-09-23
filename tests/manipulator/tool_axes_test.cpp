@@ -218,6 +218,14 @@ std::shared_ptr<threepp::Object3D> ask_for_marker(composed_arm &over)
     return over.shown->attached_at(flange_attachment::frame_marker);
 }
 
+attached_models under(flange_marker_policy stated)
+{
+    attached_models named;
+    named.marker = stated;
+
+    return named;
+}
+
 std::size_t carried_at_flange(const loadable_robot_stencil &shown)
 {
     std::size_t counted = 0;
@@ -407,6 +415,151 @@ TEST_CASE("clearing the tool leaves the frame marker exactly where it was", "[ma
     CHECK(turn_departure(put->quaternion, turned) < single_precision_tolerance);
 
     placed.shown->tear_down();
+}
+
+TEST_CASE("under the standing policy the frame marker is drawn with a tool seated and with the tool vacated", "[manipulator][tool]")
+{
+    scheduler loop(inline_workers, dictating());
+
+    composed_arm placed = compose(loop, under(flange_marker_policy::stands));
+    REQUIRE(placed.shown->initialize().has_value());
+    REQUIRE(placed.shown->flange_marker_policy_held() == flange_marker_policy::stands);
+
+    const std::shared_ptr<threepp::Object3D> put = ask_for_marker(placed);
+    draw_frame(loop, placed);
+    REQUIRE(put->visible);
+
+    placed.shown->set_flange_attachment(flange_attachment::tool, supplied_tool());
+    draw_frame(loop, placed);
+    CHECK(put->visible);
+
+    placed.shown->clear_flange_attachment(flange_attachment::tool);
+    draw_frame(loop, placed);
+    CHECK(put->visible);
+
+    placed.shown->tear_down();
+}
+
+// The tool comes and goes all session, so the rule is read where every attachment is already placed
+// rather than answered once: two cycles say the marker returns rather than merely leaves.
+TEST_CASE("under the yielding policy the frame marker is withheld while a tool is seated and drawn again once it is vacated", "[manipulator][tool]")
+{
+    scheduler loop(inline_workers, dictating());
+
+    composed_arm placed = compose(loop, under(flange_marker_policy::yields));
+    REQUIRE(placed.shown->initialize().has_value());
+    REQUIRE(placed.shown->flange_marker_policy_held() == flange_marker_policy::yields);
+
+    const std::shared_ptr<threepp::Object3D> put = ask_for_marker(placed);
+    draw_frame(loop, placed);
+    REQUIRE(put->visible);
+
+    for(const int cycle : {1, 2})
+    {
+        INFO("seat and vacate " << cycle);
+        placed.shown->set_flange_attachment(flange_attachment::tool, supplied_tool());
+        draw_frame(loop, placed);
+        CHECK_FALSE(put->visible);
+
+        placed.shown->clear_flange_attachment(flange_attachment::tool);
+        draw_frame(loop, placed);
+        CHECK(put->visible);
+    }
+
+    placed.shown->tear_down();
+}
+
+// What a yielding policy changes is whether the marker is drawn and nothing else: the flange carries
+// it, answers it and parents it exactly as it did before the tool arrived.
+TEST_CASE("a frame marker a yielding policy withholds is withheld rather than detached", "[manipulator][tool]")
+{
+    scheduler loop(inline_workers, dictating());
+
+    composed_arm placed = compose(loop, under(flange_marker_policy::yields));
+    REQUIRE(placed.shown->initialize().has_value());
+
+    const std::shared_ptr<threepp::Object3D> put = ask_for_marker(placed);
+    placed.shown->set_flange_attachment(flange_attachment::tool, supplied_tool());
+    draw_frame(loop, placed);
+
+    CHECK_FALSE(put->visible);
+    CHECK(placed.shown->attached_at(flange_attachment::frame_marker) == put);
+    CHECK(carried_at_flange(*placed.shown) == 2);
+    CHECK(put->parent == placed.target.get());
+
+    placed.shown->tear_down();
+}
+
+TEST_CASE("the marker switch withholds the frame marker under the standing policy and returns it", "[manipulator][tool]")
+{
+    scheduler loop(inline_workers, dictating());
+
+    composed_arm placed = compose(loop, under(flange_marker_policy::stands));
+    REQUIRE(placed.shown->initialize().has_value());
+
+    const std::shared_ptr<threepp::Object3D> put = ask_for_marker(placed);
+    draw_frame(loop, placed);
+    REQUIRE(put->visible);
+
+    placed.shown->set_flange_marker_shown(false);
+    draw_frame(loop, placed);
+    CHECK_FALSE(put->visible);
+
+    placed.shown->set_flange_marker_shown(true);
+    draw_frame(loop, placed);
+    CHECK(put->visible);
+
+    placed.shown->tear_down();
+}
+
+// The two reasons to withhold the marker are independent and either suffices, so a switch turned on
+// reaches only as far as the policy admits.
+TEST_CASE("a switch turned on does not bring the frame marker back while a yielding policy withholds it", "[manipulator][tool]")
+{
+    scheduler loop(inline_workers, dictating());
+
+    composed_arm placed = compose(loop, under(flange_marker_policy::yields));
+    REQUIRE(placed.shown->initialize().has_value());
+
+    const std::shared_ptr<threepp::Object3D> put = ask_for_marker(placed);
+    placed.shown->set_flange_attachment(flange_attachment::tool, supplied_tool());
+    placed.shown->set_flange_marker_shown(false);
+    draw_frame(loop, placed);
+    REQUIRE_FALSE(put->visible);
+
+    placed.shown->set_flange_marker_shown(true);
+    draw_frame(loop, placed);
+    CHECK_FALSE(put->visible);
+
+    placed.shown->clear_flange_attachment(flange_attachment::tool);
+    draw_frame(loop, placed);
+    CHECK(put->visible);
+
+    placed.shown->tear_down();
+}
+
+TEST_CASE("a stencil told no marker policy stands the marker beside a tool, as one told the standing policy does", "[manipulator][tool]")
+{
+    scheduler loop(inline_workers, dictating());
+
+    composed_arm untold = compose(loop);
+    composed_arm told   = compose(loop, under(flange_marker_policy::stands));
+    REQUIRE(untold.shown->initialize().has_value());
+    REQUIRE(told.shown->initialize().has_value());
+
+    const std::shared_ptr<threepp::Object3D> left  = ask_for_marker(untold);
+    const std::shared_ptr<threepp::Object3D> right = ask_for_marker(told);
+    untold.shown->set_flange_attachment(flange_attachment::tool, supplied_tool());
+    told.shown->set_flange_attachment(flange_attachment::tool, supplied_tool());
+    draw_frame(loop, untold);
+    draw_frame(loop, told);
+
+    CHECK(untold.shown->flange_marker_policy_held() == told.shown->flange_marker_policy_held());
+    CHECK(left->visible == right->visible);
+    CHECK(left->visible);
+
+    untold.shown->tear_down();
+    told.shown->tear_down();
 }
 
 // One rule for the whole set: the flange's pose composed with the attachment's own offset. Giving one

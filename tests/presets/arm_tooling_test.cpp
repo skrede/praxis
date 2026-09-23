@@ -186,6 +186,60 @@ TEST_CASE("the tooling scenario composes the joint control, the pose, the tool, 
     each_window_opens_one_panel(composed);
 }
 
+// Read off the composed window rather than off the preset's source: the control is offered exactly
+// where pressing it moves the marker in the scene.
+TEST_CASE("the tooling scenario offers the flange marker control in its view window", "[presets][windows]")
+{
+    const described_arm described(6, "six");
+    const written_model tool("praxis_tooling_marker_offered.stl", 0.1f);
+    const written_model world("praxis_tooling_marker_offered_world.stl", 0.2f);
+    const presets::arm_scenario chosen = carrying(described.where, tool.where, world.where);
+
+    opened_arm built;
+    const std::shared_ptr<scene::preset> composed = open_with(built, chosen, manipulator::baseline());
+    REQUIRE(composed != nullptr);
+
+    const auto stencil = std::dynamic_pointer_cast<manipulator::loadable_robot_stencil>(composed->stencil);
+    REQUIRE(stencil != nullptr);
+    built.draw(*composed);
+
+    threepp::Object3D *marker = stencil->attached_at(manipulator::flange_attachment::frame_marker).get();
+    REQUIRE(drawn(marker));
+
+    press_at(*composed->windows[4], 2);
+    built.draw(*composed);
+
+    CHECK_FALSE(drawn(marker));
+}
+
+// The scenario states the standing policy, so an edit to what it states fails here rather than
+// passing quietly: the marker stands beside a seated tool and stays where the tool is taken off.
+TEST_CASE("the tooling scenario draws the flange marker with a tool seated and with the tool vacated", "[presets][windows]")
+{
+    const described_arm described(6, "six");
+    const written_model tool("praxis_tooling_marker_stands.stl", 0.1f);
+    const written_model world("praxis_tooling_marker_stands_world.stl", 0.2f);
+    const presets::arm_scenario chosen = carrying(described.where, tool.where, world.where);
+
+    opened_arm built;
+    const std::shared_ptr<scene::preset> composed = open_with(built, chosen, manipulator::baseline());
+    REQUIRE(composed != nullptr);
+
+    const auto stencil = std::dynamic_pointer_cast<manipulator::loadable_robot_stencil>(composed->stencil);
+    REQUIRE(stencil != nullptr);
+    built.draw(*composed);
+
+    threepp::Object3D *marker = stencil->attached_at(manipulator::flange_attachment::frame_marker).get();
+    REQUIRE(stencil->attached_at(manipulator::flange_attachment::tool) != nullptr);
+    CHECK(drawn(marker));
+
+    press_at(*composed->windows[2], 0);
+    built.draw(*composed);
+
+    REQUIRE(stencil->attached_at(manipulator::flange_attachment::tool) == nullptr);
+    CHECK(drawn(marker));
+}
+
 // Both readings are the composition's own: the pose the arm assembled for its tool and the pose it
 // assembled for its flange in the same publication, lifted out where the arm reads a position.
 TEST_CASE("a tool attached moves the reported tool pose off the flange, and detaching it puts the two back together", "[presets][windows]")

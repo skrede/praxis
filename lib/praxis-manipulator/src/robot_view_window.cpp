@@ -40,10 +40,11 @@ bool model_render_draws_chain(model_render which)
     return which == model_render::chain || which == model_render::meshes_and_chain;
 }
 
-robot_view_window::settings::settings(model_render chosen_model, bool chosen_decoration, std::optional<double> chosen_reach)
+robot_view_window::settings::settings(model_render chosen_model, bool chosen_decoration, std::optional<double> chosen_reach, bool chosen_marker)
         : model(chosen_model)
         , decoration(chosen_decoration)
         , axis_reach(chosen_reach)
+        , flange_marker(chosen_marker)
 {
 }
 
@@ -55,6 +56,7 @@ robot_view_window::robot_view_window(std::string name, loadable_robot_stencil &t
 robot_view_window::robot_view_window(std::string name, loadable_robot_stencil &target, const controls &offered, const settings &state, std::string at)
         : imgui_window(std::move(name))
         , m_reach(std::max(smallest_reach, static_cast<float>(state.axis_reach.value_or(target.decoration_reach()))))
+        , m_marker(state.flange_marker)
         , m_decoration(state.decoration)
         , m_model(state.model)
         , m_reach_named(state.axis_reach.has_value())
@@ -66,7 +68,7 @@ robot_view_window::robot_view_window(std::string name, loadable_robot_stencil &t
 
 robot_view_window::settings robot_view_window::state() const
 {
-    return settings{m_model, m_decoration, m_reach_named ? std::optional<double>(m_reach) : std::nullopt};
+    return settings{m_model, m_decoration, m_reach_named ? std::optional<double>(m_reach) : std::nullopt, m_marker};
 }
 
 std::vector<config::edit> robot_view_window::settings_edits(const config::document &carried) const
@@ -80,12 +82,13 @@ void robot_view_window::show_model()
     m_stencil.set_chain_shown(model_render_draws_chain(m_model));
 }
 
-// Every one of the three reaches the stencil whether or not a control was drawn for it, which is
-// what leaves a feature nobody offered a control for standing where the composition put it.
+// Every one of the four reaches the stencil whether or not a control was drawn for it, which is what
+// leaves a feature nobody offered a control for standing where the composition put it.
 void robot_view_window::initialize()
 {
     show_model();
     m_stencil.set_decoration_shown(m_decoration);
+    m_stencil.set_flange_marker_shown(m_marker);
     m_stencil.set_decoration_reach(static_cast<double>(m_reach));
 }
 
@@ -96,8 +99,10 @@ void robot_view_window::render()
         render_model();
     if(m_controls.decoration)
         render_decoration();
+    if(m_controls.flange_marker)
+        render_flange_marker();
 
-    if(m_controls.reach && (m_controls.model || m_controls.decoration))
+    if(m_controls.reach && (m_controls.model || m_controls.decoration || m_controls.flange_marker))
         ImGui::Separator();
     if(m_controls.reach)
         render_reach();
@@ -119,6 +124,12 @@ void robot_view_window::render_decoration()
 {
     if(ImGui::Checkbox("Screw axes", &m_decoration))
         m_stencil.set_decoration_shown(m_decoration);
+}
+
+void robot_view_window::render_flange_marker()
+{
+    if(ImGui::Checkbox("Flange frame", &m_marker))
+        m_stencil.set_flange_marker_shown(m_marker);
 }
 
 void robot_view_window::render_reach()

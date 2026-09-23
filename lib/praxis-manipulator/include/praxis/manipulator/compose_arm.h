@@ -51,15 +51,17 @@ struct arm_window_inputs
 // is constructed, which is the only point at which a window can be given both.
 using arm_window_composer = std::function<std::vector<std::shared_ptr<scene::imgui_window>>(const arm_window_inputs &)>;
 
-// One composition of an arm: the windows it opens, and which of the two models the arm can carry
-// beside itself it draws. A model nothing composed a control over is a model nothing in the running
-// application can hide, so the function deciding the windows is the function declaring the models
-// and the two are carried together rather than paired by whoever calls them.
+// One composition of an arm: the windows it opens, which of the two models the arm can carry beside
+// itself it draws, and what the marker at its flange does while a tool occupies the flange. A model
+// nothing composed a control over is a model nothing in the running application can hide, so the
+// function deciding the windows is the function declaring the models and the two are carried
+// together rather than paired by whoever calls them.
 struct arm_composition
 {
     arm_window_composer windows;
-    bool draws_tool  = false;
-    bool draws_world = false;
+    bool draws_tool                    = false;
+    bool draws_world                   = false;
+    flange_marker_policy flange_marker = flange_marker_policy::stands;
 };
 
 std::shared_ptr<scene::preset> compose_arm(const meios::model<> &description, const scene::preset_site &site, attached_models attached, const capabilities &arm,

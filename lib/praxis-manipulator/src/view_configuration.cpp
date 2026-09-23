@@ -21,6 +21,7 @@ struct robot_view_names
     static constexpr std::string_view model      = "model";
     static constexpr std::string_view reach      = "axis_reach";
     static constexpr std::string_view decoration = "screw_axes";
+    static constexpr std::string_view marker     = "flange_frame";
 };
 
 const robot_view_window::settings &robot_view_fallbacks()
@@ -53,6 +54,7 @@ void declare_robot_view(config::declaration &shape, std::string_view at)
     shape.group(std::string(at));
     shape.choice(keys::under(at, robot_view_names::model), keys::spelled(model_render_labels()), model_text(was.model));
     shape.field(keys::under(at, robot_view_names::decoration), config::field_kind::flag, was.decoration ? "true" : "false");
+    shape.field(keys::under(at, robot_view_names::marker), config::field_kind::flag, was.flange_marker ? "true" : "false");
     shape.field(keys::under(at, robot_view_names::reach), config::field_kind::real, reach_text(was.axis_reach));
 }
 
@@ -61,9 +63,10 @@ robot_view_window::settings read_robot_view(const config::document &values, std:
     const robot_view_window::settings &was = robot_view_fallbacks();
 
     robot_view_window::settings state;
-    state.model      = static_cast<model_render>(keys::indexed(values, keys::under(at, robot_view_names::model), model_render_labels(), static_cast<std::size_t>(was.model)));
-    state.decoration = keys::flag_at(values, keys::under(at, robot_view_names::decoration), was.decoration);
-    state.axis_reach = reach_of(keys::real_at(values, keys::under(at, robot_view_names::reach), static_cast<float>(was.axis_reach.value_or(unnamed_reach))));
+    state.model         = static_cast<model_render>(keys::indexed(values, keys::under(at, robot_view_names::model), model_render_labels(), static_cast<std::size_t>(was.model)));
+    state.decoration    = keys::flag_at(values, keys::under(at, robot_view_names::decoration), was.decoration);
+    state.flange_marker = keys::flag_at(values, keys::under(at, robot_view_names::marker), was.flange_marker);
+    state.axis_reach    = reach_of(keys::real_at(values, keys::under(at, robot_view_names::reach), static_cast<float>(was.axis_reach.value_or(unnamed_reach))));
 
     return state;
 }
@@ -73,6 +76,7 @@ std::vector<config::edit> write_robot_view(const robot_view_window::settings &st
     std::vector<config::edit> changes;
     changes.push_back(config::edit{keys::under(at, robot_view_names::model), model_text(state.model)});
     changes.push_back(config::edit{keys::under(at, robot_view_names::decoration), state.decoration ? "true" : "false"});
+    changes.push_back(config::edit{keys::under(at, robot_view_names::marker), state.flange_marker ? "true" : "false"});
     changes.push_back(config::edit{keys::under(at, robot_view_names::reach), reach_text(state.axis_reach)});
 
     return changes;

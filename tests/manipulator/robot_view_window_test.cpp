@@ -124,6 +124,7 @@ void reads_as(const opening &read, const opening &written)
     CHECK(read.model == written.model);
     CHECK(read.decoration == written.decoration);
     CHECK(read.axis_reach == written.axis_reach);
+    CHECK(read.flange_marker == written.flange_marker);
 }
 
 arm_snapshot upright()
@@ -183,6 +184,7 @@ struct stage
     {
         published->publish(std::make_shared<const arm_snapshot>(upright()));
         REQUIRE(shown.initialize().has_value());
+        shown.set_flange_attachment(flange_attachment::frame_marker, make_flange_marker(shown.robot()));
         if(told_screws)
             REQUIRE(shown.set_joint_screws(praxis::transform::Identity(), two_axes()).has_value());
     }
@@ -212,6 +214,11 @@ struct stage
         return praxis::fixture::chain_node(*scene, loadable_robot_stencil::chain_name());
     }
 
+    threepp::Object3D *marker_node()
+    {
+        return shown.attached_at(flange_attachment::frame_marker).get();
+    }
+
     praxis::scheduler::scheduler loop;
     std::shared_ptr<threepp::Scene> scene;
     std::shared_ptr<arm_publisher> published;
@@ -221,9 +228,10 @@ struct stage
 controls offering(int subset)
 {
     controls offered;
-    offered.model      = (subset & 1) != 0;
-    offered.decoration = (subset & 2) != 0;
-    offered.reach      = (subset & 4) != 0;
+    offered.model         = (subset & 1) != 0;
+    offered.decoration    = (subset & 2) != 0;
+    offered.reach         = (subset & 4) != 0;
+    offered.flange_marker = (subset & 8) != 0;
 
     return offered;
 }
@@ -280,7 +288,7 @@ TEST_CASE("every view field written through the declared keys reads back as it w
 {
     for(const model_render chosen : {model_render::meshes, model_render::chain, model_render::meshes_and_chain, model_render::none})
     {
-        const opening named{chosen, false, 0.75};
+        const opening named{chosen, false, 0.75, false};
         reads_as(read_robot_view(saved_and_reloaded("view-round-trip-" + std::to_string(static_cast<int>(chosen)) + ".xml", write_robot_view(named, view_at)), view_at), named);
     }
 
@@ -289,13 +297,21 @@ TEST_CASE("every view field written through the declared keys reads back as it w
     reads_as(read_robot_view(starter("view-starter.xml"), view_at), opening{});
 }
 
-TEST_CASE("a document naming some of the three leaves leaves the rest where the settings open", "[manipulator][configuration]")
+TEST_CASE("a document naming some of the four leaves leaves the rest where the settings open", "[manipulator][configuration]")
 {
     const opening read = read_robot_view(carrying("view-partial.xml", "<view model=\"Joint chain\" axis_reach=\"0.25\"/>"), view_at);
 
     CHECK(read.model == model_render::chain);
     CHECK(read.axis_reach == std::optional<double>(reached));
     CHECK(read.decoration == opening{}.decoration);
+    CHECK(read.flange_marker == opening{}.flange_marker);
+
+    const opening marked = read_robot_view(carrying("view-marker-only.xml", "<view flange_frame=\"false\"/>"), view_at);
+
+    CHECK_FALSE(marked.flange_marker);
+    CHECK(marked.model == opening{}.model);
+    CHECK(marked.decoration == opening{}.decoration);
+    CHECK(marked.axis_reach == opening{}.axis_reach);
 
     reads_as(read_robot_view(carrying("view-none-named.xml", ""), view_at), opening{});
 }
@@ -376,12 +392,13 @@ TEST_CASE("a window no key path was named for offers nothing, and one named a pa
 TEST_CASE("every control a composition offered writes through to the scene", "[manipulator][controls]")
 {
     stage headless;
-    robot_view_window panel(panel_title, headless.shown, offering(7), opening{model_render::meshes, true});
+    robot_view_window panel(panel_title, headless.shown, offering(15), opening{model_render::meshes, true});
     panel.initialize();
     headless.draw();
 
     REQUIRE(drawn(rendered_arm(*headless.scene)));
     REQUIRE(drawn(headless.axis_node()));
+    REQUIRE(drawn(headless.marker_node()));
     REQUIRE_FALSE(drawn(headless.chain_node()));
     REQUIRE(headless.axis_span() == Catch::Approx(2.0 * opening_reach).margin(read_back));
 
@@ -393,13 +410,63 @@ TEST_CASE("every control a composition offered writes through to the scene", "[m
     step_to(frames, draw, 1);
     tap(frames, draw, ImGuiKey_Space);
     step_to(frames, draw, 2);
+    tap(frames, draw, ImGuiKey_Space);
+    step_to(frames, draw, 3);
     type_at_cursor(frames, draw, typed_reach);
     headless.draw();
 
     CHECK_FALSE(drawn(rendered_arm(*headless.scene)));
     CHECK(drawn(headless.chain_node()));
     CHECK_FALSE(drawn(headless.axis_node()));
+    CHECK_FALSE(drawn(headless.marker_node()));
     CHECK(headless.axis_span() == Catch::Approx(2.0 * reached).margin(read_back));
+}
+
+// The counterpart of the unoffered decoration: a marker a composition kept to itself stays where the
+// settings opened it whatever the controls it did offer are driven to.
+TEST_CASE("a composition offering no flange marker control opens the marker where it said and nothing in the window moves it", "[manipulator][controls]")
+{
+    stage headless;
+    controls offered;
+    offered.flange_marker = false;
+
+    robot_view_window panel(panel_title, headless.shown, offered, opening{model_render::meshes, true, std::nullopt, false});
+    panel.initialize();
+    headless.draw();
+
+    REQUIRE_FALSE(drawn(headless.marker_node()));
+
+    choose_entry(panel, 0, 1);
+    headless.draw();
+
+    CHECK_FALSE(drawn(headless.marker_node()));
+    CHECK(drawn(headless.chain_node()));
+}
+
+// What the panel offers the keyboard is the count of the controls it drew, so a window asked for the
+// marker beside the rest draws one control more than one asked for everything but it.
+TEST_CASE("a window asked for every control draws one control more than one asked for all but the flange marker", "[manipulator][controls]")
+{
+    stage headless;
+    robot_view_window every(panel_title, headless.shown, offering(15), opening{});
+    robot_view_window all_but_the_marker(panel_title, headless.shown, offering(7), opening{});
+    robot_view_window offering_nothing(panel_title, headless.shown, offering(0), opening{});
+
+    CHECK(geometry_of(over(offering_nothing)) == bare_panel());
+
+    std::size_t offered = 0;
+    {
+        imgui_frame counting;
+        offered = navigable_items(counting, over(every));
+    }
+
+    std::size_t fewer = 0;
+    {
+        imgui_frame counting;
+        fewer = navigable_items(counting, over(all_but_the_marker));
+    }
+
+    CHECK(offered == fewer + 1u);
 }
 
 // One control over four entries can leave no combination standing that it does not name, because

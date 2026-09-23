@@ -96,9 +96,11 @@ loadable_robot_stencil::loadable_robot_stencil(std::shared_ptr<threepp::Robot> r
         , m_ellipsoid_scale{opening_angular_scale, opening_linear_scale}
         , m_column_scale{opening_angular_column_scale, opening_linear_column_scale}
         , m_force_cap_ratio(opening_force_cap_ratio)
+        , m_marker_shown(true)
         , m_force_capped(true)
         , m_frame(jacobian_frame::space)
         , m_view(ellipsoid_view::velocity)
+        , m_marker_policy(attached.marker)
         , m_ellipsoid_solid(body_ramp(false))
         , m_ellipsoid_wire(body_ramp(true))
         , m_continuation_tone(line_ramp())

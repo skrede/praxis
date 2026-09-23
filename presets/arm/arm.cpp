@@ -48,7 +48,7 @@ std::shared_ptr<threepp::Object3D> loaded_mesh(const std::string &path)
 manipulator::attached_models scenario_models(const manipulator::arm_composition &composed, const arm_scenario &chosen)
 {
     return manipulator::attached_models{composed.draws_tool ? loaded_mesh(chosen.tool.model_path) : nullptr,
-                                        composed.draws_world ? loaded_mesh(chosen.world_object.model_path) : nullptr};
+                                        composed.draws_world ? loaded_mesh(chosen.world_object.model_path) : nullptr, composed.flange_marker};
 }
 
 }

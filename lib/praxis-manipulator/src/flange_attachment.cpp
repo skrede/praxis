@@ -72,6 +72,21 @@ void loadable_robot_stencil::clear_flange_attachment(flange_attachment which)
     held.offset.identity();
 }
 
+void loadable_robot_stencil::set_flange_marker_policy(flange_marker_policy under)
+{
+    m_marker_policy = under;
+}
+
+flange_marker_policy loadable_robot_stencil::flange_marker_policy_held() const
+{
+    return m_marker_policy;
+}
+
+void loadable_robot_stencil::set_flange_marker_shown(bool shown)
+{
+    m_marker_shown = shown;
+}
+
 std::shared_ptr<threepp::Object3D> loadable_robot_stencil::attached_at(flange_attachment which) const
 {
     return m_attached[slot_of(which)].object;
@@ -99,6 +114,19 @@ void loadable_robot_stencil::place_flange_attachments() const
         held.object->position.setFromMatrixPosition(at);
         held.object->quaternion.setFromRotationMatrix(at);
     }
+
+    show_flange_marker();
+}
+
+void loadable_robot_stencil::show_flange_marker() const
+{
+    const carried &marker = m_attached[slot_of(flange_attachment::frame_marker)];
+    if(marker.object == nullptr)
+        return;
+
+    const bool occupied    = m_attached[slot_of(flange_attachment::tool)].object != nullptr;
+    const bool withheld    = m_marker_policy == flange_marker_policy::yields && occupied;
+    marker.object->visible = m_marker_shown && !withheld;
 }
 
 }

@@ -458,6 +458,7 @@ lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	arm_composition	
 lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	windows	member	-	typename:arm_window_composer
 lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	draws_tool	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	draws_world	member	-	typename:bool
+lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	flange_marker	member	-	typename:flange_marker_policy
 lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	compose_arm	prototype	(const meios::model<> & description,const scene::preset_site & site,attached_models attached,const capabilities & arm,const trajectory::capabilities & shapes,const rigid_motion::capabilities & motions,const joint_vector & initial,const arm_window_composer & windows)	typename:std::shared_ptr<scene::preset>
 lib/praxis-manipulator/include/praxis/manipulator/control_configuration.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/control_configuration.h	praxis	namespace	-	-
@@ -845,6 +846,9 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	flang
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	tool	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	frame_marker	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	flange_attachment_count	variable	-	typename:std::size_t
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	flange_marker_policy	enum	-	typename:std::uint8_t
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	stands	enumerator	-	-
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	yields	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	jacobian_frame	enum	-	typename:std::uint8_t
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	space	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	body	enumerator	-	-
@@ -859,6 +863,7 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	make_
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	attached_models	struct	-	-
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	tool	member	-	typename:std::shared_ptr<threepp::Object3D>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	world	member	-	typename:std::shared_ptr<threepp::Object3D>
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	marker	member	-	typename:flange_marker_policy
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	loadable_robot_stencil	class	-	-
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	carried	struct	-	-
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	object	member	-	typename:std::shared_ptr<threepp::Object3D>
@@ -886,6 +891,9 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_f
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_flange_attachment	prototype	(flange_attachment which,std::shared_ptr<threepp::Object3D> attached,threepp::Matrix4 offset)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_flange_attachment_offset	prototype	(flange_attachment which,threepp::Matrix4 offset)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	clear_flange_attachment	prototype	(flange_attachment which)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_flange_marker_policy	prototype	(flange_marker_policy under)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	flange_marker_policy_held	prototype	() const	typename:flange_marker_policy
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_flange_marker_shown	prototype	(bool shown)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_world_object	prototype	(std::shared_ptr<threepp::Object3D> world_object)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	clear_world_object	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_joint_screws	prototype	(const transform & home,std::span<const screw_axis> space_screws)	typename:expected<void,refusal>
@@ -977,9 +985,11 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_col
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_ellipsoid_scale	member	-	typename:std::array<double,jacobian_block_count>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_column_scale	member	-	typename:std::array<double,jacobian_block_count>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_force_cap_ratio	member	-	typename:double
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_marker_shown	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_force_capped	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_frame	member	-	typename:jacobian_frame
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_view	member	-	typename:ellipsoid_view
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_marker_policy	member	-	typename:flange_marker_policy
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_ellipsoid_solid	member	-	typename:std::vector<std::shared_ptr<threepp::Material>>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_ellipsoid_wire	member	-	typename:std::vector<std::shared_ptr<threepp::Material>>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_continuation_tone	member	-	typename:std::vector<std::shared_ptr<threepp::Material>>
@@ -987,6 +997,7 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_col
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	apply_published	prototype	() const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	detach_flange_attachments	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	place_flange_attachments	prototype	() const	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	show_flange_marker	prototype	() const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	rebuild_decoration	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	rebuild_chain	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	clear_chain	prototype	()	typename:void
@@ -1334,11 +1345,13 @@ lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	controls	f
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	model	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	reach	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	decoration	member	-	typename:bool
+lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	flange_marker	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	settings	struct	-	-
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	model	member	-	typename:model_render
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	decoration	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	axis_reach	member	-	typename:std::optional<double>
-lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	settings	prototype	(model_render chosen_model=model_render::meshes,bool chosen_decoration=true,std::optional<double> chosen_reach=std::nullopt)	-
+lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	flange_marker	member	-	typename:bool
+lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	settings	prototype	(model_render chosen_model=model_render::meshes,bool chosen_decoration=true,std::optional<double> chosen_reach=std::nullopt,bool chosen_marker=true)	-
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	robot_view_window	prototype	(std::string name,loadable_robot_stencil & target)	-
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	robot_view_window	prototype	(std::string name,loadable_robot_stencil & target,const controls & offered,const settings & state,std::string at=std::string ())	-
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	state	prototype	() const	typename:settings
@@ -1348,6 +1361,7 @@ lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	settings_p
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	settings_edits	prototype	(const config::document & carried) const	typename:std::vector<config::edit>
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	as_configurable	function	() const	typename:const config::configurable *
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	m_reach	member	-	typename:float
+lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	m_marker	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	m_decoration	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	m_model	member	-	typename:model_render
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	m_reach_named	member	-	typename:bool
@@ -1358,6 +1372,7 @@ lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	show_model
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	render_model	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	render_reach	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	render_decoration	prototype	()	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	render_flange_marker	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	scene_robot	class	-	-

@@ -36,8 +36,8 @@ std::span<const char *const> model_render_labels();
 bool model_render_draws_meshes(model_render which);
 bool model_render_draws_chain(model_render which);
 
-// The three drawings of one arm and how far a drawn screw axis reaches, each reachable only where
-// the composition asked for a control over it.
+// The four drawings of one arm and how far a drawn screw axis reaches, each reachable only where the
+// composition asked for a control over it.
 class robot_view_window : public scene::imgui_window, public config::configurable
 {
 public:
@@ -50,12 +50,14 @@ public:
                 : model(true)
                 , reach(false)
                 , decoration(true)
+                , flange_marker(false)
         {
         }
 
         bool model;
         bool reach;
         bool decoration;
+        bool flange_marker;
     };
 
     // What the window opens the arm at. An absent reach leaves the decoration at the reach the
@@ -66,8 +68,9 @@ public:
         model_render model;
         bool decoration;
         std::optional<double> axis_reach;
+        bool flange_marker;
 
-        explicit settings(model_render chosen_model = model_render::meshes, bool chosen_decoration = true, std::optional<double> chosen_reach = std::nullopt);
+        explicit settings(model_render chosen_model = model_render::meshes, bool chosen_decoration = true, std::optional<double> chosen_reach = std::nullopt, bool chosen_marker = true);
     };
 
     robot_view_window(std::string name, loadable_robot_stencil &target);
@@ -94,6 +97,7 @@ public:
 
 private:
     float m_reach;
+    bool m_marker;
     bool m_decoration;
     model_render m_model;
 
@@ -112,6 +116,7 @@ private:
     void render_model();
     void render_reach();
     void render_decoration();
+    void render_flange_marker();
 };
 
 }

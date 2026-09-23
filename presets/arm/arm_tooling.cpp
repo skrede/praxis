@@ -62,7 +62,8 @@ void draw_derived_chain(manipulator::loadable_robot_stencil &on, const manipulat
 manipulator::robot_view_window::controls every_view_control()
 {
     manipulator::robot_view_window::controls offered;
-    offered.reach = true;
+    offered.reach         = true;
+    offered.flange_marker = true;
 
     return offered;
 }
@@ -72,9 +73,10 @@ manipulator::robot_view_window::controls every_view_control()
 manipulator::arm_composition arm_windows_tooling(arm_scenario chosen)
 {
     manipulator::arm_composition composed;
-    composed.draws_tool  = true;
-    composed.draws_world = true;
-    composed.windows     = [state = std::move(chosen)](const manipulator::arm_window_inputs &built)
+    composed.draws_tool    = true;
+    composed.draws_world   = true;
+    composed.flange_marker = manipulator::flange_marker_policy::stands;
+    composed.windows       = [state = std::move(chosen)](const manipulator::arm_window_inputs &built)
     {
         if(const std::string unbound = unbound_among(slot_names, built.inert, pose_transformations); !unbound.empty())
             return declined(built.stencil, unbound);
