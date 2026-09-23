@@ -137,6 +137,18 @@ rigid_motion::screw_slot_set defaulted_screw_slots(const rigid_motion::screw_ops
     return held;
 }
 
+forward_kinematics_slot_set defaulted_forward_kinematics_slots(const forward_kinematics_ops &ops)
+{
+    const capability_view described = view_of(ops);
+    forward_kinematics_slot_set held;
+
+    for(std::uint32_t index = 0; index < static_cast<std::uint32_t>(forward_kinematics_slot::count); ++index)
+        if(holds_default(described, index))
+            held.set(static_cast<forward_kinematics_slot>(index));
+
+    return held;
+}
+
 differential_kinematics_slot_set defaulted_differential_kinematics_slots(const differential_kinematics_ops &ops)
 {
     const capability_view described = view_of(ops);
@@ -202,6 +214,7 @@ std::shared_ptr<scene::preset> composed_preset(const scene::preset_site &site, c
                                   forward,
                                   differential,
                                   path,
+                                  defaulted_forward_kinematics_slots(forward),
                                   defaulted_differential_kinematics_slots(differential)};
 
     auto composed  = std::make_shared<scene::preset>(stencil, windows(built), site.add_window, site.remove_window);

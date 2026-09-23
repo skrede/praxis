@@ -43,6 +43,7 @@ struct arm_window_inputs
     forward_kinematics_ops fk;
     differential_kinematics_ops dk;
     trajectory::path_ops path;
+    forward_kinematics_slot_set fk_inert;
     differential_kinematics_slot_set dk_inert;
 };
 

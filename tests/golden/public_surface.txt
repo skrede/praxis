@@ -451,6 +451,7 @@ lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	screw	member	-	t
 lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	fk	member	-	typename:forward_kinematics_ops
 lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	dk	member	-	typename:differential_kinematics_ops
 lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	path	member	-	typename:trajectory::path_ops
+lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	fk_inert	member	-	typename:forward_kinematics_slot_set
 lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	dk_inert	member	-	typename:differential_kinematics_slot_set
 lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	arm_window_composer	typedef	-	-
 lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	arm_composition	struct	-	-
