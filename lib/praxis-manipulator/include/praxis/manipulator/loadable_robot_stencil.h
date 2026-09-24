@@ -286,6 +286,11 @@ public:
     // by name, one at a time, and a name no path stands under is declined rather than quietly
     // ignored. None of them decides when it should be on: that is the composition's to say. Eight
     // drawings, eight switches.
+    //
+    // The columns carry one grain beneath their own switch: either part of every column is shown or
+    // hidden on its own, under the switch that shows or hides the columns at all, so a part withheld
+    // leaves the other part of every column standing and the switch over the columns still reaches
+    // both.
     void set_meshes_shown(bool shown);
     void set_decoration_shown(bool shown);
     void set_chain_shown(bool shown);
@@ -293,12 +298,14 @@ public:
     void set_angular_ellipsoid_shown(bool shown);
     void set_linear_ellipsoid_shown(bool shown);
     void set_jacobian_columns_shown(bool shown);
+    void set_column_part_shown(jacobian_block which, bool shown);
     expected<void, refusal> set_pose_path_shown(std::string_view named, bool shown);
 
     // Which joint the drawing tells apart from the rest, counted from zero: its point, the segment
-    // leading to it and its screw axis take a tone of their own. An index the screws the stencil was
-    // told do not reach is declined rather than clamped, and a stencil told nothing tells nothing
-    // apart.
+    // leading to it, its screw axis and the two arrows of the Jacobian column of that index take a
+    // tone of their own, and every other column's arrows take a dimmed one. An index the screws the
+    // stencil was told do not reach is declined rather than clamped, and a stencil told nothing tells
+    // nothing apart, which stands every column's arrows in its part's own tone.
     expected<void, refusal> set_selected_joint(std::size_t joint);
     void clear_selected_joint();
 
@@ -362,6 +369,9 @@ private:
     std::shared_ptr<threepp::Object3D> m_solutions;
     std::array<std::shared_ptr<threepp::Object3D>, jacobian_block_count> m_ellipsoid_groups;
     std::shared_ptr<threepp::Object3D> m_columns;
+    // One subtree per part beneath the columns, so the switch over a part and the switch over the
+    // columns at all are each a write the other cannot reach.
+    std::array<std::shared_ptr<threepp::Object3D>, jacobian_block_count> m_column_parts;
     std::shared_ptr<threepp::Object3D> m_decoration;
     // Turned like the robot, so a world object's placement is read in the robot's frame rather than
     // the renderer's.
@@ -395,8 +405,10 @@ private:
     std::vector<std::shared_ptr<threepp::Material>> m_ellipsoid_solid;
     std::vector<std::shared_ptr<threepp::Material>> m_ellipsoid_wire;
     std::vector<std::shared_ptr<threepp::Material>> m_continuation_tone;
-    // One material per block, built once, for the same reason the ramp is.
+    // One material per block, built once, for the same reason the ramp is: the tone a part's arrows
+    // wear, and the one they wear while the drawing is about another column.
     std::array<std::shared_ptr<threepp::Material>, jacobian_block_count> m_column_tone;
+    std::array<std::shared_ptr<threepp::Material>, jacobian_block_count> m_column_dimmed;
 
     void apply_published() const;
     void detach_flange_attachments();
@@ -414,6 +426,10 @@ private:
     // identity where the space Jacobian is shown, whose quantities are expressed there already, and
     // the tool's own orientation where the body Jacobian is, whose are expressed in the tool frame.
     expected<rotation, refusal> carried_into_space(const arm_snapshot &seen) const;
+
+    // The tone every arrow of every column wears, which is the selection the decoration answers
+    // applied to the columns; it is reached from there rather than told on its own.
+    void wear_jacobian_columns() const;
 
     // Every arrow of every column left undrawn, which is what a placement that cannot honestly
     // stand them does rather than stand some of them.

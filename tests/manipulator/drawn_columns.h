@@ -18,7 +18,10 @@
 #include <threepp/core/Object3D.hpp>
 #include <threepp/core/BufferGeometry.hpp>
 
+#include <threepp/math/Color.hpp>
 #include <threepp/math/Vector3.hpp>
+
+#include <threepp/materials/interfaces.hpp>
 
 #include <Eigen/Core>
 
@@ -81,10 +84,10 @@ inline jacobian carried_into_space(const Eigen::Matrix3d &orientation, const Eig
     Eigen::Matrix3d crossed;
     crossed << 0.0, -at.z(), at.y(), at.z(), 0.0, -at.x(), -at.y(), at.x(), 0.0;
 
-    Eigen::Matrix<double, 6, 6> adjoint  = Eigen::Matrix<double, 6, 6>::Zero();
-    adjoint.topLeftCorner<3, 3>()        = orientation;
-    adjoint.bottomLeftCorner<3, 3>()     = crossed * orientation;
-    adjoint.bottomRightCorner<3, 3>()    = orientation;
+    Eigen::Matrix<double, 6, 6> adjoint = Eigen::Matrix<double, 6, 6>::Zero();
+    adjoint.topLeftCorner<3, 3>()       = orientation;
+    adjoint.bottomLeftCorner<3, 3>()    = crossed * orientation;
+    adjoint.bottomRightCorner<3, 3>()   = orientation;
 
     return jacobian(adjoint * body);
 }
@@ -117,6 +120,24 @@ inline double shaft_stretch(threepp::Object3D *arrow)
     REQUIRE(shaft != nullptr);
 
     return static_cast<double>(shaft->scale.y);
+}
+
+// The tone an arrow wears, read off the shaft and the head together: the two are one arrow, so a case
+// that read one of them could pass while the other wore something else.
+inline threepp::Color arrow_tone(threepp::Object3D *arrow)
+{
+    threepp::Object3D *const shaft = shaft_of(arrow);
+    REQUIRE(shaft != nullptr);
+    threepp::Object3D *const head = arrow->getObjectByName<threepp::Object3D>("tip");
+    REQUIRE(head != nullptr);
+
+    threepp::MaterialWithColor *const on_the_shaft = shaft->materialAs<threepp::MaterialWithColor>();
+    threepp::MaterialWithColor *const on_the_head  = head->materialAs<threepp::MaterialWithColor>();
+    REQUIRE(on_the_shaft != nullptr);
+    REQUIRE(on_the_head != nullptr);
+    REQUIRE(on_the_shaft->color == on_the_head->color);
+
+    return on_the_shaft->color;
 }
 
 inline threepp::Object3D *head_of(threepp::Object3D *arrow)

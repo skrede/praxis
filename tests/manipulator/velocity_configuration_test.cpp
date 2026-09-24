@@ -95,8 +95,8 @@ void stands_at(const opening &read, const opening &written)
 {
     CHECK(read.frame == written.frame);
     CHECK(read.reading == written.reading);
-    CHECK(read.angular_ellipsoid == written.angular_ellipsoid);
-    CHECK(read.linear_ellipsoid == written.linear_ellipsoid);
+    CHECK(read.angular == written.angular);
+    CHECK(read.linear == written.linear);
     CHECK(read.columns == written.columns);
     CHECK(read.capped == written.capped);
 }
@@ -110,9 +110,8 @@ TEST_CASE("a document naming nothing yields the window at the values its setting
 
 TEST_CASE("a document naming every field yields each of them", "[manipulator][configuration]")
 {
-    const config::document carried = carrying("authored.xml",
-                                              "<velocity_kinematics frame=\"body\" reading=\"force\" angular_ellipsoid=\"false\" linear_ellipsoid=\"false\" columns=\"false\" "
-                                              "capped=\"false\"/>");
+    const config::document carried =
+            carrying("authored.xml", "<velocity_kinematics frame=\"body\" reading=\"force\" angular=\"false\" linear=\"false\" columns=\"false\" capped=\"false\"/>");
 
     stands_at(read_velocity_kinematics(carried, velocity_at), every_field_moved());
 }
@@ -125,6 +124,22 @@ TEST_CASE("a frame or a reading the table does not spell is refused by name and 
     const config::outcome answered = answering("unspelled.xml", "<velocity_kinematics frame=\"diagonal\" reading=\"momentum\"/>");
 
     REQUIRE(answered.failure.has_value());
+    stands_at(read_velocity_kinematics(answered.values, velocity_at), opening{});
+}
+
+// A part's switch governs its ellipsoid and its arrows of every column together, which is not what a
+// key named for an ellipsoid alone said, so the older key is not declared under another meaning. A
+// document still carrying it is refused by name -- the refusal spells the key it does not know and the
+// one it does -- and everything that document said falls back, the frame it named included, rather
+// than half of it standing.
+TEST_CASE("a document carrying a key named for an ellipsoid alone is refused by name and every value it carries falls back", "[manipulator][configuration]")
+{
+    const config::outcome answered = answering("older.xml", "<velocity_kinematics frame=\"body\" angular_ellipsoid=\"false\" linear_ellipsoid=\"false\"/>");
+
+    REQUIRE(answered.failure.has_value());
+    CHECK(answered.failure->code == config::error_code::rejected_content);
+    CHECK(answered.failure->message.find("angular_ellipsoid") != std::string::npos);
+    CHECK(answered.failure->message.find("linear_ellipsoid") != std::string::npos);
     stands_at(read_velocity_kinematics(answered.values, velocity_at), opening{});
 }
 

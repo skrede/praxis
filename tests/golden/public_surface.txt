@@ -948,6 +948,7 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_s
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_angular_ellipsoid_shown	prototype	(bool shown)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_linear_ellipsoid_shown	prototype	(bool shown)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_jacobian_columns_shown	prototype	(bool shown)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_column_part_shown	prototype	(jacobian_block which,bool shown)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_pose_path_shown	prototype	(std::string_view named,bool shown)	typename:expected<void,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_selected_joint	prototype	(std::size_t joint)	typename:expected<void,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	clear_selected_joint	prototype	()	typename:void
@@ -991,6 +992,7 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_pat
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_solutions	member	-	typename:std::shared_ptr<threepp::Object3D>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_ellipsoid_groups	member	-	typename:std::array<std::shared_ptr<threepp::Object3D>,jacobian_block_count>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_columns	member	-	typename:std::shared_ptr<threepp::Object3D>
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_column_parts	member	-	typename:std::array<std::shared_ptr<threepp::Object3D>,jacobian_block_count>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_decoration	member	-	typename:std::shared_ptr<threepp::Object3D>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_world_frame	member	-	typename:std::shared_ptr<threepp::Object3D>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_world_object	member	-	typename:std::shared_ptr<threepp::Object3D>
@@ -1015,6 +1017,7 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_ell
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_ellipsoid_wire	member	-	typename:std::vector<std::shared_ptr<threepp::Material>>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_continuation_tone	member	-	typename:std::vector<std::shared_ptr<threepp::Material>>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_column_tone	member	-	typename:std::array<std::shared_ptr<threepp::Material>,jacobian_block_count>
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_column_dimmed	member	-	typename:std::array<std::shared_ptr<threepp::Material>,jacobian_block_count>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	apply_published	prototype	() const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	detach_flange_attachments	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	place_flange_attachments	prototype	() const	typename:void
@@ -1027,6 +1030,7 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	place
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	place_ellipsoids	prototype	() const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	place_jacobian_columns	prototype	() const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	carried_into_space	prototype	(const arm_snapshot & seen) const	typename:expected<rotation,refusal>
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	wear_jacobian_columns	prototype	() const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	hide_jacobian_columns	prototype	() const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	fold_solutions	prototype	(std::span<const joint_vector> at) const	typename:expected<std::vector<std::vector<Eigen::Vector3d>>,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	raise_solution_figure	prototype	(std::size_t figure,std::size_t joints)	typename:void
@@ -1830,8 +1834,8 @@ lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	s
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	settings	struct	-	-
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	frame	member	-	typename:jacobian_frame
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	reading	member	-	typename:ellipsoid_view
-lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	angular_ellipsoid	member	-	typename:bool
-lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	linear_ellipsoid	member	-	typename:bool
+lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	angular	member	-	typename:bool
+lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	linear	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	columns	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	capped	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	velocity_kinematics_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,loadable_robot_stencil & drawn)	-
@@ -1858,6 +1862,7 @@ lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	r
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	render_frame	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	render_reading	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	render_switches	prototype	()	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	apply_part	prototype	(jacobian_block which) const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	report_unbounded	prototype	() const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/view_configuration.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/view_configuration.h	praxis	namespace	-	-

@@ -26,8 +26,8 @@ using opening  = velocity_kinematics_window::settings;
 constexpr const char *panel_title = "Velocity kinematics";
 
 // The names the panel writes beside the two switches, which are what a reader has to go on.
-constexpr const char *angular_switch = "Angular ellipsoid";
-constexpr const char *linear_switch  = "Linear ellipsoid";
+constexpr const char *angular_switch = "Angular";
+constexpr const char *linear_switch  = "Linear";
 
 // Singular values a decomposition can be read off, all three positive, so both bodies have an extent
 // to draw and neither is refused.
@@ -52,8 +52,8 @@ void flip(scene::imgui_window &panel, const char *label)
     press_on(frames, draw, panel.display_name().c_str(), label);
 }
 
-// Both bodies stand at the opening, then the named switch is pressed and only the body it names has
-// moved.
+// Both drawings of both parts stand at the opening, then the named switch is pressed and only the
+// part it names has moved -- its body and its arrow of every column together.
 void moves_only(velocity_stage &headless, const char *label, jacobian_block named, jacobian_block other)
 {
     velocity_kinematics_window panel = opened_over(headless, opening{});
@@ -61,12 +61,17 @@ void moves_only(velocity_stage &headless, const char *label, jacobian_block name
     headless.draw();
     REQUIRE(drawn(headless.body(named)));
     REQUIRE(drawn(headless.body(other)));
+    REQUIRE(drawn(headless.arrow(0u, named)));
+    REQUIRE(drawn(headless.arrow(0u, other)));
 
     flip(panel, label);
     headless.draw();
 
     CHECK_FALSE(drawn(headless.body(named)));
     CHECK(drawn(headless.body(other)));
+    CHECK_FALSE(drawn(headless.arrow(0u, named)));
+    CHECK_FALSE(drawn(headless.arrow(1u, named)));
+    CHECK(drawn(headless.arrow(0u, other)));
 }
 
 // Drives a panel opened with both switches at one value to the combination asked for, pressing only
@@ -74,8 +79,8 @@ void moves_only(velocity_stage &headless, const char *label, jacobian_block name
 void reaches(velocity_stage &headless, bool from, bool angular_on, bool linear_on)
 {
     opening opened{};
-    opened.angular_ellipsoid = from;
-    opened.linear_ellipsoid  = from;
+    opened.angular = from;
+    opened.linear  = from;
 
     velocity_kinematics_window panel = opened_over(headless, opened);
     panel.initialize();
@@ -87,11 +92,13 @@ void reaches(velocity_stage &headless, bool from, bool angular_on, bool linear_o
 
     CHECK(drawn(headless.body(jacobian_block::angular)) == angular_on);
     CHECK(drawn(headless.body(jacobian_block::linear)) == linear_on);
+    CHECK(drawn(headless.arrow(0u, jacobian_block::angular)) == angular_on);
+    CHECK(drawn(headless.arrow(1u, jacobian_block::linear)) == linear_on);
 }
 
 }
 
-TEST_CASE("the panel offers a switch under each ellipsoid's own name", "[manipulator][window]")
+TEST_CASE("the panel offers a switch under each part's own name", "[manipulator][window]")
 {
     velocity_stage headless;
     headless.put(reading_of(readable()));
@@ -107,7 +114,7 @@ TEST_CASE("the panel offers a switch under each ellipsoid's own name", "[manipul
     stand_on(frames, draw, titled.c_str(), linear_switch);
 }
 
-TEST_CASE("the switch named for the angular ellipsoid takes that body away and leaves the linear one drawn", "[manipulator][window]")
+TEST_CASE("the switch named for the angular part takes that body and that part's arrows away and leaves the linear ones drawn", "[manipulator][window]")
 {
     velocity_stage headless;
     headless.put(reading_of(readable()));
@@ -115,7 +122,7 @@ TEST_CASE("the switch named for the angular ellipsoid takes that body away and l
     moves_only(headless, angular_switch, jacobian_block::angular, jacobian_block::linear);
 }
 
-TEST_CASE("the switch named for the linear ellipsoid takes that body away and leaves the angular one drawn", "[manipulator][window]")
+TEST_CASE("the switch named for the linear part takes that body and that part's arrows away and leaves the angular ones drawn", "[manipulator][window]")
 {
     velocity_stage headless;
     headless.put(reading_of(readable()));
@@ -123,7 +130,7 @@ TEST_CASE("the switch named for the linear ellipsoid takes that body away and le
     moves_only(headless, linear_switch, jacobian_block::linear, jacobian_block::angular);
 }
 
-TEST_CASE("each combination of the two named switches draws exactly the bodies those switches stand for", "[manipulator][window]")
+TEST_CASE("each combination of the two named switches draws exactly the bodies and the arrows those switches stand for", "[manipulator][window]")
 {
     velocity_stage headless;
     headless.put(reading_of(readable()));

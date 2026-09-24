@@ -37,13 +37,15 @@ public:
     };
 
     // Which matrix the window reads, which of the two readings its blocks are taken under, and which
-    // of the four drawings stand.
+    // of the drawings taken from it stand. A part's switch governs both of that part's drawings, the
+    // ellipsoid and the arrows of that part of every column; the columns switch governs whether the
+    // columns stand at all.
     struct settings
     {
         jacobian_frame frame   = jacobian_frame::space;
         ellipsoid_view reading = ellipsoid_view::velocity;
-        bool angular_ellipsoid = true;
-        bool linear_ellipsoid  = true;
+        bool angular           = true;
+        bool linear            = true;
         bool columns           = true;
         bool capped            = true;
     };
@@ -100,6 +102,10 @@ private:
     void render_frame();
     void render_reading();
     void render_switches();
+
+    // Both drawings of one part, told together, which is what leaves a part shown or hidden across
+    // the ellipsoid and the columns rather than on one of them.
+    void apply_part(jacobian_block which) const;
 
     // Named through the arm's own strand, which is the only one that can name a refusal.
     void report_unbounded() const;

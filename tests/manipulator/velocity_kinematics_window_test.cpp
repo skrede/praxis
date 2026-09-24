@@ -312,11 +312,11 @@ TEST_CASE("every value reaches the stencil at initialize even where the composit
 {
     velocity_stage headless;
     opening named;
-    named.frame             = jacobian_frame::body;
-    named.reading           = ellipsoid_view::force;
-    named.angular_ellipsoid = false;
-    named.columns           = false;
-    named.capped            = false;
+    named.frame   = jacobian_frame::body;
+    named.reading = ellipsoid_view::force;
+    named.angular = false;
+    named.columns = false;
+    named.capped  = false;
 
     velocity_kinematics_window panel(panel_title, headless.source->reader(), headless.arm(), headless.shown, no_control(), named);
     panel.initialize();
@@ -404,15 +404,17 @@ TEST_CASE("each of the four switches writes its own thing about what is drawn an
 
         CHECK(drawn(headless.body(jacobian_block::angular)) == (row != angular_row));
         CHECK(drawn(headless.body(jacobian_block::linear)) == (row != linear_row));
-        CHECK(drawn(headless.arrow(0u, jacobian_block::angular)) == (row != columns_row));
+        CHECK(drawn(headless.arrow(0u, jacobian_block::angular)) == (row != columns_row && row != angular_row));
+        CHECK(drawn(headless.arrow(0u, jacobian_block::linear)) == (row != columns_row && row != linear_row));
         CHECK(headless.shown.force_capped() == (row != capped_row));
     }
 }
 
 // The two tones are neighbours by construction, so which part is which is not answerable from the
 // picture. The key answers it, in the tones the arrows themselves wear rather than in a pair of
-// literals that happen to agree with them.
-TEST_CASE("a panel whose column switch is on names each part in the tone that part's arrows wear, and one whose switch is off names neither", "[manipulator][window]")
+// literals that happen to agree with them. It stands beside the switch over that part, so it is drawn
+// wherever that switch is, whatever the switch over the columns says.
+TEST_CASE("a panel offering the part switches names each part in the tone that part's arrows wear, columns drawn or not", "[manipulator][window]")
 {
     velocity_stage headless;
     headless.put(reading_of(Eigen::Vector3d(1.0, 0.5, 0.25)));
@@ -431,13 +433,13 @@ TEST_CASE("a panel whose column switch is on names each part in the tone that pa
 
     CHECK(carries(drawn, angular_tone));
     CHECK(carries(drawn, linear_tone));
-    CHECK_FALSE(carries(bare, angular_tone));
-    CHECK_FALSE(carries(bare, linear_tone));
+    CHECK(carries(bare, angular_tone));
+    CHECK(carries(bare, linear_tone));
 }
 
 // The key stands with the switch it belongs to, so a composition that asked for no switch gets no key
 // either, however the drawing it never offered a control for happens to open.
-TEST_CASE("a panel whose composition offered no drawing switches names no part, though its columns are drawn", "[manipulator][window]")
+TEST_CASE("a panel whose composition offered no part switches names no part, though its columns are drawn", "[manipulator][window]")
 {
     velocity_stage headless;
     headless.put(reading_of(Eigen::Vector3d(1.0, 0.5, 0.25)));

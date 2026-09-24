@@ -1,5 +1,6 @@
 #include "fixtures.h"
 #include "drawn_columns.h"
+#include "robot/column_arrow.h"
 #include "drawn_chain.h"
 #include "drawn_ellipsoids.h"
 
@@ -43,7 +44,9 @@ TEST_CASE("telling a column count raises two arrows per column, all under one su
         for(const jacobian_block part : {jacobian_block::angular, jacobian_block::linear})
             CHECK(drawn(headless.arrow(column, part)));
 
-    CHECK(headless.arrow(0u, jacobian_block::angular)->parent == headless.arrow(1u, jacobian_block::linear)->parent);
+    CHECK(headless.arrow(0u, jacobian_block::angular)->parent == headless.arrow(1u, jacobian_block::angular)->parent);
+    CHECK(headless.arrow(0u, jacobian_block::angular)->parent != headless.arrow(0u, jacobian_block::linear)->parent);
+    CHECK(headless.arrow(0u, jacobian_block::angular)->parent->parent == headless.arrow(1u, jacobian_block::linear)->parent->parent);
     CHECK(headless.arrow(2u, jacobian_block::angular) == nullptr);
 }
 
@@ -218,7 +221,7 @@ TEST_CASE("an arm too narrow for a decomposition still draws the columns of the 
             CHECK(drawn(headless.arrow(column, part)));
 }
 
-TEST_CASE("every combination of the eight switches leaves the scene in the state those eight name", "[manipulator][drawing]")
+TEST_CASE("every combination of the ten switches leaves the scene in the state those ten name", "[manipulator][drawing]")
 {
     column_stage headless;
     REQUIRE(headless.shown.set_jacobian_columns(2u).has_value());
@@ -227,16 +230,18 @@ TEST_CASE("every combination of the eight switches leaves the scene in the state
     headless.put(published_columns(two_columns(1.0), two_columns(1.0), Eigen::Vector3d(Eigen::Vector3d::Zero()), decomposed_both(Eigen::Vector3d(1.0, 0.6, 0.2)),
                                    decomposed_both(Eigen::Vector3d(1.0, 0.6, 0.2))));
 
-    for(int combination = 0; combination < 256; ++combination)
+    for(int combination = 0; combination < 1024; ++combination)
     {
-        const bool meshes  = (combination & 1) != 0;
-        const bool axes    = (combination & 2) != 0;
-        const bool stick   = (combination & 4) != 0;
-        const bool path    = (combination & 8) != 0;
-        const bool figures = (combination & 16) != 0;
-        const bool angular = (combination & 32) != 0;
-        const bool linear  = (combination & 64) != 0;
-        const bool columns = (combination & 128) != 0;
+        const bool meshes         = (combination & 1) != 0;
+        const bool axes           = (combination & 2) != 0;
+        const bool stick          = (combination & 4) != 0;
+        const bool path           = (combination & 8) != 0;
+        const bool figures        = (combination & 16) != 0;
+        const bool angular        = (combination & 32) != 0;
+        const bool linear         = (combination & 64) != 0;
+        const bool columns        = (combination & 128) != 0;
+        const bool angular_arrows = (combination & 256) != 0;
+        const bool linear_arrows  = (combination & 512) != 0;
 
         headless.shown.set_meshes_shown(meshes);
         headless.shown.set_decoration_shown(axes);
@@ -246,6 +251,8 @@ TEST_CASE("every combination of the eight switches leaves the scene in the state
         headless.shown.set_angular_ellipsoid_shown(angular);
         headless.shown.set_linear_ellipsoid_shown(linear);
         headless.shown.set_jacobian_columns_shown(columns);
+        headless.shown.set_column_part_shown(jacobian_block::angular, angular_arrows);
+        headless.shown.set_column_part_shown(jacobian_block::linear, linear_arrows);
         headless.draw();
 
         CHECK(drawn(rendered_arm(*headless.scene)) == meshes);
@@ -255,8 +262,8 @@ TEST_CASE("every combination of the eight switches leaves the scene in the state
         CHECK(drawn(chain_node(*headless.scene, loadable_robot_stencil::solution_figure_name(0))) == figures);
         CHECK(drawn(headless.body(jacobian_block::angular)) == angular);
         CHECK(drawn(headless.body(jacobian_block::linear)) == linear);
-        CHECK(drawn(headless.arrow(0u, jacobian_block::angular)) == columns);
-        CHECK(drawn(headless.arrow(1u, jacobian_block::linear)) == columns);
+        CHECK(drawn(headless.arrow(0u, jacobian_block::angular)) == (columns && angular_arrows));
+        CHECK(drawn(headless.arrow(1u, jacobian_block::linear)) == (columns && linear_arrows));
     }
 }
 
@@ -319,4 +326,119 @@ TEST_CASE("a body Jacobian's columns are not stood at all while the tool's own o
     headless.draw();
 
     CHECK(headless.arrow(0u, jacobian_block::angular)->visible);
+}
+
+// The selection is the one the decoration already answers, so no case names a joint for the columns
+// that the axes and the chain are not also about.
+TEST_CASE("the joint the drawing tells apart tells its own column apart, and every other column is dimmed", "[manipulator][drawing]")
+{
+    column_stage headless;
+    REQUIRE(headless.shown.set_jacobian_columns(2u).has_value());
+    headless.draw();
+
+    for(std::size_t column = 0; column < 2u; ++column)
+        for(const jacobian_block part : {jacobian_block::angular, jacobian_block::linear})
+            CHECK(arrow_tone(headless.arrow(column, part)) == column_tone(part, false));
+
+    REQUIRE(headless.shown.set_selected_joint(0u).has_value());
+    headless.draw();
+
+    for(const jacobian_block part : {jacobian_block::angular, jacobian_block::linear})
+    {
+        CHECK(arrow_tone(headless.arrow(0u, part)) == column_tone(part, false));
+        CHECK(arrow_tone(headless.arrow(1u, part)) == column_tone(part, true));
+    }
+
+    REQUIRE(headless.shown.set_selected_joint(1u).has_value());
+    headless.draw();
+
+    for(const jacobian_block part : {jacobian_block::angular, jacobian_block::linear})
+    {
+        CHECK(arrow_tone(headless.arrow(0u, part)) == column_tone(part, true));
+        CHECK(arrow_tone(headless.arrow(1u, part)) == column_tone(part, false));
+    }
+
+    headless.shown.clear_selected_joint();
+    headless.draw();
+
+    for(std::size_t column = 0; column < 2u; ++column)
+        for(const jacobian_block part : {jacobian_block::angular, jacobian_block::linear})
+            CHECK(arrow_tone(headless.arrow(column, part)) == column_tone(part, false));
+}
+
+// A selection that stands while a width is told would otherwise raise arrows in the tone of a column
+// the drawing is not about.
+TEST_CASE("a column count told while a joint is told apart raises every arrow in the tone that selection names", "[manipulator][drawing]")
+{
+    column_stage headless;
+    REQUIRE(headless.shown.set_jacobian_columns(2u).has_value());
+    REQUIRE(headless.shown.set_selected_joint(1u).has_value());
+    REQUIRE(headless.shown.set_jacobian_columns(2u).has_value());
+    headless.draw();
+
+    for(const jacobian_block part : {jacobian_block::angular, jacobian_block::linear})
+    {
+        CHECK(arrow_tone(headless.arrow(0u, part)) == column_tone(part, true));
+        CHECK(arrow_tone(headless.arrow(1u, part)) == column_tone(part, false));
+    }
+}
+
+// A selection the drawing declines leaves the tones where they were, as it leaves the axes and the
+// chain.
+TEST_CASE("a joint the drawing carries no screw for is declined and no column changes tone", "[manipulator][drawing]")
+{
+    column_stage headless;
+    REQUIRE(headless.shown.set_jacobian_columns(2u).has_value());
+    REQUIRE(headless.shown.set_selected_joint(0u).has_value());
+    headless.draw();
+
+    CHECK_FALSE(headless.shown.set_selected_joint(2u).has_value());
+    headless.draw();
+
+    for(const jacobian_block part : {jacobian_block::angular, jacobian_block::linear})
+    {
+        CHECK(arrow_tone(headless.arrow(0u, part)) == column_tone(part, false));
+        CHECK(arrow_tone(headless.arrow(1u, part)) == column_tone(part, true));
+    }
+}
+
+// Either part of every column is withheld on its own, beneath the switch over the columns at all.
+TEST_CASE("a part withheld takes that part's arrow from every column and leaves the other part's standing", "[manipulator][drawing]")
+{
+    column_stage headless;
+    REQUIRE(headless.shown.set_jacobian_columns(2u).has_value());
+    headless.shown.set_column_part_shown(jacobian_block::angular, false);
+    headless.draw();
+
+    CHECK_FALSE(drawn(headless.arrow(0u, jacobian_block::angular)));
+    CHECK_FALSE(drawn(headless.arrow(1u, jacobian_block::angular)));
+    CHECK(drawn(headless.arrow(0u, jacobian_block::linear)));
+    CHECK(drawn(headless.arrow(1u, jacobian_block::linear)));
+
+    headless.shown.set_column_part_shown(jacobian_block::angular, true);
+    headless.shown.set_jacobian_columns_shown(false);
+    headless.draw();
+
+    CHECK_FALSE(drawn(headless.arrow(0u, jacobian_block::angular)));
+    CHECK_FALSE(drawn(headless.arrow(0u, jacobian_block::linear)));
+
+    headless.shown.set_jacobian_columns_shown(true);
+    headless.draw();
+
+    CHECK(drawn(headless.arrow(0u, jacobian_block::angular)));
+    CHECK(drawn(headless.arrow(0u, jacobian_block::linear)));
+}
+
+// A width told again replaces the arrows, so a part withheld before it must still be withheld after:
+// the switch is on the subtree the arrows are raised under rather than on the arrows.
+TEST_CASE("a part withheld stays withheld through a column count told again", "[manipulator][drawing]")
+{
+    column_stage headless;
+    REQUIRE(headless.shown.set_jacobian_columns(2u).has_value());
+    headless.shown.set_column_part_shown(jacobian_block::linear, false);
+    REQUIRE(headless.shown.set_jacobian_columns(2u).has_value());
+    headless.draw();
+
+    CHECK(drawn(headless.arrow(1u, jacobian_block::angular)));
+    CHECK_FALSE(drawn(headless.arrow(1u, jacobian_block::linear)));
 }

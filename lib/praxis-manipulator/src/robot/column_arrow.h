@@ -35,12 +35,14 @@ drawn_arrow arrow_object(std::string name, std::shared_ptr<threepp::Material> to
 void place_arrow(const drawn_arrow &drawn, const Eigen::Vector3d &from, const Eigen::Vector3d &along, double length);
 
 // The tone one part of a Jacobian column wears, in the renderer's working colour space, as every
-// colour handed to a material is.
-threepp::Color column_tone(jacobian_block part);
+// colour handed to a material is. A dimmed tone is the same part's hue washed toward the light the
+// viewport is cleared to rather than darkened, which against a light background reads as more
+// prominent rather than less.
+threepp::Color column_tone(jacobian_block part, bool dimmed);
 
 // A material in that tone. Built by the caller once and handed to every arrow of that part, so a
 // drawing running every frame assigns a material rather than building one.
-std::shared_ptr<threepp::Material> column_material(jacobian_block part);
+std::shared_ptr<threepp::Material> column_material(jacobian_block part, bool dimmed);
 
 }
 

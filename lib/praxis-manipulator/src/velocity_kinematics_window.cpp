@@ -26,12 +26,14 @@ constexpr std::size_t linear  = static_cast<std::size_t>(jacobian_block::linear)
 // writes its own colours in.
 ImU32 as_written(jacobian_block part)
 {
-    const unsigned int worn = column_tone(part).getHex(threepp::SRGBColorSpace);
+    const unsigned int worn = column_tone(part, false).getHex(threepp::SRGBColorSpace);
 
     return IM_COL32((worn >> 16) & 0xffu, (worn >> 8) & 0xffu, worn & 0xffu, 0xff);
 }
 
-void name_part(const char *called, jacobian_block part)
+// The switch over one part, standing beside the tone that part's arrows wear: the two tones are
+// neighbours by construction, so which part is which is not answerable from the drawing alone.
+bool switch_over(const char *called, jacobian_block part, bool &shown)
 {
     const float side = ImGui::GetTextLineHeight();
     const ImVec2 at  = ImGui::GetCursorScreenPos();
@@ -39,15 +41,8 @@ void name_part(const char *called, jacobian_block part)
     ImGui::GetWindowDrawList()->AddRectFilled(at, ImVec2(at.x + side, at.y + side), as_written(part));
     ImGui::Dummy(ImVec2(side, side));
     ImGui::SameLine();
-    ImGui::TextUnformatted(called);
-}
 
-void name_column_parts()
-{
-    ImGui::Indent();
-    name_part("Angular part", jacobian_block::angular);
-    name_part("Linear part", jacobian_block::linear);
-    ImGui::Unindent();
+    return ImGui::Checkbox(called, &shown);
 }
 
 }
@@ -63,7 +58,7 @@ velocity_kinematics_window::velocity_kinematics_window(std::string name, arm_rea
                   std::move(name), [this] { render_controls(); }, [this] { return reading(); })
         , m_capped(state.capped)
         , m_columns(state.columns)
-        , m_shown{state.angular_ellipsoid, state.linear_ellipsoid}
+        , m_shown{state.angular, state.linear}
         , m_refused(false)
         , m_controls(offered)
         , m_settings_at(std::move(at))
@@ -77,22 +72,29 @@ velocity_kinematics_window::velocity_kinematics_window(std::string name, arm_rea
 
 velocity_kinematics_window::settings velocity_kinematics_window::state() const
 {
-    return settings{.frame             = m_frame.value(),
-                    .reading           = m_reading.value(),
-                    .angular_ellipsoid = m_shown[angular],
-                    .linear_ellipsoid  = m_shown[linear],
-                    .columns           = m_columns,
-                    .capped            = m_capped};
+    return settings{.frame = m_frame.value(), .reading = m_reading.value(), .angular = m_shown[angular], .linear = m_shown[linear], .columns = m_columns, .capped = m_capped};
 }
 
 void velocity_kinematics_window::initialize()
 {
     m_drawn.set_jacobian_frame(m_frame.value());
     m_drawn.set_manipulability_ellipsoids(m_reading.value());
-    m_drawn.set_angular_ellipsoid_shown(m_shown[angular]);
-    m_drawn.set_linear_ellipsoid_shown(m_shown[linear]);
+    apply_part(jacobian_block::angular);
+    apply_part(jacobian_block::linear);
     m_drawn.set_jacobian_columns_shown(m_columns);
     m_drawn.set_force_capped(m_capped);
+}
+
+void velocity_kinematics_window::apply_part(jacobian_block which) const
+{
+    const bool shown = m_shown[static_cast<std::size_t>(which)];
+
+    if(which == jacobian_block::angular)
+        m_drawn.set_angular_ellipsoid_shown(shown);
+    else
+        m_drawn.set_linear_ellipsoid_shown(shown);
+
+    m_drawn.set_column_part_shown(which, shown);
 }
 
 void velocity_kinematics_window::render_controls()
@@ -119,16 +121,17 @@ void velocity_kinematics_window::render_reading()
         m_drawn.set_manipulability_ellipsoids(m_reading.value());
 }
 
+// A part's switch reaches both of that part's drawings and the columns switch reaches the columns at
+// all, so a part withheld leaves the other part's arrows standing and a columns switch turned off
+// leaves both parts' ellipsoids where their own switches put them.
 void velocity_kinematics_window::render_switches()
 {
-    if(ImGui::Checkbox("Angular ellipsoid", &m_shown[angular]))
-        m_drawn.set_angular_ellipsoid_shown(m_shown[angular]);
-    if(ImGui::Checkbox("Linear ellipsoid", &m_shown[linear]))
-        m_drawn.set_linear_ellipsoid_shown(m_shown[linear]);
+    if(switch_over("Angular", jacobian_block::angular, m_shown[angular]))
+        apply_part(jacobian_block::angular);
+    if(switch_over("Linear", jacobian_block::linear, m_shown[linear]))
+        apply_part(jacobian_block::linear);
     if(ImGui::Checkbox("Jacobian columns", &m_columns))
         m_drawn.set_jacobian_columns_shown(m_columns);
-    if(m_columns)
-        name_column_parts();
     if(ImGui::Checkbox("Cap the force ellipsoid", &m_capped))
         m_drawn.set_force_capped(m_capped);
 }

@@ -163,8 +163,8 @@ void loadable_robot_stencil::clear_chain()
     m_marks.clear();
 }
 
-// Joint j owns the point at fold index j+1, the segment spanning fold indices j and j+1 and the axis
-// line named for j, so one index reaches all three of a joint's drawn items.
+// Joint j owns the point at fold index j+1, the segment spanning fold indices j and j+1, the axis
+// line named for j and column j of the Jacobian, so one index reaches all of a joint's drawn items.
 void loadable_robot_stencil::apply_selection() const
 {
     for(std::size_t joint = 0; joint < m_drawn.size(); ++joint)
@@ -175,6 +175,7 @@ void loadable_robot_stencil::apply_selection() const
 
     for(std::size_t joint = 0; joint < m_marks.size(); ++joint)
         wear(*m_marks[joint], m_selected == joint ? m_chain_told : m_chain_tone);
+    wear_jacobian_columns();
 }
 
 void loadable_robot_stencil::place_joint_decoration() const
