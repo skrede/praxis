@@ -17,12 +17,12 @@ constexpr unsigned int grid_extent = 10u;
 
 }
 
-void visualizer::setup_scene()
+void visualizer::setup_scene(const windows &stood)
 {
     add_scene_grid();
     add_camera();
     add_scene_lights();
-    add_imgui_windows();
+    add_imgui_windows(stood);
 }
 
 void visualizer::add_scene_grid()
@@ -54,18 +54,22 @@ void visualizer::add_scene_lights()
     m_scene->add(threepp::HemisphereLight::create(threepp::Color::aliceblue, threepp::Color::grey));
 }
 
-void visualizer::add_imgui_windows()
+void visualizer::add_imgui_windows(const windows &stood)
 {
-    if(m_messages == nullptr)
+    if(m_messages == nullptr && stood.messages)
     {
         m_messages = std::make_shared<log_buffer>(default_log_capacity);
         install_log_sink(m_messages);
     }
 
-    m_imgui->add_window(std::make_shared<log_window>("Messages", m_messages));
-    m_imgui->add_window(std::make_shared<preset_window>("Presets", *this));
-    m_imgui->add_window(std::make_shared<view_gizmo_window>("ViewGizmo", *m_camera, *m_controls));
-    m_imgui->add_window(std::make_shared<stepped_work_window>("Stepped work", *this));
+    if(stood.messages)
+        m_imgui->add_window(std::make_shared<log_window>("Messages", m_messages));
+    if(stood.presets)
+        m_imgui->add_window(std::make_shared<preset_window>("Presets", *this));
+    if(stood.view_gizmo)
+        m_imgui->add_window(std::make_shared<view_gizmo_window>("ViewGizmo", *m_camera, *m_controls));
+    if(stood.stepped_work)
+        m_imgui->add_window(std::make_shared<stepped_work_window>("Stepped work", *this));
 }
 
 void visualizer::capture_input()

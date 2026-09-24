@@ -60,7 +60,7 @@ visualizer::visualizer(std::shared_ptr<preset_registry> registry, scheduler::sch
     m_composition.windows_through([this](const std::shared_ptr<imgui_window> &panel) { m_imgui->add_window(panel); },
                                   [this](const std::shared_ptr<imgui_window> &panel) { m_imgui->remove_window(panel); });
 
-    setup_scene();
+    setup_scene(chosen.stood);
     capture_input();
 }
 

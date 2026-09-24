@@ -2686,11 +2686,18 @@ lib/praxis-scene/include/praxis/scene/visualizer.h	width	member	-	typename:std::
 lib/praxis-scene/include/praxis/scene/visualizer.h	height	member	-	typename:std::optional<int>
 lib/praxis-scene/include/praxis/scene/visualizer.h	x	member	-	typename:std::optional<int>
 lib/praxis-scene/include/praxis/scene/visualizer.h	y	member	-	typename:std::optional<int>
+lib/praxis-scene/include/praxis/scene/visualizer.h	windows	struct	-	-
+lib/praxis-scene/include/praxis/scene/visualizer.h	windows	function	()	-
+lib/praxis-scene/include/praxis/scene/visualizer.h	messages	member	-	typename:bool
+lib/praxis-scene/include/praxis/scene/visualizer.h	presets	member	-	typename:bool
+lib/praxis-scene/include/praxis/scene/visualizer.h	view_gizmo	member	-	typename:bool
+lib/praxis-scene/include/praxis/scene/visualizer.h	stepped_work	member	-	typename:bool
 lib/praxis-scene/include/praxis/scene/visualizer.h	options	struct	-	-
 lib/praxis-scene/include/praxis/scene/visualizer.h	view	member	-	typename:projection
 lib/praxis-scene/include/praxis/scene/visualizer.h	messages	member	-	typename:std::shared_ptr<log_buffer>
 lib/praxis-scene/include/praxis/scene/visualizer.h	window	member	-	typename:geometry
 lib/praxis-scene/include/praxis/scene/visualizer.h	root	member	-	typename:std::filesystem::path
+lib/praxis-scene/include/praxis/scene/visualizer.h	stood	member	-	typename:windows
 lib/praxis-scene/include/praxis/scene/visualizer.h	visualizer	prototype	(std::shared_ptr<preset_registry> registry,scheduler::scheduler & loop,options chosen=options ())	-
 lib/praxis-scene/include/praxis/scene/visualizer.h	~visualizer	prototype	()	-
 lib/praxis-scene/include/praxis/scene/visualizer.h	show_grid	prototype	(bool show)	typename:void
@@ -2733,11 +2740,11 @@ lib/praxis-scene/include/praxis/scene/visualizer.h	load	prototype	(const preset_
 lib/praxis-scene/include/praxis/scene/visualizer.h	report_load_refusal	prototype	(load_refusal reason,const std::string & name) const	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	capture_input	prototype	()	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	resize	prototype	(threepp::WindowSize size)	typename:void
-lib/praxis-scene/include/praxis/scene/visualizer.h	setup_scene	prototype	()	typename:void
+lib/praxis-scene/include/praxis/scene/visualizer.h	setup_scene	prototype	(const windows & stood)	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	add_camera	prototype	()	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	add_scene_grid	prototype	()	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	add_scene_lights	prototype	()	typename:void
-lib/praxis-scene/include/praxis/scene/visualizer.h	add_imgui_windows	prototype	()	typename:void
+lib/praxis-scene/include/praxis/scene/visualizer.h	add_imgui_windows	prototype	(const windows & stood)	typename:void
 lib/praxis-scene/include/praxis/scene/widgets.h	praxis	namespace	-	-
 lib/praxis-scene/include/praxis/scene/widgets.h	scene	namespace	-	-
 lib/praxis-scene/include/praxis/scene/widgets.h	render_float3_inputs	function	(Eigen::Vector3f & vector,const char * const labels[3],float step,float step_fast,const std::function<void (int idx)> & on_change=nullptr)	typename:void

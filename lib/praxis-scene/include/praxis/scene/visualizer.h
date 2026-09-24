@@ -58,6 +58,28 @@ public:
         std::optional<int> y;
     };
 
+    // Which of the windows a visualizer stands on its own behalf are stood. One not asked for is not
+    // built, so nothing it would draw and nothing it would read exists. Two of them carry more than a
+    // reading: the presets window is where a composition is chosen, released and saved, and where the
+    // question asked before a release is drawn, so a holder that does not ask for it answers that
+    // question itself; and where the messages window is not asked for and no ring was handed in, no
+    // log sink is installed and what is logged reaches the terminal alone.
+    struct windows
+    {
+        windows()
+                : messages(true)
+                , presets(true)
+                , view_gizmo(true)
+                , stepped_work(true)
+        {
+        }
+
+        bool messages;
+        bool presets;
+        bool view_gizmo;
+        bool stepped_work;
+    };
+
     // What a visualizer is built with beyond its registry and the loop it draws on, the last of which
     // is the root everything written on its behalf is placed under; an empty root leaves each
     // writer's own choice of place in force.
@@ -70,6 +92,7 @@ public:
         std::shared_ptr<log_buffer> messages;
         geometry window;
         std::filesystem::path root;
+        windows stood;
     };
 
     visualizer(std::shared_ptr<preset_registry> registry, scheduler::scheduler &loop, options chosen = options());
@@ -162,11 +185,11 @@ private:
     void capture_input();
     void resize(threepp::WindowSize size);
 
-    void setup_scene();
+    void setup_scene(const windows &stood);
     void add_camera();
     void add_scene_grid();
     void add_scene_lights();
-    void add_imgui_windows();
+    void add_imgui_windows(const windows &stood);
 };
 
 }

@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <string>
+#include <filesystem>
 #include <vector>
 #include <optional>
 
@@ -69,11 +70,30 @@ preset_registry::factory admitting_work()
     };
 }
 
+// A root of its own, so what the GUI library kept for a visualizer built earlier in the run is not
+// what a case reads back: those settings are written under the root and loaded from it again.
+visualizer::options standing(const visualizer::windows &stood, const std::filesystem::path &root)
+{
+    visualizer::options chosen;
+    chosen.view     = visualizer::projection::perspective;
+    chosen.messages = nullptr;
+    chosen.root     = root;
+    chosen.stood    = stood;
+
+    return chosen;
+}
+
 struct stage
 {
     stage()
             : loop(inline_workers)
             , view(std::make_shared<preset_registry>(), loop)
+    {
+    }
+
+    stage(const visualizer::windows &stood, const std::filesystem::path &root)
+            : loop(inline_workers)
+            , view(std::make_shared<preset_registry>(), loop, standing(stood, root))
     {
     }
 
@@ -168,6 +188,27 @@ TEST_CASE("a drawn frame puts both the selector and the work panel on screen", "
 
     REQUIRE(drawn_panel(settings, "Presets"));
     REQUIRE(drawn_panel(settings, "Stepped work"));
+}
+
+TEST_CASE("a window the visualizer was not asked for is not stood at all", "[scene][display]")
+{
+    const std::filesystem::path root = std::filesystem::temp_directory_path() / "praxis-windows-not-asked-for";
+    std::filesystem::remove_all(root);
+    std::filesystem::create_directories(root);
+
+    visualizer::windows without;
+    without.stepped_work = false;
+
+    {
+        stage live(without, root);
+        live.frame();
+        const std::string settings(ImGui::SaveIniSettingsToMemory(nullptr));
+
+        REQUIRE(drawn_panel(settings, "Presets"));
+        REQUIRE_FALSE(drawn_panel(settings, "Stepped work"));
+    }
+
+    std::filesystem::remove_all(root);
 }
 
 // The orbit controls are held privately and the only window built over them keeps no settings, so
