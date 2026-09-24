@@ -125,8 +125,8 @@ public:
     void set_trapezoid_bounds(std::optional<path_parameter_bounds> held_to);
     std::optional<path_parameter_bounds> trapezoid_bounds() const;
 
-    // A pose parameter named tool_pose is where the tool centre point is commanded to stand; the
-    // flange pose that reaches it is derived on the way to the solver.
+    // A pose parameter named tool_pose or tool_poses is where the tool centre point is commanded to
+    // stand; the flange pose that reaches it is derived on the way to the solver.
     void preview_tool_frame_jog(const transform &tool_pose, const Eigen::Vector3d &offset, const rotation &orientation);
     void preview_task_space_pose(const transform &tool_pose);
     void preview_task_space_screw(const transform &tool_pose, const Eigen::Vector3d &w, const Eigen::Vector3d &q, double theta_radians, double pitch);
@@ -136,7 +136,7 @@ public:
     void task_space_lin(const transform &tool_pose);
     void task_space_screw(const Eigen::Vector3d &w, const Eigen::Vector3d &q, double theta_radians, double pitch);
 
-    void task_space_trajectory(std::span<const transform> poses);
+    void task_space_trajectory(std::span<const transform> tool_poses);
     void joint_space_trajectory(std::span<const joint_vector> positions);
 
     // Samples the motion the command of the same shape would play, once and whole, and publishes it
@@ -146,7 +146,7 @@ public:
     void preview_trajectory(const joint_vector &target);
     void preview_trajectory(const transform &tool_pose);
     void preview_trajectory(std::span<const joint_vector> positions);
-    void preview_trajectory(std::span<const transform> poses);
+    void preview_trajectory(std::span<const transform> tool_poses);
 
     // Samples the run of separate motions between the targets -- one motion per pair, each coming
     // fully to rest at the target it ends at -- and publishes them as one run, so the rate of the
@@ -312,6 +312,8 @@ private:
 
     void run_to(const joint_vector &target);
     void run_along(const transform &tool_pose, task_space_path shape);
+
+    std::vector<transform> flange_poses_from(std::span<const transform> tool_poses) const;
 };
 
 }

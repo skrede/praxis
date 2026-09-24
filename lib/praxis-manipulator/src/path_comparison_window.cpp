@@ -34,6 +34,27 @@ joint_vector radians_of(const Eigen::VectorXf &degrees)
     return degrees.cast<double>() * radians_per_degree;
 }
 
+std::vector<transform> tool_poses_of(const scene_robot &driven, const std::vector<transform> &flange_poses)
+{
+    std::vector<transform> standing;
+    standing.reserve(flange_poses.size());
+    for(const transform &pose : flange_poses)
+        standing.push_back(driven.tool_pose_from_flange_pose(pose));
+
+    return standing;
+}
+
+void play_poses(const std::weak_ptr<owned_arm> &arm, const joint_vector &first, const std::vector<transform> &poses)
+{
+    command(arm,
+            [first, poses](robot_controller &control, scene_robot &driven)
+            {
+                driven.set_joint_positions(first);
+                const std::vector<transform> standing = tool_poses_of(driven, poses);
+                control.task_space_trajectory(std::span<const transform>(standing));
+            });
+}
+
 }
 
 path_comparison_window::settings::settings(joint_vector opening_first, joint_vector opening_second, bool drawing_joint_space, bool drawing_decoupled, bool drawing_screw,
@@ -167,15 +188,8 @@ void path_comparison_window::play()
     }
 
     const std::vector<transform> poses = poses_along(m_played.value());
-    if(poses.size() < drawn_points)
-        return;
-
-    command(m_arm,
-            [first = through.front(), poses](robot_controller &control, scene_robot &driven)
-            {
-                driven.set_joint_positions(first);
-                control.task_space_trajectory(std::span<const transform>(poses));
-            });
+    if(poses.size() >= drawn_points)
+        play_poses(m_arm, through.front(), poses);
 }
 
 }

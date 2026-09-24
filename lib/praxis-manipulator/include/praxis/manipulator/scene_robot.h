@@ -48,6 +48,8 @@ public:
     // The frame conversion a commanded pose is carried through, made by whatever the composition
     // bound. The tool offset and the frame operations are this holder's own, so no caller supplies either.
     transform flange_pose_from_tool_pose(const transform &tool_pose) const;
+    // The way back, over that same tool offset and bound the same way. Neither of the two can refuse.
+    transform tool_pose_from_flange_pose(const transform &flange_pose) const;
 
     expected<transform, refusal> tool_pose() const;
     expected<Eigen::Vector3d, refusal> tool_position() const;

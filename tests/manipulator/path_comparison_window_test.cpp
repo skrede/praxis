@@ -6,6 +6,7 @@
 #include "praxis/manipulator/capabilities.h"
 #include "praxis/manipulator/motion_drawings.h"
 #include "praxis/manipulator/path_comparison_window.h"
+#include "praxis/manipulator/baseline/robot.h"
 
 #include "praxis/trajectory/capabilities.h"
 
@@ -23,10 +24,13 @@
 
 #include <Eigen/Core>
 
+#include <span>
 #include <memory>
 #include <string>
 #include <vector>
 #include <cstddef>
+#include <utility>
+#include <algorithm>
 #include <string_view>
 
 using namespace praxis;
@@ -51,6 +55,7 @@ constexpr double at_the_end = 1.0e-9;
 constexpr std::size_t screw_switch       = 2;
 constexpr std::size_t joint_space_switch = 4;
 constexpr std::size_t first_end          = 6;
+constexpr std::size_t play_button        = 0;
 
 // How far apart the poses of a published traversed run stand, in metres along one axis.
 constexpr double traversed_step = 0.05;
@@ -106,15 +111,82 @@ path_comparison_window::settings ends_at(const joint_vector &first, const joint_
     return path_comparison_window::settings{first, second};
 }
 
+std::vector<transform> &handed_to_the_factory()
+{
+    static std::vector<transform> handed;
+
+    return handed;
+}
+
+std::vector<transform> &carried_from_the_tool_frame()
+{
+    static std::vector<transform> carried;
+
+    return carried;
+}
+
+expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> recorded_waypoints(const kinematics &, std::span<const transform> waypoints, const joint_vector &,
+                                                                                        const joint_limits &)
+{
+    handed_to_the_factory().assign(waypoints.begin(), waypoints.end());
+
+    return unexpected(refusal::not_implemented);
+}
+
+transform recorded_conversion(const rigid_motion::frame_ops &frames, const transform &tool_pose, const transform &tool_offset)
+{
+    carried_from_the_tool_frame().push_back(tool_pose);
+
+    return flange_pose_from_tool_pose(frames, tool_pose, tool_offset);
+}
+
+task_trajectory_ops recording_waypoints()
+{
+    return task_trajectory_ops{&recorded_waypoints};
+}
+
+robot_ops recording_the_conversion()
+{
+    robot_ops injected                  = baseline().robot;
+    injected.flange_pose_from_tool_pose = &recorded_conversion;
+
+    return injected;
+}
+
+transform bent_tool_offset()
+{
+    const rigid_motion::frame_ops frames = rigid_motion::baseline().frame;
+
+    return frames.transformation_matrix_from_rotation_position(frames.rotate_z(0.35), Eigen::Vector3d(0.132, 0.082, 0.0));
+}
+
+std::vector<transform> carried_to_the_tool_frame(const std::vector<transform> &flange_poses)
+{
+    std::vector<transform> standing;
+    for(const transform &pose : flange_poses)
+        standing.push_back(tool_pose_from_flange_pose(pose, bent_tool_offset()));
+
+    return standing;
+}
+
+double worst_gap(const std::vector<transform> &one, const std::vector<transform> &other)
+{
+    double worst = 0.0;
+    for(std::size_t step = 0; step < one.size(); ++step)
+        worst = std::max(worst, (one[step] - other[step]).cwiseAbs().maxCoeff());
+
+    return worst;
+}
+
 struct stage
 {
-    explicit stage(const path_comparison_window::settings &opened = ends_at(configuration(0.0, 0.0), configuration(1.0, 1.0)))
+    explicit stage(const path_comparison_window::settings &opened = ends_at(configuration(0.0, 0.0), configuration(1.0, 1.0)), std::weak_ptr<owned_arm> driving = {})
             : loop(inline_workers)
             , scene(threepp::Scene::create())
             , published(publishing(at_rest(configuration(0.0, 0.0), origin, upright)))
             , stencil(two_joint_handle(), attachments{}, *scene, loop.main_strand(), published->reader(), rigid_motion::baseline().screw, rigid_motion::screw_slot_set{})
-            , panel(panel_title, published->reader(), std::weak_ptr<owned_arm>{}, stencil, rigid_motion::baseline().screw, baseline().fk, planar_chain(), trajectory::baseline().path,
-                    opened, comparison_at)
+            , panel(panel_title, published->reader(), std::move(driving), stencil, rigid_motion::baseline().screw, baseline().fk, planar_chain(), trajectory::baseline().path, opened,
+                    comparison_at)
     {
         REQUIRE(stencil.initialize().has_value());
     }
@@ -182,6 +254,20 @@ struct stage
     std::shared_ptr<arm_publisher> published;
     loadable_robot_stencil stencil;
     path_comparison_window panel;
+};
+
+struct driven_by_the_window
+{
+    driven_by_the_window()
+            : loop(inline_workers)
+            , driven(compose(loop, composing_motion(), rigid_motion::baseline().screw, reference_framing(), recording_waypoints(), recording_the_conversion()))
+    {
+        command(std::weak_ptr<owned_arm>(driven.owned), [](robot_controller &, scene_robot &arm) { arm.set_tool_offset(bent_tool_offset()); });
+        REQUIRE(loop.drain().has_value());
+    }
+
+    praxis::scheduler::scheduler loop;
+    composed_arm driven;
 };
 
 }
@@ -332,4 +418,25 @@ TEST_CASE("the chosen shape is the one the settings named", "[manipulator][compa
     stage over(path_comparison_window::settings{configuration(0.0, 0.0), configuration(1.0, 1.0), true, true, true, compared_path::decoupled});
 
     CHECK(over.panel.state().played == compared_path::decoupled);
+}
+
+TEST_CASE("playing a task-space shape hands the controller the polyline it drew, carried to the tool frame", "[manipulator][comparison]")
+{
+    captured_log log;
+    driven_by_the_window arm;
+    stage over(ends_at(configuration(0.0, 0.0), configuration(1.0, 1.0)), arm.driven.owned);
+    over.draw();
+
+    handed_to_the_factory().clear();
+    carried_from_the_tool_frame().clear();
+    over.press_above_last(play_button);
+    REQUIRE(arm.loop.drain().has_value());
+
+    const std::vector<transform> drawn = over.panel.poses_along(over.panel.state().played);
+
+    REQUIRE(drawn.size() == path_comparison_window::drawn_points);
+    REQUIRE(handed_to_the_factory().size() == drawn.size());
+    CHECK(worst_gap(handed_to_the_factory(), drawn) < read_back);
+    REQUIRE(carried_from_the_tool_frame().size() == drawn.size());
+    CHECK(worst_gap(carried_from_the_tool_frame(), carried_to_the_tool_frame(drawn)) < read_back);
 }

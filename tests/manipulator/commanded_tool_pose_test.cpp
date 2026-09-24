@@ -13,8 +13,11 @@
 
 #include <Eigen/Core>
 
+#include <span>
 #include <limits>
 #include <memory>
+#include <vector>
+#include <cstddef>
 
 using namespace praxis;
 using namespace praxis::fixture;
@@ -27,6 +30,10 @@ namespace {
 constexpr double apart_by_radians = 1.0e-3;
 
 constexpr double thirty_degrees = 30.0 * radians_per_degree;
+
+constexpr std::size_t waypoints_in_a_run = 3;
+
+constexpr double turn_between_waypoints = 0.1;
 
 Eigen::Vector3d along_the_tool_x()
 {
@@ -145,6 +152,50 @@ commanded_outcome screw_outcome(const transform &tool_offset)
     placed.control().task_space_screw(Eigen::Vector3d::UnitZ(), through, thirty_degrees, 0.0);
 
     return played_to(placed, target);
+}
+
+transform stepped(const transform &pose)
+{
+    return pose * rigid_motion::transformation_matrix_from_rotation_position(rigid_motion::rotate_z(turn_between_waypoints), Eigen::Vector3d(0.03, 0.02, 0.0));
+}
+
+std::vector<transform> run_from(const transform &pose)
+{
+    std::vector<transform> through;
+    transform at = pose;
+    for(std::size_t step = 0; step < waypoints_in_a_run; ++step)
+    {
+        at = stepped(at);
+        through.push_back(at);
+    }
+
+    return through;
+}
+
+commanded_outcome waypoint_run_outcome(const transform &tool_offset)
+{
+    commanded_arm placed(tool_offset);
+    const std::vector<transform> through = run_from(placed.tool_pose());
+
+    placed.control().task_space_trajectory(std::span<const transform>(through));
+
+    return played_to(placed, through.back());
+}
+
+double previewed_run_strays(const transform &tool_offset)
+{
+    commanded_arm placed(tool_offset);
+    const std::vector<transform> through = run_from(placed.tool_pose());
+
+    placed.control().preview_trajectory(std::span<const transform>(through));
+
+    const std::shared_ptr<const preview_run> drawn = placed.control().preview();
+    if(!drawn || drawn->samples.empty())
+        return std::numeric_limits<double>::infinity();
+
+    placed.driven().set_joint_positions(drawn->samples.back().motion.position);
+
+    return apart(placed.tool_pose(), through.back());
 }
 
 double previewed_path_strays(const transform &tool_offset)
@@ -290,4 +341,30 @@ TEST_CASE("the last sample of a previewed task-space motion stands a bent tool a
 TEST_CASE("the last sample of a previewed task-space motion stands an arm wearing no tool at the pose it was given", "[manipulator]")
 {
     CHECK(previewed_path_strays(no_tool()) < solved_tolerance);
+}
+
+TEST_CASE("a commanded run of poses ends with a bent tool at the last of them", "[manipulator]")
+{
+    const commanded_outcome outcome = waypoint_run_outcome(bent_tool());
+
+    CHECK(outcome.composed);
+    CHECK(outcome.strays < solved_tolerance);
+}
+
+TEST_CASE("a commanded run of poses ends with an arm wearing no tool at the last of them", "[manipulator]")
+{
+    const commanded_outcome outcome = waypoint_run_outcome(no_tool());
+
+    CHECK(outcome.composed);
+    CHECK(outcome.strays < solved_tolerance);
+}
+
+TEST_CASE("the last sample of a previewed run of poses stands a bent tool at the last of them", "[manipulator]")
+{
+    CHECK(previewed_run_strays(bent_tool()) < solved_tolerance);
+}
+
+TEST_CASE("the last sample of a previewed run of poses stands an arm wearing no tool at the last of them", "[manipulator]")
+{
+    CHECK(previewed_run_strays(no_tool()) < solved_tolerance);
 }

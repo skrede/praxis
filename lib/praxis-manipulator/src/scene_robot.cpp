@@ -78,13 +78,18 @@ transform scene_robot::flange_pose_from_tool_pose(const transform &tool_pose) co
     return m_robot.flange_pose_from_tool_pose(m_frames, tool_pose, m_offset);
 }
 
+transform scene_robot::tool_pose_from_flange_pose(const transform &flange_pose) const
+{
+    return m_robot.tool_pose_from_flange_pose(flange_pose, m_offset);
+}
+
 expected<transform, refusal> scene_robot::tool_pose() const
 {
     const expected<transform, refusal> flange = flange_pose();
     if(!flange)
         return unexpected(flange.error());
 
-    return m_robot.tool_pose_from_flange_pose(*flange, m_offset);
+    return tool_pose_from_flange_pose(*flange);
 }
 
 expected<Eigen::Vector3d, refusal> scene_robot::tool_position() const
@@ -114,7 +119,7 @@ expected<transform, refusal> scene_robot::tool_pose_at(const joint_vector &at) c
     if(!flange)
         return unexpected(flange.error());
 
-    return m_robot.tool_pose_from_flange_pose(*flange, m_offset);
+    return tool_pose_from_flange_pose(*flange);
 }
 
 expected<transform, refusal> scene_robot::flange_pose() const

@@ -50,13 +50,14 @@ inline rigid_motion::frame_ops reference_framing()
     return rigid_motion::baseline().frame;
 }
 
-inline composed_arm compose(scheduler::scheduler &loop, const motion_ops &moving, const rigid_motion::screw_ops &turning, rigid_motion::frame_ops framing = reference_framing())
+inline composed_arm compose(scheduler::scheduler &loop, const motion_ops &moving, const rigid_motion::screw_ops &turning, rigid_motion::frame_ops framing = reference_framing(),
+                            const task_trajectory_ops &waypoints = task_trajectory_ops{}, const robot_ops &robot = baseline().robot)
 {
     const trajectory::path_ops along{.joint_straight_line = &straight_line, .screw = &interpolated, .decoupled = &interpolated};
     const scheduler::strand work = *loop.make_strand();
-    const auto driven            = std::make_shared<scene_robot>(two_joint_arm(baseline().robot));
+    const auto driven            = std::make_shared<scene_robot>(two_joint_arm(robot));
     const auto published         = std::make_shared<arm_publisher>();
-    const auto control = std::make_shared<robot_controller>(*driven, moving, along, task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, turning, framing);
+    const auto control           = std::make_shared<robot_controller>(*driven, moving, along, waypoints, composing_time_scaling(), trajectory::trajectory_ops{}, turning, framing);
 
     return composed_arm{published->reader(), published, std::make_shared<owned_arm>(work, work, driven, control, published)};
 }

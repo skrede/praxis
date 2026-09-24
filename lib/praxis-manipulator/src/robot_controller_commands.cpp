@@ -243,16 +243,17 @@ void robot_controller::task_space_screw(const Eigen::Vector3d &w, const Eigen::V
 // A waypoint count a factory does not serve is a refused request and not a composition unable to
 // answer for itself, so both waypoint commands report and return rather than reaching the fatality
 // decision the other commands route their refusals through.
-void robot_controller::task_space_trajectory(std::span<const transform> poses)
+void robot_controller::task_space_trajectory(std::span<const transform> tool_poses)
 {
     if(executing())
         return;
 
     asking();
-    auto motion = m_task_trajectory.task_space_waypoints(m_robot.solver(), poses, m_robot.joint_positions(), m_robot.limits());
+    const std::vector<transform> reaching = flange_poses_from(tool_poses);
+    auto motion                           = m_task_trajectory.task_space_waypoints(m_robot.solver(), reaching, m_robot.joint_positions(), m_robot.limits());
     if(!motion)
     {
-        spdlog::error("praxis: the task-space waypoint factory refused {} waypoints, so no motion is commanded", poses.size());
+        spdlog::error("praxis: the task-space waypoint factory refused {} waypoints, so no motion is commanded", tool_poses.size());
         return;
     }
 
@@ -333,15 +334,16 @@ void robot_controller::preview_trajectory(std::span<const joint_vector> position
     previewed(std::move(*motion), {});
 }
 
-void robot_controller::preview_trajectory(std::span<const transform> poses)
+void robot_controller::preview_trajectory(std::span<const transform> tool_poses)
 {
     if(executing())
         return;
 
-    auto motion = m_task_trajectory.task_space_waypoints(m_robot.solver(), poses, m_robot.joint_positions(), m_robot.limits());
+    const std::vector<transform> reaching = flange_poses_from(tool_poses);
+    auto motion                           = m_task_trajectory.task_space_waypoints(m_robot.solver(), reaching, m_robot.joint_positions(), m_robot.limits());
     if(!motion)
     {
-        spdlog::error("praxis: the task-space waypoint factory refused {} waypoints, so no preview stands", poses.size());
+        spdlog::error("praxis: the task-space waypoint factory refused {} waypoints, so no preview stands", tool_poses.size());
         return;
     }
 
@@ -590,6 +592,16 @@ void robot_controller::run_along(const transform &tool_pose, task_space_path sha
     }
 
     run(std::move(*motion));
+}
+
+std::vector<transform> robot_controller::flange_poses_from(std::span<const transform> tool_poses) const
+{
+    std::vector<transform> reaching;
+    reaching.reserve(tool_poses.size());
+    for(const transform &pose : tool_poses)
+        reaching.push_back(m_robot.flange_pose_from_tool_pose(pose));
+
+    return reaching;
 }
 
 }

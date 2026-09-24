@@ -35,6 +35,27 @@ using namespace praxis::manipulator;
 
 namespace {
 
+constexpr double round_trip_tolerance = 1.0e-12;
+
+transform bent_tool_offset()
+{
+    const rigid_motion::frame_ops frames = rigid_motion::baseline().frame;
+
+    return frames.transformation_matrix_from_rotation_position(frames.rotate_z(0.35), Eigen::Vector3d(0.132, 0.082, 0.0));
+}
+
+transform a_turned_pose()
+{
+    const rigid_motion::frame_ops frames = rigid_motion::baseline().frame;
+
+    return frames.transformation_matrix_from_rotation_position(frames.rotate_z(-0.8), Eigen::Vector3d(0.4, -0.25, 0.1));
+}
+
+double apart(const transform &one, const transform &other)
+{
+    return (one - other).cwiseAbs().maxCoeff();
+}
+
 transform shifted_tool_pose(const transform &pose, const transform &offset)
 {
     return pose + offset;
@@ -172,6 +193,26 @@ TEST_CASE("the_tool_offset_is_the_adapters_own_state")
     offset(2, 3)     = 0.15;
     robot.set_tool_offset(offset);
     CHECK(is_approx_equal(robot.tool_offset(), offset));
+}
+
+TEST_CASE("the two frame conversions the holder publishes are inverses of each other on a bent tool offset")
+{
+    scene_robot robot = adapter(baseline().robot);
+    robot.set_tool_offset(bent_tool_offset());
+
+    const transform pose = a_turned_pose();
+
+    CHECK(apart(robot.flange_pose_from_tool_pose(robot.tool_pose_from_flange_pose(pose)), pose) < round_trip_tolerance);
+    CHECK(apart(robot.tool_pose_from_flange_pose(robot.flange_pose_from_tool_pose(pose)), pose) < round_trip_tolerance);
+}
+
+TEST_CASE("each frame conversion the holder publishes is the identity where the tool offset is")
+{
+    const scene_robot robot = adapter(baseline().robot);
+    const transform pose    = a_turned_pose();
+
+    CHECK(apart(robot.flange_pose_from_tool_pose(pose), pose) < round_trip_tolerance);
+    CHECK(apart(robot.tool_pose_from_flange_pose(pose), pose) < round_trip_tolerance);
 }
 
 TEST_CASE("the_flange_pose_is_the_solvers_forward_kinematics_at_the_held_configuration")
