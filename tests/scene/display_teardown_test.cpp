@@ -56,9 +56,13 @@ private:
     body_record &m_into;
 };
 
+// What a release asks to be unloaded names, which the route carries so that the question drawn before
+// the values are released can say what refused.
+constexpr const char *refusing_slot = "a slot";
+
 // The composition keeps the route its site offered it, so a case asks for the unload through a copy
 // of that route rather than through a share of what the composition owns.
-preset_registry::factory composing(body_record &into, std::function<void()> &kept)
+preset_registry::factory composing(body_record &into, std::function<void(std::string)> &kept)
 {
     return [&into, &kept](const preset_site &site)
     {
@@ -89,7 +93,7 @@ struct stage
 
     void unload()
     {
-        asked();
+        asked(refusing_slot);
         REQUIRE(loop.drain().has_value());
     }
 
@@ -103,7 +107,7 @@ struct stage
 
     scheduler loop;
     body_record body;
-    std::function<void()> asked;
+    std::function<void(std::string)> asked;
     visualizer view;
 };
 
@@ -194,7 +198,7 @@ TEST_CASE("a reported refusal reaches the message ring and the route unloads the
 TEST_CASE("a composition loaded after an unload runs frames of its own", "[scene][display]")
 {
     body_record next{};
-    std::function<void()> again;
+    std::function<void(std::string)> again;
     stage live;
 
     live.load(composing(live.body, live.asked));
