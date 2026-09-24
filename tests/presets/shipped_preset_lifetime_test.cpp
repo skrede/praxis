@@ -325,7 +325,6 @@ TEST_CASE("a name registered twice leaves one entry, and it is the second regist
     REQUIRE(second_asked);
 }
 
-// Where a name registered twice sits, recorded rather than prescribed: the second registration corrects what the label builds and leaves it where the first put it.
 TEST_CASE("a name registered twice keeps the place its first registration gave it", "[presets][registry]")
 {
     preset_registry twice;
