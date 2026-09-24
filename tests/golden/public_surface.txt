@@ -1640,6 +1640,7 @@ lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	m_motion_s
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	render_task_space	prototype	(const arm_snapshot & seen)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	render_task_space_preview	prototype	(const arm_snapshot & seen)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	render_task_space_lin_p2p	prototype	(const arm_snapshot & seen)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	render_reset_to_current	prototype	(const arm_snapshot & seen)	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/task_trajectory.h	inert	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/task_trajectory.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/task_trajectory.h	praxis	namespace	-	-

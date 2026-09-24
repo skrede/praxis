@@ -75,6 +75,9 @@ private:
     void render_task_space(const arm_snapshot &seen);
     void render_task_space_preview(const arm_snapshot &seen);
     void render_task_space_lin_p2p(const arm_snapshot &seen);
+
+    // Whether the edited pose was seeded from the published one by this frame's press.
+    bool render_reset_to_current(const arm_snapshot &seen);
 };
 
 }

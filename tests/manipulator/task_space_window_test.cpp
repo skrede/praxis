@@ -117,22 +117,28 @@ drawing over_both(task_space_window &first, task_space_window &second, const cha
     };
 }
 
+void draw_seeding_control(bool seedable)
+{
+    ImGui::BeginDisabled(!seedable);
+    static_cast<void>(ImGui::Button("Reset to current"));
+    ImGui::EndDisabled();
+}
+
 // The two panels a task space window draws, written out here rather than read off the window: which
-// widget stands where, what it is labeled and what the two cycles offer are the case's own claim.
-void draw_slider_group(const edited_pose &edited)
+// widget stands where, what it is labeled and what the cycles each panel offers are the case's own
+// claim. The preview panel offers no trajectory, because it reaches nothing along one.
+void draw_slider_group(const edited_pose &edited, bool seedable = true)
 {
     option_cycle<mode, 2> selected(mode::preview, {mode::preview, mode::simulation}, {"Preview", "Simulation"});
-    option_cycle<shape, 2> trajectory(shape::ptp, {shape::ptp, shape::lin}, {"P2P", "LIN"});
     edited_pose shown = edited;
 
     ImGui::Begin("Task space");
     render_option_cycle("Control mode", selected);
-    render_option_cycle("Trajectory", trajectory);
     scene::render_float3_slider(shown.position, position_labels, -1.f, 1.f);
     ImGui::NewLine();
     scene::render_float3_slider_with_reset(shown.euler_degrees, angle_labels, -180.f, 180.f);
     scene::render_enum_selection("Euler order", shown.order, axis_order_labels());
-    static_cast<void>(ImGui::Button("Reset to current"));
+    draw_seeding_control(seedable);
     ImGui::End();
 }
 
@@ -148,7 +154,7 @@ void draw_field_group(const edited_pose &edited)
     scene::render_float3_inputs(shown.position, position_labels, 0.01f, 0.1f);
     ImGui::NewLine();
     render_euler_inputs("Euler order", shown.euler_degrees, shown.order, 0.01f, 0.1f);
-    static_cast<void>(ImGui::Button("Reset to current"));
+    draw_seeding_control(true);
     ImGui::SameLine();
     static_cast<void>(ImGui::Button("Move"));
     ImGui::End();
@@ -186,11 +192,11 @@ drawing over_alone(task_space_window &panel)
     return [&panel] { panel.render(); };
 }
 
-// The first position control stands two rows under the pane's first, which the two cycles occupy.
+// The first position control of the preview panel stands one row under the pane's first, which its
+// one cycle occupies.
 void enter_first_offset(imgui_frame &frames, const drawing &draw)
 {
     reach(frames, draw, ImGuiKey_Home);
-    tap(frames, draw, ImGuiKey_DownArrow);
     tap(frames, draw, ImGuiKey_DownArrow);
     type_at_cursor(frames, draw, typed_offset);
 }
@@ -383,7 +389,9 @@ TEST_CASE("a task space window in preview previews the pose the orientation orde
     CHECK(!resolved.back().topLeftCorner<3, 3>().isApprox(chosen_orientation, float_step));
 }
 
-TEST_CASE("a task space window moving point to point seeds nothing where the publication carries no tool pose", "[manipulator][controls]")
+// The seeding control is drawn unavailable here, and an unavailable control is not one navigation
+// reaches, so the row's leftmost reachable widget is the move control standing beside it.
+TEST_CASE("a task space window moving point to point offers no seeding where the publication carries no tool pose", "[manipulator][controls]")
 {
     resolved.clear();
     straight.clear();
@@ -402,6 +410,17 @@ TEST_CASE("a task space window moving point to point seeds nothing where the pub
 
     CHECK(held->position.cast<double>().isZero(float_step));
     CHECK(held->euler_degrees.cast<double>().isZero(float_step));
-    CHECK(resolved.empty());
     CHECK(straight.empty());
+}
+
+TEST_CASE("a task space window draws its seeding control unavailable where the publication carries no tool pose", "[manipulator][controls]")
+{
+    const std::shared_ptr<arm_publisher> published = publishing(poseless_snapshot());
+    const std::shared_ptr<edited_pose> held        = holding(chosen_position, chosen_euler_degrees);
+    task_space_window panel("Task space", published->reader(), std::weak_ptr<owned_arm>(), reference, held, {shape::ptp, mode::preview});
+
+    const std::size_t drawn = geometry_of([&panel] { panel.render(); });
+
+    CHECK(drawn == geometry_of([&held] { draw_slider_group(*held, false); }));
+    CHECK(drawn != geometry_of([&held] { draw_slider_group(*held); }));
 }

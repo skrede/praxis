@@ -98,11 +98,11 @@ joint_vector held_by(const composed_arm &placed, praxis::scheduler::scheduler &l
     return *read;
 }
 
-// The first position control stands two rows under the pane's first, which the two cycles occupy.
+// The first position control of the task space panel in preview stands one row under the pane's
+// first, which its one cycle occupies.
 void enter_first_offset(imgui_frame &frames, const drawing &draw)
 {
     reach(frames, draw, ImGuiKey_Home);
-    tap(frames, draw, ImGuiKey_DownArrow);
     tap(frames, draw, ImGuiKey_DownArrow);
     type_at_cursor(frames, draw, typed_offset);
 }

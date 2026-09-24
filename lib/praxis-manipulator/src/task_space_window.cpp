@@ -82,15 +82,29 @@ void task_space_window::render()
     ImGui::End();
 }
 
+// The trajectory the target is reached along is drawn only where a motion is commanded: a preview
+// slaves the tool to the edited pose as it is edited and reaches nothing along anything.
 void task_space_window::render_task_space(const arm_snapshot &seen)
 {
     render_option_cycle("Control mode", m_control_mode);
-    render_option_cycle("Trajectory", m_motion_shape);
 
     if(m_control_mode == control_mode::preview)
         render_task_space_preview(seen);
     else
         render_task_space_lin_p2p(seen);
+}
+
+// A snapshot carrying no tool pose has no current pose to seed from, so the control that would seed
+// from it is drawn unavailable rather than drawn and silent.
+bool task_space_window::render_reset_to_current(const arm_snapshot &seen)
+{
+    const bool seedable = seen.tool_pose.has_value() && seen.tool_orientation && seen.tool_position;
+
+    ImGui::BeginDisabled(!seedable);
+    const bool pressed = ImGui::Button("Reset to current");
+    ImGui::EndDisabled();
+
+    return pressed && seed_from(*m_edited, seen, m_frame);
 }
 
 void task_space_window::render_task_space_preview(const arm_snapshot &seen)
@@ -105,17 +119,17 @@ void task_space_window::render_task_space_preview(const arm_snapshot &seen)
     scene::render_float3_slider_with_reset(m_edited->euler_degrees, orientation_labels, -180.f, 180.f, preview);
     if(scene::render_enum_selection("Euler order", m_edited->order, axis_order_labels()))
         preview(0);
-    if(ImGui::Button("Reset to current") && seed_from(*m_edited, seen, m_frame))
+    if(render_reset_to_current(seen))
         preview(0);
 }
 
 void task_space_window::render_task_space_lin_p2p(const arm_snapshot &seen)
 {
+    render_option_cycle("Trajectory", m_motion_shape);
     scene::render_float3_inputs(m_edited->position, position_labels, 0.01f, 0.1f);
     ImGui::NewLine();
     render_euler_inputs("Euler order", m_edited->euler_degrees, m_edited->order, 0.01f, 0.1f);
-    if(ImGui::Button("Reset to current"))
-        seed_from(*m_edited, seen, m_frame);
+    static_cast<void>(render_reset_to_current(seen));
     ImGui::SameLine();
     if(!ImGui::Button("Move"))
         return;
