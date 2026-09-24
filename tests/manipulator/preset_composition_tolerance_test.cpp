@@ -156,7 +156,7 @@ struct stage
             , site{*scene,
                    loop.main_strand(),
                    *loop.make_strand(),
-                   [] {},
+                   [](std::string) {},
                    [this](const std::shared_ptr<scene::imgui_window> &panel) { shown.push_back(panel); },
                    [this](const std::shared_ptr<scene::imgui_window> &panel) { shown.erase(std::find(shown.begin(), shown.end(), panel)); },
                    {}}

@@ -154,7 +154,7 @@ std::vector<const config::configurable *> composition::configured() const
     return shown;
 }
 
-void composition::unload_through(detail::move_only_function<void()> route)
+void composition::unload_through(detail::move_only_function<void(std::string)> route)
 {
     m_unload_cb = std::move(route);
 }
@@ -191,20 +191,21 @@ void composition::answer(leaving_answer chosen)
 
 // The request is carried on the strand the frames are drawn on, because that is where the scene
 // graph may be mutated, and it names the strand it came from rather than being one-shot.
-std::function<void()> composition::unload_route(scheduler::strand own)
+std::function<void(std::string)> composition::unload_route(scheduler::strand own)
 {
     const scheduler::strand render      = m_loop.main_strand();
     const scheduler::strand_id identity = own.id();
 
-    return [this, render, identity] { static_cast<void>(render.post([this, identity] { unload_if(identity); })); };
+    return [this, render, identity](std::string named)
+    { static_cast<void>(render.post([this, identity, named = std::move(named)]() mutable { unload_if(identity, std::move(named)); })); };
 }
 
-void composition::unload_if(scheduler::strand_id from)
+void composition::unload_if(scheduler::strand_id from, std::string named)
 {
     if(m_preset == nullptr || m_preset->work.id() != from || m_unload_cb == nullptr)
         return;
 
-    m_unload_cb();
+    m_unload_cb(std::move(named));
 }
 
 window_route composition::collecting_route()

@@ -3,6 +3,7 @@
 #include "praxis/scene/widgets.h"
 
 #include <string>
+#include <string_view>
 #include <vector>
 #include <utility>
 
@@ -49,9 +50,12 @@ void preset_window::render_body()
 
 // Drawn in place of the ordinary body, so nothing can be composed, released or written while a
 // question stands. Neither answer is preselected, no key reaches either, and closing the window
-// answers nothing.
+// answers nothing. A release the held composition asked for names what refused, so the question says
+// what is going away and why before it asks what to do with the values.
 void preset_window::render_question()
 {
+    if(const std::string_view cause = m_visualizer.release_cause(); !cause.empty())
+        ImGui::TextWrapped("'%.*s' refused, so what is composed cannot continue and is being unloaded.", static_cast<int>(cause.size()), cause.data());
     ImGui::TextUnformatted("What is composed differs from what the file carries.");
     ImGui::Checkbox("Remember this answer", &m_remember);
     if(ImGui::Button("Keep"))

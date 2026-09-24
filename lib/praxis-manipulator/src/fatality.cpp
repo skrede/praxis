@@ -2,6 +2,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <string>
 #include <functional>
 #include <string_view>
 
@@ -16,13 +17,13 @@ bool is_fatal(refusal reason)
 
 }
 
-void tear_down_if_fatal(std::string_view named, refusal reason, refusal_standing standing, const std::function<void()> &ask_unload)
+void tear_down_if_fatal(std::string_view named, refusal reason, refusal_standing standing, request_origin formed_from, const std::function<void(std::string)> &ask_unload)
 {
-    if(!is_fatal(reason) || standing == refusal_standing::composition_wide || ask_unload == nullptr)
+    if(!is_fatal(reason) || standing == refusal_standing::composition_wide || formed_from == request_origin::edited || ask_unload == nullptr)
         return;
 
     spdlog::error("praxis: '{}' refused the request, so the composition cannot answer for itself and is asked to unload", named);
-    ask_unload();
+    ask_unload(std::string(named));
 }
 
 }

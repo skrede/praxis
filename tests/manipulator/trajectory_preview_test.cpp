@@ -779,7 +779,7 @@ TEST_CASE("a queued run whose next target the composition refuses stops there, n
     bool unloaded    = false;
     auto control     = std::make_shared<robot_controller>(*built.robot, motion_ops{.task_space_pose = &solving_task_space_pose}, trajectory::baseline().path, task_trajectory_ops{},
                                                           trajectory::baseline().time_scaling, trajectory::baseline().trajectory, rigid_motion::screw_ops{}, rigid_motion::frame_ops{},
-                                                          [&unloaded] { unloaded = true; });
+                                                          [&unloaded](std::string) { unloaded = true; });
     const auto owned = std::make_shared<owned_arm>(work, work, built.robot, control, published);
     const std::weak_ptr<owned_arm> observer = owned;
 

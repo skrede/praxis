@@ -175,7 +175,7 @@ struct opened_comparison
     std::shared_ptr<scene::preset> open(const presets::arm_scenario &chosen, const manipulator::capabilities &arm)
     {
         const scene::window_route nowhere = [](const std::shared_ptr<scene::imgui_window> &) {};
-        const scene::preset_site site{*scene, loop.main_strand(), *loop.make_strand(), [this] { unloaded = true; }, opening_route(), nowhere, {}};
+        const scene::preset_site site{*scene, loop.main_strand(), *loop.make_strand(), [this](std::string) { unloaded = true; }, opening_route(), nowhere, {}};
 
         composed = presets::arm_preset(site, arm, trajectory::baseline(), rigid_motion::baseline(), chosen, presets::arm_windows_path_comparison(chosen));
         if(composed != nullptr)

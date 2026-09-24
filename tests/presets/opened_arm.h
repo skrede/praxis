@@ -116,7 +116,7 @@ struct opened_arm
     {
         const scene::window_route nowhere = [](const std::shared_ptr<scene::imgui_window> &) {};
 
-        return scene::preset_site{*scene, loop.main_strand(), *loop.make_strand(), [] {}, opening_route(), nowhere, {}};
+        return scene::preset_site{*scene, loop.main_strand(), *loop.make_strand(), [](std::string) {}, opening_route(), nowhere, {}};
     }
 
     std::size_t descendants() const

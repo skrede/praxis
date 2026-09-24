@@ -76,7 +76,7 @@ struct offered
     auto read_composed(const std::string &named, Reading reading)
     {
         const scene::window_route nowhere = [](const std::shared_ptr<scene::imgui_window> &) {};
-        const scene::preset_site site{*scene, loop.main_strand(), *loop.make_strand(), [] {}, nowhere, nowhere, {}};
+        const scene::preset_site site{*scene, loop.main_strand(), *loop.make_strand(), [](std::string) {}, nowhere, nowhere, {}};
 
         const scene::preset_registry::factory compose = registry->load_preset(named);
         REQUIRE(compose != nullptr);
@@ -98,7 +98,7 @@ struct offered
     std::shared_ptr<scene::preset> composed_or_nothing(const std::string &named)
     {
         const scene::window_route nowhere = [](const std::shared_ptr<scene::imgui_window> &) {};
-        const scene::preset_site site{*scene, loop.main_strand(), *loop.make_strand(), [] {}, nowhere, nowhere, {}};
+        const scene::preset_site site{*scene, loop.main_strand(), *loop.make_strand(), [](std::string) {}, nowhere, nowhere, {}};
 
         const scene::preset_registry::factory compose = registry->load_preset(named);
         REQUIRE(compose != nullptr);

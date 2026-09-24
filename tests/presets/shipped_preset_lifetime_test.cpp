@@ -166,7 +166,7 @@ struct stage
             , shown()
             , held(*scene, loop, {})
     {
-        held.unload_through([this] { held.unload(); });
+        held.unload_through([this](std::string) { held.unload(); });
         held.windows_through([this](const window_share &panel) { shown.push_back(panel); },
                              [this](const window_share &panel) { shown.erase(std::find(shown.begin(), shown.end(), panel)); });
     }

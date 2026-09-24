@@ -117,7 +117,7 @@ std::shared_ptr<scene::preset> composed(scene::preset_registry &registry, const 
     const scene::preset_registry::factory compose = registry.load_preset(name);
     REQUIRE(compose != nullptr);
 
-    return compose(scene::preset_site{target, scheduler::strand{}, scheduler::strand{}, [] {}, nowhere, nowhere, {}});
+    return compose(scene::preset_site{target, scheduler::strand{}, scheduler::strand{}, [](std::string) {}, nowhere, nowhere, {}});
 }
 
 // The binding each composition announced it writes back to, in the order the compositions happened.

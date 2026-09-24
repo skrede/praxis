@@ -26,6 +26,16 @@ enum class refusal_standing : std::uint8_t
     composition_wide
 };
 
+// The third axis a refusal is read on: where the value the refused request was formed from came
+// from. composed: a value the composition itself produced, so a request its mathematics cannot take
+// says the composition cannot serve its own state. edited: a value an operator is moving, re-issued
+// as it moves, so an ill-formed one says what was asked for and nothing about what answered.
+enum class request_origin : std::uint8_t
+{
+    composed,
+    edited
+};
+
 }
 
 #endif

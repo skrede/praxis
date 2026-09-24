@@ -60,7 +60,7 @@ void append_leg(preview_run &whole, preview_run leg)
 
 }
 
-void robot_controller::report_refusal(std::string_view named, refusal reason, refusal_standing standing) const
+void robot_controller::report_refusal(std::string_view named, refusal reason, refusal_standing standing, request_origin formed_from) const
 {
     if(reason == refusal::not_implemented)
         spdlog::warn("praxis: '{}' is not implemented, so nothing was commanded and the arm is where it was", named);
@@ -71,7 +71,7 @@ void robot_controller::report_refusal(std::string_view named, refusal reason, re
     else
         spdlog::error("praxis: '{}' refused the request, so nothing was commanded and the arm is where it was", named);
 
-    tear_down_if_fatal(named, reason, standing, m_unload_cb);
+    tear_down_if_fatal(named, reason, standing, formed_from, m_unload_cb);
 }
 
 void robot_controller::preview_tool_frame_jog(const transform &start_pose, const Eigen::Vector3d &offset, const rotation &orientation)
@@ -84,7 +84,7 @@ void robot_controller::preview_tool_frame_jog(const transform &start_pose, const
     if(reached)
         m_robot.set_joint_positions(*reached);
     else
-        report_refusal("motion.tool_frame_displace", reached.error());
+        report_refusal("motion.tool_frame_displace", reached.error(), refusal_standing::per_request, request_origin::edited);
 }
 
 void robot_controller::preview_task_space_pose(const transform &pose)
@@ -97,7 +97,7 @@ void robot_controller::preview_task_space_pose(const transform &pose)
     if(reached)
         m_robot.set_joint_positions(*reached);
     else
-        report_refusal("motion.task_space_pose", reached.error());
+        report_refusal("motion.task_space_pose", reached.error(), refusal_standing::per_request, request_origin::edited);
 }
 
 void robot_controller::preview_task_space_screw(const transform &start_pose, const Eigen::Vector3d &w, const Eigen::Vector3d &q, double theta_radians, double pitch)
@@ -106,7 +106,7 @@ void robot_controller::preview_task_space_screw(const transform &start_pose, con
         return;
 
     if(w.isZero())
-        return report_refusal("robot_controller.preview_task_space_screw", refusal::degenerate);
+        return report_refusal("robot_controller.preview_task_space_screw", refusal::degenerate, refusal_standing::per_request, request_origin::edited);
 
     const std::uint64_t before = m_robot.solver().solve_count();
     const expected<joint_vector, refusal> reached =
@@ -114,7 +114,7 @@ void robot_controller::preview_task_space_screw(const transform &start_pose, con
     if(reached)
         m_robot.set_joint_positions(*reached);
     else
-        report_refusal("motion.task_space_screw", reached.error());
+        report_refusal("motion.task_space_screw", reached.error(), refusal_standing::per_request, request_origin::edited);
 }
 
 void robot_controller::preview_joint_configuration(const joint_vector &positions)

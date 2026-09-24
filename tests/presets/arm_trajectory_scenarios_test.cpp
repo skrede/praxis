@@ -71,8 +71,7 @@ struct trajectory_composer
     manipulator::arm_composition (*compose)(presets::arm_scenario);
 };
 
-constexpr std::array trajectory_composers{trajectory_composer{"point to point", &presets::arm_windows_point_to_point},
-                                          trajectory_composer{"via point", &presets::arm_windows_via_point},
+constexpr std::array trajectory_composers{trajectory_composer{"point to point", &presets::arm_windows_point_to_point}, trajectory_composer{"via point", &presets::arm_windows_via_point},
                                           trajectory_composer{"path comparison", &presets::arm_windows_path_comparison}};
 
 // One headless scene a motion scenario is opened against, with the way to say the composition cannot
@@ -93,7 +92,7 @@ struct opened_motion
     std::shared_ptr<scene::preset> open(const presets::arm_scenario &chosen, const manipulator::arm_composition &opened)
     {
         const scene::window_route nowhere = [](const std::shared_ptr<scene::imgui_window> &) {};
-        const scene::preset_site site{*scene, loop.main_strand(), *loop.make_strand(), [this] { unloaded = true; }, opening_route(), nowhere, {}};
+        const scene::preset_site site{*scene, loop.main_strand(), *loop.make_strand(), [this](std::string) { unloaded = true; }, opening_route(), nowhere, {}};
 
         composed = presets::arm_preset(site, manipulator::baseline(), trajectory::baseline(), rigid_motion::baseline(), chosen, opened);
         if(composed != nullptr)

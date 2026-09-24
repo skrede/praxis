@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <optional>
 #include <filesystem>
@@ -107,6 +108,11 @@ public:
     bool awaiting_answer() const;
     void answer(leaving_answer chosen);
 
+    // What refused, where the release standing was asked for by the held composition rather than by
+    // a person, and nothing where a person asked for it. A holder showing the question above reads
+    // this to say why what it shows is going away.
+    std::string_view release_cause() const;
+
     void saving_through(save_route route);
 
     bool save_offered() const;
@@ -139,13 +145,16 @@ private:
     // down against the canvas's window. Declared ahead of the composition so that it is destroyed
     // after one: a preset torn down at destruction withdraws its windows through this list.
     std::unique_ptr<imgui_window_context> m_imgui;
+    // What the held composition named as its reason for asking to be unloaded, held until the
+    // release it asks for has concluded. Empty for a release a person asked for.
+    std::string m_release_cause;
     composition m_composition;
     std::shared_ptr<threepp::Camera> m_camera;
     std::unique_ptr<threepp::GLRenderer> m_renderer;
     std::shared_ptr<threepp::GridHelper> m_grid_helper;
     std::shared_ptr<threepp::OrbitControls> m_controls;
 
-    void unload();
+    void unload(std::string named);
     void load(const preset_registry::factory &builder, const std::string &name);
 
     void report_load_refusal(load_refusal reason, const std::string &name) const;

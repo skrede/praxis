@@ -23,6 +23,7 @@
 
 #include <span>
 #include <memory>
+#include <string>
 #include <vector>
 #include <cstddef>
 #include <cstdint>
@@ -69,7 +70,7 @@ public:
 
     robot_controller(scene_robot &driven, const motion_ops &injected_motion, const trajectory::path_ops &injected_path, const task_trajectory_ops &injected_task_trajectory,
                      const trajectory::time_scaling_ops &injected_time_scaling, const trajectory::trajectory_ops &injected_joint_trajectory,
-                     const rigid_motion::screw_ops &injected_screw, const rigid_motion::frame_ops &injected_frames, std::function<void()> ask_unload = {},
+                     const rigid_motion::screw_ops &injected_screw, const rigid_motion::frame_ops &injected_frames, std::function<void(std::string)> ask_unload = {},
                      std::filesystem::path root = {});
     ~robot_controller();
 
@@ -108,8 +109,9 @@ public:
 
     // Names what refused, then hands the refusal to the one place that decides what becomes of the
     // composition, so every command reports the same way and none of them decides fatality itself.
-    // The standing defaults to a fact about this one request, which is what a command is.
-    void report_refusal(std::string_view named, refusal reason, refusal_standing standing = refusal_standing::per_request) const;
+    // The standing defaults to a fact about this one request, which is what a command is, and the
+    // origin to a value the composition produced.
+    void report_refusal(std::string_view named, refusal reason, refusal_standing standing = refusal_standing::per_request, request_origin formed_from = request_origin::composed) const;
 
     double velocity_factor() const;
     void set_velocity_factor(double factor);
@@ -244,10 +246,11 @@ private:
     // Every recording folder is resolved against this. An empty one leaves the folder as it was
     // written, which is the resolution a caller that chose no root asked for.
     std::filesystem::path m_root;
-    // Absent unless whoever composed this kept a way to say the composition cannot continue. Its
-    // target is the composition, which outlives every preset it holds, and this copy dies with the
-    // controller, so it can never outlive what it names.
-    std::function<void()> m_unload_cb;
+    // Absent unless whoever composed this kept a way to say the composition cannot continue. It is
+    // told what refused, so a holder can say why what it shows is going away. Its target is the
+    // composition, which outlives every preset it holds, and this copy dies with the controller, so
+    // it can never outlive what it names.
+    std::function<void(std::string)> m_unload_cb;
     std::unique_ptr<trajectory_executor> m_executor;
 
     // The one place the accumulator is emptied, announced on the path a request travels: a request

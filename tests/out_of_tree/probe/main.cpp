@@ -355,7 +355,7 @@ std::string_view the_shipped_arrangement_composes_outside_the_tree()
 {
     const std::shared_ptr<threepp::Scene> target          = threepp::Scene::create();
     const praxis::scene::window_route unwired             = [](const window_share &) {};
-    const praxis::scene::preset_site site                 = {*target, praxis::scheduler::strand{}, praxis::scheduler::strand{}, [] {}, unwired, unwired, {}};
+    const praxis::scene::preset_site site                 = {*target, praxis::scheduler::strand{}, praxis::scheduler::strand{}, [](std::string) {}, unwired, unwired, {}};
     const std::shared_ptr<praxis::scene::preset> composed = praxis::presets::euler_rung_preset(site, praxis::rigid_motion::baseline(), praxis::presets::euler_rung::single_frame);
 
     if(composed == nullptr)

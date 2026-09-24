@@ -65,7 +65,7 @@ struct counting_site
     explicit counting_site(scheduler::scheduler &loop)
             : scene(threepp::Scene::create())
             , unloaded(0)
-            , site{*scene, loop.main_strand(), *loop.make_strand(), [this] { ++unloaded; }, unreached, unreached, {}}
+            , site{*scene, loop.main_strand(), *loop.make_strand(), [this](std::string) { ++unloaded; }, unreached, unreached, {}}
     {
     }
 

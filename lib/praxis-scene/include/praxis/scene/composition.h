@@ -16,6 +16,7 @@
 #include <threepp/scenes/Scene.hpp>
 
 #include <memory>
+#include <string>
 #include <vector>
 #include <cstdint>
 #include <filesystem>
@@ -67,10 +68,10 @@ public:
     // reached only from the strand the frames are drawn on and valid no longer than it is.
     std::vector<const config::configurable *> configured() const;
 
-    // The route an unload the held composition asks for itself is carried out by. Reconciling
-    // whatever a holder shows of a preset is that holder's business, so the holder installs it;
-    // without one such a request is recorded and nothing else.
-    void unload_through(detail::move_only_function<void()> route);
+    // The route an unload the held composition asks for itself is carried out by, told what refused.
+    // Reconciling whatever a holder shows of a preset is that holder's business, so the holder
+    // installs it; without one such a request is recorded and nothing else.
+    void unload_through(detail::move_only_function<void(std::string)> route);
 
     // The routes every preset this composition builds registers and withdraws its windows through.
     // The holder owns the window list, so the holder installs them, and a composition given neither
@@ -116,13 +117,13 @@ private:
     std::vector<std::weak_ptr<imgui_window>> m_configured;
     leaving_question m_asking_cb;
     leaving_resolution m_answered_cb;
-    detail::move_only_function<void()> m_unload_cb;
+    detail::move_only_function<void(std::string)> m_unload_cb;
 
-    std::function<void()> unload_route(scheduler::strand own);
+    std::function<void(std::string)> unload_route(scheduler::strand own);
 
     // Unloads only when the composition currently held is the one the request came from, which is
     // what keeps a request issued by a composition already unloaded from unloading the next one.
-    void unload_if(scheduler::strand_id from);
+    void unload_if(scheduler::strand_id from, std::string named);
 
     // The routes a preset is handed, which record and forget the windows that carry settings before
     // the holder's own routes see them. A route the holder never installed is handed on uninstalled.

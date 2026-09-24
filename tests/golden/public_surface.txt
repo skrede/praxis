@@ -312,6 +312,9 @@ lib/praxis-extension/include/praxis/extension/refusal.h	not_implemented	enumerat
 lib/praxis-extension/include/praxis/extension/refusal.h	refusal_standing	enum	-	typename:std::uint8_t
 lib/praxis-extension/include/praxis/extension/refusal.h	per_request	enumerator	-	-
 lib/praxis-extension/include/praxis/extension/refusal.h	composition_wide	enumerator	-	-
+lib/praxis-extension/include/praxis/extension/refusal.h	request_origin	enum	-	typename:std::uint8_t
+lib/praxis-extension/include/praxis/extension/refusal.h	composed	enumerator	-	-
+lib/praxis-extension/include/praxis/extension/refusal.h	edited	enumerator	-	-
 lib/praxis-extension/include/praxis/extension/slot_set.h	praxis	namespace	-	-
 lib/praxis-extension/include/praxis/extension/slot_set.h	basic_slot_set	class	-	-
 lib/praxis-extension/include/praxis/extension/slot_set.h	word_bits	member	-	typename:std::size_t
@@ -1248,7 +1251,7 @@ lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	operator =	
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	operator =	prototype	(command_extent &&)	typename:command_extent &
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	~command_extent	prototype	()	-
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	m_commanded	member	-	typename:robot_controller &
-lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	robot_controller	prototype	(scene_robot & driven,const motion_ops & injected_motion,const trajectory::path_ops & injected_path,const task_trajectory_ops & injected_task_trajectory,const trajectory::time_scaling_ops & injected_time_scaling,const trajectory::trajectory_ops & injected_joint_trajectory,const rigid_motion::screw_ops & injected_screw,const rigid_motion::frame_ops & injected_frames,std::function<void ()> ask_unload={},std::filesystem::path root={})	-
+lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	robot_controller	prototype	(scene_robot & driven,const motion_ops & injected_motion,const trajectory::path_ops & injected_path,const task_trajectory_ops & injected_task_trajectory,const trajectory::time_scaling_ops & injected_time_scaling,const trajectory::trajectory_ops & injected_joint_trajectory,const rigid_motion::screw_ops & injected_screw,const rigid_motion::frame_ops & injected_frames,std::function<void (std::string)> ask_unload={},std::filesystem::path root={})	-
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	~robot_controller	prototype	()	-
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	recording	prototype	() const	typename:recording_parameters
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	set_recording	prototype	(const recording_parameters & parameters)	typename:expected<std::filesystem::path,refusal>
@@ -1265,7 +1268,7 @@ lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	limits	prot
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	executing	prototype	() const	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	playback_pending	prototype	() const	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	advance_playback	prototype	(scheduler::step_delta step)	typename:bool
-lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	report_refusal	prototype	(std::string_view named,refusal reason,refusal_standing standing=refusal_standing::per_request) const	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	report_refusal	prototype	(std::string_view named,refusal reason,refusal_standing standing=refusal_standing::per_request,request_origin formed_from=request_origin::composed) const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	velocity_factor	prototype	() const	typename:double
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	set_velocity_factor	prototype	(double factor)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	set_time_scaling	prototype	(time_scaling_choice chosen)	typename:void
@@ -1323,7 +1326,7 @@ lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	m_open_exte
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	m_carried_over	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	m_robot	member	-	typename:scene_robot &
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	m_root	member	-	typename:std::filesystem::path
-lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	m_unload_cb	member	-	typename:std::function<void ()>
+lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	m_unload_cb	member	-	typename:std::function<void (std::string)>
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	m_executor	member	-	typename:std::unique_ptr<trajectory_executor>
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	asking	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	keep	prototype	(std::uint64_t before)	typename:void
@@ -2460,7 +2463,7 @@ lib/praxis-scene/include/praxis/scene/composition.h	~composition	prototype	()	-
 lib/praxis-scene/include/praxis/scene/composition.h	loaded	prototype	() const	typename:bool
 lib/praxis-scene/include/praxis/scene/composition.h	composed	prototype	() const	typename:const std::shared_ptr<preset> &
 lib/praxis-scene/include/praxis/scene/composition.h	configured	prototype	() const	typename:std::vector<const config::configurable * >
-lib/praxis-scene/include/praxis/scene/composition.h	unload_through	prototype	(detail::move_only_function<void ()> route)	typename:void
+lib/praxis-scene/include/praxis/scene/composition.h	unload_through	prototype	(detail::move_only_function<void (std::string)> route)	typename:void
 lib/praxis-scene/include/praxis/scene/composition.h	windows_through	prototype	(window_route add,window_route remove)	typename:void
 lib/praxis-scene/include/praxis/scene/composition.h	asking_before_release	prototype	(leaving_question pending,leaving_resolution answered)	typename:void
 lib/praxis-scene/include/praxis/scene/composition.h	awaiting_answer	prototype	() const	typename:bool
@@ -2478,9 +2481,9 @@ lib/praxis-scene/include/praxis/scene/composition.h	m_preset	member	-	typename:s
 lib/praxis-scene/include/praxis/scene/composition.h	m_configured	member	-	typename:std::vector<std::weak_ptr<imgui_window>>
 lib/praxis-scene/include/praxis/scene/composition.h	m_asking_cb	member	-	typename:leaving_question
 lib/praxis-scene/include/praxis/scene/composition.h	m_answered_cb	member	-	typename:leaving_resolution
-lib/praxis-scene/include/praxis/scene/composition.h	m_unload_cb	member	-	typename:detail::move_only_function<void ()>
-lib/praxis-scene/include/praxis/scene/composition.h	unload_route	prototype	(scheduler::strand own)	typename:std::function<void ()>
-lib/praxis-scene/include/praxis/scene/composition.h	unload_if	prototype	(scheduler::strand_id from)	typename:void
+lib/praxis-scene/include/praxis/scene/composition.h	m_unload_cb	member	-	typename:detail::move_only_function<void (std::string)>
+lib/praxis-scene/include/praxis/scene/composition.h	unload_route	prototype	(scheduler::strand own)	typename:std::function<void (std::string)>
+lib/praxis-scene/include/praxis/scene/composition.h	unload_if	prototype	(scheduler::strand_id from,std::string named)	typename:void
 lib/praxis-scene/include/praxis/scene/composition.h	collecting_route	prototype	()	typename:window_route
 lib/praxis-scene/include/praxis/scene/composition.h	forgetting_route	prototype	()	typename:window_route
 lib/praxis-scene/include/praxis/scene/composition.h	make_preset	prototype	(const preset_registry::factory & builder)	typename:expected<std::shared_ptr<preset>,load_refusal>
@@ -2632,7 +2635,7 @@ lib/praxis-scene/include/praxis/scene/preset_site.h	preset_site	struct	-	-
 lib/praxis-scene/include/praxis/scene/preset_site.h	scene	member	-	typename:threepp::Scene &
 lib/praxis-scene/include/praxis/scene/preset_site.h	render	member	-	typename:scheduler::strand
 lib/praxis-scene/include/praxis/scene/preset_site.h	work	member	-	typename:scheduler::strand
-lib/praxis-scene/include/praxis/scene/preset_site.h	ask_unload	member	-	typename:std::function<void ()>
+lib/praxis-scene/include/praxis/scene/preset_site.h	ask_unload	member	-	typename:std::function<void (std::string)>
 lib/praxis-scene/include/praxis/scene/preset_site.h	add_window	member	-	typename:window_route
 lib/praxis-scene/include/praxis/scene/preset_site.h	remove_window	member	-	typename:window_route
 lib/praxis-scene/include/praxis/scene/preset_site.h	root	member	-	typename:std::filesystem::path
@@ -2687,6 +2690,7 @@ lib/praxis-scene/include/praxis/scene/visualizer.h	is_preset_loaded	prototype	()
 lib/praxis-scene/include/praxis/scene/visualizer.h	asking_before_release	prototype	(leaving_question pending,leaving_resolution answered)	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	awaiting_answer	prototype	() const	typename:bool
 lib/praxis-scene/include/praxis/scene/visualizer.h	answer	prototype	(leaving_answer chosen)	typename:void
+lib/praxis-scene/include/praxis/scene/visualizer.h	release_cause	prototype	() const	typename:std::string_view
 lib/praxis-scene/include/praxis/scene/visualizer.h	saving_through	prototype	(save_route route)	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	save_offered	prototype	() const	typename:bool
 lib/praxis-scene/include/praxis/scene/visualizer.h	save_values	prototype	()	typename:void
@@ -2702,12 +2706,13 @@ lib/praxis-scene/include/praxis/scene/visualizer.h	m_scene	member	-	typename:std
 lib/praxis-scene/include/praxis/scene/visualizer.h	m_capture	member	-	typename:std::unique_ptr<threepp::IOCapture>
 lib/praxis-scene/include/praxis/scene/visualizer.h	m_canvas	member	-	typename:std::unique_ptr<threepp::Canvas>
 lib/praxis-scene/include/praxis/scene/visualizer.h	m_imgui	member	-	typename:std::unique_ptr<imgui_window_context>
+lib/praxis-scene/include/praxis/scene/visualizer.h	m_release_cause	member	-	typename:std::string
 lib/praxis-scene/include/praxis/scene/visualizer.h	m_composition	member	-	typename:composition
 lib/praxis-scene/include/praxis/scene/visualizer.h	m_camera	member	-	typename:std::shared_ptr<threepp::Camera>
 lib/praxis-scene/include/praxis/scene/visualizer.h	m_renderer	member	-	typename:std::unique_ptr<threepp::GLRenderer>
 lib/praxis-scene/include/praxis/scene/visualizer.h	m_grid_helper	member	-	typename:std::shared_ptr<threepp::GridHelper>
 lib/praxis-scene/include/praxis/scene/visualizer.h	m_controls	member	-	typename:std::shared_ptr<threepp::OrbitControls>
-lib/praxis-scene/include/praxis/scene/visualizer.h	unload	prototype	()	typename:void
+lib/praxis-scene/include/praxis/scene/visualizer.h	unload	prototype	(std::string named)	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	load	prototype	(const preset_registry::factory & builder,const std::string & name)	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	report_load_refusal	prototype	(load_refusal reason,const std::string & name) const	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	capture_input	prototype	()	typename:void

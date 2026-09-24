@@ -131,7 +131,7 @@ scene::preset_site unwired(threepp::Scene &target)
 {
     const scene::window_route nowhere = [](const std::shared_ptr<scene::imgui_window> &) {};
 
-    return scene::preset_site{target, scheduler::strand{}, scheduler::strand{}, [] {}, nowhere, nowhere, {}};
+    return scene::preset_site{target, scheduler::strand{}, scheduler::strand{}, [](std::string) {}, nowhere, nowhere, {}};
 }
 
 // Whether there is still something to save, asked of one implementor the way a composition asks it

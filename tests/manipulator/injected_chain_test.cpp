@@ -96,7 +96,13 @@ struct stage
 {
     explicit stage(scheduler::scheduler &loop)
             : scene(threepp::Scene::create())
-            , site{*scene, loop.main_strand(), *loop.make_strand(), [] {}, [](const std::shared_ptr<scene::imgui_window> &) {}, [](const std::shared_ptr<scene::imgui_window> &) {}, {}}
+            , site{*scene,
+                   loop.main_strand(),
+                   *loop.make_strand(),
+                   [](std::string) {},
+                   [](const std::shared_ptr<scene::imgui_window> &) {},
+                   [](const std::shared_ptr<scene::imgui_window> &) {},
+                   {}}
     {
     }
 

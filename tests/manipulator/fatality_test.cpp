@@ -1,4 +1,5 @@
 #include "fixtures.h"
+#include "captured_log.h"
 
 #include "praxis/manipulator/capabilities.h"
 #include "praxis/manipulator/robot_controller.h"
@@ -9,6 +10,8 @@
 
 #include <span>
 #include <memory>
+#include <string>
+#include <cstddef>
 #include <vector>
 #include <utility>
 #include <functional>
@@ -34,7 +37,7 @@ expected<joint_vector, refusal> unreachable(const kinematics &, const transform 
     return praxis::unexpected(refusal::no_solution);
 }
 
-robot_controller controlling(scene_robot &driven, const motion_ops &injected, std::function<void()> ask_unload)
+robot_controller controlling(scene_robot &driven, const motion_ops &injected, std::function<void(std::string)> ask_unload)
 {
     return robot_controller(driven, injected, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{}, trajectory::trajectory_ops{}, rigid_motion::screw_ops{},
                             rigid_motion::frame_ops{}, std::move(ask_unload));
@@ -43,7 +46,7 @@ robot_controller controlling(scene_robot &driven, const motion_ops &injected, st
 // The factories a preset ships rather than a stub written to refuse, so what a case reads is the
 // classification a shipped composition reaches. Each serves one or two waypoints and answers any
 // other count with a refusal.
-robot_controller shipping_waypoints(scene_robot &driven, std::function<void()> ask_unload)
+robot_controller shipping_waypoints(scene_robot &driven, std::function<void(std::string)> ask_unload)
 {
     return robot_controller(driven, motion_ops{}, trajectory::path_ops{}, manipulator::baseline().trajectory, trajectory::time_scaling_ops{}, trajectory::baseline().trajectory,
                             rigid_motion::screw_ops{}, rigid_motion::frame_ops{}, std::move(ask_unload));
@@ -64,7 +67,7 @@ outcome previewing(const motion_ops &injected)
     driven.set_joint_positions(configuration(0.15, -0.25));
     const joint_vector before = driven.joint_positions();
 
-    robot_controller controller = controlling(driven, injected, [&asked] { ++asked; });
+    robot_controller controller = controlling(driven, injected, [&asked](std::string) { ++asked; });
     controller.preview_task_space_pose(transform::Identity());
 
     return outcome{asked, (driven.joint_positions().array() == before.array()).all()};
@@ -79,7 +82,7 @@ outcome previewing_configuration(const joint_vector &positions)
     driven.set_joint_positions(configuration(0.15, -0.25));
     const joint_vector before = driven.joint_positions();
 
-    robot_controller controller = controlling(driven, motion_ops{}, [&asked] { ++asked; });
+    robot_controller controller = controlling(driven, motion_ops{}, [&asked](std::string) { ++asked; });
     controller.preview_joint_configuration(positions);
 
     const joint_vector after = driven.joint_positions();
@@ -94,7 +97,7 @@ outcome commanding_configurations(std::span<const joint_vector> waypoints)
     driven.set_joint_positions(configuration(0.15, -0.25));
     const joint_vector before = driven.joint_positions();
 
-    robot_controller controller = shipping_waypoints(driven, [&asked] { ++asked; });
+    robot_controller controller = shipping_waypoints(driven, [&asked](std::string) { ++asked; });
     controller.joint_space_trajectory(waypoints);
 
     return outcome{asked, (driven.joint_positions().array() == before.array()).all()};
@@ -107,7 +110,7 @@ outcome commanding_poses(std::span<const transform> waypoints)
     driven.set_joint_positions(configuration(0.15, -0.25));
     const joint_vector before = driven.joint_positions();
 
-    robot_controller controller = shipping_waypoints(driven, [&asked] { ++asked; });
+    robot_controller controller = shipping_waypoints(driven, [&asked](std::string) { ++asked; });
     controller.task_space_trajectory(waypoints);
 
     return outcome{asked, (driven.joint_positions().array() == before.array()).all()};
@@ -121,20 +124,58 @@ joint_vector three_joints()
     return held;
 }
 
+std::size_t occurrences(const std::string &reported, const std::string &of)
+{
+    std::size_t counted = 0;
+    for(std::size_t at = reported.find(of); at != std::string::npos; at = reported.find(of, at + 1u))
+        ++counted;
+
+    return counted;
 }
 
-TEST_CASE("a_request_the_binding_does_not_serve_unloads_the_composition_it_was_made_against")
+// A preview of a pose the fatal kind refuses, made over and over, as one dragged through a range of
+// refused poses is.
+std::string reported_over(int requests, const motion_ops &injected)
 {
-    const outcome after = previewing(motion_ops{.task_space_pose = &unsupported});
+    int asked          = 0;
+    scene_robot driven = two_joint_arm(robot_ops{});
 
-    CHECK(after.asked_to_unload == 1);
+    robot_controller controller = controlling(driven, injected, [&asked](std::string) { ++asked; });
+
+    return praxis::tests::reported_by(
+            [&]
+            {
+                for(int request = 0; request < requests; ++request)
+                    controller.preview_task_space_pose(transform::Identity());
+            });
 }
 
-TEST_CASE("an_input_ill_formed_for_the_mathematics_unloads_the_composition_as_well")
-{
-    const outcome after = previewing(motion_ops{.task_space_pose = &ill_formed});
+}
 
-    CHECK(after.asked_to_unload == 1);
+// A preview is formed from a pose an operator is moving and is re-issued at every move of it, so an
+// ill-formed one is what was asked for and says nothing about what answered. Each fatal kind is
+// asserted on its own, so reclassifying one of them cannot pass on the strength of the other.
+TEST_CASE("a_request_formed_from_a_value_an_operator_is_editing_unloads_nothing_whichever_fatal_kind_it_carries")
+{
+    const outcome unserved         = previewing(motion_ops{.task_space_pose = &unsupported});
+    const outcome ill_formed_input = previewing(motion_ops{.task_space_pose = &ill_formed});
+
+    CHECK(unserved.asked_to_unload == 0);
+    CHECK(unserved.configuration_untouched);
+    CHECK(ill_formed_input.asked_to_unload == 0);
+    CHECK(ill_formed_input.configuration_untouched);
+}
+
+// The log ring carries a repeat count, so a message written over and over is one entry. It counts
+// consecutive repeats alone, so a second message written between them defeats it: a fatal refusal
+// that also announced an unloading wrote two lines per event and collapsed to neither. What this
+// rules out is that second line, which is what leaves one standing refusal reading as one thing.
+TEST_CASE("a_refusal_of_an_edited_value_repeated_writes_that_one_message_and_nothing_between_the_repeats")
+{
+    const std::string reported = reported_over(6, motion_ops{.task_space_pose = &ill_formed});
+
+    CHECK(occurrences(reported, "'motion.task_space_pose' refused the request") == 6u);
+    CHECK(occurrences(reported, "is asked to unload") == 0u);
 }
 
 // Each bearable kind is asserted on its own, so reclassifying one of them cannot pass on the

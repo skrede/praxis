@@ -45,10 +45,11 @@ visualizer::visualizer(std::shared_ptr<preset_registry> registry, scheduler::sch
         , m_strand(loop.main_strand())
         , m_reg(std::move(registry))
         , m_scene(threepp::Scene::create())
+        , m_release_cause()
         , m_composition(*m_scene, loop, chosen.root)
 {
     held(m_reg, "the visualizer", "preset registry");
-    m_composition.unload_through([this] { unload(); });
+    m_composition.unload_through([this](std::string named) { unload(std::move(named)); });
 
     m_canvas   = opened_canvas(chosen.window);
     m_renderer = std::make_unique<threepp::GLRenderer>(*m_canvas);
@@ -140,7 +141,7 @@ void visualizer::load_preset(const preset_registry::factory &preset_builder)
 
 void visualizer::clear_preset()
 {
-    static_cast<void>(m_strand.post([this] { unload(); }));
+    static_cast<void>(m_strand.post([this] { unload(std::string()); }));
 }
 
 void visualizer::release_preset(detail::move_only_function<void()> concluded)
@@ -162,7 +163,12 @@ bool visualizer::awaiting_answer() const
 // its own on the strand the frames are drawn on, as a load and an unload do.
 void visualizer::answer(leaving_answer chosen)
 {
-    static_cast<void>(m_strand.post([this, chosen] { m_composition.answer(chosen); }));
+    static_cast<void>(m_strand.post(
+            [this, chosen]
+            {
+                m_composition.answer(chosen);
+                m_release_cause.clear();
+            }));
 }
 
 void visualizer::saving_through(save_route route)
@@ -204,9 +210,19 @@ void visualizer::load(const preset_registry::factory &builder, const std::string
         spdlog::info("Showing preset '{}'", name);
 }
 
-void visualizer::unload()
+// The cause is written before the release is asked for, because the question the release may stand
+// on is drawn from inside it, and is dropped once nothing is held any more.
+void visualizer::unload(std::string named)
 {
+    m_release_cause = std::move(named);
     m_composition.unload();
+    if(!m_composition.loaded() && !m_composition.awaiting_answer())
+        m_release_cause.clear();
+}
+
+std::string_view visualizer::release_cause() const
+{
+    return m_release_cause;
 }
 
 bool visualizer::is_preset_loaded() const

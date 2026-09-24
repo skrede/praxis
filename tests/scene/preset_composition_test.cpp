@@ -187,7 +187,7 @@ preset_registry::factory offering(body_record &into, std::shared_ptr<settled_win
 
 // Every composition this builds keeps the route its own site offered it. The case is handed a copy
 // of that route rather than a share of anything the composition owns.
-preset_registry::factory composing(body_record &into, std::function<void()> &kept, std::string label = "the body")
+preset_registry::factory composing(body_record &into, std::function<void(std::string)> &kept, std::string label = "the body")
 {
     return [&into, &kept, label](const preset_site &site)
     {
@@ -362,7 +362,7 @@ struct stage
             , composed(*scene, loop, {})
     {
         sequence.clear();
-        composed.unload_through([this] { composed.unload(); });
+        composed.unload_through([this](std::string) { composed.unload(); });
         composed.windows_through(
                 [this](const window_share &)
                 {
@@ -387,7 +387,7 @@ struct stage
     strand work;
     body_record body;
     frame_record seen;
-    std::function<void()> asked;
+    std::function<void(std::string)> asked;
     composition composed;
 };
 
@@ -458,7 +458,7 @@ TEST_CASE("a load while one composition is held switches to it, and the strand i
     stage headless;
     body_record second{};
     acknowledgment left{};
-    std::function<void()> unused;
+    std::function<void(std::string)> unused;
 
     REQUIRE(headless.composed.load(composing_acknowledging(headless.body, left, "the first body")).has_value());
     REQUIRE(headless.composed.load(composing(second, unused, "the second body")).has_value());
@@ -528,7 +528,7 @@ TEST_CASE("the route a composition is given unloads it, and nothing of it outliv
     REQUIRE(headless.asked != nullptr);
 
     // Asking records a handler; nothing of the scene graph moves where the request was made.
-    headless.asked();
+    headless.asked("a slot");
 
     REQUIRE(headless.composed.loaded());
     REQUIRE(headless.body.torn_down == 0);
@@ -571,12 +571,12 @@ TEST_CASE("the strand a composition's frames run on retires behind the unload it
 TEST_CASE("a route carried over from a composition already unloaded leaves the next one alone", "[scene][composition]")
 {
     stage headless;
-    std::function<void()> carried;
+    std::function<void(std::string)> carried;
 
     REQUIRE(headless.composed.load(composing(headless.body, carried)).has_value());
     headless.draw_frame();
 
-    carried();
+    carried("a slot");
     REQUIRE(headless.loop.drain().has_value());
     REQUIRE_FALSE(headless.composed.loaded());
     REQUIRE(headless.body.torn_down == 1);
@@ -584,7 +584,7 @@ TEST_CASE("a route carried over from a composition already unloaded leaves the n
     REQUIRE(headless.composed.load(composing(headless.body, headless.asked)).has_value());
     headless.draw_frame();
 
-    carried();
+    carried("a slot");
     REQUIRE(headless.loop.drain().has_value());
 
     REQUIRE(headless.composed.loaded());
@@ -592,7 +592,7 @@ TEST_CASE("a route carried over from a composition already unloaded leaves the n
     REQUIRE(headless.body.torn_down == 1);
 
     // The control: what is left alone by the carried route is unloaded by its own.
-    headless.asked();
+    headless.asked("a slot");
     REQUIRE(headless.loop.drain().has_value());
 
     REQUIRE_FALSE(headless.composed.loaded());

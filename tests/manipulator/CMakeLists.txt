@@ -25,7 +25,7 @@ praxis_add_test(published_iterates_test.cpp HEADERS fixtures.h LIBS praxis::mani
 praxis_add_test(solution_publication_test.cpp HEADERS fixtures.h ../support/drawn_chain.h LIBS praxis::manipulator praxis::evaluation spdlog::spdlog praxis_test_support)
 praxis_add_test(multi_start_test.cpp HEADERS fixtures.h LIBS praxis::manipulator praxis::evaluation spdlog::spdlog praxis_test_support)
 praxis_add_test(scene_robot_test.cpp HEADERS fixtures.h LIBS praxis::manipulator spdlog::spdlog praxis_test_support)
-praxis_add_test(fatality_test.cpp HEADERS fixtures.h LIBS praxis::manipulator spdlog::spdlog)
+praxis_add_test(fatality_test.cpp HEADERS fixtures.h ../support/captured_log.h LIBS praxis::manipulator spdlog::spdlog praxis_test_support)
 praxis_add_test(refusal_standing_test.cpp HEADERS six_axis_machine.h LIBS praxis::manipulator spdlog::spdlog praxis_test_support)
 praxis_add_test(preset_composition_tolerance_test.cpp LIBS praxis::manipulator spdlog::spdlog praxis_test_support)
 praxis_add_test(compose_arm_joint_guard_test.cpp LIBS praxis::manipulator spdlog::spdlog praxis_test_support)
