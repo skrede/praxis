@@ -159,7 +159,7 @@ void robot_controller::task_space_ptp(const transform &tool_pose)
 // add to the same sequences, the same distinct configurations and the same indices, and the
 // announcement beside it is what empties them: the command answers for what it publishes from the
 // moment it asks, so a set of seeds it declines every one of publishes nothing at all.
-void robot_controller::solve_from_seeds(const transform &target, std::span<const joint_vector> seeds)
+void robot_controller::solve_from_seeds(const transform &tool_pose, std::span<const joint_vector> seeds)
 {
     if(executing())
         return;
@@ -173,8 +173,9 @@ void robot_controller::solve_from_seeds(const transform &target, std::span<const
     const command_extent extent(*this);
     asking();
 
+    const transform reaching = m_robot.flange_pose_from_tool_pose(tool_pose);
     for(const joint_vector &seed : seeds)
-        solved_from(target, seed);
+        solved_from(reaching, seed);
 
     for(std::size_t &named : m_reached)
         if(named == reached_nothing)
@@ -183,7 +184,7 @@ void robot_controller::solve_from_seeds(const transform &target, std::span<const
     static_cast<void>(run_to_nearest("ik.inverse_kinematics"));
 }
 
-void robot_controller::solve_in_closed_form(const transform &target)
+void robot_controller::solve_in_closed_form(const transform &tool_pose)
 {
     if(executing())
         return;
@@ -191,8 +192,9 @@ void robot_controller::solve_in_closed_form(const transform &target)
     const command_extent extent(*this);
     asking();
 
+    const transform reaching                                        = m_robot.flange_pose_from_tool_pose(tool_pose);
     const std::uint64_t before                                      = m_robot.solver().solve_count();
-    const expected<std::span<const joint_vector>, refusal> answered = m_robot.solver().configurations_reaching(target);
+    const expected<std::span<const joint_vector>, refusal> answered = m_robot.solver().configurations_reaching(reaching);
     keep(before);
     if(!answered)
     {
@@ -495,7 +497,7 @@ void robot_controller::previewed(std::unique_ptr<trajectory::trajectory_generato
 
 // The answers are copied off the solver here, where the strand that owns it runs, so what the arm
 // publishes is a value of its own rather than a span the next solve would empty.
-void robot_controller::solved_from(const transform &target, const joint_vector &seed)
+void robot_controller::solved_from(const transform &flange_pose, const joint_vector &seed)
 {
     if(seed.size() != static_cast<Eigen::Index>(m_robot.joint_count()))
     {
@@ -506,7 +508,7 @@ void robot_controller::solved_from(const transform &target, const joint_vector &
     }
 
     const std::uint64_t before                    = m_robot.solver().solve_count();
-    const expected<joint_vector, refusal> reached = kept(before, m_robot.solver().ik_solve(target, seed, solver_parameters{}));
+    const expected<joint_vector, refusal> reached = kept(before, m_robot.solver().ik_solve(flange_pose, seed, solver_parameters{}));
     if(!reached)
     {
         report_refusal("ik.inverse_kinematics", reached.error());

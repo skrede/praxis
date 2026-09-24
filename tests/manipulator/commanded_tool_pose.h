@@ -54,8 +54,8 @@ inline joint_vector tooled_configuration()
 class commanded_arm
 {
 public:
-    explicit commanded_arm(const transform &tool_offset, const robot_ops &injected = manipulator::baseline().robot)
-            : m_driven(composed(injected))
+    explicit commanded_arm(const transform &tool_offset, const robot_ops &injected = manipulator::baseline().robot, const inverse_kinematics_ops &solving = manipulator::baseline().ik)
+            : m_driven(composed(injected, solving))
             , m_control(m_driven, manipulator::baseline().motion, trajectory::baseline().path, manipulator::baseline().trajectory, trajectory::baseline().time_scaling,
                         trajectory::baseline().trajectory, rigid_motion::baseline().screw, rigid_motion::baseline().frame)
     {
@@ -87,11 +87,11 @@ private:
     scene_robot m_driven;
     robot_controller m_control;
 
-    static scene_robot composed(const robot_ops &injected)
+    static scene_robot composed(const robot_ops &injected, const inverse_kinematics_ops &solving)
     {
-        const kinematics solver = kinematics::compose(three_link_arm(), manipulator::baseline().fk, manipulator::baseline().dk, manipulator::baseline().ik,
-                                                      rigid_motion::baseline().screw, rigid_motion::baseline().frame)
-                                          .value();
+        const kinematics solver =
+                kinematics::compose(three_link_arm(), manipulator::baseline().fk, manipulator::baseline().dk, solving, rigid_motion::baseline().screw, rigid_motion::baseline().frame)
+                        .value();
 
         return scene_robot::compose(solver, injected, rigid_motion::baseline().frame, static_cast<std::uint32_t>(3)).value();
     }

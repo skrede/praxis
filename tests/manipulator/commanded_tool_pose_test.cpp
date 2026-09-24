@@ -35,6 +35,8 @@ constexpr std::size_t waypoints_in_a_run = 3;
 
 constexpr double turn_between_waypoints = 0.1;
 
+constexpr double recorded_exactly = 1.0e-12;
+
 Eigen::Vector3d along_the_tool_x()
 {
     return Eigen::Vector3d(jog_tick(), 0.0, 0.0);
@@ -214,6 +216,57 @@ double previewed_path_strays(const transform &tool_offset)
     return apart(placed.tool_pose(), target);
 }
 
+joint_vector answered_configuration()
+{
+    return arm_configuration(0.5, -1.7, 1.0);
+}
+
+transform &pose_the_closed_form_was_asked_at()
+{
+    static transform asked = transform::Identity();
+
+    return asked;
+}
+
+expected<void, refusal> recorded_closed_form(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const screw_chain &, const transform &desired, ik_result &answer)
+{
+    pose_the_closed_form_was_asked_at() = desired;
+    answer.solutions.push_back(answered_configuration());
+
+    return {};
+}
+
+inverse_kinematics_ops recording_the_closed_form()
+{
+    inverse_kinematics_ops injected      = manipulator::baseline().ik;
+    injected.analytic_inverse_kinematics = &recorded_closed_form;
+
+    return injected;
+}
+
+commanded_outcome seeded_solve_outcome(const transform &tool_offset)
+{
+    commanded_arm placed(tool_offset);
+    const transform target = nudged(placed.tool_pose());
+    const std::vector<joint_vector> from{placed.driven().joint_positions()};
+
+    placed.control().solve_from_seeds(target, std::span<const joint_vector>(from));
+
+    return played_to(placed, target);
+}
+
+double closed_form_asked_at_strays(const transform &tool_offset)
+{
+    commanded_arm placed(tool_offset, manipulator::baseline().robot, recording_the_closed_form());
+    const transform target   = nudged(placed.tool_pose());
+    const transform reaching = placed.driven().flange_pose_from_tool_pose(target);
+
+    pose_the_closed_form_was_asked_at() = transform::Identity();
+    placed.control().solve_in_closed_form(target);
+
+    return apart(pose_the_closed_form_was_asked_at(), reaching);
+}
+
 }
 
 TEST_CASE("a tick along a bent tool's own x moves the tool centre point by the tick", "[manipulator]")
@@ -367,4 +420,30 @@ TEST_CASE("the last sample of a previewed run of poses stands a bent tool at the
 TEST_CASE("the last sample of a previewed run of poses stands an arm wearing no tool at the last of them", "[manipulator]")
 {
     CHECK(previewed_run_strays(no_tool()) < solved_tolerance);
+}
+
+TEST_CASE("a solve from a set of starts ends with a bent tool at the pose it was asked at", "[manipulator]")
+{
+    const commanded_outcome outcome = seeded_solve_outcome(bent_tool());
+
+    CHECK(outcome.composed);
+    CHECK(outcome.strays < solved_tolerance);
+}
+
+TEST_CASE("a solve from a set of starts ends with an arm wearing no tool at the pose it was asked at", "[manipulator]")
+{
+    const commanded_outcome outcome = seeded_solve_outcome(no_tool());
+
+    CHECK(outcome.composed);
+    CHECK(outcome.strays < solved_tolerance);
+}
+
+TEST_CASE("a closed-form solve is asked at the flange pose a bent tool's commanded pose converts to", "[manipulator]")
+{
+    CHECK(closed_form_asked_at_strays(bent_tool()) < recorded_exactly);
+}
+
+TEST_CASE("a closed-form solve is asked at the flange pose the commanded pose of an arm wearing no tool converts to", "[manipulator]")
+{
+    CHECK(closed_form_asked_at_strays(no_tool()) < recorded_exactly);
 }

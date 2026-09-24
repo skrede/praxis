@@ -193,11 +193,11 @@ public:
     // of the distinct configurations they answered stands nearest -- in joint space and with each
     // joint difference wrapped to a half turn either way -- the configuration the arm is already at.
     // A seed of the wrong width is declined and the seeds beside it are still solved from.
-    void solve_from_seeds(const transform &target, std::span<const joint_vector> seeds);
+    void solve_from_seeds(const transform &tool_pose, std::span<const joint_vector> seeds);
 
     // Asks the solver for every configuration that reaches the target in one go, which takes no
     // seed, and moves to whichever of them stands nearest by the same distance.
-    void solve_in_closed_form(const transform &target);
+    void solve_in_closed_form(const transform &tool_pose);
 
     // One sequence per request the most recent requesting command handed the solver and the solver
     // entered, in the order the requests were made. A command that hands the solver no request leaves
@@ -270,7 +270,7 @@ private:
 
     // One start of a multi-start command: the solve, the fold of what it answered into the distinct
     // configurations, and the index naming which of them this start reached.
-    void solved_from(const transform &target, const joint_vector &seed);
+    void solved_from(const transform &flange_pose, const joint_vector &seed);
 
     // Commands the motion to whichever distinct configuration stands nearest where the arm is, and
     // answers which one that was. Nothing is commanded where none was answered.

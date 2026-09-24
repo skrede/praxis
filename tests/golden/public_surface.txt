@@ -1309,8 +1309,8 @@ lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	queued	prot
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	clear_queue	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	start_queued	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	traversed	prototype	() const	typename:std::shared_ptr<const std::vector<transform>>
-lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	solve_from_seeds	prototype	(const transform & target,std::span<const joint_vector> seeds)	typename:void
-lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	solve_in_closed_form	prototype	(const transform & target)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	solve_from_seeds	prototype	(const transform & tool_pose,std::span<const joint_vector> seeds)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	solve_in_closed_form	prototype	(const transform & tool_pose)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	solves	prototype	() const	typename:std::span<const std::vector<iteration_state>>
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	solutions	prototype	() const	typename:std::span<const joint_vector>
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	reached	prototype	() const	typename:std::span<const std::size_t>
@@ -1343,7 +1343,7 @@ lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	m_executor	
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	asking	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	keep	prototype	(std::uint64_t before)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	kept	prototype	(std::uint64_t before,expected<joint_vector,refusal> reached)	typename:expected<joint_vector,refusal>
-lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	solved_from	prototype	(const transform & target,const joint_vector & seed)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	solved_from	prototype	(const transform & flange_pose,const joint_vector & seed)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	run_to_nearest	prototype	(std::string_view named)	typename:std::optional<std::size_t>
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	prepared	prototype	() const	typename:prepared_time_scaling
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	scalings_along	prototype	(const trajectory::trajectory_generator & motion) const	typename:std::vector<prepared_time_scaling>
