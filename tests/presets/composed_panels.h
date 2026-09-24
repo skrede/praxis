@@ -76,6 +76,18 @@ inline std::vector<std::string> composed_windows(const std::shared_ptr<scene::pr
     return named;
 }
 
+// The one window a composition opened under that title, or nothing where it opened none.
+inline std::shared_ptr<scene::imgui_window> panel_named(const std::shared_ptr<scene::preset> &composed, const std::string &named)
+{
+    REQUIRE(composed != nullptr);
+
+    for(const std::shared_ptr<scene::imgui_window> &panel : composed->windows)
+        if(panel->display_name() == named)
+            return panel;
+
+    return nullptr;
+}
+
 // The interface library identifies a panel by its title, so what one window opened in a frame is the
 // set of titles the context holds once that frame has been drawn. The implicit debug panel a frame
 // always carries is the library's own, and a child region is part of the panel that opened it.

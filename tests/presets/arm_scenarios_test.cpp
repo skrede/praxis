@@ -1,5 +1,6 @@
 #include "opened_arm.h"
 #include "drawn_chain.h"
+#include "labeled_panels.h"
 #include "carried_models.h"
 #include "supplied_chain.h"
 #include "composed_panels.h"
@@ -108,6 +109,22 @@ std::vector<Eigen::Vector3d> supplied_chain_points(threepp::Scene &target)
 constexpr std::size_t last_joint_field    = 7;
 constexpr const char *last_joint_degrees  = "30";
 constexpr double turned_by_the_last_joint = 0.25;
+
+// The shipped scenarios that install a marker at a frame. The three trajectory scenarios stand a view
+// window of their own that marks no frame at all, so they carry no control over one either and are not
+// among these.
+std::vector<std::pair<const char *, manipulator::arm_composition>> marking_scenarios(const presets::arm_scenario &chosen)
+{
+    std::vector<std::pair<const char *, manipulator::arm_composition>> standing;
+    standing.emplace_back("forward kinematics", presets::arm_windows_forward(chosen));
+    standing.emplace_back("screw modeling", presets::arm_windows_modeling(chosen, presets::screw_table_source{}));
+    standing.emplace_back("tooling", presets::arm_windows_tooling(chosen));
+    standing.emplace_back("numerical inverse kinematics", presets::arm_windows_numerical_ik(chosen));
+    standing.emplace_back("analytic inverse kinematics", presets::arm_windows_analytic_ik(chosen));
+    standing.emplace_back("velocity kinematics", presets::arm_windows_velocity_kinematics(chosen));
+
+    return standing;
+}
 
 presets::arm_scenario driving_on_edit(const std::filesystem::path &description)
 {
@@ -264,6 +281,33 @@ TEST_CASE("the two scenarios composing no tool window carry markers of the same 
     REQUIRE(forward != nullptr);
     REQUIRE(modeled != nullptr);
     CHECK(std::abs(marker_extent(*forward) - marker_extent(*modeled)) < read_back);
+}
+
+// A document naming a view switch reaches the window whether or not a control was drawn for it, so a
+// scenario that marks a frame and offers no control over it is a state a document can put the arm in
+// and nothing in the running application can take it out of. Every scenario that installs the markers
+// therefore offers all three controls over them, and the walk names the one it cannot reach.
+TEST_CASE("every arm scenario that marks a frame offers a control over each frame it marks and over their size", "[presets][windows]")
+{
+    const described_arm described(6, "six");
+    const presets::arm_scenario chosen = described_by(described.where);
+
+    for(const auto &named : marking_scenarios(chosen))
+    {
+        INFO(named.first);
+        opened_arm built;
+        const std::shared_ptr<scene::preset> composed = built.open(chosen, named.second);
+        REQUIRE(composed != nullptr);
+
+        const std::shared_ptr<scene::imgui_window> view = panel_named(composed, "View");
+        REQUIRE(view != nullptr);
+        REQUIRE(drawn_by(composed).attached_at(manipulator::flange_attachment::frame_marker) != nullptr);
+        REQUIRE(drawn_by(composed).attached_at(manipulator::flange_attachment::tool_frame_marker) != nullptr);
+
+        stands_on(*view, "Flange frame");
+        stands_on(*view, "Tool frame");
+        stands_on(*view, "Frame marker size");
+    }
 }
 
 // The agnosticism case above is over two descriptions written for it. This one is over the two

@@ -10,6 +10,17 @@
 
 namespace praxis::fixture {
 
+// Walks onto the control the label names without pressing it, which is how a case asks whether a panel
+// offers one at all: the walk fails by name where the panel draws no such control.
+inline void stands_on(scene::imgui_window &panel, const char *label)
+{
+    tests::imgui_frame frames;
+    frames.assert_on_frame_faults(true);
+
+    const drawing over = [&panel] { panel.render(); };
+    stand_on(frames, over, panel.display_name().c_str(), label);
+}
+
 inline void press_on(scene::imgui_window &panel, const char *label)
 {
     tests::imgui_frame frames;
