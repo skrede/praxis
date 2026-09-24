@@ -5,6 +5,7 @@
 #include "praxis/manipulator/screw_chain.h"
 
 #include "praxis/extension/refusal.h"
+#include "praxis/extension/descriptor.h"
 
 #include "praxis/compat/expected.h"
 
@@ -142,6 +143,16 @@ public:
                                                  const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames);
 
     std::uint32_t joint_count() const;
+
+    // A view names this composition's slots and answers which of them still hold their defaults; it
+    // carries no way to ask one of them anything, so the operations themselves stay private. It points
+    // into this object, which a call on a temporary would leave it outliving.
+    capability_view fk_capability() const &;
+    capability_view fk_capability() const && = delete;
+    capability_view dk_capability() const &;
+    capability_view dk_capability() const && = delete;
+    capability_view ik_capability() const &;
+    capability_view ik_capability() const && = delete;
 
     const screw_chain &space_chain() const;
 

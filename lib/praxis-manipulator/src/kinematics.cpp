@@ -1,3 +1,4 @@
+#include "praxis/manipulator/slots.h"
 #include "praxis/manipulator/kinematics.h"
 
 #include <span>
@@ -84,6 +85,21 @@ expected<kinematics, refusal> kinematics::compose(screw_chain chain, forward_kin
 std::uint32_t kinematics::joint_count() const
 {
     return static_cast<std::uint32_t>(m_space.joint_count());
+}
+
+capability_view kinematics::fk_capability() const &
+{
+    return view_of(m_fk);
+}
+
+capability_view kinematics::dk_capability() const &
+{
+    return view_of(m_dk);
+}
+
+capability_view kinematics::ik_capability() const &
+{
+    return view_of(m_ik);
 }
 
 const screw_chain &kinematics::space_chain() const

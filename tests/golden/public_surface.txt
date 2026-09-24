@@ -806,6 +806,12 @@ lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	kinematics	class	
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	kinematics	prototype	()	-
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	compose	prototype	(screw_chain chain,forward_kinematics_ops forward,differential_kinematics_ops differential,inverse_kinematics_ops inverse,const rigid_motion::screw_ops & screw,const rigid_motion::frame_ops & frames)	typename:expected<kinematics,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	joint_count	prototype	() const	typename:std::uint32_t
+lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	fk_capability	prototype	() const	typename:capability_view
+lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	fk_capability	prototype	() const	typename:capability_view
+lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	dk_capability	prototype	() const	typename:capability_view
+lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	dk_capability	prototype	() const	typename:capability_view
+lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	ik_capability	prototype	() const	typename:capability_view
+lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	ik_capability	prototype	() const	typename:capability_view
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	space_chain	prototype	() const	typename:const screw_chain &
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	body_chain	prototype	() const	typename:expected<std::reference_wrapper<const screw_chain>,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/kinematics.h	fk_solve	prototype	(const joint_vector & joint_positions) const	typename:expected<transform,refusal>

@@ -1,5 +1,6 @@
 #include "two_joint_bindings.h"
 
+#include "praxis/manipulator/slots.h"
 #include "praxis/manipulator/kinematics.h"
 
 #include "praxis/evaluation/tolerance.h"
@@ -9,8 +10,10 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <vector>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <string_view>
 
 using namespace praxis;
 using namespace praxis::manipulator;
@@ -139,4 +142,22 @@ TEST_CASE("a chain whose limits do not carry one entry per joint is refused")
     }
 
     CHECK(kinematics::compose(two_joint_chain(), {}, {}, {}, rigid_motion::baseline().screw, rigid_motion::baseline().frame).has_value());
+}
+
+TEST_CASE("the holder names the slots it routes to and says which of them nobody bound")
+{
+    const kinematics solver = holding(forward_kinematics_ops{.forward_kinematics = &lifting_forward_kinematics}, {}, {});
+
+    const capability_view mapping = solver.fk_capability();
+    const capability_view rates   = solver.dk_capability();
+    const capability_view solving = solver.ik_capability();
+
+    CHECK(slot_name(mapping, static_cast<std::size_t>(forward_kinematics_slot::forward_kinematics)) == "fk.forward_kinematics");
+    CHECK(slot_name(rates, static_cast<std::size_t>(differential_kinematics_slot::body_jacobian)) == "dk.body_jacobian");
+    CHECK(slot_name(solving, static_cast<std::size_t>(inverse_kinematics_slot::inverse_kinematics)) == "ik.inverse_kinematics");
+
+    CHECK_FALSE(holds_default(mapping, static_cast<std::size_t>(forward_kinematics_slot::forward_kinematics)));
+    CHECK(holds_default(mapping, static_cast<std::size_t>(forward_kinematics_slot::body_forward_kinematics)));
+    CHECK(holds_default(rates, static_cast<std::size_t>(differential_kinematics_slot::space_jacobian)));
+    CHECK(holds_default(solving, static_cast<std::size_t>(inverse_kinematics_slot::inverse_kinematics)));
 }
