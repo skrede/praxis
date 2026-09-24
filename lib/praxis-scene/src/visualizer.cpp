@@ -38,6 +38,11 @@ std::unique_ptr<threepp::Canvas> opened_canvas(const visualizer::geometry &windo
 
 }
 
+visualizer::visualizer(std::shared_ptr<preset_registry> registry, scheduler::scheduler &loop)
+        : visualizer(std::move(registry), loop, options())
+{
+}
+
 visualizer::visualizer(std::shared_ptr<preset_registry> registry, scheduler::scheduler &loop, options chosen)
         : m_save_cb()
         , m_projection(chosen.view)

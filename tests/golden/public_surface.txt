@@ -2704,7 +2704,8 @@ lib/praxis-scene/include/praxis/scene/visualizer.h	messages	member	-	typename:st
 lib/praxis-scene/include/praxis/scene/visualizer.h	window	member	-	typename:geometry
 lib/praxis-scene/include/praxis/scene/visualizer.h	root	member	-	typename:std::filesystem::path
 lib/praxis-scene/include/praxis/scene/visualizer.h	stood	member	-	typename:windows
-lib/praxis-scene/include/praxis/scene/visualizer.h	visualizer	prototype	(std::shared_ptr<preset_registry> registry,scheduler::scheduler & loop,options chosen=options ())	-
+lib/praxis-scene/include/praxis/scene/visualizer.h	visualizer	prototype	(std::shared_ptr<preset_registry> registry,scheduler::scheduler & loop)	-
+lib/praxis-scene/include/praxis/scene/visualizer.h	visualizer	prototype	(std::shared_ptr<preset_registry> registry,scheduler::scheduler & loop,options chosen)	-
 lib/praxis-scene/include/praxis/scene/visualizer.h	~visualizer	prototype	()	-
 lib/praxis-scene/include/praxis/scene/visualizer.h	show_grid	prototype	(bool show)	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	set_background_color	prototype	(threepp::Color color)	typename:void

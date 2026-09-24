@@ -92,10 +92,11 @@ public:
         std::shared_ptr<log_buffer> messages;
         geometry window;
         std::filesystem::path root;
-        windows stood;
+        windows stood{};
     };
 
-    visualizer(std::shared_ptr<preset_registry> registry, scheduler::scheduler &loop, options chosen = options());
+    visualizer(std::shared_ptr<preset_registry> registry, scheduler::scheduler &loop);
+    visualizer(std::shared_ptr<preset_registry> registry, scheduler::scheduler &loop, options chosen);
 
     ~visualizer();
 
