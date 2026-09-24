@@ -1,3 +1,5 @@
+#include "frame_markers.h"
+
 #include "praxis/presets/arm.h"
 
 #include "praxis/manipulator/robot.h"
@@ -60,10 +62,9 @@ void draw_derived_chain(manipulator::loadable_robot_stencil &on, const manipulat
 manipulator::robot_view_window::controls every_view_control()
 {
     manipulator::robot_view_window::controls offered;
-    offered.reach         = true;
-    offered.flange_marker = true;
+    offered.reach = true;
 
-    return offered;
+    return every_marker_control(offered);
 }
 
 }
@@ -80,7 +81,7 @@ manipulator::arm_composition arm_windows_tooling(arm_scenario chosen)
             return declined(built.stencil, joined_slot_names(slot_names, unbound));
 
         draw_derived_chain(built.stencil, built.chain);
-        built.stencil.set_flange_attachment(manipulator::flange_attachment::frame_marker, manipulator::make_flange_marker(built.stencil.robot()));
+        install_frame_markers(built.stencil);
 
         return composed_windows{
                 std::make_shared<manipulator::joint_control_window>("Joint control", built.seen, built.arm, state.joint_control, window_paths::joint_control),

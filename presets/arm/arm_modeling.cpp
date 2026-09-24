@@ -1,3 +1,5 @@
+#include "frame_markers.h"
+
 #include "praxis/presets/arm.h"
 #include "praxis/presets/screw_table.h"
 
@@ -26,7 +28,7 @@ manipulator::robot_view_window::controls chain_view_controls()
     offered.reach      = true;
     offered.decoration = false;
 
-    return offered;
+    return every_marker_control(offered);
 }
 
 manipulator::robot_view_window::settings chain_view(manipulator::robot_view_window::settings chosen)
@@ -57,7 +59,7 @@ manipulator::arm_composition arm_windows_modeling(arm_scenario chosen, screw_tab
     manipulator::arm_composition composed;
     composed.windows = [state = std::move(chosen), kept = std::move(keeping)](const manipulator::arm_window_inputs &built)
     {
-        built.stencil.set_flange_attachment(manipulator::flange_attachment::frame_marker, manipulator::make_flange_marker(built.stencil.robot()));
+        install_frame_markers(built.stencil);
 
         // The document this scenario announces declares the chain's keys and no others, so a window
         // beside the chain names no key path: an edit written against a declaration that does not

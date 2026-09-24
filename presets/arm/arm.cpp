@@ -1,3 +1,5 @@
+#include "frame_markers.h"
+
 #include "praxis/presets/arm.h"
 
 #include "praxis/manipulator/edited_pose.h"
@@ -60,7 +62,7 @@ manipulator::arm_composition arm_windows(arm_scenario chosen)
     composed.draws_world = true;
     composed.windows     = [state = std::move(chosen)](const manipulator::arm_window_inputs &built)
     {
-        built.stencil.set_flange_attachment(manipulator::flange_attachment::frame_marker, manipulator::make_flange_marker(built.stencil.robot()));
+        install_frame_markers(built.stencil);
 
         // The task-space window and the two jog windows drive one pose between them, so the three are
         // handed the same one.

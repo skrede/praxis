@@ -1,3 +1,5 @@
+#include "frame_markers.h"
+
 #include "praxis/presets/arm.h"
 
 #include "praxis/manipulator/pose_readout.h"
@@ -31,7 +33,7 @@ manipulator::robot_view_window::controls every_view_control()
     manipulator::robot_view_window::controls offered;
     offered.reach = true;
 
-    return offered;
+    return every_marker_control(offered);
 }
 
 }
@@ -42,7 +44,7 @@ manipulator::arm_composition arm_windows_forward(arm_scenario chosen)
     composed.windows = [state = std::move(chosen)](const manipulator::arm_window_inputs &built)
     {
         draw_derived_chain(built.stencil, built.chain);
-        built.stencil.set_flange_attachment(manipulator::flange_attachment::frame_marker, manipulator::make_flange_marker(built.stencil.robot()));
+        install_frame_markers(built.stencil);
 
         return std::vector<std::shared_ptr<scene::imgui_window>>{
                 std::make_shared<manipulator::joint_control_window>("Joint control", built.seen, built.arm, state.joint_control, window_paths::joint_control),

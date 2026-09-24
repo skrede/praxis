@@ -9,6 +9,7 @@
 #include <threepp/core/Object3D.hpp>
 
 #include <threepp/math/Color.hpp>
+#include <threepp/math/Matrix4.hpp>
 
 #include <threepp/materials/Material.hpp>
 
@@ -55,8 +56,10 @@ void place_joint_axes(std::span<const std::shared_ptr<threepp::Object3D>> drawn,
 bool decline_unbound_fold(std::span<const std::shared_ptr<threepp::Object3D>> drawn, threepp::Object3D *chain, const rigid_motion::screw_ops &screw,
                           const rigid_motion::screw_slot_set &inert, bool &reported);
 
-// The pose an object is drawn at, written onto its node. The renderer stores a transform column by
-// column and in single precision, which is what the conversion behind this is for.
+// The same transform as the renderer holds one: column by column, and in single precision.
+threepp::Matrix4 to_renderer_transform(const transform &placed);
+
+// The pose an object is drawn at, written onto its node.
 void write_placement(threepp::Object3D &node, const transform &placed);
 
 }

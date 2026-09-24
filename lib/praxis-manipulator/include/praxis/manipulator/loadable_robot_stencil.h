@@ -35,15 +35,18 @@ namespace praxis::manipulator {
 // What the flange can carry. An attachment is an object drawn at the flange, placed by the flange's
 // own pose composed with the offset it was installed under; that one rule carries every member of
 // this set. The set is closed at what the flange holds, so an object standing at another link or at
-// a pose in the world is not one of these.
+// a pose in the world is not one of these. The tool frame's marker stands at the frame the arm's own
+// tool offset defines, so that key is carried at the offset the arm publishes rather than at one
+// whoever installed the marker has to keep in step with it.
 enum class flange_attachment : std::uint8_t
 {
     tool,
-    frame_marker
+    frame_marker,
+    tool_frame_marker
 };
 
 // Written out beside the enumeration, so that the set and the count of it cannot disagree.
-inline constexpr std::size_t flange_attachment_count = 2;
+inline constexpr std::size_t flange_attachment_count = 3;
 
 // What the marker drawn at the flange does while a tool occupies the flange: it keeps standing
 // beside the tool, or it withholds itself for as long as the tool key is occupied. The set is closed
@@ -85,11 +88,17 @@ enum class jacobian_block : std::uint8_t
 // Written out beside the enumeration, so that the set and the count of it cannot disagree.
 inline constexpr std::size_t jacobian_block_count = 2;
 
-// A coordinate triad drawn at the frame it is attached to, proportioned to how far the rendered
-// arm's bounding box is across so that one call serves machines of different size. An arm carrying
-// no drawn geometry has no extent to take a proportion of, and the stand-in praxis uses there is
-// stated rather than derived.
+// The fraction of the rendered arm's extent a marker's axes are built as long as where no other is
+// asked for.
+inline constexpr double opening_marker_extent_fraction = 0.15;
+
+// A coordinate triad drawn at the frame it is attached to, built as long as the given fraction of how
+// far the rendered arm's bounding box is across so that one call serves machines of different size.
+// An arm carrying no drawn geometry has no extent to take a proportion of, and the stand-in praxis
+// uses there is stated rather than derived. A fraction at or below zero builds nothing measurable and
+// is declined in favour of the opening one.
 std::shared_ptr<threepp::Object3D> make_flange_marker(threepp::Object3D &arm);
+std::shared_ptr<threepp::Object3D> make_flange_marker(threepp::Object3D &arm, double of_the_arms_extent);
 
 // The two models an arm carries beside the robot itself, and the policy the marker at its flange is
 // drawn under. A null tool leaves the flange carrying nothing under the tool key until one is
@@ -169,10 +178,19 @@ public:
     void clear_flange_attachment(flange_attachment which);
 
     // The marker at the flange is drawn only where the switch and the policy both admit it; either
-    // one withholds it, and a switch cannot defeat a policy that yields.
+    // one withholds it, and a switch cannot defeat a policy that yields. The marker at the tool frame
+    // answers its own switch alone: the tool offset defines that frame whether or not anything hangs
+    // at the flange.
     void set_flange_marker_policy(flange_marker_policy under);
     flange_marker_policy flange_marker_policy_held() const;
     void set_flange_marker_shown(bool shown);
+    void set_tool_marker_shown(bool shown);
+
+    // How large every marker the flange carries is drawn, as a multiple of the size it was built at,
+    // so one number serves a marker built for a small machine and one built for a large one. A
+    // multiple at or below zero draws nothing measurable and is declined.
+    expected<void, refusal> set_marker_scale(double of_the_built_size);
+    double marker_scale() const;
 
     void set_world_object(std::shared_ptr<threepp::Object3D> world_object);
     void clear_world_object();
@@ -364,7 +382,10 @@ private:
     std::array<double, jacobian_block_count> m_column_scale;
     // A multiple of the block's own ellipsoid scale.
     double m_force_cap_ratio;
+    // A multiple of the size a marker was built at.
+    double m_marker_scale;
     bool m_marker_shown;
+    bool m_tool_marker_shown;
     bool m_force_capped;
     jacobian_frame m_frame;
     ellipsoid_view m_view;
@@ -380,7 +401,7 @@ private:
     void apply_published() const;
     void detach_flange_attachments();
     void place_flange_attachments() const;
-    void show_flange_marker() const;
+    void show_flange_markers() const;
     void rebuild_decoration();
     void rebuild_chain();
     void clear_chain();

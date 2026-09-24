@@ -36,8 +36,8 @@ std::span<const char *const> model_render_labels();
 bool model_render_draws_meshes(model_render which);
 bool model_render_draws_chain(model_render which);
 
-// The four drawings of one arm and how far a drawn screw axis reaches, each reachable only where the
-// composition asked for a control over it.
+// The drawings of one arm, how far a drawn screw axis reaches and how large the markers it carries
+// are drawn, each reachable only where the composition asked for a control over it.
 class robot_view_window : public scene::imgui_window, public config::configurable
 {
 public:
@@ -51,6 +51,8 @@ public:
                 , reach(false)
                 , decoration(true)
                 , flange_marker(false)
+                , tool_frame_marker(false)
+                , marker_scale(false)
         {
         }
 
@@ -58,6 +60,8 @@ public:
         bool reach;
         bool decoration;
         bool flange_marker;
+        bool tool_frame_marker;
+        bool marker_scale;
     };
 
     // What the window opens the arm at. An absent reach leaves the decoration at the reach the
@@ -69,8 +73,15 @@ public:
         bool decoration;
         std::optional<double> axis_reach;
         bool flange_marker;
+        // Absent unless a document asks: a tool offset of the identity stands the marker at the tool
+        // frame on top of the one at the flange, so neither reads as the frame it marks.
+        bool tool_frame_marker;
+        // A multiple of the size a marker was built at, so one document serves a marker built for a
+        // small machine and one built for a large one.
+        double marker_scale;
 
-        explicit settings(model_render chosen_model = model_render::meshes, bool chosen_decoration = true, std::optional<double> chosen_reach = std::nullopt, bool chosen_marker = true);
+        explicit settings(model_render chosen_model = model_render::meshes, bool chosen_decoration = true, std::optional<double> chosen_reach = std::nullopt, bool chosen_marker = true,
+                          bool chosen_tool_marker = false, double chosen_marker_scale = 1.0);
     };
 
     robot_view_window(std::string name, loadable_robot_stencil &target);
@@ -97,7 +108,9 @@ public:
 
 private:
     float m_reach;
+    float m_marker_scale;
     bool m_marker;
+    bool m_tool_marker;
     bool m_decoration;
     model_render m_model;
 
@@ -117,6 +130,8 @@ private:
     void render_reach();
     void render_decoration();
     void render_flange_marker();
+    void render_tool_frame_marker();
+    void render_marker_scale();
 };
 
 }

@@ -1,28 +1,13 @@
+#include "robot/joint_decoration.h"
+
 #include "praxis/manipulator/tool_window.h"
 
 #include "praxis/rigid_motion/types.h"
 #include "praxis/rigid_motion/angles.h"
 
-#include <array>
 #include <string>
-#include <cstddef>
 
 namespace praxis::manipulator {
-
-namespace {
-
-// The renderer stores a transform column by column, and in single precision.
-threepp::Matrix4 to_renderer_transform(const transform &tf)
-{
-    std::array<float, 16> rendered{};
-    for(Eigen::Index column = 0; column < 4; ++column)
-        for(Eigen::Index row = 0; row < 4; ++row)
-            rendered[static_cast<std::size_t>(4 * column + row)] = static_cast<float>(tf(row, column));
-
-    return threepp::Matrix4(rendered);
-}
-
-}
 
 void tool_window::assign_gfx_transform()
 {

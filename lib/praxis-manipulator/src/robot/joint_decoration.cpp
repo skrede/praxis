@@ -40,17 +40,6 @@ struct drawn_axis
     Eigen::Vector3d through;
 };
 
-// The renderer stores a transform column by column, and in single precision.
-threepp::Matrix4 to_renderer_transform(const transform &tf)
-{
-    std::array<float, 16> rendered{};
-    for(Eigen::Index column = 0; column < 4; ++column)
-        for(Eigen::Index row = 0; row < 4; ++row)
-            rendered[static_cast<std::size_t>(4 * column + row)] = static_cast<float>(tf(row, column));
-
-    return threepp::Matrix4(rendered);
-}
-
 // A screw with an angular part passes through the point of its axis nearest the frame's origin,
 // which is the angular direction crossed into the linear part. A screw with no angular part has no
 // point on its axis at all, so the indicator is placed at the translation of the pose carrying it.
@@ -162,6 +151,16 @@ bool decline_unbound_fold(std::span<const std::shared_ptr<threepp::Object3D>> dr
     chain->visible = false;
 
     return true;
+}
+
+threepp::Matrix4 to_renderer_transform(const transform &placed)
+{
+    std::array<float, 16> rendered{};
+    for(Eigen::Index column = 0; column < 4; ++column)
+        for(Eigen::Index row = 0; row < 4; ++row)
+            rendered[static_cast<std::size_t>(4 * column + row)] = static_cast<float>(placed(row, column));
+
+    return threepp::Matrix4(rendered);
 }
 
 void write_placement(threepp::Object3D &node, const transform &placed)

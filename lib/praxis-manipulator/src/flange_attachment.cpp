@@ -1,3 +1,5 @@
+#include "robot/joint_decoration.h"
+
 #include "praxis/manipulator/loadable_robot_stencil.h"
 
 #include "praxis/rigid_motion/axes.h"
@@ -14,7 +16,6 @@ namespace praxis::manipulator {
 
 namespace {
 
-constexpr double marker_axis_length_fraction    = 0.15;
 constexpr double marker_axis_thickness_fraction = 0.10;
 
 // The extent stood in for where the arm has none of its own, in metres.
@@ -25,9 +26,19 @@ std::size_t slot_of(flange_attachment which)
     return static_cast<std::size_t>(which);
 }
 
+bool marks_a_frame(flange_attachment which)
+{
+    return which == flange_attachment::frame_marker || which == flange_attachment::tool_frame_marker;
+}
+
 }
 
 std::shared_ptr<threepp::Object3D> make_flange_marker(threepp::Object3D &arm)
+{
+    return make_flange_marker(arm, opening_marker_extent_fraction);
+}
+
+std::shared_ptr<threepp::Object3D> make_flange_marker(threepp::Object3D &arm, double of_the_arms_extent)
 {
     threepp::Box3 around;
     around.setFromObject(arm);
@@ -35,7 +46,7 @@ std::shared_ptr<threepp::Object3D> make_flange_marker(threepp::Object3D &arm)
     const double extent = around.isEmpty() ? bare_arm_extent : static_cast<double>(around.getSize().length());
 
     rigid_motion::axes_settings chosen;
-    chosen.axis_length    = extent * marker_axis_length_fraction;
+    chosen.axis_length    = extent * (of_the_arms_extent > 0.0 ? of_the_arms_extent : opening_marker_extent_fraction);
     chosen.axis_thickness = chosen.axis_length * marker_axis_thickness_fraction;
 
     return rigid_motion::make_axes(chosen, true);
@@ -87,6 +98,26 @@ void loadable_robot_stencil::set_flange_marker_shown(bool shown)
     m_marker_shown = shown;
 }
 
+void loadable_robot_stencil::set_tool_marker_shown(bool shown)
+{
+    m_tool_marker_shown = shown;
+}
+
+expected<void, refusal> loadable_robot_stencil::set_marker_scale(double of_the_built_size)
+{
+    if(of_the_built_size <= 0.0)
+        return unexpected(refusal::unsupported_input);
+
+    m_marker_scale = of_the_built_size;
+
+    return {};
+}
+
+double loadable_robot_stencil::marker_scale() const
+{
+    return m_marker_scale;
+}
+
 std::shared_ptr<threepp::Object3D> loadable_robot_stencil::attached_at(flange_attachment which) const
 {
     return m_attached[slot_of(which)].object;
@@ -100,33 +131,46 @@ void loadable_robot_stencil::detach_flange_attachments()
 }
 
 // The one rule every attachment is carried by: the flange's pose composed with the offset the
-// attachment was installed under.
+// attachment was installed under. The tool frame's marker is carried at the tool offset the arm
+// published, which is written here so that the one rule places it like any other.
 void loadable_robot_stencil::place_flange_attachments() const
 {
-    const threepp::Matrix4 flange = m_robot->getEndEffectorTransform();
-    for(const carried &held : m_attached)
+    const std::shared_ptr<const arm_snapshot> seen = m_seen.read();
+    const threepp::Matrix4 flange                  = m_robot->getEndEffectorTransform();
+    for(std::size_t slot = 0; slot < flange_attachment_count; ++slot)
     {
+        const carried &held           = m_attached[slot];
+        const flange_attachment which = static_cast<flange_attachment>(slot);
         if(held.object == nullptr)
             continue;
 
         threepp::Matrix4 at(flange);
-        at.multiply(held.offset);
+        at.multiply(which == flange_attachment::tool_frame_marker && seen != nullptr ? to_renderer_transform(seen->tool_offset) : held.offset);
         held.object->position.setFromMatrixPosition(at);
         held.object->quaternion.setFromRotationMatrix(at);
+        if(marks_a_frame(which))
+        {
+            const auto worn = static_cast<float>(m_marker_scale);
+            held.object->scale.set(worn, worn, worn);
+        }
     }
 
-    show_flange_marker();
+    show_flange_markers();
 }
 
-void loadable_robot_stencil::show_flange_marker() const
+void loadable_robot_stencil::show_flange_markers() const
 {
-    const carried &marker = m_attached[slot_of(flange_attachment::frame_marker)];
-    if(marker.object == nullptr)
-        return;
+    const carried &at_the_flange = m_attached[slot_of(flange_attachment::frame_marker)];
+    if(at_the_flange.object != nullptr)
+    {
+        const bool occupied           = m_attached[slot_of(flange_attachment::tool)].object != nullptr;
+        const bool withheld           = m_marker_policy == flange_marker_policy::yields && occupied;
+        at_the_flange.object->visible = m_marker_shown && !withheld;
+    }
 
-    const bool occupied    = m_attached[slot_of(flange_attachment::tool)].object != nullptr;
-    const bool withheld    = m_marker_policy == flange_marker_policy::yields && occupied;
-    marker.object->visible = m_marker_shown && !withheld;
+    const carried &at_the_tool = m_attached[slot_of(flange_attachment::tool_frame_marker)];
+    if(at_the_tool.object != nullptr)
+        at_the_tool.object->visible = m_tool_marker_shown;
 }
 
 }

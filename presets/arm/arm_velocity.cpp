@@ -1,3 +1,5 @@
+#include "frame_markers.h"
+
 #include "praxis/presets/arm.h"
 
 #include "praxis/manipulator/slots.h"
@@ -57,7 +59,7 @@ manipulator::robot_view_window::controls every_view_control()
     manipulator::robot_view_window::controls offered;
     offered.reach = true;
 
-    return offered;
+    return every_marker_control(offered);
 }
 
 }
@@ -67,6 +69,7 @@ manipulator::arm_composition arm_windows_velocity_kinematics(arm_scenario chosen
     manipulator::arm_composition composed;
     composed.windows = [state = std::move(chosen)](const manipulator::arm_window_inputs &built)
     {
+        install_frame_markers(built.stencil);
         if(const manipulator::differential_kinematics_slot_set unbound = defaulted_among(built.dk_inert, jacobians); !unbound.empty())
             return declined(joined_slot_names(slot_names, unbound));
 
