@@ -138,20 +138,13 @@ preset_registry populated()
     return into;
 }
 
-std::vector<std::string> sorted_names(std::vector<std::string> names)
-{
-    std::sort(names.begin(), names.end());
-
-    return names;
-}
-
 std::vector<std::string> registered_names()
 {
     std::vector<std::string> names;
     for(const shipped_preset &entry : shipped_presets())
         names.push_back(entry.name);
 
-    return sorted_names(std::move(names));
+    return names;
 }
 
 // One headless stage: the scene a composition is built against, the window list its routes record
@@ -271,7 +264,7 @@ TEST_CASE("the registry enumerates exactly the names it was given and nothing el
     REQUIRE(nothing.preset_names().empty());
 
     preset_registry shipped                   = populated();
-    const std::vector<std::string> enumerated = sorted_names(shipped.preset_names());
+    const std::vector<std::string> enumerated = shipped.preset_names();
 
     REQUIRE(enumerated == registered_names());
     REQUIRE(enumerated.size() == registered_names().size());
@@ -330,6 +323,19 @@ TEST_CASE("a name registered twice leaves one entry, and it is the second regist
     REQUIRE(refused.error() == load_refusal::refused);
     REQUIRE_FALSE(first_asked);
     REQUIRE(second_asked);
+}
+
+// Where a name registered twice sits, recorded rather than prescribed: the second registration corrects what the label builds and leaves it where the first put it.
+TEST_CASE("a name registered twice keeps the place its first registration gave it", "[presets][registry]")
+{
+    preset_registry twice;
+    const preset_registry::factory nothing = [](const preset_site &) { return std::shared_ptr<preset>(); };
+
+    twice.register_preset("the label registered first", nothing);
+    twice.register_preset("the label registered after it", nothing);
+    twice.register_preset("the label registered first", nothing);
+
+    REQUIRE(twice.preset_names() == std::vector<std::string>{"the label registered first", "the label registered after it"});
 }
 
 // The two failure classes an unload is measured by, and neither catches the other: a node left in

@@ -2649,7 +2649,7 @@ lib/praxis-scene/include/praxis/scene/preset_registry.h	factory	typedef	-	-
 lib/praxis-scene/include/praxis/scene/preset_registry.h	preset_names	prototype	() const	typename:std::vector<std::string>
 lib/praxis-scene/include/praxis/scene/preset_registry.h	load_preset	prototype	(const std::string & name)	typename:factory
 lib/praxis-scene/include/praxis/scene/preset_registry.h	register_preset	prototype	(const std::string & name,factory preset_factory)	typename:void
-lib/praxis-scene/include/praxis/scene/preset_registry.h	m_presets	member	-	typename:std::unordered_map<std::string,factory>
+lib/praxis-scene/include/praxis/scene/preset_registry.h	m_presets	member	-	typename:std::vector<std::pair<std::string,factory>>
 lib/praxis-scene/include/praxis/scene/preset_site.h	praxis	namespace	-	-
 lib/praxis-scene/include/praxis/scene/preset_site.h	scene	namespace	-	-
 lib/praxis-scene/include/praxis/scene/preset_site.h	window_route	typedef	-	-

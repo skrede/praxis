@@ -92,8 +92,6 @@ std::vector<std::string> offered()
     return named;
 }
 
-// Sorted, because `preset_names` reads an unordered map and the order it answers in is unspecified:
-// a case comparing that against a sequence would assert something the registry does not promise.
 std::vector<std::string> sorted(std::vector<std::string> named)
 {
     std::sort(named.begin(), named.end());
@@ -167,7 +165,7 @@ TEST_CASE("the arrangements register under exactly the names their documents sta
     const auto registry                   = std::make_shared<scene::preset_registry>();
 
     REQUIRE(presets::register_arrangements(registry, every(directory), {}, {}) == offered());
-    REQUIRE(sorted(registry->preset_names()) == sorted(offered()));
+    REQUIRE(registry->preset_names() == offered());
 }
 
 TEST_CASE("a directory holding no document registers nothing", "[presets][registry]")
@@ -183,7 +181,7 @@ TEST_CASE("registering the same documents twice does not multiply the names", "[
 
     REQUIRE(presets::register_arrangements(registry, documents, {}, {}) == offered());
     REQUIRE(presets::register_arrangements(registry, documents, {}, {}).empty());
-    REQUIRE(sorted(registry->preset_names()) == sorted(offered()));
+    REQUIRE(registry->preset_names() == offered());
 }
 
 TEST_CASE("each registered arrangement composes where its arrangement block is absent", "[presets][registry]")

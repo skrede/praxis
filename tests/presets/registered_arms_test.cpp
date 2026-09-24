@@ -204,6 +204,7 @@ TEST_CASE("the names answered are the ones the span carried, in the order it car
 
     const auto registry = std::make_shared<scene::preset_registry>();
     REQUIRE(presets::register_arms(registry, named, roots, {}, {}) == std::vector<std::string>{"Third", "First", "Second"});
+    REQUIRE(registry->preset_names() == std::vector<std::string>{"Third", "First", "Second"});
 }
 
 TEST_CASE("a span carrying no documents registers nothing", "[presets][registry]")
