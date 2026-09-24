@@ -100,4 +100,52 @@ capability_view view_of(modeling_ops &&) = delete;
 
 }
 
+// The enumeration each aggregate's slots are indexed by, so a set of one capability's slots cannot be
+// read against another's descriptor table.
+namespace praxis {
+
+template<>
+struct capability_slots<manipulator::forward_kinematics_ops>
+{
+    using type = manipulator::forward_kinematics_slot;
+};
+
+template<>
+struct capability_slots<manipulator::differential_kinematics_ops>
+{
+    using type = manipulator::differential_kinematics_slot;
+};
+
+template<>
+struct capability_slots<manipulator::inverse_kinematics_ops>
+{
+    using type = manipulator::inverse_kinematics_slot;
+};
+
+template<>
+struct capability_slots<manipulator::robot_ops>
+{
+    using type = manipulator::robot_slot;
+};
+
+template<>
+struct capability_slots<manipulator::motion_ops>
+{
+    using type = manipulator::motion_slot;
+};
+
+template<>
+struct capability_slots<manipulator::task_trajectory_ops>
+{
+    using type = manipulator::task_trajectory_slot;
+};
+
+template<>
+struct capability_slots<manipulator::modeling_ops>
+{
+    using type = manipulator::modeling_slot;
+};
+
+}
+
 #endif

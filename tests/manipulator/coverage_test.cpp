@@ -7,6 +7,7 @@
 #include <set>
 #include <span>
 #include <array>
+#include <string>
 #include <cstddef>
 #include <cstdint>
 #include <string_view>
@@ -16,6 +17,8 @@ using namespace praxis::manipulator;
 
 static_assert(modeling_slot_set().empty());
 static_assert(modeling_slot_set().set(modeling_slot::build_chain).contains(modeling_slot::build_chain));
+static_assert(defaulted_among(modeling_slot_set().set(modeling_slot::build_chain), std::array{modeling_slot::build_chain}).contains(modeling_slot::build_chain));
+static_assert(defaulted_among(modeling_slot_set(), std::array{modeling_slot::build_chain}).empty());
 
 namespace {
 
@@ -184,4 +187,31 @@ TEST_CASE("complementing_moves_between_the_empty_set_and_the_set_of_every_slot")
     REQUIRE(held == last);
     REQUIRE_FALSE(every.empty());
     REQUIRE((~every).empty());
+}
+
+TEST_CASE("the_needed_slots_that_still_hold_their_defaults_are_answered_as_a_set")
+{
+    constexpr std::array<robot_slot, 2> needed{robot_slot::position_from_pose, robot_slot::orientation_from_pose};
+    robot_slot_set defaulted;
+
+    defaulted.set(robot_slot::position_from_pose).set(robot_slot::ik_solve_pose);
+
+    const robot_slot_set wanting = defaulted_among(defaulted, needed);
+
+    REQUIRE(wanting.contains(robot_slot::position_from_pose));
+    REQUIRE_FALSE(wanting.contains(robot_slot::orientation_from_pose));
+    REQUIRE_FALSE(wanting.contains(robot_slot::ik_solve_pose));
+    REQUIRE(defaulted_among(robot_slot_set(), needed).empty());
+    REQUIRE(defaulted_among(defaulted, std::array<robot_slot, 1>{robot_slot::count}).empty());
+}
+
+TEST_CASE("a_set_of_slots_is_named_by_the_table_of_the_capability_whose_slots_they_are")
+{
+    differential_kinematics_slot_set both;
+
+    both.set(differential_kinematics_slot::body_jacobian).set(differential_kinematics_slot::space_jacobian);
+
+    REQUIRE(joined_slot_names(unbound_differential_kinematics, both) == "dk.space_jacobian, dk.body_jacobian");
+    REQUIRE(joined_slot_names(unbound_differential_kinematics, differential_kinematics_slot_set()).empty());
+    REQUIRE(joined_slot_names(unbound_robot, robot_slot_set().set(robot_slot::orientation_from_pose)) == "robot.orientation_from_pose");
 }

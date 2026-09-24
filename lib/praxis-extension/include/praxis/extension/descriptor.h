@@ -22,6 +22,15 @@ struct capability_descriptors
     std::span<const slot_descriptor> slots;
 };
 
+// The enumeration whose enumerators index a capability's descriptor table, specialized beside the
+// enumeration itself. An operation aggregate paired with another capability's enumeration is a
+// substitution failure rather than an index into a table that does not describe it.
+template<typename Ops>
+struct capability_slots;
+
+template<typename Ops>
+using capability_slots_t = typename capability_slots<Ops>::type;
+
 class capability_view
 {
 public:

@@ -88,6 +88,12 @@ if (TARGET praxis_manipulator)
     praxis_add_failing_compile(manipulator_evaluation_view_over_temporary.cpp DIAGNOSTIC "deleted function" LIBS praxis::manipulator)
     praxis_add_failing_compile(capability_view_mismatch.cpp DIAGNOSTIC "no matching|no overloaded function" LIBS praxis::manipulator)
 
+    # The naming function constrains the set's enumeration to the one indexing the capability's own
+    # table, so a set of another capability's slots satisfies no constraint and leaves no candidate.
+    # That wording is the one text no other failure in the unit composes: GCC and Clang write "no
+    # matching function for call to" and MSVC "no overloaded function".
+    praxis_add_failing_compile(coverage_slot_set_mismatch.cpp DIAGNOSTIC "no matching|no overloaded function" LIBS praxis::manipulator)
+
     # One probe per solve. A bound solve is handed the maps its own mathematics reads and the chain it
     # solves over, and none of those carries a solve, so a slot body asking one of them for one names
     # a member that is not there. The families word an absent member differently, and the call is the

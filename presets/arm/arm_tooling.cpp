@@ -1,5 +1,3 @@
-#include "unbound_slots.h"
-
 #include "praxis/presets/arm.h"
 
 #include "praxis/manipulator/robot.h"
@@ -78,8 +76,8 @@ manipulator::arm_composition arm_windows_tooling(arm_scenario chosen)
     composed.flange_marker = manipulator::flange_marker_policy::stands;
     composed.windows       = [state = std::move(chosen)](const manipulator::arm_window_inputs &built)
     {
-        if(const std::string unbound = unbound_among(slot_names, built.inert, pose_transformations); !unbound.empty())
-            return declined(built.stencil, unbound);
+        if(const manipulator::robot_slot_set unbound = defaulted_among(built.inert, pose_transformations); !unbound.empty())
+            return declined(built.stencil, joined_slot_names(slot_names, unbound));
 
         draw_derived_chain(built.stencil, built.chain);
         built.stencil.set_flange_attachment(manipulator::flange_attachment::frame_marker, manipulator::make_flange_marker(built.stencil.robot()));

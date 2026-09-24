@@ -277,6 +277,9 @@ lib/praxis-extension/include/praxis/extension/coverage.h	count_defaults	prototyp
 lib/praxis-extension/include/praxis/extension/coverage.h	defaulted_slots	prototype	(std::span<const capability_view> views)	typename:std::vector<defaulted_slot>
 lib/praxis-extension/include/praxis/extension/coverage.h	holds_default	prototype	(const capability_view & view,std::size_t index)	typename:bool
 lib/praxis-extension/include/praxis/extension/coverage.h	slot_name	prototype	(const capability_view & view,std::size_t index)	typename:std::string_view
+lib/praxis-extension/include/praxis/extension/coverage.h	capability_slots_t	variable	-	meta:typename
+lib/praxis-extension/include/praxis/extension/coverage.h	defaulted_among	function	(const basic_slot_set<Slot> & defaulted,const std::array<Slot,N> & needed)	typename:basic_slot_set<Slot>
+lib/praxis-extension/include/praxis/extension/coverage.h	joined_slot_names	function	(const Ops & described,const basic_slot_set<Slot> & listed)	typename:requires described_capability<Ops> && std::same_as<Slot,capability_slots_t<Ops>> std::string
 lib/praxis-extension/include/praxis/extension/descriptor.h	praxis	namespace	-	-
 lib/praxis-extension/include/praxis/extension/descriptor.h	slot_descriptor	struct	-	-
 lib/praxis-extension/include/praxis/extension/descriptor.h	name	member	-	typename:std::string_view
@@ -284,6 +287,7 @@ lib/praxis-extension/include/praxis/extension/descriptor.h	holds_default	member	
 lib/praxis-extension/include/praxis/extension/descriptor.h	capability_descriptors	struct	-	-
 lib/praxis-extension/include/praxis/extension/descriptor.h	extension	member	-	typename:std::string_view
 lib/praxis-extension/include/praxis/extension/descriptor.h	slots	member	-	typename:std::span<const slot_descriptor>
+lib/praxis-extension/include/praxis/extension/descriptor.h	capability_slots_t	typedef	-	typename:capability_slots<Ops>::type
 lib/praxis-extension/include/praxis/extension/descriptor.h	capability_view	class	-	-
 lib/praxis-extension/include/praxis/extension/descriptor.h	capability_view	function	()	-
 lib/praxis-extension/include/praxis/extension/descriptor.h	of	function	(const Ops & ops,const capability_descriptors<Ops> & described)	typename:capability_view
@@ -1587,6 +1591,21 @@ lib/praxis-manipulator/include/praxis/manipulator/slots.h	view_of	prototype	(con
 lib/praxis-manipulator/include/praxis/manipulator/slots.h	view_of	prototype	(task_trajectory_ops &&)	typename:capability_view
 lib/praxis-manipulator/include/praxis/manipulator/slots.h	view_of	prototype	(const modeling_ops & ops)	typename:capability_view
 lib/praxis-manipulator/include/praxis/manipulator/slots.h	view_of	prototype	(modeling_ops &&)	typename:capability_view
+lib/praxis-manipulator/include/praxis/manipulator/slots.h	praxis	namespace	-	-
+lib/praxis-manipulator/include/praxis/manipulator/slots.h	capability_slots	struct	-	-
+lib/praxis-manipulator/include/praxis/manipulator/slots.h	type	typedef	-	typename:manipulator::forward_kinematics_slot
+lib/praxis-manipulator/include/praxis/manipulator/slots.h	capability_slots	struct	-	-
+lib/praxis-manipulator/include/praxis/manipulator/slots.h	type	typedef	-	typename:manipulator::differential_kinematics_slot
+lib/praxis-manipulator/include/praxis/manipulator/slots.h	capability_slots	struct	-	-
+lib/praxis-manipulator/include/praxis/manipulator/slots.h	type	typedef	-	typename:manipulator::inverse_kinematics_slot
+lib/praxis-manipulator/include/praxis/manipulator/slots.h	capability_slots	struct	-	-
+lib/praxis-manipulator/include/praxis/manipulator/slots.h	type	typedef	-	typename:manipulator::robot_slot
+lib/praxis-manipulator/include/praxis/manipulator/slots.h	capability_slots	struct	-	-
+lib/praxis-manipulator/include/praxis/manipulator/slots.h	type	typedef	-	typename:manipulator::motion_slot
+lib/praxis-manipulator/include/praxis/manipulator/slots.h	capability_slots	struct	-	-
+lib/praxis-manipulator/include/praxis/manipulator/slots.h	type	typedef	-	typename:manipulator::task_trajectory_slot
+lib/praxis-manipulator/include/praxis/manipulator/slots.h	capability_slots	struct	-	-
+lib/praxis-manipulator/include/praxis/manipulator/slots.h	type	typedef	-	typename:manipulator::modeling_slot
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	task_space_window	class	-	-
@@ -2328,6 +2347,11 @@ lib/praxis-rigid_motion/include/praxis/rigid_motion/slots.h	view_of	prototype	(c
 lib/praxis-rigid_motion/include/praxis/rigid_motion/slots.h	view_of	prototype	(frame_ops &&)	typename:capability_view
 lib/praxis-rigid_motion/include/praxis/rigid_motion/slots.h	view_of	prototype	(const screw_ops & ops)	typename:capability_view
 lib/praxis-rigid_motion/include/praxis/rigid_motion/slots.h	view_of	prototype	(screw_ops &&)	typename:capability_view
+lib/praxis-rigid_motion/include/praxis/rigid_motion/slots.h	praxis	namespace	-	-
+lib/praxis-rigid_motion/include/praxis/rigid_motion/slots.h	capability_slots	struct	-	-
+lib/praxis-rigid_motion/include/praxis/rigid_motion/slots.h	type	typedef	-	typename:rigid_motion::frame_slot
+lib/praxis-rigid_motion/include/praxis/rigid_motion/slots.h	capability_slots	struct	-	-
+lib/praxis-rigid_motion/include/praxis/rigid_motion/slots.h	type	typedef	-	typename:rigid_motion::screw_slot
 lib/praxis-rigid_motion/include/praxis/rigid_motion/twist_axis_window.h	praxis	namespace	-	-
 lib/praxis-rigid_motion/include/praxis/rigid_motion/twist_axis_window.h	rigid_motion	namespace	-	-
 lib/praxis-rigid_motion/include/praxis/rigid_motion/twist_axis_window.h	twist_axis_window	class	-	-
@@ -2968,6 +2992,15 @@ lib/praxis-trajectory/include/praxis/trajectory/slots.h	view_of	prototype	(const
 lib/praxis-trajectory/include/praxis/trajectory/slots.h	view_of	prototype	(pose_trajectory_ops &&)	typename:capability_view
 lib/praxis-trajectory/include/praxis/trajectory/slots.h	view_of	prototype	(const trajectory_ops & ops)	typename:capability_view
 lib/praxis-trajectory/include/praxis/trajectory/slots.h	view_of	prototype	(trajectory_ops &&)	typename:capability_view
+lib/praxis-trajectory/include/praxis/trajectory/slots.h	praxis	namespace	-	-
+lib/praxis-trajectory/include/praxis/trajectory/slots.h	capability_slots	struct	-	-
+lib/praxis-trajectory/include/praxis/trajectory/slots.h	type	typedef	-	typename:trajectory::time_scaling_slot
+lib/praxis-trajectory/include/praxis/trajectory/slots.h	capability_slots	struct	-	-
+lib/praxis-trajectory/include/praxis/trajectory/slots.h	type	typedef	-	typename:trajectory::path_slot
+lib/praxis-trajectory/include/praxis/trajectory/slots.h	capability_slots	struct	-	-
+lib/praxis-trajectory/include/praxis/trajectory/slots.h	type	typedef	-	typename:trajectory::pose_trajectory_slot
+lib/praxis-trajectory/include/praxis/trajectory/slots.h	capability_slots	struct	-	-
+lib/praxis-trajectory/include/praxis/trajectory/slots.h	type	typedef	-	typename:trajectory::trajectory_slot
 lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	praxis	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	trajectory	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	scaling_sample	struct	-	-

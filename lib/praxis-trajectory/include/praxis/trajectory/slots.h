@@ -66,4 +66,34 @@ capability_view view_of(trajectory_ops &&) = delete;
 
 }
 
+// The enumeration each aggregate's slots are indexed by, so a set of one capability's slots cannot be
+// read against another's descriptor table.
+namespace praxis {
+
+template<>
+struct capability_slots<trajectory::time_scaling_ops>
+{
+    using type = trajectory::time_scaling_slot;
+};
+
+template<>
+struct capability_slots<trajectory::path_ops>
+{
+    using type = trajectory::path_slot;
+};
+
+template<>
+struct capability_slots<trajectory::pose_trajectory_ops>
+{
+    using type = trajectory::pose_trajectory_slot;
+};
+
+template<>
+struct capability_slots<trajectory::trajectory_ops>
+{
+    using type = trajectory::trajectory_slot;
+};
+
+}
+
 #endif

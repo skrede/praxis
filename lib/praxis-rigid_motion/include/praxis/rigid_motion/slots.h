@@ -68,4 +68,22 @@ capability_view view_of(screw_ops &&) = delete;
 
 }
 
+// The enumeration each aggregate's slots are indexed by, so a set of one capability's slots cannot be
+// read against another's descriptor table.
+namespace praxis {
+
+template<>
+struct capability_slots<rigid_motion::frame_ops>
+{
+    using type = rigid_motion::frame_slot;
+};
+
+template<>
+struct capability_slots<rigid_motion::screw_ops>
+{
+    using type = rigid_motion::screw_slot;
+};
+
+}
+
 #endif

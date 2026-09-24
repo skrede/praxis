@@ -1,5 +1,3 @@
-#include "unbound_slots.h"
-
 #include "praxis/presets/arm.h"
 
 #include "praxis/manipulator/slots.h"
@@ -70,8 +68,8 @@ manipulator::arm_composition arm_windows_velocity_kinematics(arm_scenario chosen
     manipulator::arm_composition composed;
     composed.windows = [state = std::move(chosen)](const manipulator::arm_window_inputs &built)
     {
-        if(const std::string unbound = unbound_among(slot_names, built.dk_inert, jacobians); !unbound.empty())
-            return declined(unbound);
+        if(const manipulator::differential_kinematics_slot_set unbound = defaulted_among(built.dk_inert, jacobians); !unbound.empty())
+            return declined(joined_slot_names(slot_names, unbound));
 
         raise_structure(built.stencil, built.chain);
 
