@@ -125,13 +125,15 @@ public:
     void set_trapezoid_bounds(std::optional<path_parameter_bounds> held_to);
     std::optional<path_parameter_bounds> trapezoid_bounds() const;
 
+    // A pose parameter named tool_pose is where the tool centre point is commanded to stand; the
+    // flange pose that reaches it is derived on the way to the solver.
     void preview_tool_frame_jog(const transform &tool_pose, const Eigen::Vector3d &offset, const rotation &orientation);
-    void preview_task_space_pose(const transform &pose);
-    void preview_task_space_screw(const transform &start_pose, const Eigen::Vector3d &w, const Eigen::Vector3d &q, double theta_radians, double pitch);
+    void preview_task_space_pose(const transform &tool_pose);
+    void preview_task_space_screw(const transform &tool_pose, const Eigen::Vector3d &w, const Eigen::Vector3d &q, double theta_radians, double pitch);
     void preview_joint_configuration(const joint_vector &positions);
 
-    void task_space_ptp(const transform &pose);
-    void task_space_lin(const transform &pose);
+    void task_space_ptp(const transform &tool_pose);
+    void task_space_lin(const transform &tool_pose);
     void task_space_screw(const Eigen::Vector3d &w, const Eigen::Vector3d &q, double theta_radians, double pitch);
 
     void task_space_trajectory(std::span<const transform> poses);
@@ -142,7 +144,7 @@ public:
     // task-space sampling reaches are internal to the drawing, so what a reader sees of the solver is
     // what the last requesting command left. The generator is kept exactly as it was sampled.
     void preview_trajectory(const joint_vector &target);
-    void preview_trajectory(const transform &end_pose);
+    void preview_trajectory(const transform &tool_pose);
     void preview_trajectory(std::span<const joint_vector> positions);
     void preview_trajectory(std::span<const transform> poses);
 
@@ -309,7 +311,7 @@ private:
     void loaded(std::unique_ptr<trajectory::trajectory_generator> motion);
 
     void run_to(const joint_vector &target);
-    void run_along(const transform &end_pose, task_space_path shape);
+    void run_along(const transform &tool_pose, task_space_path shape);
 };
 
 }

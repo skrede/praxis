@@ -1288,16 +1288,16 @@ lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	time_scalin
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	set_trapezoid_bounds	prototype	(std::optional<path_parameter_bounds> held_to)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	trapezoid_bounds	prototype	() const	typename:std::optional<path_parameter_bounds>
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_tool_frame_jog	prototype	(const transform & tool_pose,const Eigen::Vector3d & offset,const rotation & orientation)	typename:void
-lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_task_space_pose	prototype	(const transform & pose)	typename:void
-lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_task_space_screw	prototype	(const transform & start_pose,const Eigen::Vector3d & w,const Eigen::Vector3d & q,double theta_radians,double pitch)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_task_space_pose	prototype	(const transform & tool_pose)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_task_space_screw	prototype	(const transform & tool_pose,const Eigen::Vector3d & w,const Eigen::Vector3d & q,double theta_radians,double pitch)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_joint_configuration	prototype	(const joint_vector & positions)	typename:void
-lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	task_space_ptp	prototype	(const transform & pose)	typename:void
-lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	task_space_lin	prototype	(const transform & pose)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	task_space_ptp	prototype	(const transform & tool_pose)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	task_space_lin	prototype	(const transform & tool_pose)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	task_space_screw	prototype	(const Eigen::Vector3d & w,const Eigen::Vector3d & q,double theta_radians,double pitch)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	task_space_trajectory	prototype	(std::span<const transform> poses)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	joint_space_trajectory	prototype	(std::span<const joint_vector> positions)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_trajectory	prototype	(const joint_vector & target)	typename:void
-lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_trajectory	prototype	(const transform & end_pose)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_trajectory	prototype	(const transform & tool_pose)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_trajectory	prototype	(std::span<const joint_vector> positions)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_trajectory	prototype	(std::span<const transform> poses)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_in_turn	prototype	(std::span<const joint_vector> targets)	typename:void
@@ -1354,7 +1354,7 @@ lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	open_traver
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	run	prototype	(std::unique_ptr<trajectory::trajectory_generator> motion)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	loaded	prototype	(std::unique_ptr<trajectory::trajectory_generator> motion)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	run_to	prototype	(const joint_vector & target)	typename:void
-lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	run_along	prototype	(const transform & end_pose,task_space_path shape)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	run_along	prototype	(const transform & tool_pose,task_space_path shape)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/robot_view_window.h	model_render	enum	-	typename:std::uint8_t

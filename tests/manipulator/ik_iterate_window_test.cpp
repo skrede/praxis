@@ -127,7 +127,7 @@ composed_arm solving_arm(praxis::scheduler::scheduler &loop)
                                                      inverse_kinematics_ops{.inverse_kinematics = &stepping_inverse_kinematics}, rigid_motion::baseline().screw,
                                                      rigid_motion::baseline().frame)
                                          .value(),
-                                 robot_ops{}, rigid_motion::baseline().frame, 2u)
+                                 manipulator::baseline().robot, rigid_motion::baseline().frame, 2u)
                     .value());
     const auto published = std::make_shared<arm_publisher>();
     const auto control   = std::make_shared<robot_controller>(*driven, motion_ops{.task_space_pose = &solving_task_space_pose}, trajectory::path_ops{}, task_trajectory_ops{},

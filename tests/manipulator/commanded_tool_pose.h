@@ -7,6 +7,8 @@
 #include "praxis/manipulator/capabilities.h"
 #include "praxis/manipulator/robot_controller.h"
 
+#include "praxis/scheduler/scheduler.h"
+
 #include "praxis/trajectory/capabilities.h"
 
 #include "praxis/rigid_motion/capabilities.h"
@@ -14,6 +16,7 @@
 
 #include <Eigen/Core>
 
+#include <chrono>
 #include <cstdint>
 #include <functional>
 
@@ -93,6 +96,40 @@ private:
         return scene_robot::compose(solver, injected, rigid_motion::baseline().frame, static_cast<std::uint32_t>(3)).value();
     }
 };
+
+inline scheduler::time_point dictated_reading{};
+
+inline scheduler::time_point reading()
+{
+    return dictated_reading;
+}
+
+inline scheduler::clock_source dictating()
+{
+    dictated_reading = scheduler::time_point{};
+
+    return scheduler::clock_source{&reading};
+}
+
+inline bool played_out(robot_controller &commanded)
+{
+    constexpr scheduler::step_period stepped{scheduler::seconds{0.01}};
+    constexpr std::uint32_t most_steps = 100000;
+
+    praxis::scheduler::scheduler loop(scheduler::inline_workers, dictating());
+    const scheduler::strand work = *loop.make_strand();
+    const scheduler::task_handle motion =
+            work.every(stepped, scheduler::overrun::catch_up, [&commanded](scheduler::step_delta step) { static_cast<void>(commanded.advance_playback(step)); });
+
+    for(std::uint32_t taken = 0; taken < most_steps && commanded.executing(); ++taken)
+    {
+        dictated_reading += std::chrono::duration_cast<scheduler::time_point::duration>(stepped.value);
+        if(!loop.drain().has_value())
+            return false;
+    }
+
+    return !commanded.executing();
+}
 
 inline double tool_travel(commanded_arm &placed, const std::function<void()> &commanding)
 {

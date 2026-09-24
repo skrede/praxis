@@ -110,7 +110,7 @@ bare_arm compose_arm(const forward_kinematics_ops &forward, const differential_k
     auto robot = std::make_shared<scene_robot>(
             scene_robot::compose(
                     kinematics::compose(sliding_chain(), forward, differential, inverse, praxis::rigid_motion::baseline().screw, praxis::rigid_motion::baseline().frame).value(),
-                    robot_ops{}, praxis::rigid_motion::baseline().frame, 2u)
+                    praxis::manipulator::baseline().robot, praxis::rigid_motion::baseline().frame, 2u)
                     .value());
     robot->set_joint_positions(configuration(0.25, -0.5));
 

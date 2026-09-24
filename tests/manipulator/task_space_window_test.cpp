@@ -80,7 +80,7 @@ composed_arm composing(praxis::scheduler::scheduler &loop)
 {
     const trajectory::path_ops along{.joint_straight_line = &straight_line, .decoupled = &recorded_decoupled};
     const strand work    = *loop.make_strand();
-    const auto driven    = std::make_shared<scene_robot>(two_joint_arm(robot_ops{}));
+    const auto driven    = std::make_shared<scene_robot>(two_joint_arm(manipulator::baseline().robot));
     const auto published = std::make_shared<arm_publisher>();
     const auto control   = std::make_shared<robot_controller>(*driven, motion_ops{.task_space_pose = &recorded_pose}, along, task_trajectory_ops{}, composing_time_scaling(),
                                                               trajectory::trajectory_ops{}, rigid_motion::baseline().screw, rigid_motion::baseline().frame);

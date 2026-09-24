@@ -90,20 +90,22 @@ void robot_controller::preview_tool_frame_jog(const transform &tool_pose, const 
         report_refusal("motion.task_space_pose", reached.error(), refusal_standing::per_request, request_origin::edited);
 }
 
-void robot_controller::preview_task_space_pose(const transform &pose)
+void robot_controller::preview_task_space_pose(const transform &tool_pose)
 {
     if(executing())
         return;
 
+    const transform target = m_robot.flange_pose_from_tool_pose(tool_pose);
+
     const std::uint64_t before                    = m_robot.solver().solve_count();
-    const expected<joint_vector, refusal> reached = kept(before, m_motion.task_space_pose(m_robot.solver(), pose, m_robot.joint_positions()));
+    const expected<joint_vector, refusal> reached = kept(before, m_motion.task_space_pose(m_robot.solver(), target, m_robot.joint_positions()));
     if(reached)
         m_robot.set_joint_positions(*reached);
     else
         report_refusal("motion.task_space_pose", reached.error(), refusal_standing::per_request, request_origin::edited);
 }
 
-void robot_controller::preview_task_space_screw(const transform &start_pose, const Eigen::Vector3d &w, const Eigen::Vector3d &q, double theta_radians, double pitch)
+void robot_controller::preview_task_space_screw(const transform &tool_pose, const Eigen::Vector3d &w, const Eigen::Vector3d &q, double theta_radians, double pitch)
 {
     if(executing())
         return;
@@ -111,9 +113,13 @@ void robot_controller::preview_task_space_screw(const transform &start_pose, con
     if(w.isZero())
         return report_refusal("robot_controller.preview_task_space_screw", refusal::degenerate, refusal_standing::per_request, request_origin::edited);
 
-    const std::uint64_t before = m_robot.solver().solve_count();
-    const expected<joint_vector, refusal> reached =
-            kept(before, m_motion.task_space_screw(m_screw, m_robot.solver(), start_pose, w, q, theta_radians, pitch, m_robot.joint_positions()));
+    // The exponential premultiplies and the conversion acts on the right, so the turn of the
+    // converted start pose is the conversion of the turned one: converting the start converts the
+    // whole path.
+    const transform start = m_robot.flange_pose_from_tool_pose(tool_pose);
+
+    const std::uint64_t before                    = m_robot.solver().solve_count();
+    const expected<joint_vector, refusal> reached = kept(before, m_motion.task_space_screw(m_screw, m_robot.solver(), start, w, q, theta_radians, pitch, m_robot.joint_positions()));
     if(reached)
         m_robot.set_joint_positions(*reached);
     else
@@ -134,13 +140,15 @@ void robot_controller::preview_joint_configuration(const joint_vector &positions
     m_robot.set_joint_positions(positions);
 }
 
-void robot_controller::task_space_ptp(const transform &pose)
+void robot_controller::task_space_ptp(const transform &tool_pose)
 {
     if(executing())
         return;
 
+    const transform commanded = m_robot.flange_pose_from_tool_pose(tool_pose);
+
     const std::uint64_t before                   = m_robot.solver().solve_count();
-    const expected<joint_vector, refusal> target = kept(before, m_motion.task_space_pose(m_robot.solver(), pose, m_robot.joint_positions()));
+    const expected<joint_vector, refusal> target = kept(before, m_motion.task_space_pose(m_robot.solver(), commanded, m_robot.joint_positions()));
     if(target)
         run_to(*target);
     else
@@ -200,11 +208,11 @@ void robot_controller::solve_in_closed_form(const transform &target)
     m_reached.push_back(nearest.value_or(m_solutions.size()));
 }
 
-void robot_controller::task_space_lin(const transform &pose)
+void robot_controller::task_space_lin(const transform &tool_pose)
 {
     if(executing())
         return;
-    run_along(pose, m_path.decoupled);
+    run_along(tool_pose, m_path.decoupled);
 }
 
 void robot_controller::task_space_screw(const Eigen::Vector3d &w, const Eigen::Vector3d &q, double theta_radians, double pitch)
@@ -285,19 +293,21 @@ void robot_controller::preview_trajectory(const joint_vector &target)
     previewed(std::move(*motion), curves);
 }
 
-void robot_controller::preview_trajectory(const transform &end_pose)
+void robot_controller::preview_trajectory(const transform &tool_pose)
 {
     if(executing())
         return;
 
-    const expected<transform, refusal> start_pose = m_robot.tool_pose();
+    const expected<transform, refusal> start_pose = m_robot.flange_pose();
     if(!start_pose)
     {
         spdlog::error("praxis: the arm's own pose is unavailable, so the previewed task-space motion has nowhere to start and no preview stands");
         return;
     }
 
-    auto motion = task_space_motion(m_motion, prepared(), m_robot.solver(), m_robot.limits(), m_robot.joint_positions(), *start_pose, end_pose, m_path.decoupled);
+    const transform target = m_robot.flange_pose_from_tool_pose(tool_pose);
+
+    auto motion = task_space_motion(m_motion, prepared(), m_robot.solver(), m_robot.limits(), m_robot.joint_positions(), *start_pose, target, m_path.decoupled);
     if(!motion)
     {
         spdlog::error("praxis: the task-space composition refused the previewed pose, so no preview stands");
@@ -558,18 +568,21 @@ void robot_controller::run_to(const joint_vector &target)
     run(std::move(*motion));
 }
 
-void robot_controller::run_along(const transform &end_pose, task_space_path shape)
+void robot_controller::run_along(const transform &tool_pose, task_space_path shape)
 {
-    const expected<transform, refusal> start_pose = m_robot.tool_pose();
+    // The composed path resolves its samples in the flange frame, so its start is read there.
+    const expected<transform, refusal> start_pose = m_robot.flange_pose();
     if(!start_pose)
     {
         report_refusal("fk.forward_kinematics", start_pose.error());
         return;
     }
 
+    const transform target = m_robot.flange_pose_from_tool_pose(tool_pose);
+
     asking();
     const prepared_time_scaling scaled = prepared();
-    auto motion                        = task_space_motion(m_motion, scaled, m_robot.solver(), m_robot.limits(), m_robot.joint_positions(), *start_pose, end_pose, shape);
+    auto motion                        = task_space_motion(m_motion, scaled, m_robot.solver(), m_robot.limits(), m_robot.joint_positions(), *start_pose, target, shape);
     if(!motion)
     {
         report_refusal("task_space_motion", motion.error());

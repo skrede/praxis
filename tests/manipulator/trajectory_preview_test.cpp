@@ -64,13 +64,6 @@ clock_source dictating()
     return clock_source{&reading};
 }
 
-// A composition rather than the inert stand-in, so the pose at one sampled configuration differs
-// from the pose at the next and a preview carrying one pose throughout would fail.
-transform offset_tool_pose(const transform &pose, const transform &offset)
-{
-    return transform(pose * offset);
-}
-
 // The answer is the desired pose's own translation, so a resolved path reaches a configuration the
 // case can name, and each entry into the solver leaves one iterate behind.
 expected<void, refusal> recording_inverse_kinematics(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &,
@@ -108,7 +101,7 @@ previewed_arm arm_at(const joint_vector &start)
             scene_robot::compose(kinematics::compose(sliding_chain(), forward_kinematics_ops{.forward_kinematics = &sliding_forward_kinematics}, differential_kinematics_ops{},
                                                      inverse_kinematics_ops{&recording_inverse_kinematics}, rigid_motion::baseline().screw, rigid_motion::baseline().frame)
                                          .value(),
-                                 robot_ops{.tool_pose_from_flange_pose = &offset_tool_pose}, rigid_motion::baseline().frame, 2u)
+                                 manipulator::baseline().robot, rigid_motion::baseline().frame, 2u)
                     .value());
     robot->set_joint_positions(start);
 
