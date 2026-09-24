@@ -60,26 +60,18 @@ constexpr double float_step = 1.0e-4;
 // composes its angles in.
 constexpr axis_order first_offered = axis_order::xyz;
 
-struct displacement
-{
-    transform start;
-    Eigen::Vector3d offset;
-    rotation turned;
-};
+std::vector<transform> jogged;
 
-std::vector<displacement> jogged;
-
-expected<joint_vector, refusal> recorded_jog(const rigid_motion::frame_ops &, const kinematics &, const transform &start, const Eigen::Vector3d &offset, const rotation &turned,
-                                             const joint_vector &j0)
+expected<joint_vector, refusal> recorded_target(const kinematics &, const transform &target, const joint_vector &j0)
 {
-    jogged.push_back(displacement{start, offset, turned});
+    jogged.push_back(target);
 
     return j0;
 }
 
 composed_arm jogging(praxis::scheduler::scheduler &loop)
 {
-    return compose(loop, motion_ops{.tool_frame_displace = &recorded_jog}, rigid_motion::baseline().screw);
+    return compose(loop, motion_ops{.task_space_pose = &recorded_target}, rigid_motion::baseline().screw);
 }
 
 arm_snapshot chosen_snapshot()
@@ -185,11 +177,17 @@ drawing over_alone(tool_jog_window &panel)
     return [&panel] { panel.render(); };
 }
 
-void starts_at(const transform &recorded, const Eigen::Vector3d &position, const rotation &orientation)
+// The stage's arm wears no tool, so the conversion from this composed pose to the flange is the identity.
+transform jogged_to(const Eigen::Vector3d &position, const rotation &orientation, const Eigen::Vector3d &offset, const rotation &turned)
+{
+    return reference.transformation_matrix_from_rotation_position(orientation, position) * reference.transformation_matrix_from_rotation_position(turned, offset);
+}
+
+void lands_at(const transform &recorded, const transform &composed)
 {
     for(Eigen::Index axis = 0; axis < 3; ++axis)
-        CHECK(recorded(axis, 3) == Catch::Approx(position[axis]).margin(float_step));
-    CHECK(recorded.topLeftCorner<3, 3>().isApprox(orientation, float_step));
+        CHECK(recorded(axis, 3) == Catch::Approx(composed(axis, 3)).margin(float_step));
+    CHECK(recorded.topLeftCorner<3, 3>().isApprox(composed.topLeftCorner<3, 3>(), float_step));
 }
 
 // A panel whose reset landed is indistinguishable from one where the jog was never entered, and the
@@ -267,9 +265,7 @@ TEST_CASE("an angle entered at a tool jog slider is previewed as a jog about the
     static_cast<void>(loop.drain());
 
     REQUIRE(!jogged.empty());
-    starts_at(jogged.back().start, chosen_position, chosen_orientation);
-    CHECK(jogged.back().offset.isZero(float_step));
-    CHECK(jogged.back().turned.isApprox(turned_by(jog_angle_degrees, axis_order::zyx), float_step));
+    lands_at(jogged.back(), jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(jog_angle_degrees, axis_order::zyx)));
 }
 
 TEST_CASE("an offset entered at a tool jog slider is previewed as the offset the jog carries", "[manipulator][controls]")
@@ -288,8 +284,8 @@ TEST_CASE("an offset entered at a tool jog slider is previewed as the offset the
     static_cast<void>(loop.drain());
 
     REQUIRE(!jogged.empty());
-    CHECK(jogged.back().offset.isApprox(Eigen::Vector3d{0.0, 0.0, jog_offset}, float_step));
-    CHECK(jogged.back().turned.isApprox(rotation::Identity(), float_step));
+    lands_at(jogged.back(), jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d{0.0, 0.0, jog_offset}, rotation::Identity()));
+    CHECK(!jogged.back().topRightCorner<3, 1>().isApprox(chosen_position, float_step));
 }
 
 TEST_CASE("a tool jog window in simulation issues nothing at all, because the group is preview only", "[manipulator][controls]")
@@ -401,9 +397,7 @@ TEST_CASE("two tool jog windows over one shared pose read one pose and jog indep
     static_cast<void>(loop.drain());
 
     REQUIRE(!jogged.empty());
-    starts_at(jogged.back().start, chosen_position, chosen_orientation);
-    CHECK(jogged.back().offset.isZero(float_step));
-    CHECK(jogged.back().turned.isApprox(turned_by(jog_angle_degrees, axis_order::zyx), float_step));
+    lands_at(jogged.back(), jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(jog_angle_degrees, axis_order::zyx)));
 }
 
 TEST_CASE("a tool jog's own rotation is not reinterpreted by the order another panel set", "[manipulator][controls]")
@@ -424,8 +418,8 @@ TEST_CASE("a tool jog's own rotation is not reinterpreted by the order another p
     static_cast<void>(loop.drain());
 
     REQUIRE(!jogged.empty());
-    CHECK(jogged.back().turned.isApprox(turned_by(jog_angle_degrees, axis_order::zyx), float_step));
-    CHECK(!jogged.back().turned.isApprox(turned_by(jog_angle_degrees, axis_order::xyz), float_step));
+    lands_at(jogged.back(), jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(jog_angle_degrees, axis_order::zyx)));
+    CHECK(!jogged.back().isApprox(jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(jog_angle_degrees, axis_order::xyz)), float_step));
 }
 
 TEST_CASE("a tool jog window in preview jogs from the start pose the orientation order it was moved to composes", "[manipulator][controls]")
@@ -445,10 +439,9 @@ TEST_CASE("a tool jog window in preview jogs from the start pose the orientation
     static_cast<void>(loop.drain());
 
     REQUIRE(!jogged.empty());
-    starts_at(jogged.back().start, chosen_position, reference.rotation_matrix_from_euler(chosen_euler_degrees * radians_per_degree, first_offered));
-    CHECK(!jogged.back().start.topLeftCorner<3, 3>().isApprox(chosen_orientation, float_step));
-    CHECK(jogged.back().offset.isZero(float_step));
-    CHECK(jogged.back().turned.isApprox(rotation::Identity(), float_step));
+    lands_at(jogged.back(),
+             jogged_to(chosen_position, reference.rotation_matrix_from_euler(chosen_euler_degrees * radians_per_degree, first_offered), Eigen::Vector3d::Zero(), rotation::Identity()));
+    CHECK(!jogged.back().topLeftCorner<3, 3>().isApprox(chosen_orientation, float_step));
 }
 
 TEST_CASE("a tool jog window in preview jogs from the start pose its position row was moved to", "[manipulator][controls]")
@@ -468,7 +461,5 @@ TEST_CASE("a tool jog window in preview jogs from the start pose its position ro
     static_cast<void>(loop.drain());
 
     REQUIRE(!jogged.empty());
-    starts_at(jogged.back().start, Eigen::Vector3d{jog_offset, chosen_position[1], chosen_position[2]}, chosen_orientation);
-    CHECK(jogged.back().offset.isZero(float_step));
-    CHECK(jogged.back().turned.isApprox(rotation::Identity(), float_step));
+    lands_at(jogged.back(), jogged_to(Eigen::Vector3d{jog_offset, chosen_position[1], chosen_position[2]}, chosen_orientation, Eigen::Vector3d::Zero(), rotation::Identity()));
 }

@@ -125,7 +125,7 @@ public:
     void set_trapezoid_bounds(std::optional<path_parameter_bounds> held_to);
     std::optional<path_parameter_bounds> trapezoid_bounds() const;
 
-    void preview_tool_frame_jog(const transform &start_pose, const Eigen::Vector3d &offset, const rotation &orientation);
+    void preview_tool_frame_jog(const transform &tool_pose, const Eigen::Vector3d &offset, const rotation &orientation);
     void preview_task_space_pose(const transform &pose);
     void preview_task_space_screw(const transform &start_pose, const Eigen::Vector3d &w, const Eigen::Vector3d &q, double theta_radians, double pitch);
     void preview_joint_configuration(const joint_vector &positions);

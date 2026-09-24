@@ -1287,7 +1287,7 @@ lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	set_time_sc
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	time_scaling	prototype	() const	typename:time_scaling_choice
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	set_trapezoid_bounds	prototype	(std::optional<path_parameter_bounds> held_to)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	trapezoid_bounds	prototype	() const	typename:std::optional<path_parameter_bounds>
-lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_tool_frame_jog	prototype	(const transform & start_pose,const Eigen::Vector3d & offset,const rotation & orientation)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_tool_frame_jog	prototype	(const transform & tool_pose,const Eigen::Vector3d & offset,const rotation & orientation)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_task_space_pose	prototype	(const transform & pose)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_task_space_screw	prototype	(const transform & start_pose,const Eigen::Vector3d & w,const Eigen::Vector3d & q,double theta_radians,double pitch)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_joint_configuration	prototype	(const joint_vector & positions)	typename:void
@@ -1420,6 +1420,7 @@ lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	tool_offset	prot
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	set_tool_offset	prototype	(const transform & offset)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	position_of	prototype	(const transform & pose) const	typename:Eigen::Vector3d
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	orientation_of	prototype	(const transform & pose) const	typename:rotation
+lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	flange_pose_from_tool_pose	prototype	(const transform & tool_pose) const	typename:transform
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	tool_pose	prototype	() const	typename:expected<transform,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	tool_position	prototype	() const	typename:expected<Eigen::Vector3d,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	tool_orientation	prototype	() const	typename:expected<rotation,refusal>

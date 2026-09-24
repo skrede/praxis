@@ -45,6 +45,10 @@ public:
     Eigen::Vector3d position_of(const transform &pose) const;
     rotation orientation_of(const transform &pose) const;
 
+    // The frame conversion a commanded pose is carried through, made by whatever the composition
+    // bound. The tool offset and the frame operations are this holder's own, so no caller supplies either.
+    transform flange_pose_from_tool_pose(const transform &tool_pose) const;
+
     expected<transform, refusal> tool_pose() const;
     expected<Eigen::Vector3d, refusal> tool_position() const;
     expected<rotation, refusal> tool_orientation() const;

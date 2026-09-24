@@ -54,7 +54,7 @@ inline composed_arm compose(scheduler::scheduler &loop, const motion_ops &moving
 {
     const trajectory::path_ops along{.joint_straight_line = &straight_line, .screw = &interpolated, .decoupled = &interpolated};
     const scheduler::strand work = *loop.make_strand();
-    const auto driven            = std::make_shared<scene_robot>(two_joint_arm(robot_ops{}));
+    const auto driven            = std::make_shared<scene_robot>(two_joint_arm(baseline().robot));
     const auto published         = std::make_shared<arm_publisher>();
     const auto control = std::make_shared<robot_controller>(*driven, moving, along, task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, turning, framing);
 

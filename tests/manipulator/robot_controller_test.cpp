@@ -585,7 +585,7 @@ TEST_CASE("a differently named refusal between the repeats starts a new entry ra
     const std::shared_ptr<scene::log_buffer> messages = ring_on_the_current_logger();
 
     drive_refused_pose(controller, repeated_drives);
-    controller.preview_tool_frame_jog(transform::Identity(), Eigen::Vector3d::UnitX(), rotation::Identity());
+    controller.preview_task_space_screw(transform::Identity(), Eigen::Vector3d::UnitZ(), Eigen::Vector3d::Zero(), 0.3, 0.0);
     drive_refused_pose(controller, repeated_drives);
 
     const std::vector<scene::log_entry> drained = messages->drain();
@@ -595,7 +595,7 @@ TEST_CASE("a differently named refusal between the repeats starts a new entry ra
     CHECK(drained[1].repeats == 1);
     CHECK(drained[2].repeats == repeated_drives);
     CHECK_THAT(drained[0].text, Catch::Matchers::ContainsSubstring("motion.task_space_pose"));
-    CHECK_THAT(drained[1].text, Catch::Matchers::ContainsSubstring("motion.tool_frame_displace"));
+    CHECK_THAT(drained[1].text, Catch::Matchers::ContainsSubstring("motion.task_space_screw"));
     CHECK_THAT(terminal.text(), Catch::Matchers::ContainsSubstring(drained[1].text));
 }
 

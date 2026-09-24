@@ -73,6 +73,11 @@ rotation scene_robot::orientation_of(const transform &pose) const
     return m_robot.orientation_from_pose(pose);
 }
 
+transform scene_robot::flange_pose_from_tool_pose(const transform &tool_pose) const
+{
+    return m_robot.flange_pose_from_tool_pose(m_frames, tool_pose, m_offset);
+}
+
 expected<transform, refusal> scene_robot::tool_pose() const
 {
     const expected<transform, refusal> flange = flange_pose();

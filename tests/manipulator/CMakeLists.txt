@@ -32,6 +32,7 @@ praxis_add_test(compose_arm_joint_guard_test.cpp LIBS praxis::manipulator spdlog
 praxis_add_test(composed_slot_sets_test.cpp LIBS praxis::manipulator spdlog::spdlog praxis_test_support)
 praxis_add_test(motion_commands_test.cpp HEADERS fixtures.h LIBS praxis::manipulator praxis_test_support)
 praxis_add_test(robot_controller_test.cpp HEADERS fixtures.h LIBS praxis::manipulator spdlog::spdlog praxis_test_support)
+praxis_add_test(commanded_tool_pose_test.cpp HEADERS commanded_tool_pose.h LIBS praxis::manipulator praxis_test_support)
 praxis_add_test(trajectory_preview_test.cpp HEADERS fixtures.h LIBS praxis::manipulator praxis::evaluation spdlog::spdlog praxis_test_support)
 target_include_directories(trajectory_preview_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-manipulator/src)
 praxis_add_test(window_lifetime_test.cpp HEADERS fixtures.h LIBS praxis::manipulator)

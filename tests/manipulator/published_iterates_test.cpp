@@ -104,7 +104,7 @@ struct bare_arm
 };
 
 // The seeded configuration is the one every case starts from, over a composition that binds no
-// tool-frame displacement, so a jog is a motion operation that refuses before the solver.
+// screw-swept motion, so a screw preview is a motion operation that refuses before the solver.
 bare_arm compose_arm(const forward_kinematics_ops &forward, const differential_kinematics_ops &differential, const inverse_kinematics_ops &inverse)
 {
     auto robot = std::make_shared<scene_robot>(
@@ -156,14 +156,14 @@ TEST_CASE("a command whose motion slot refused before the solver publishes no se
             [&loop, &observer]
             {
                 command(observer, [](robot_controller &control, scene_robot &)
-                        { control.preview_tool_frame_jog(praxis::transform::Identity(), Eigen::Vector3d::Zero(), praxis::rotation::Identity()); });
+                        { control.preview_task_space_screw(praxis::transform::Identity(), Eigen::Vector3d::UnitZ(), Eigen::Vector3d::Zero(), 0.3, 0.0); });
                 REQUIRE(loop.drain().has_value());
             });
 
     // The collection is what this command asked the solver for, and it asked for nothing: the
     // sequence the command before it left behind belongs to that command and not to this one.
     CHECK(arm.seen.read()->iterations.empty());
-    CHECK(reported.find("motion.tool_frame_displace") != std::string::npos);
+    CHECK(reported.find("motion.task_space_screw") != std::string::npos);
 }
 
 // A solve that converged on nothing is still a solve: its iterates are exactly what a reader has to
