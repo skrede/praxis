@@ -95,6 +95,14 @@ jacobian_frame loadable_robot_stencil::jacobian_frame_shown() const
     return m_frame;
 }
 
+expected<rotation, refusal> loadable_robot_stencil::carried_into_space(const arm_snapshot &seen) const
+{
+    if(m_frame == jacobian_frame::space)
+        return rotation(rotation::Identity());
+
+    return seen.tool_orientation;
+}
+
 void loadable_robot_stencil::set_ellipsoid_scale(jacobian_block which, double drawn_metres_per_unit)
 {
     m_ellipsoid_scale[block_of(which)] = drawn_metres_per_unit;
@@ -177,14 +185,15 @@ void loadable_robot_stencil::place_ellipsoids() const
     if(seen == nullptr)
         return;
 
-    const jacobian_manipulability &taken = m_frame == jacobian_frame::space ? seen->space_manipulability : seen->body_manipulability;
+    const jacobian_manipulability &taken         = m_frame == jacobian_frame::space ? seen->space_manipulability : seen->body_manipulability;
+    const expected<rotation, refusal> into_space = carried_into_space(*seen);
     for(std::size_t block = 0; block < jacobian_block_count; ++block)
     {
         const drawn_ellipsoid &standing = m_ellipsoids[block];
         if(standing.body == nullptr)
             continue;
 
-        if(!seen->tool_position)
+        if(!seen->tool_position || !into_space)
         {
             hide_ellipsoid_block(*standing.body, standing.lines);
             continue;
@@ -193,7 +202,7 @@ void loadable_robot_stencil::place_ellipsoids() const
         const bool angular              = block == block_of(jacobian_block::angular);
         const std::optional<double> cap = m_view == ellipsoid_view::force && m_force_capped ? std::optional<double>(m_force_cap_ratio * m_ellipsoid_scale[block]) : std::nullopt;
         const ellipsoid_tones tone{angular ? m_ellipsoid_wire : m_ellipsoid_solid, m_continuation_tone};
-        place_ellipsoid_block(angular ? taken.angular : taken.linear, *seen->tool_position, m_view, m_ellipsoid_scale[block], cap, *standing.body, standing.lines, tone);
+        place_ellipsoid_block(angular ? taken.angular : taken.linear, *seen->tool_position, *into_space, m_view, m_ellipsoid_scale[block], cap, *standing.body, standing.lines, tone);
     }
 }
 

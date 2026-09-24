@@ -278,3 +278,45 @@ TEST_CASE("an arrow of either part is built at the girth and the head its own ge
         CHECK(head.z() == Catch::Approx(built_head_radius).margin(read_back));
     }
 }
+
+TEST_CASE("the angular part of a column stands the same way whichever Jacobian of one configuration is shown", "[manipulator][drawing]")
+{
+    const Eigen::Matrix3d turned = turned_tool();
+    const jacobian body          = two_columns(1.0);
+
+    arm_snapshot seen     = published_columns(carried_into_space(turned, elsewhere, body), body, elsewhere);
+    seen.tool_orientation = rotation(turned);
+
+    column_stage headless;
+    REQUIRE(headless.shown.set_jacobian_columns(2u).has_value());
+    headless.put(seen);
+    headless.draw();
+
+    const Eigen::Vector3d in_space = arrow_along(headless.arrow(0u, jacobian_block::angular));
+
+    headless.shown.set_jacobian_frame(jacobian_frame::body);
+    headless.draw();
+
+    CHECK((arrow_along(headless.arrow(0u, jacobian_block::angular)) - in_space).norm() < placed_back);
+    CHECK((arrow_at(headless.arrow(0u, jacobian_block::angular)) - elsewhere).norm() < placed_back);
+}
+
+TEST_CASE("a body Jacobian's columns are not stood at all while the tool's own orientation is a refusal", "[manipulator][drawing]")
+{
+    arm_snapshot seen     = published_columns(two_columns(1.0), two_columns(1.0), elsewhere);
+    seen.tool_orientation = unexpected(refusal::not_implemented);
+
+    column_stage headless;
+    headless.shown.set_jacobian_frame(jacobian_frame::body);
+    REQUIRE(headless.shown.set_jacobian_columns(2u).has_value());
+    headless.put(seen);
+    headless.draw();
+
+    CHECK_FALSE(headless.arrow(0u, jacobian_block::angular)->visible);
+    CHECK_FALSE(headless.arrow(1u, jacobian_block::linear)->visible);
+
+    headless.shown.set_jacobian_frame(jacobian_frame::space);
+    headless.draw();
+
+    CHECK(headless.arrow(0u, jacobian_block::angular)->visible);
+}

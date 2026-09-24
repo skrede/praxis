@@ -14,7 +14,10 @@
 
 #include <threepp/scenes/Scene.hpp>
 
+#include <threepp/math/Vector3.hpp>
+
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include <memory>
 #include <vector>
@@ -38,6 +41,30 @@ inline constexpr double cap_ratio     = 0.6;
 inline constexpr double angular_cap   = cap_ratio * angular_scale;
 inline constexpr double linear_cap    = cap_ratio * linear_scale;
 
+// A tool orientation away from the base's, about no coordinate axis, so a drawing that carried a
+// body-frame quantity into the space frame is told apart from one that took it as it arrived.
+inline Eigen::Matrix3d turned_tool()
+{
+    return Eigen::Matrix3d(Eigen::AngleAxisd(0.7, Eigen::Vector3d(1.0, 2.0, 3.0).normalized()));
+}
+
+// The principal axes as the placement wrote them: the body's own three coordinate axes carried by
+// the turn it was stood at.
+inline Eigen::Matrix3d body_axes(threepp::Object3D *drawn)
+{
+    REQUIRE(drawn != nullptr);
+
+    Eigen::Matrix3d standing;
+    for(Eigen::Index axis = 0; axis < 3; ++axis)
+    {
+        threepp::Vector3 out{axis == 0 ? 1.f : 0.f, axis == 1 ? 1.f : 0.f, axis == 2 ? 1.f : 0.f};
+        out.applyQuaternion(drawn->quaternion);
+        standing.col(axis) = Eigen::Vector3d(out.x, out.y, out.z);
+    }
+
+    return standing;
+}
+
 // The principal axes are the identity, so a body's own coordinate axes are its principal ones.
 inline manipulability_ellipsoid decomposed(const Eigen::Vector3d &values)
 {
@@ -49,6 +76,15 @@ inline manipulability_ellipsoid decomposed(const Eigen::Vector3d &values)
 inline jacobian_manipulability decomposed_both(const Eigen::Vector3d &values)
 {
     return jacobian_manipulability{decomposed(values), decomposed(values)};
+}
+
+// One block's decomposition with principal axes of the caller's own, so a case can tell a drawing
+// that carried them into the frame it stands in from one that took them as they arrived.
+inline manipulability_ellipsoid decomposed_about(const Eigen::Vector3d &values, const Eigen::Matrix3d &axes)
+{
+    const std::optional<double> condition = values.z() > 0.0 ? std::optional<double>(values.x() / values.z()) : std::nullopt;
+
+    return manipulability_ellipsoid{values, axes, values.prod(), condition};
 }
 
 inline jacobian_manipulability refused()

@@ -389,6 +389,11 @@ private:
     void place_ellipsoids() const;
     void place_jacobian_columns() const;
 
+    // The rotation carrying a quantity taken from the shown Jacobian into the space frame: the
+    // identity where the space Jacobian is shown, whose quantities are expressed there already, and
+    // the tool's own orientation where the body Jacobian is, whose are expressed in the tool frame.
+    expected<rotation, refusal> carried_into_space(const arm_snapshot &seen) const;
+
     // Every arrow of every column left undrawn, which is what a placement that cannot honestly
     // stand them does rather than stand some of them.
     void hide_jacobian_columns() const;

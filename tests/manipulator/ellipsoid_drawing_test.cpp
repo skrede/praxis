@@ -172,3 +172,48 @@ TEST_CASE("a stencil told neither scale nor cap opens at the measured values", "
     CHECK(headless.shown.force_cap_ratio() == Catch::Approx(2.4));
     CHECK(headless.shown.force_capped());
 }
+
+TEST_CASE("the angular ellipsoid stands at the same principal axes whichever Jacobian of one configuration is shown", "[manipulator][drawing]")
+{
+    const Eigen::Matrix3d turned = turned_tool();
+    const Eigen::Vector3d values(1.0, 0.6, 0.2);
+    const Eigen::Vector3d at(0.3, -0.2, 0.7);
+
+    // A_s = R A_b R^T at one configuration, so the two decompositions carry the same singular values
+    // and principal axes a rotation apart. Lynch & Park, Modern Robotics, section 5.4.
+    arm_snapshot seen     = published(jacobian_manipulability{decomposed_about(values, turned), decomposed_about(values, turned)}, decomposed_both(values), at);
+    seen.tool_orientation = praxis::rotation(turned);
+
+    ellipsoid_stage headless;
+    headless.shown.set_manipulability_ellipsoids(ellipsoid_view::velocity);
+    headless.put(seen);
+    headless.draw();
+
+    const Eigen::Matrix3d in_space = body_axes(headless.body(jacobian_block::angular));
+    CHECK((in_space - turned).norm() < read_back);
+
+    headless.shown.set_jacobian_frame(jacobian_frame::body);
+    headless.draw();
+
+    CHECK((body_axes(headless.body(jacobian_block::angular)) - in_space).norm() < read_back);
+}
+
+TEST_CASE("neither ellipsoid is stood from the body Jacobian while the tool's own orientation is a refusal", "[manipulator][drawing]")
+{
+    arm_snapshot seen     = published(decomposed_both(Eigen::Vector3d(1.0, 0.6, 0.2)), decomposed_both(Eigen::Vector3d(1.0, 0.6, 0.2)), Eigen::Vector3d(0.3, -0.2, 0.7));
+    seen.tool_orientation = praxis::unexpected(praxis::refusal::not_implemented);
+
+    ellipsoid_stage headless;
+    headless.shown.set_manipulability_ellipsoids(ellipsoid_view::velocity);
+    headless.shown.set_jacobian_frame(jacobian_frame::body);
+    headless.put(seen);
+    headless.draw();
+
+    CHECK_FALSE(headless.body(jacobian_block::angular)->visible);
+    CHECK_FALSE(headless.body(jacobian_block::linear)->visible);
+
+    headless.shown.set_jacobian_frame(jacobian_frame::space);
+    headless.draw();
+
+    CHECK(headless.body(jacobian_block::angular)->visible);
+}

@@ -112,17 +112,19 @@ void loadable_robot_stencil::hide_jacobian_columns() const
 
 // The linear part of a space Jacobian's column is the velocity of the material point currently at
 // the space origin, and the linear part of a body Jacobian's column is the tool's own velocity, so
-// each column stands at the point its linear part is the velocity of. Lynch & Park, Modern
-// Robotics, section 5.1.
+// each column stands at the point its linear part is the velocity of. A body Jacobian's columns are
+// twists expressed in the tool frame, so each is carried into the space frame before it is drawn
+// there. Lynch & Park, Modern Robotics, section 5.1.
 void loadable_robot_stencil::place_jacobian_columns() const
 {
     const std::shared_ptr<const arm_snapshot> seen = m_seen.read();
     if(m_column_arrows.empty() || seen == nullptr)
         return;
 
-    const expected<jacobian, refusal> &taken     = shown_jacobian(*seen, m_frame);
-    const expected<Eigen::Vector3d, refusal> put = m_frame == jacobian_frame::space ? expected<Eigen::Vector3d, refusal>(Eigen::Vector3d::Zero()) : seen->tool_position;
-    if(!taken || !put || static_cast<std::size_t>(taken->cols()) != m_column_arrows.size())
+    const expected<jacobian, refusal> &taken      = shown_jacobian(*seen, m_frame);
+    const expected<Eigen::Vector3d, refusal> put  = m_frame == jacobian_frame::space ? expected<Eigen::Vector3d, refusal>(Eigen::Vector3d::Zero()) : seen->tool_position;
+    const expected<rotation, refusal> into_space = carried_into_space(*seen);
+    if(!taken || !put || !into_space || static_cast<std::size_t>(taken->cols()) != m_column_arrows.size())
     {
         hide_jacobian_columns();
         return;
@@ -132,7 +134,7 @@ void loadable_robot_stencil::place_jacobian_columns() const
         for(std::size_t part = 0; part < jacobian_block_count; ++part)
         {
             const drawn_column &standing = m_column_arrows[column][part];
-            const Eigen::Vector3d along  = taken->block<3, 1>(part == block_of(jacobian_block::angular) ? 0 : 3, static_cast<Eigen::Index>(column));
+            const Eigen::Vector3d along  = *into_space * Eigen::Vector3d(taken->block<3, 1>(part == block_of(jacobian_block::angular) ? 0 : 3, static_cast<Eigen::Index>(column)));
 
             place_arrow(drawn_arrow{standing.object, standing.shaft, standing.tip}, *put, along, along.norm() * m_column_scale[part]);
         }

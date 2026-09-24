@@ -73,6 +73,22 @@ inline jacobian two_columns_exchanged()
     return of_columns({twist_of(Eigen::Vector3d(0.0, 2.0, 0.0), Eigen::Vector3d(0.0, 0.0, 1.0)), twist_of(Eigen::Vector3d(0.0, 0.0, 3.0), Eigen::Vector3d(1.0, 0.0, 0.0))});
 }
 
+// The space Jacobian one body Jacobian gives at a configuration: J_s = [Ad_{T_sb}] J_b, whose
+// adjoint carries the angular rows by the orientation alone and the linear rows by the orientation
+// and the translation together. Lynch & Park, Modern Robotics, section 5.1.
+inline jacobian carried_into_space(const Eigen::Matrix3d &orientation, const Eigen::Vector3d &at, const jacobian &body)
+{
+    Eigen::Matrix3d crossed;
+    crossed << 0.0, -at.z(), at.y(), at.z(), 0.0, -at.x(), -at.y(), at.x(), 0.0;
+
+    Eigen::Matrix<double, 6, 6> adjoint  = Eigen::Matrix<double, 6, 6>::Zero();
+    adjoint.topLeftCorner<3, 3>()        = orientation;
+    adjoint.bottomLeftCorner<3, 3>()     = crossed * orientation;
+    adjoint.bottomRightCorner<3, 3>()    = orientation;
+
+    return jacobian(adjoint * body);
+}
+
 // Only the two Jacobians, the two decompositions and the tool position are read by what is under
 // test, but a snapshot has no field a publication may leave out, so the rest is filled with what an
 // arm at rest reports.

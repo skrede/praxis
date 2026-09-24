@@ -42,9 +42,10 @@ Eigen::Vector3d drawn_semi_axes(const manipulability_ellipsoid &block, ellipsoid
 // continues every axis whose drawn semi-axis strictly exceeds it with a line either way; no cap
 // leaves the body whole and every line undrawn. A block that is a refusal, and one whose drawn
 // semi-axes are not all finite, is not drawn at all. Line 2*axis runs along principal axis axis and
-// line 2*axis+1 runs against it.
-void place_ellipsoid_block(const expected<manipulability_ellipsoid, refusal> &block, const Eigen::Vector3d &at, ellipsoid_view read, double scale, const std::optional<double> &cap,
-                           threepp::Object3D &body, std::span<const std::shared_ptr<threepp::Object3D>> lines, const ellipsoid_tones &tone);
+// line 2*axis+1 runs against it. The principal axes are expressed in the frame the block's Jacobian
+// was taken in, and `into_space` carries them into the frame the drawing stands in.
+void place_ellipsoid_block(const expected<manipulability_ellipsoid, refusal> &block, const Eigen::Vector3d &at, const rotation &into_space, ellipsoid_view read, double scale,
+                           const std::optional<double> &cap, threepp::Object3D &body, std::span<const std::shared_ptr<threepp::Object3D>> lines, const ellipsoid_tones &tone);
 
 }
 

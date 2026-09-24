@@ -71,8 +71,8 @@ void hide_ellipsoid_block(threepp::Object3D &body, std::span<const std::shared_p
 
 // The finiteness check runs whether or not a cap was named: lifting the cap removes a bound, not a
 // check.
-void place_ellipsoid_block(const expected<manipulability_ellipsoid, refusal> &block, const Eigen::Vector3d &at, ellipsoid_view read, double scale, const std::optional<double> &cap,
-                           threepp::Object3D &body, std::span<const std::shared_ptr<threepp::Object3D>> lines, const ellipsoid_tones &tone)
+void place_ellipsoid_block(const expected<manipulability_ellipsoid, refusal> &block, const Eigen::Vector3d &at, const rotation &into_space, ellipsoid_view read, double scale,
+                           const std::optional<double> &cap, threepp::Object3D &body, std::span<const std::shared_ptr<threepp::Object3D>> lines, const ellipsoid_tones &tone)
 {
     if(!block)
     {
@@ -87,13 +87,14 @@ void place_ellipsoid_block(const expected<manipulability_ellipsoid, refusal> &bl
         return;
     }
 
-    const std::size_t step = ellipsoid_ramp_step(block->condition);
+    const std::size_t step         = ellipsoid_ramp_step(block->condition);
+    const Eigen::Matrix3d standing = into_space * block->principal_axes;
     shape_ellipsoid(body, semi_axes, cap);
-    place_ellipsoid(body, block->principal_axes, at);
+    place_ellipsoid(body, standing, at);
     wear_step(body, tone.body, step);
     body.visible = true;
 
-    place_continuations(semi_axes, block->principal_axes, at, cap, lines, tone.line, step);
+    place_continuations(semi_axes, standing, at, cap, lines, tone.line, step);
 }
 
 }
