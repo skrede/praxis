@@ -13,6 +13,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include <threepp/scenes/Scene.hpp>
 #include <threepp/objects/Mesh.hpp>
@@ -26,6 +27,7 @@
 #include <threepp/math/Matrix4.hpp>
 #include <threepp/math/Vector3.hpp>
 
+#include <array>
 #include <cmath>
 #include <memory>
 #include <string>
@@ -151,6 +153,30 @@ threepp::Matrix4 carried_by(const threepp::Matrix4 &flange, const threepp::Matri
     return at;
 }
 
+// The same pose as the renderer holds one: column by column, and in single precision. Written here
+// rather than taken from the code under test, so a case comparing against it compares against the
+// rule.
+threepp::Matrix4 as_the_renderer_holds(const praxis::transform &placed)
+{
+    std::array<float, 16> held{};
+    for(Eigen::Index column = 0; column < 4; ++column)
+        for(Eigen::Index row = 0; row < 4; ++row)
+            held[static_cast<std::size_t>(4 * column + row)] = static_cast<float>(placed(row, column));
+
+    return threepp::Matrix4(held);
+}
+
+// A tool offset that is no coordinate translation and no coordinate rotation, so a marker standing at
+// the flange instead of at the tool frame differs in position and in every axis direction at once.
+praxis::transform turned_tool_offset()
+{
+    praxis::transform offset     = praxis::transform::Identity();
+    offset.topLeftCorner<3, 3>() = Eigen::AngleAxisd(0.7, Eigen::Vector3d(1.0, 1.0, 1.0).normalized()).toRotationMatrix();
+    offset.block<3, 1>(0, 3)     = Eigen::Vector3d(0.12, -0.07, 0.19);
+
+    return offset;
+}
+
 // Two turns compared component by component. `Quaternion::angleTo` goes through an arc cosine of a
 // dot product near one, where single-precision rounding alone reads as a milliradian, so it is no
 // instrument for asking whether a turn stayed put.
@@ -239,6 +265,13 @@ std::size_t carried_at_flange(const loadable_robot_stencil &shown)
 void draw_frame(scheduler &loop, composed_arm &over)
 {
     REQUIRE(loop.main_strand().post([&over] { over.shown->render(); }).has_value());
+    REQUIRE(loop.drain().has_value());
+}
+
+void tell_tool_offset(scheduler &loop, composed_arm &over, const praxis::transform &offset)
+{
+    const std::weak_ptr<owned_arm> observer = over.owned;
+    command(observer, [offset](robot_controller &, scene_robot &driven) { driven.set_tool_offset(offset); });
     REQUIRE(loop.drain().has_value());
 }
 
@@ -644,4 +677,74 @@ TEST_CASE("a tool window opens at the view its settings name, and at the loader 
 
     seated.shown->tear_down();
     bare.shown->tear_down();
+}
+
+// The frame the arm's own tool offset defines, not one whoever installed the marker keeps in step with
+// it: the offset is read from what the arm published, so telling the arm a new one is the whole of
+// what moves the marker. The marker at the flange is the control: it is carried at its own offset and
+// stays where it was.
+TEST_CASE("the marker at the tool frame stands at the offset the arm published, at a tool offset about no coordinate axis", "[manipulator][tool]")
+{
+    scheduler loop(inline_workers, dictating());
+
+    composed_arm placed = compose(loop, attachments{}, threepp::Scene::create());
+    REQUIRE(placed.shown->initialize().has_value());
+
+    const std::shared_ptr<threepp::Object3D> at_the_flange = ask_for_marker(placed);
+    placed.shown->set_flange_attachment(flange_attachment::tool_frame_marker, make_flange_marker(placed.shown->robot()));
+    const std::shared_ptr<threepp::Object3D> at_the_tool = placed.shown->attached_at(flange_attachment::tool_frame_marker);
+    REQUIRE(at_the_tool != nullptr);
+
+    draw_frame(loop, placed);
+    const threepp::Matrix4 flange = placed.shown->robot().getEndEffectorTransform();
+    const threepp::Matrix4 identity;
+    REQUIRE(placement_departure(*at_the_tool, carried_by(flange, identity)) < single_precision_tolerance);
+
+    const praxis::transform offset = turned_tool_offset();
+    tell_tool_offset(loop, placed, offset);
+    draw_frame(loop, placed);
+
+    CHECK(placement_departure(*at_the_tool, carried_by(flange, as_the_renderer_holds(offset))) < single_precision_tolerance);
+    CHECK(placement_departure(*at_the_flange, carried_by(flange, identity)) < single_precision_tolerance);
+    CHECK(static_cast<double>(at_the_tool->position.distanceTo(at_the_flange->position)) > offset.block<3, 1>(0, 3).norm() / 2.0);
+
+    placed.shown->tear_down();
+}
+
+// One multiple over every frame the flange marks, so a document naming it once reaches both markers.
+// A marker is built at a size proportioned to the arm, and the multiple is read on the size drawn
+// rather than on the number the stencil holds.
+TEST_CASE("the marker size multiple reaches the size every marker the flange carries is drawn at", "[manipulator][tool]")
+{
+    scheduler loop(inline_workers, dictating());
+
+    composed_arm placed = compose(loop, attachments{}, threepp::Scene::create());
+    REQUIRE(placed.shown->initialize().has_value());
+
+    const std::shared_ptr<threepp::Object3D> at_the_flange = ask_for_marker(placed);
+    placed.shown->set_flange_attachment(flange_attachment::tool_frame_marker, make_flange_marker(placed.shown->robot()));
+    const std::shared_ptr<threepp::Object3D> at_the_tool = placed.shown->attached_at(flange_attachment::tool_frame_marker);
+    REQUIRE(at_the_tool != nullptr);
+
+    draw_frame(loop, placed);
+    const double flange_built = extent_of(*at_the_flange);
+    const double tool_built   = extent_of(*at_the_tool);
+    REQUIRE(placed.shown->marker_scale() == 1.0);
+    REQUIRE(flange_built > 0.0);
+
+    REQUIRE(placed.shown->set_marker_scale(2.5).has_value());
+    draw_frame(loop, placed);
+
+    CHECK(placed.shown->marker_scale() == 2.5);
+    CHECK(std::abs(extent_of(*at_the_flange) - 2.5 * flange_built) < single_precision_tolerance);
+    CHECK(std::abs(extent_of(*at_the_tool) - 2.5 * tool_built) < single_precision_tolerance);
+
+    CHECK_FALSE(placed.shown->set_marker_scale(0.0).has_value());
+    CHECK_FALSE(placed.shown->set_marker_scale(-1.0).has_value());
+    draw_frame(loop, placed);
+
+    CHECK(placed.shown->marker_scale() == 2.5);
+    CHECK(std::abs(extent_of(*at_the_flange) - 2.5 * flange_built) < single_precision_tolerance);
+
+    placed.shown->tear_down();
 }

@@ -17,6 +17,8 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <threepp/math/Box3.hpp>
+
 #include <threepp/scenes/Scene.hpp>
 
 #include <imgui.h>
@@ -56,6 +58,10 @@ constexpr double read_back     = 1.0e-4;
 // at this value was typed into the control.
 constexpr const char *typed_reach = "0.25";
 constexpr double reached          = 0.25;
+
+// The multiple typed into the marker size control, and the value it stands for.
+constexpr const char *typed_scale = "2.5";
+constexpr double scaled_to        = 2.5;
 
 config::declaration described()
 {
@@ -119,12 +125,24 @@ config::document carrying(const std::string &name, std::string_view body)
     return answered.values;
 }
 
+// How large a marker is drawn, taken as the reach of its world box: a marker is built about its own
+// origin, so a uniform scale on its node scales that box by the same multiple.
+double extent_of(threepp::Object3D &measured)
+{
+    threepp::Box3 box;
+    box.setFromObject(measured);
+
+    return static_cast<double>(box.getSize().length());
+}
+
 void reads_as(const opening &read, const opening &written)
 {
     CHECK(read.model == written.model);
     CHECK(read.decoration == written.decoration);
     CHECK(read.axis_reach == written.axis_reach);
     CHECK(read.flange_marker == written.flange_marker);
+    CHECK(read.tool_frame_marker == written.tool_frame_marker);
+    CHECK(read.marker_scale == written.marker_scale);
 }
 
 arm_snapshot upright()
@@ -227,10 +245,12 @@ struct stage
 controls offering(int subset)
 {
     controls offered;
-    offered.model         = (subset & 1) != 0;
-    offered.decoration    = (subset & 2) != 0;
-    offered.reach         = (subset & 4) != 0;
-    offered.flange_marker = (subset & 8) != 0;
+    offered.model             = (subset & 1) != 0;
+    offered.decoration        = (subset & 2) != 0;
+    offered.reach             = (subset & 4) != 0;
+    offered.flange_marker     = (subset & 8) != 0;
+    offered.tool_frame_marker = (subset & 16) != 0;
+    offered.marker_scale      = (subset & 32) != 0;
 
     return offered;
 }
@@ -287,7 +307,7 @@ TEST_CASE("every view field written through the declared keys reads back as it w
 {
     for(const model_render chosen : {model_render::meshes, model_render::chain, model_render::meshes_and_chain, model_render::none})
     {
-        const opening named{chosen, false, 0.75, false};
+        const opening named{chosen, false, 0.75, false, true, 2.5};
         reads_as(read_robot_view(saved_and_reloaded("view-round-trip-" + std::to_string(static_cast<int>(chosen)) + ".xml", write_robot_view(named, view_at)), view_at), named);
     }
 
@@ -312,6 +332,18 @@ TEST_CASE("a document naming some of the four leaves leaves the rest where the s
     CHECK(marked.decoration == opening{}.decoration);
     CHECK(marked.axis_reach == opening{}.axis_reach);
 
+    // A tool offset of the identity stands the marker at the tool frame on top of the one at the
+    // flange, so the marker it asks for is the one no document has to ask for it not to draw.
+    CHECK_FALSE(opening{}.tool_frame_marker);
+    CHECK(opening{}.marker_scale == 1.0);
+
+    const opening at_the_tool = read_robot_view(carrying("view-tool-frame.xml", "<view tool_frame=\"true\" frame_marker_scale=\"2.5\"/>"), view_at);
+
+    CHECK(at_the_tool.tool_frame_marker);
+    CHECK(at_the_tool.marker_scale == 2.5);
+    CHECK(at_the_tool.flange_marker == opening{}.flange_marker);
+    CHECK(at_the_tool.model == opening{}.model);
+
     reads_as(read_robot_view(carrying("view-none-named.xml", ""), view_at), opening{});
 }
 
@@ -333,13 +365,13 @@ TEST_CASE("a window draws the controls its composition asked for and no others",
     stage headless;
 
     std::set<std::size_t> panels;
-    for(int subset = 0; subset < 8; ++subset)
+    for(int subset = 0; subset < 64; ++subset)
     {
         robot_view_window panel(panel_title, headless.shown, offering(subset), opening{});
         panels.insert(geometry_of(over(panel)));
     }
 
-    CHECK(panels.size() == 8u);
+    CHECK(panels.size() == 64u);
 
     robot_view_window offering_nothing(panel_title, headless.shown, offering(0), opening{});
 
@@ -578,6 +610,40 @@ TEST_CASE("a reach typed into the control is written out as the value it was typ
 
     CHECK(read_robot_view(written, view_at).axis_reach == std::optional<double>(reached));
     CHECK(answered->settings_edits(written).empty());
+}
+
+// The two controls a scenario marking frames offers over them: the switch over the marker at the tool
+// frame, and the multiple every frame the flange marks is drawn at. Both are read on the scene rather
+// than on the window's own answer, since what a document asks for is a drawing.
+TEST_CASE("the control over the tool frame marker and the control over the marker size both write through to the scene", "[manipulator][controls]")
+{
+    stage headless;
+    headless.shown.set_flange_attachment(flange_attachment::tool_frame_marker, make_flange_marker(headless.shown.robot()));
+    threepp::Object3D *const at_the_tool = headless.shown.attached_at(flange_attachment::tool_frame_marker).get();
+    REQUIRE(at_the_tool != nullptr);
+
+    robot_view_window panel(panel_title, headless.shown, offering(63), opening{});
+    panel.initialize();
+    headless.draw();
+
+    REQUIRE_FALSE(drawn(at_the_tool));
+    const double built = extent_of(*headless.marker_node());
+    REQUIRE(built > 0.0);
+
+    imgui_frame frames;
+    const drawing draw = over(panel);
+    start_navigating(frames, draw);
+    step_to(frames, draw, 3);
+    tap(frames, draw, ImGuiKey_Space);
+    step_to(frames, draw, 5);
+    type_at_cursor(frames, draw, typed_scale);
+    headless.draw();
+
+    CHECK(panel.state().tool_frame_marker);
+    CHECK(panel.state().marker_scale == scaled_to);
+    CHECK(drawn(at_the_tool));
+    CHECK(std::abs(extent_of(*headless.marker_node()) - scaled_to * built) < read_back);
+    CHECK(std::abs(extent_of(*at_the_tool) - scaled_to * built) < read_back);
 }
 
 // The control admits no reach below the smallest one that draws, and a composition naming a reach
