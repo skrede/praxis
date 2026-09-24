@@ -1694,6 +1694,7 @@ lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	settings_pat
 lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	settings_edits	prototype	(const config::document &) const	typename:std::vector<config::edit>
 lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	as_configurable	function	() const	typename:const config::configurable *
 lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	m_seen	member	-	typename:arm_reader
+lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	m_start_pose_chosen	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	m_settings_at	member	-	typename:std::string
 lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	m_arm	member	-	typename:std::weak_ptr<owned_arm>
 lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	m_jog_position	member	-	typename:Eigen::Vector3f

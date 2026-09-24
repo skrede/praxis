@@ -335,6 +335,53 @@ TEST_CASE("a tool jog window's seeding control clears its own jog, and only over
     CHECK(reset_over(poseless_snapshot(), true) != reset_over(poseless_snapshot(), false));
 }
 
+TEST_CASE("a tool jog window seeds its start pose from the published tool pose before anything is driven", "[manipulator][controls]")
+{
+    const std::shared_ptr<arm_publisher> published = publishing(chosen_snapshot());
+    const std::shared_ptr<edited_pose> held        = std::make_shared<edited_pose>();
+    tool_jog_window panel("Tool frame jog", published->reader(), std::weak_ptr<owned_arm>(), reference, held, {mode::preview});
+
+    imgui_frame frames;
+    frames.draw(over(panel));
+
+    CHECK(held->position.cast<double>().isApprox(chosen_position, float_step));
+    CHECK(held->euler_degrees.cast<double>().isApprox(chosen_euler_degrees, float_step));
+}
+
+TEST_CASE("a tool jog window over a publication carrying no tool pose seeds from the one that follows", "[manipulator][controls]")
+{
+    const std::shared_ptr<arm_publisher> published = publishing(poseless_snapshot());
+    const std::shared_ptr<edited_pose> held        = std::make_shared<edited_pose>();
+    tool_jog_window panel("Tool frame jog", published->reader(), std::weak_ptr<owned_arm>(), reference, held, {mode::preview});
+
+    imgui_frame frames;
+    frames.draw(over(panel));
+    REQUIRE(held->position.cast<double>().isZero(float_step));
+
+    published->publish(std::make_shared<const arm_snapshot>(chosen_snapshot()));
+    frames.draw(over(panel));
+
+    CHECK(held->position.cast<double>().isApprox(chosen_position, float_step));
+}
+
+TEST_CASE("a start pose entered before the arm published a tool pose is not overwritten by the seed", "[manipulator][controls]")
+{
+    const std::shared_ptr<arm_publisher> published = publishing(poseless_snapshot());
+    const std::shared_ptr<edited_pose> held        = std::make_shared<edited_pose>();
+    tool_jog_window panel("Tool frame jog", published->reader(), std::weak_ptr<owned_arm>(), reference, held, {mode::preview});
+
+    imgui_frame frames;
+    const drawing draw = over(panel);
+    start_navigating(frames, draw);
+    enter_start_position(frames, draw);
+    published->publish(std::make_shared<const arm_snapshot>(chosen_snapshot()));
+    frames.draw(draw);
+
+    CHECK(held->position[0] == Catch::Approx(jog_offset).margin(float_step));
+    CHECK(held->position[1] == Catch::Approx(0.0).margin(float_step));
+    CHECK(held->position[2] == Catch::Approx(0.0).margin(float_step));
+}
+
 TEST_CASE("two tool jog windows over one shared pose read one pose and jog independently", "[manipulator][controls]")
 {
     jogged.clear();

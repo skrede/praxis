@@ -58,6 +58,7 @@ public:
 
 private:
     arm_reader m_seen;
+    bool m_start_pose_chosen;
     std::string m_settings_at;
     std::weak_ptr<owned_arm> m_arm;
     Eigen::Vector3f m_jog_position;
