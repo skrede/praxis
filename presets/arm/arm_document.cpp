@@ -34,6 +34,14 @@ std::map<std::string, std::string> read_arguments(const config::document &values
     return named;
 }
 
+// The spelling tables read a policy back as a position and cast it, and the enumerations they are
+// positions in belong to a fetched dependency. An enumerator inserted there would select a policy
+// nobody wrote, so the correspondence is asserted here rather than assumed to survive a pin move.
+static_assert(static_cast<std::size_t>(meios::eval_policy::fail) == 0u && static_cast<std::size_t>(meios::eval_policy::warn) == 1u &&
+              static_cast<std::size_t>(meios::eval_policy::skip) == 2u);
+static_assert(static_cast<std::size_t>(meios::missing_asset::fail) == 0u && static_cast<std::size_t>(meios::missing_asset::warn) == 1u &&
+              static_cast<std::size_t>(meios::missing_asset::skip) == 2u);
+
 meios::load_options read_options(const config::document &values, const std::string &at, std::span<const std::filesystem::path> roots)
 {
     meios::load_options options;

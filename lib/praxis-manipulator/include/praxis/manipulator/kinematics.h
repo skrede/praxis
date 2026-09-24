@@ -170,6 +170,8 @@ public:
 
     expected<jacobian, refusal> space_jacobian(const joint_vector &joint_positions) const;
 
+    // Taken over the space chain, which the bound slot sees through its own inverse adjoint, so the
+    // body chain derived at composition does not enter here either.
     expected<jacobian, refusal> body_jacobian(const joint_vector &joint_positions) const;
 
     expected<joint_vector, refusal> ik_solve(const transform &desired_pose, const joint_vector &j0, const solver_parameters &parameters) const;

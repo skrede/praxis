@@ -64,8 +64,6 @@ std::shared_ptr<scene::preset> open_with(threepp::Scene &target, const presets::
 
 }
 
-// The one still bound is named nowhere, so a decline answering a fixed string rather than what it
-// read fails here rather than passes.
 TEST_CASE("a Jacobian left at its default composes no window and is named", "[presets][windows]")
 {
     const described_arm described(6, "velocity_one_denied");

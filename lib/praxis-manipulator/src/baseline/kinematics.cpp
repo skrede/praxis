@@ -171,7 +171,8 @@ expected<cartan::opw_parameters<double>, refusal> admitted_geometry(const rigid_
 
 }
 
-// Lynch & Park, Modern Robotics, chapter 4.
+// The exponentials are taken by the solver library, which the handed screw operations do not
+// enter. Lynch & Park, Modern Robotics, chapter 4.
 expected<transform, refusal> forward_kinematics(const rigid_motion::screw_ops &, const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta)
 {
     if(theta.size() != static_cast<Eigen::Index>(space_screws.size()))
@@ -188,8 +189,9 @@ expected<transform, refusal> forward_kinematics(const rigid_motion::screw_ops &,
     return transform(solved->reached.end_effector.matrix());
 }
 
-// The home pose does not enter, so the chain the columns are taken over carries none. Lynch & Park,
-// Modern Robotics, chapter 5.
+// The home pose does not enter, so the chain the columns are taken over carries none, and neither do
+// the handed screw operations: the columns are the solver library's. Lynch & Park, Modern Robotics,
+// chapter 5.
 expected<jacobian, refusal> space_jacobian(const rigid_motion::screw_ops &, std::span<const screw_axis> space_screws, const joint_vector &theta)
 {
     if(theta.size() != static_cast<Eigen::Index>(space_screws.size()))
@@ -269,7 +271,8 @@ expected<std::vector<screw_axis>, refusal> body_screws_from_space(const rigid_mo
     return to_body_screws(screw, m, space_screws);
 }
 
-// The iterate sequence is taken from the solve policy one work unit at a time.
+// The iterate sequence is taken from the solve policy one work unit at a time. The solve is the
+// solver library's, so neither the handed screw operations nor either kinematics aggregate enters it.
 expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &chain,
                                            const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer)
 {

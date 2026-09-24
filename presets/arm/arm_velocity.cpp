@@ -3,8 +3,8 @@
 #include "praxis/manipulator/slots.h"
 #include "praxis/manipulator/robot_view_window.h"
 #include "praxis/manipulator/joint_control_window.h"
-#include "praxis/manipulator/render_controls_window.h"
 #include "praxis/manipulator/loadable_robot_stencil.h"
+#include "praxis/manipulator/render_controls_window.h"
 #include "praxis/manipulator/velocity_kinematics_window.h"
 
 #include "praxis/scene/imgui_window.h"
@@ -30,11 +30,10 @@ constexpr std::array<manipulator::differential_kinematics_slot, 2> jacobians{man
 
 constexpr manipulator::differential_kinematics_ops slot_names{};
 
-// Said once at composition, rather than read out of a published snapshot after the arm has
-// published.
 composed_windows declined(const std::string &unbound)
 {
-    spdlog::error("praxis: 'arm_windows_velocity_kinematics' was denied {}, which still hold their defaults; every velocity it would show would be a refusal, so it composes no window",
+    spdlog::error("praxis: 'presets.arm_windows_velocity_kinematics' was denied {}, which still hold their defaults; every velocity it would show would be a refusal, so it composes no "
+                  "window",
                   unbound);
 
     return composed_windows{};
@@ -47,9 +46,9 @@ composed_windows declined(const std::string &unbound)
 void raise_structure(manipulator::loadable_robot_stencil &on, const manipulator::screw_chain &derived)
 {
     if(!on.set_joint_screws(derived.home, derived.space_screws))
-        spdlog::error("praxis: 'arm_windows_velocity_kinematics' was refused the chain its description derived; the arm is shown without its screw axes");
+        spdlog::error("praxis: 'presets.arm_windows_velocity_kinematics' was refused the chain its description derived; the arm is shown without its screw axes");
     if(!on.set_jacobian_columns(derived.space_screws.size()))
-        spdlog::error("praxis: 'arm_windows_velocity_kinematics' was refused the column count its description derived; the arm is shown without its Jacobian columns");
+        spdlog::error("praxis: 'presets.arm_windows_velocity_kinematics' was refused the column count its description derived; the arm is shown without its Jacobian columns");
 }
 
 // The screw axes are drawn beside the column arrows, so the reach they are drawn to is reachable.

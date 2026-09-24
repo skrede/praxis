@@ -113,50 +113,21 @@ arm_snapshot undriven_snapshot(const joint_vector &initial, refusal reason)
                         std::nullopt};
 }
 
-robot_slot_set defaulted_robot_slots(const robot_ops &ops)
+// Which of a capability's slots still hold their defaults. The enumeration indexing the answer is
+// the one the operations themselves name, so a set of one capability's slots cannot be built from
+// another's table.
+template<typename Ops>
+    requires described_capability<Ops>
+basic_slot_set<capability_slots_t<Ops>> defaulted_slots_of(const Ops &ops)
 {
+    using slot = capability_slots_t<Ops>;
+
     const capability_view described = view_of(ops);
-    robot_slot_set held;
+    basic_slot_set<slot> held;
 
-    for(std::uint32_t index = 0; index < static_cast<std::uint32_t>(robot_slot::count); ++index)
+    for(std::size_t index = 0; index < static_cast<std::size_t>(slot::count); ++index)
         if(holds_default(described, index))
-            held.set(static_cast<robot_slot>(index));
-
-    return held;
-}
-
-rigid_motion::screw_slot_set defaulted_screw_slots(const rigid_motion::screw_ops &ops)
-{
-    const capability_view described = view_of(ops);
-    rigid_motion::screw_slot_set held;
-
-    for(std::uint32_t index = 0; index < static_cast<std::uint32_t>(rigid_motion::screw_slot::count); ++index)
-        if(holds_default(described, index))
-            held.set(static_cast<rigid_motion::screw_slot>(index));
-
-    return held;
-}
-
-forward_kinematics_slot_set defaulted_forward_kinematics_slots(const forward_kinematics_ops &ops)
-{
-    const capability_view described = view_of(ops);
-    forward_kinematics_slot_set held;
-
-    for(std::uint32_t index = 0; index < static_cast<std::uint32_t>(forward_kinematics_slot::count); ++index)
-        if(holds_default(described, index))
-            held.set(static_cast<forward_kinematics_slot>(index));
-
-    return held;
-}
-
-differential_kinematics_slot_set defaulted_differential_kinematics_slots(const differential_kinematics_ops &ops)
-{
-    const capability_view described = view_of(ops);
-    differential_kinematics_slot_set held;
-
-    for(std::uint32_t index = 0; index < static_cast<std::uint32_t>(differential_kinematics_slot::count); ++index)
-        if(holds_default(described, index))
-            held.set(static_cast<differential_kinematics_slot>(index));
+            held.set(static_cast<slot>(index));
 
     return held;
 }
@@ -170,8 +141,7 @@ std::shared_ptr<scene::preset> undriven_preset(const scene::preset_site &site, c
     auto published = std::make_shared<arm_publisher>();
     published->publish(std::make_shared<const arm_snapshot>(undriven_snapshot(initial, reason)));
 
-    auto stencil =
-            std::make_shared<loadable_robot_stencil>(handle, std::move(attached), site.scene, site.render, published->reader(), motions.screw, defaulted_screw_slots(motions.screw));
+    auto stencil = std::make_shared<loadable_robot_stencil>(handle, std::move(attached), site.scene, site.render, published->reader(), motions.screw, defaulted_slots_of(motions.screw));
     auto composed = std::make_shared<scene::preset>(stencil, std::vector<std::shared_ptr<scene::imgui_window>>{}, site.add_window, site.remove_window);
 
     composed->work       = site.work;
@@ -197,7 +167,7 @@ std::shared_ptr<scene::preset> composed_preset(const scene::preset_site &site, c
                                                forward_kinematics_ops forward, differential_kinematics_ops differential, trajectory::path_ops path, robot_slot_set inert,
                                                const arm_window_composer &windows)
 {
-    const rigid_motion::screw_slot_set unbound = defaulted_screw_slots(motions.screw);
+    const rigid_motion::screw_slot_set unbound = defaulted_slots_of(motions.screw);
 
     auto published = std::make_shared<arm_publisher>();
     auto owned     = std::make_shared<owned_arm>(site.work, site.work, robot, controller, published);
@@ -214,8 +184,8 @@ std::shared_ptr<scene::preset> composed_preset(const scene::preset_site &site, c
                                   forward,
                                   differential,
                                   path,
-                                  defaulted_forward_kinematics_slots(forward),
-                                  defaulted_differential_kinematics_slots(differential)};
+                                  defaulted_slots_of(forward),
+                                  defaulted_slots_of(differential)};
 
     auto composed  = std::make_shared<scene::preset>(stencil, windows(built), site.add_window, site.remove_window);
     composed->work = site.work;
@@ -276,7 +246,7 @@ std::shared_ptr<scene::preset> compose_arm(const meios::model<> &description, co
     auto controller = std::make_shared<robot_controller>(*robot, arm.motion, shapes.path, arm.trajectory, shapes.time_scaling, shapes.trajectory, motions.screw, motions.frame,
                                                          site.ask_unload, site.root);
 
-    return composed_preset(site, *handle, std::move(attached), robot, controller, motions, arm.fk, arm.dk, shapes.path, defaulted_robot_slots(arm.robot), windows);
+    return composed_preset(site, *handle, std::move(attached), robot, controller, motions, arm.fk, arm.dk, shapes.path, defaulted_slots_of(arm.robot), windows);
 }
 
 }

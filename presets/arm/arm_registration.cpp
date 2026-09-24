@@ -130,6 +130,12 @@ std::vector<std::string> register_arms(const std::shared_ptr<scene::preset_regis
                                        std::span<const std::filesystem::path> roots, document_route located, composed_route announced, const manipulator::capabilities &arm,
                                        const trajectory::capabilities &shapes, const rigid_motion::capabilities &motions)
 {
+    if(registry == nullptr)
+    {
+        spdlog::error("praxis: no arm was registered, because no registry was supplied");
+        return {};
+    }
+
     const std::vector<std::filesystem::path> searched(roots.begin(), roots.end());
 
     std::vector<std::string> registered;

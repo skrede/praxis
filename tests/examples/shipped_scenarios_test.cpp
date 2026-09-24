@@ -78,7 +78,10 @@ struct offered
         const scene::window_route nowhere = [](const std::shared_ptr<scene::imgui_window> &) {};
         const scene::preset_site site{*scene, loop.main_strand(), *loop.make_strand(), [] {}, nowhere, nowhere, {}};
 
-        std::shared_ptr<scene::preset> composed = registry->load_preset(named)(site);
+        const scene::preset_registry::factory compose = registry->load_preset(named);
+        REQUIRE(compose != nullptr);
+
+        std::shared_ptr<scene::preset> composed = compose(site);
         REQUIRE(composed != nullptr);
 
         auto answered = reading(*composed);
@@ -97,7 +100,10 @@ struct offered
         const scene::window_route nowhere = [](const std::shared_ptr<scene::imgui_window> &) {};
         const scene::preset_site site{*scene, loop.main_strand(), *loop.make_strand(), [] {}, nowhere, nowhere, {}};
 
-        return registry->load_preset(named)(site);
+        const scene::preset_registry::factory compose = registry->load_preset(named);
+        REQUIRE(compose != nullptr);
+
+        return compose(site);
     }
 
     std::vector<std::string> windows_of(const std::string &named)
