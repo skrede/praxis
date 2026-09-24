@@ -463,7 +463,7 @@ lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	windows	member	-
 lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	draws_tool	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	draws_world	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	flange_marker	member	-	typename:flange_marker_policy
-lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	compose_arm	prototype	(const meios::model<> & description,const scene::preset_site & site,attached_models attached,const capabilities & arm,const trajectory::capabilities & shapes,const rigid_motion::capabilities & motions,const joint_vector & initial,const arm_window_composer & windows)	typename:std::shared_ptr<scene::preset>
+lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	compose_arm	prototype	(const meios::model<> & description,const scene::preset_site & site,attachments attached,const capabilities & arm,const trajectory::capabilities & shapes,const rigid_motion::capabilities & motions,const joint_vector & initial,const arm_window_composer & windows)	typename:std::shared_ptr<scene::preset>
 lib/praxis-manipulator/include/praxis/manipulator/control_configuration.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/control_configuration.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/control_configuration.h	declare_joint_control	prototype	(config::declaration & shape,std::string_view at)	typename:void
@@ -870,7 +870,7 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	angul
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	linear	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	jacobian_block_count	variable	-	typename:std::size_t
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	make_flange_marker	prototype	(threepp::Object3D & arm)	typename:std::shared_ptr<threepp::Object3D>
-lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	attached_models	struct	-	-
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	attachments	struct	-	-
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	tool	member	-	typename:std::shared_ptr<threepp::Object3D>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	world	member	-	typename:std::shared_ptr<threepp::Object3D>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	marker	member	-	typename:flange_marker_policy
@@ -892,7 +892,7 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	drawn
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	object	member	-	typename:std::shared_ptr<threepp::Object3D>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	shaft	member	-	typename:std::shared_ptr<threepp::Object3D>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	tip	member	-	typename:std::shared_ptr<threepp::Object3D>
-lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	loadable_robot_stencil	prototype	(std::shared_ptr<threepp::Robot> robot_object,attached_models attached,threepp::Scene & parent,scheduler::strand render,arm_reader seen,rigid_motion::screw_ops screw,rigid_motion::screw_slot_set inert)	-
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	loadable_robot_stencil	prototype	(std::shared_ptr<threepp::Robot> robot_object,attachments attached,threepp::Scene & parent,scheduler::strand render,arm_reader seen,rigid_motion::screw_ops screw,rigid_motion::screw_slot_set inert)	-
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	~loadable_robot_stencil	prototype	()	-
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	initialize	prototype	()	typename:expected<void,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	tear_down	prototype	()	typename:void

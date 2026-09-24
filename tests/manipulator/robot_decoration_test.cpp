@@ -131,7 +131,7 @@ struct stage
             : loop(inline_workers)
             , scene(threepp::Scene::create())
             , published(std::make_shared<arm_publisher>())
-            , shown(two_joint_handle(), attached_models{}, *scene, loop.main_strand(), published->reader(), turning, inert)
+            , shown(two_joint_handle(), attachments{}, *scene, loop.main_strand(), published->reader(), turning, inert)
     {
         publish(joints);
         REQUIRE(shown.initialize().has_value());

@@ -164,7 +164,7 @@ differential_kinematics_slot_set defaulted_differential_kinematics_slots(const d
 // The publication is made once, at the composition, and every frame reads that one: with no solver
 // there is nothing below the stencil left to ask. No window is composed either, because a window is
 // built from a gated arm state that does not exist here.
-std::shared_ptr<scene::preset> undriven_preset(const scene::preset_site &site, const std::shared_ptr<threepp::Robot> &handle, attached_models attached, const joint_vector &initial,
+std::shared_ptr<scene::preset> undriven_preset(const scene::preset_site &site, const std::shared_ptr<threepp::Robot> &handle, attachments attached, const joint_vector &initial,
                                                const rigid_motion::capabilities &motions, refusal reason)
 {
     auto published = std::make_shared<arm_publisher>();
@@ -192,7 +192,7 @@ void release_arm(std::shared_ptr<owned_arm> &owned, std::shared_ptr<robot_contro
 // last share is handed to the preset's release callables: freeing it anywhere earlier would let a
 // handler the gate has already posted run against storage that is gone. It publishes its first
 // snapshot in its own constructor, so every reader handed out below it reads a published value.
-std::shared_ptr<scene::preset> composed_preset(const scene::preset_site &site, const std::shared_ptr<threepp::Robot> &handle, attached_models attached,
+std::shared_ptr<scene::preset> composed_preset(const scene::preset_site &site, const std::shared_ptr<threepp::Robot> &handle, attachments attached,
                                                const std::shared_ptr<scene_robot> &robot, const std::shared_ptr<robot_controller> &controller, const rigid_motion::capabilities &motions,
                                                forward_kinematics_ops forward, differential_kinematics_ops differential, trajectory::path_ops path, robot_slot_set inert,
                                                const arm_window_composer &windows)
@@ -254,7 +254,7 @@ std::optional<joint_vector> opening_configuration(const std::string &model, cons
 // One parsed description feeds both the chain derivation and the scene graph, which is what makes
 // the screw axes and the rendered links agree on the frame they are expressed in. The scene graph is
 // the one derivation with nothing to fall back on: with no body there is no preset.
-std::shared_ptr<scene::preset> compose_arm(const meios::model<> &description, const scene::preset_site &site, attached_models attached, const capabilities &arm,
+std::shared_ptr<scene::preset> compose_arm(const meios::model<> &description, const scene::preset_site &site, attachments attached, const capabilities &arm,
                                            const trajectory::capabilities &shapes, const rigid_motion::capabilities &motions, const joint_vector &initial,
                                            const arm_window_composer &windows)
 {

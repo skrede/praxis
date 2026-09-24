@@ -64,7 +64,7 @@ struct arm_composition
     flange_marker_policy flange_marker = flange_marker_policy::stands;
 };
 
-std::shared_ptr<scene::preset> compose_arm(const meios::model<> &description, const scene::preset_site &site, attached_models attached, const capabilities &arm,
+std::shared_ptr<scene::preset> compose_arm(const meios::model<> &description, const scene::preset_site &site, attachments attached, const capabilities &arm,
                                            const trajectory::capabilities &shapes, const rigid_motion::capabilities &motions, const joint_vector &initial,
                                            const arm_window_composer &windows);
 

@@ -68,7 +68,7 @@ TEST_CASE("a holder given no handle to hold refuses to be built")
     const std::shared_ptr<threepp::Scene> target = threepp::Scene::create();
     const auto published                         = std::make_shared<arm_publisher>();
 
-    CHECK_THROWS_AS(loadable_robot_stencil(nullptr, attached_models{}, *target, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw,
+    CHECK_THROWS_AS(loadable_robot_stencil(nullptr, attachments{}, *target, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw,
                                            praxis::rigid_motion::screw_slot_set{}),
                     std::invalid_argument);
 }

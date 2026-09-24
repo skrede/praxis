@@ -236,8 +236,8 @@ composed_arm composing(stage &built, const trajectory_recording_window::settings
         return std::vector<std::shared_ptr<praxis::scene::imgui_window>>{std::make_shared<trajectory_recording_window>("Recording", offered.seen, offered.arm, requested)};
     };
 
-    std::shared_ptr<praxis::scene::preset> composed = compose_arm(well_formed_arm(), built.site, attached_models{}, baseline(), praxis::trajectory::baseline(),
-                                                                  praxis::rigid_motion::baseline(), one_joint(0.0), recording_window);
+    std::shared_ptr<praxis::scene::preset> composed =
+            compose_arm(well_formed_arm(), built.site, attachments{}, baseline(), praxis::trajectory::baseline(), praxis::rigid_motion::baseline(), one_joint(0.0), recording_window);
     REQUIRE(composed != nullptr);
     REQUIRE(caught.has_value());
     REQUIRE(composed->initialize().has_value());
@@ -264,7 +264,7 @@ praxis::scene::preset_registry::factory recording_preset(std::optional<arm_reade
             return std::vector<std::shared_ptr<praxis::scene::imgui_window>>{std::make_shared<trajectory_recording_window>("Recording", offered.seen, offered.arm, requested)};
         };
 
-        return compose_arm(well_formed_arm(), site, attached_models{}, baseline(), praxis::trajectory::baseline(), praxis::rigid_motion::baseline(), one_joint(0.0), recording_window);
+        return compose_arm(well_formed_arm(), site, attachments{}, baseline(), praxis::trajectory::baseline(), praxis::rigid_motion::baseline(), one_joint(0.0), recording_window);
     };
 }
 

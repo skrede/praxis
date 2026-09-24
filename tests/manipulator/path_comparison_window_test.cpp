@@ -112,7 +112,7 @@ struct stage
             : loop(inline_workers)
             , scene(threepp::Scene::create())
             , published(publishing(at_rest(configuration(0.0, 0.0), origin, upright)))
-            , stencil(two_joint_handle(), attached_models{}, *scene, loop.main_strand(), published->reader(), rigid_motion::baseline().screw, rigid_motion::screw_slot_set{})
+            , stencil(two_joint_handle(), attachments{}, *scene, loop.main_strand(), published->reader(), rigid_motion::baseline().screw, rigid_motion::screw_slot_set{})
             , panel(panel_title, published->reader(), std::weak_ptr<owned_arm>{}, stencil, rigid_motion::baseline().screw, baseline().fk, planar_chain(), trajectory::baseline().path,
                     opened, comparison_at)
     {

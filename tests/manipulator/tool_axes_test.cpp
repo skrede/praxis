@@ -195,7 +195,7 @@ struct composed_arm
     std::shared_ptr<tool_window> panel;
 };
 
-composed_arm compose(scheduler &loop, attached_models attached = attached_models{}, std::shared_ptr<threepp::Scene> target = scaled_scene())
+composed_arm compose(scheduler &loop, attachments attached = attachments{}, std::shared_ptr<threepp::Scene> target = scaled_scene())
 {
     const strand work    = *loop.make_strand();
     const auto driven    = std::make_shared<scene_robot>(two_joint_arm(robot_ops{}));
@@ -218,9 +218,9 @@ std::shared_ptr<threepp::Object3D> ask_for_marker(composed_arm &over)
     return over.shown->attached_at(flange_attachment::frame_marker);
 }
 
-attached_models under(flange_marker_policy stated)
+attachments under(flange_marker_policy stated)
 {
-    attached_models named;
+    attachments named;
     named.marker = stated;
 
     return named;
@@ -322,7 +322,7 @@ TEST_CASE("the frame marker is drawn along the flange's own axes, one direction 
 {
     scheduler loop(inline_workers, dictating());
 
-    composed_arm placed = compose(loop, attached_models{}, threepp::Scene::create());
+    composed_arm placed = compose(loop, attachments{}, threepp::Scene::create());
     REQUIRE(placed.shown->initialize().has_value());
     placed.panel->initialize();
 
@@ -395,7 +395,7 @@ TEST_CASE("clearing the tool leaves the frame marker exactly where it was", "[ma
 {
     scheduler loop(inline_workers, dictating());
 
-    composed_arm placed = compose(loop, attached_models{}, threepp::Scene::create());
+    composed_arm placed = compose(loop, attachments{}, threepp::Scene::create());
     REQUIRE(placed.shown->initialize().has_value());
 
     const std::shared_ptr<threepp::Object3D> put = ask_for_marker(placed);
@@ -568,7 +568,7 @@ TEST_CASE("every flange attachment is carried by the flange's pose composed with
 {
     scheduler loop(inline_workers, dictating());
 
-    composed_arm placed = compose(loop, attached_models{}, threepp::Scene::create());
+    composed_arm placed = compose(loop, attachments{}, threepp::Scene::create());
     REQUIRE(placed.shown->initialize().has_value());
 
     const std::shared_ptr<threepp::Object3D> put  = ask_for_marker(placed);
@@ -601,7 +601,7 @@ TEST_CASE("driving the last joint turns the frame marker with no tool attached",
 {
     scheduler loop(inline_workers, dictating());
 
-    composed_arm placed = compose(loop, attached_models{}, threepp::Scene::create());
+    composed_arm placed = compose(loop, attachments{}, threepp::Scene::create());
     REQUIRE(placed.shown->initialize().has_value());
 
     const std::shared_ptr<threepp::Object3D> put = ask_for_marker(placed);
@@ -629,7 +629,7 @@ TEST_CASE("a tool window opens at the view its settings name, and at the loader 
     const Eigen::Vector3f unit = Eigen::Vector3f{1.f, 1.f, 1.f};
     const tool_window::settings graphics{true, "models/tool.stl", tool_window::tool_view::graphics_transform, none, praxis::axis_order::zyx, unit, none, none, praxis::axis_order::zyx,
                                          none};
-    const attached_models shaped{threepp::Mesh::create(threepp::BoxGeometry::create(link_edge, link_edge, link_edge), threepp::MeshBasicMaterial::create()), nullptr};
+    const attachments shaped{threepp::Mesh::create(threepp::BoxGeometry::create(link_edge, link_edge, link_edge), threepp::MeshBasicMaterial::create()), nullptr};
 
     composed_arm seated = compose(loop, shaped);
     tool_window carried("Tool settings", *seated.shown, seated.seen, seated.owned, praxis::rigid_motion::baseline().frame, graphics, "machine/tool");

@@ -117,7 +117,7 @@ struct ellipsoid_stage
             : loop(scheduler::inline_workers)
             , scene(threepp::Scene::create())
             , source(std::make_shared<arm_publisher>())
-            , shown(two_joint_handle(), attached_models{}, *scene, loop.main_strand(), source->reader(), rigid_motion::baseline().screw, rigid_motion::screw_slot_set{})
+            , shown(two_joint_handle(), attachments{}, *scene, loop.main_strand(), source->reader(), rigid_motion::baseline().screw, rigid_motion::screw_slot_set{})
     {
         put(published(refused(), refused(), Eigen::Vector3d(Eigen::Vector3d::Zero())));
         REQUIRE(shown.initialize().has_value());

@@ -116,7 +116,7 @@ std::string composition_diagnosis(const meios::model<> &description, const scene
 {
     captured_log captured;
 
-    composed = compose_arm(description, site, attached_models{}, baseline(), trajectory::baseline(), rigid_motion::baseline(), configuration(0.0, 0.0), no_windows());
+    composed = compose_arm(description, site, attachments{}, baseline(), trajectory::baseline(), rigid_motion::baseline(), configuration(0.0, 0.0), no_windows());
 
     return captured.text();
 }

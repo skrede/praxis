@@ -78,8 +78,7 @@ struct mirror
     explicit mirror(scheduler &loop)
             : scene(threepp::Scene::create())
             , published(std::make_shared<arm_publisher>())
-            , stencil(two_joint_handle(), attached_models{}, *scene, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw,
-                      praxis::rigid_motion::screw_slot_set{})
+            , stencil(two_joint_handle(), attachments{}, *scene, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw, praxis::rigid_motion::screw_slot_set{})
     {
     }
 

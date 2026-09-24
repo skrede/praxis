@@ -60,7 +60,7 @@ praxis::manipulator::arm_window_composer no_windows()
 // preset without anything under lib/ being edited or rebuilt.
 std::shared_ptr<praxis::scene::preset> composed_arm(const meios::model<> &description, const praxis::scene::preset_site &site, const praxis::manipulator::joint_vector &initial)
 {
-    return praxis::manipulator::compose_arm(description, site, praxis::manipulator::attached_models{}, arm(), shapes(), motions(), initial, no_windows());
+    return praxis::manipulator::compose_arm(description, site, praxis::manipulator::attachments{}, arm(), shapes(), motions(), initial, no_windows());
 }
 
 }

@@ -137,7 +137,7 @@ struct stage
             , control(std::make_shared<robot_controller>(*robot, motion_ops{.task_space_pose = &solving_task_space_pose}, trajectory::baseline().path, task_trajectory_ops{},
                                                          trajectory::baseline().time_scaling, trajectory::baseline().trajectory, rigid_motion::screw_ops{}, rigid_motion::frame_ops{}))
             , owned(std::make_shared<owned_arm>(work, work, robot, control, published))
-            , shown(two_joint_handle(), attached_models{}, *scene, work, published->reader(), rigid_motion::baseline().screw, rigid_motion::screw_slot_set{})
+            , shown(two_joint_handle(), attachments{}, *scene, work, published->reader(), rigid_motion::baseline().screw, rigid_motion::screw_slot_set{})
             , panel(panel_title, published->reader(), owned, shown, [this] { ask(); })
     {
         REQUIRE(shown.initialize().has_value());
@@ -239,7 +239,7 @@ struct stated_stage
             : loop(inline_workers, dictating())
             , scene(threepp::Scene::create())
             , published(std::make_shared<arm_publisher>())
-            , shown(two_joint_handle(), attached_models{}, *scene, loop.main_strand(), published->reader(), rigid_motion::baseline().screw, rigid_motion::screw_slot_set{})
+            , shown(two_joint_handle(), attachments{}, *scene, loop.main_strand(), published->reader(), rigid_motion::baseline().screw, rigid_motion::screw_slot_set{})
             , panel(panel_title, published->reader(), std::weak_ptr<owned_arm>{}, shown, std::function<void()>{})
     {
         REQUIRE(shown.initialize().has_value());

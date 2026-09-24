@@ -141,7 +141,7 @@ TEST_CASE("the supplied chain builder is the one the composed machine's forward 
     };
 
     const std::shared_ptr<scene::preset> composed =
-            compose_arm(machine, built.site, attached_models{}, deriving_the_supplied_chain(), trajectory::baseline(), rigid_motion::baseline(), folded(), capturing);
+            compose_arm(machine, built.site, attachments{}, deriving_the_supplied_chain(), trajectory::baseline(), rigid_motion::baseline(), folded(), capturing);
     REQUIRE(composed != nullptr);
     REQUIRE(composed->initialize().has_value());
     REQUIRE_FALSE(driven.expired());

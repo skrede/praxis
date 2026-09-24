@@ -69,7 +69,7 @@ std::vector<std::shared_ptr<threepp::Material>> line_ramp()
 
 }
 
-loadable_robot_stencil::loadable_robot_stencil(std::shared_ptr<threepp::Robot> robot_object, attached_models attached, threepp::Scene &parent, scheduler::strand render, arm_reader seen,
+loadable_robot_stencil::loadable_robot_stencil(std::shared_ptr<threepp::Robot> robot_object, attachments attached, threepp::Scene &parent, scheduler::strand render, arm_reader seen,
                                                rigid_motion::screw_ops screw, rigid_motion::screw_slot_set inert)
         : m_seen(std::move(seen))
         , m_scene(parent)

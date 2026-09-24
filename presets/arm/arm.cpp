@@ -45,10 +45,10 @@ std::shared_ptr<threepp::Object3D> loaded_mesh(const std::string &path)
 // meshes another composition of the same description is already showing. A model the composition
 // declares it does not draw is not loaded at all, so nothing stands in a scene with no control over
 // it: what is drawn is decided where the windows are decided and nowhere here.
-manipulator::attached_models scenario_models(const manipulator::arm_composition &composed, const arm_scenario &chosen)
+manipulator::attachments scenario_attachments(const manipulator::arm_composition &composed, const arm_scenario &chosen)
 {
-    return manipulator::attached_models{composed.draws_tool ? loaded_mesh(chosen.tool.model_path) : nullptr,
-                                        composed.draws_world ? loaded_mesh(chosen.world_object.model_path) : nullptr, composed.flange_marker};
+    return manipulator::attachments{composed.draws_tool ? loaded_mesh(chosen.tool.model_path) : nullptr, composed.draws_world ? loaded_mesh(chosen.world_object.model_path) : nullptr,
+                                    composed.flange_marker};
 }
 
 }
@@ -95,7 +95,7 @@ std::shared_ptr<scene::preset> arm_preset(const scene::preset_site &site, const 
         return nullptr;
     }
 
-    return manipulator::compose_arm(description->robot, site, scenario_models(composed, chosen), arm, shapes, motions, chosen.initial, composed.windows);
+    return manipulator::compose_arm(description->robot, site, scenario_attachments(composed, chosen), arm, shapes, motions, chosen.initial, composed.windows);
 }
 
 }

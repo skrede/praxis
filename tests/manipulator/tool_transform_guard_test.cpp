@@ -51,8 +51,8 @@ staged compose(scheduler &loop)
     const std::shared_ptr<threepp::Scene> target = threepp::Scene::create();
 
     return staged{published, target,
-                  std::make_shared<loadable_robot_stencil>(two_joint_handle(), attached_models{}, *target, loop.main_strand(), published->reader(),
-                                                           praxis::rigid_motion::baseline().screw, praxis::rigid_motion::screw_slot_set{})};
+                  std::make_shared<loadable_robot_stencil>(two_joint_handle(), attachments{}, *target, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw,
+                                                           praxis::rigid_motion::screw_slot_set{})};
 }
 
 using drawing = std::function<void()>;

@@ -263,7 +263,7 @@ struct stage
             , chain(std::move(derived))
             , scene(threepp::Scene::create())
             , published(std::make_shared<arm_publisher>())
-            , shown(build_scene_robot(six_axis_machine()).value(), attached_models{}, *scene, loop.main_strand(), published->reader(), composed, inert)
+            , shown(build_scene_robot(six_axis_machine()).value(), attachments{}, *scene, loop.main_strand(), published->reader(), composed, inert)
     {
         published->publish(std::make_shared<const arm_snapshot>(standing(at)));
         REQUIRE(shown.initialize().has_value());

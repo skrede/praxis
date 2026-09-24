@@ -192,7 +192,7 @@ struct standing_stencil
     std::shared_ptr<loadable_robot_stencil> shown;
 };
 
-standing_stencil stand(scheduler::scheduler &loop, const attached_models &held)
+standing_stencil stand(scheduler::scheduler &loop, const attachments &held)
 {
     const auto published                         = std::make_shared<arm_publisher>();
     const std::shared_ptr<threepp::Scene> target = threepp::Scene::create();
@@ -707,7 +707,7 @@ TEST_CASE("a tool window holding no tool opens at the loader whatever view its d
     REQUIRE(read_tool(nothing, at).selected_view == tool_window::tool_view::load_stl);
 
     scheduler::scheduler loop(scheduler::inline_workers);
-    standing_stencil bare = stand(loop, attached_models{});
+    standing_stencil bare = stand(loop, attachments{});
     tool_window untouched("Tool settings", *bare.shown, bare.published->reader(), std::weak_ptr<owned_arm>(), reference, read_tool(nothing, at), std::string(at));
     untouched.initialize();
 
@@ -718,7 +718,7 @@ TEST_CASE("a tool window holding no tool opens at the loader whatever view its d
     transforming.selected_view         = tool_window::tool_view::kinematics_transform;
 
     const config::document carried = saved_and_reloaded("tool-view-carried.xml", write_tool(transforming, at));
-    standing_stencil written       = stand(loop, attached_models{});
+    standing_stencil written       = stand(loop, attachments{});
     tool_window recorded("Tool settings", *written.shown, written.published->reader(), std::weak_ptr<owned_arm>(), reference, read_tool(carried, at), std::string(at));
     recorded.initialize();
 
@@ -730,14 +730,14 @@ TEST_CASE("a tool window holding no tool opens at the loader whatever view its d
     tool_window::settings composed = read_tool(nothing, at);
     composed.selected_view         = tool_window::tool_view::graphics_transform;
 
-    standing_stencil named = stand(loop, attached_models{});
+    standing_stencil named = stand(loop, attachments{});
     tool_window opened("Tool settings", *named.shown, named.published->reader(), std::weak_ptr<owned_arm>(), reference, composed, std::string(at));
     opened.initialize();
 
     REQUIRE(opened.state().selected_view == tool_window::tool_view::load_stl);
     require_one_edit(opened.settings_edits(nothing), view_key, "graphics_transform");
 
-    standing_stencil turned = stand(loop, attached_models{});
+    standing_stencil turned = stand(loop, attachments{});
     tool_window moved("Tool settings", *turned.shown, turned.published->reader(), std::weak_ptr<owned_arm>(), reference, read_tool(nothing, at), std::string(at));
     moved.initialize();
 
@@ -776,14 +776,14 @@ TEST_CASE("a world object window opens where its initializer puts it and offers 
     REQUIRE(read_world_object(carried, world_at).active);
 
     scheduler::scheduler loop(scheduler::inline_workers);
-    standing_stencil bare = stand(loop, attached_models{});
+    standing_stencil bare = stand(loop, attachments{});
     world_object_window loose("World object", *bare.shown, reference, read_world_object(carried, world_at), std::string(world_at));
     loose.initialize();
 
     REQUIRE(loose.state().selected_view == world_object_window::world_view::load_stl);
     REQUIRE(loose.settings_edits(carried).empty());
 
-    standing_stencil seated = stand(loop, attached_models{nullptr, a_mesh()});
+    standing_stencil seated = stand(loop, attachments{nullptr, a_mesh()});
     world_object_window held("World object", *seated.shown, reference, read_world_object(carried, world_at), std::string(world_at));
     held.initialize();
 

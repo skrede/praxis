@@ -59,7 +59,7 @@ seen observe(stage &built, const capabilities &arm)
     };
 
     const std::shared_ptr<scene::preset> composed =
-            compose_arm(well_formed_arm(), built.site, attached_models{}, arm, trajectory::baseline(), rigid_motion::baseline(), joint_vector{}, capturing);
+            compose_arm(well_formed_arm(), built.site, attachments{}, arm, trajectory::baseline(), rigid_motion::baseline(), joint_vector{}, capturing);
 
     REQUIRE(composed != nullptr);
 

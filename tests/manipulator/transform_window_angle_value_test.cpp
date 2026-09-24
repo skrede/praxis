@@ -90,7 +90,7 @@ struct staged
     std::shared_ptr<loadable_robot_stencil> shown;
 };
 
-staged stage_with(praxis::scheduler::scheduler &loop, attached_models attached)
+staged stage_with(praxis::scheduler::scheduler &loop, attachments attached)
 {
     composed_arm arm                             = compose(loop, composing_motion(), rigid_motion::baseline().screw);
     const std::shared_ptr<threepp::Scene> target = threepp::Scene::create();
@@ -124,7 +124,7 @@ TEST_CASE("the orientation a world object is placed with reaches the frame seam 
     built_radians.clear();
 
     praxis::scheduler::scheduler loop(inline_workers, clock_source{&reading});
-    staged placed = stage_with(loop, attached_models{.world = threepp::Object3D::create()});
+    staged placed = stage_with(loop, attachments{.world = threepp::Object3D::create()});
     world_object_window panel("World object", *placed.shown, framing(), placing(), "machine/world");
     panel.initialize();
 
@@ -139,7 +139,7 @@ TEST_CASE("the orientation a tool's rendered transform is built from reaches the
     built_radians.clear();
 
     praxis::scheduler::scheduler loop(inline_workers, clock_source{&reading});
-    staged placed = stage_with(loop, attached_models{.tool = threepp::Object3D::create()});
+    staged placed = stage_with(loop, attachments{.tool = threepp::Object3D::create()});
     tool_window panel("Tool settings", *placed.shown, placed.arm.seen, placed.arm.owned, framing(), attaching(), "machine/tool");
     panel.initialize();
     static_cast<void>(loop.drain());
@@ -158,7 +158,7 @@ TEST_CASE("the orientation a tool's kinematic offset is built from reaches the f
     built_radians.clear();
 
     praxis::scheduler::scheduler loop(inline_workers, clock_source{&reading});
-    staged placed = stage_with(loop, attached_models{.tool = threepp::Object3D::create()});
+    staged placed = stage_with(loop, attachments{.tool = threepp::Object3D::create()});
     tool_window panel("Tool settings", *placed.shown, placed.arm.seen, placed.arm.owned, framing(), attaching(), "machine/tool");
     panel.initialize();
     static_cast<void>(loop.drain());

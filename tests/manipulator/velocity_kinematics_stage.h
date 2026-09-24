@@ -69,7 +69,7 @@ struct velocity_stage
             , scene(threepp::Scene::create())
             , source(std::make_shared<arm_publisher>())
             , driving(std::make_shared<arm_publisher>())
-            , shown(two_joint_handle(), attached_models{}, *scene, loop.main_strand(), source->reader(), rigid_motion::baseline().screw, rigid_motion::screw_slot_set{})
+            , shown(two_joint_handle(), attachments{}, *scene, loop.main_strand(), source->reader(), rigid_motion::baseline().screw, rigid_motion::screw_slot_set{})
     {
         REQUIRE(shown.initialize().has_value());
         REQUIRE(shown.set_joint_screws(transform::Identity(), two_axes()).has_value());

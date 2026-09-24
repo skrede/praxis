@@ -82,7 +82,7 @@ struct stage
             , scene(threepp::Scene::create())
             , published(std::make_shared<arm_publisher>())
             , held(std::make_shared<edited_pose>())
-            , shown(two_joint_handle(), attached_models{}, *scene, loop.main_strand(), published->reader(), rigid_motion::baseline().screw, rigid_motion::screw_slot_set{})
+            , shown(two_joint_handle(), attachments{}, *scene, loop.main_strand(), published->reader(), rigid_motion::baseline().screw, rigid_motion::screw_slot_set{})
     {
         publish(standing_at(configuration(0.0, 0.0), {}));
         REQUIRE(shown.initialize().has_value());

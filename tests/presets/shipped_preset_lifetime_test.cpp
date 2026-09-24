@@ -99,7 +99,7 @@ manipulator::capabilities without_the_chain_derivation()
 
 std::shared_ptr<preset> arm_over(const preset_site &site, const manipulator::capabilities &arm)
 {
-    return manipulator::compose_arm(well_formed_arm(), site, manipulator::attached_models{}, arm, trajectory::baseline(), rigid_motion::baseline(), one_joint(0.25), one_window());
+    return manipulator::compose_arm(well_formed_arm(), site, manipulator::attachments{}, arm, trajectory::baseline(), rigid_motion::baseline(), one_joint(0.25), one_window());
 }
 
 struct shipped_preset

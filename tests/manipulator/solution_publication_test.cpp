@@ -104,8 +104,7 @@ struct stage
             , scene(threepp::Scene::create())
             , published(std::make_shared<arm_publisher>())
             , seen(published->reader())
-            , shown(two_joint_handle(), attached_models{}, *scene, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw,
-                    praxis::rigid_motion::screw_slot_set{})
+            , shown(two_joint_handle(), attachments{}, *scene, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw, praxis::rigid_motion::screw_slot_set{})
     {
         auto solver = kinematics::compose(reaching_chain(), forward_kinematics_ops{.forward_kinematics = &sliding_forward_kinematics}, differential_kinematics_ops{}, inverse,
                                           praxis::rigid_motion::baseline().screw, praxis::rigid_motion::baseline().frame);

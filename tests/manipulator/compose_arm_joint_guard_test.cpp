@@ -133,7 +133,7 @@ opened open_named(stage &built, std::string name, const joint_vector &initial)
     };
 
     captured_log captured;
-    taken.composed  = compose_arm(elbowed_arm(std::move(name)), built.site, attached_models{}, baseline(), trajectory::baseline(), rigid_motion::baseline(), initial, capturing);
+    taken.composed  = compose_arm(elbowed_arm(std::move(name)), built.site, attachments{}, baseline(), trajectory::baseline(), rigid_motion::baseline(), initial, capturing);
     taken.diagnosis = captured.text();
 
     return taken;

@@ -94,7 +94,7 @@ std::shared_ptr<threepp::Object3D> make_flange_marker(threepp::Object3D &arm);
 // The two models an arm carries beside the robot itself, and the policy the marker at its flange is
 // drawn under. A null tool leaves the flange carrying nothing under the tool key until one is
 // installed; a null world reference is no world object at all rather than an empty one.
-struct attached_models
+struct attachments
 {
     std::shared_ptr<threepp::Object3D> tool  = nullptr;
     std::shared_ptr<threepp::Object3D> world = nullptr;
@@ -151,7 +151,7 @@ class loadable_robot_stencil : public scene::stencil
     };
 
 public:
-    loadable_robot_stencil(std::shared_ptr<threepp::Robot> robot_object, attached_models attached, threepp::Scene &parent, scheduler::strand render, arm_reader seen,
+    loadable_robot_stencil(std::shared_ptr<threepp::Robot> robot_object, attachments attached, threepp::Scene &parent, scheduler::strand render, arm_reader seen,
                            rigid_motion::screw_ops screw, rigid_motion::screw_slot_set inert);
     ~loadable_robot_stencil() override = default;
 

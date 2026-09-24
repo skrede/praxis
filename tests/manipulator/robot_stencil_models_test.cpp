@@ -103,7 +103,7 @@ TEST_CASE("a stencil built with a tool and a world reference object holds both i
     const std::shared_ptr<threepp::Object3D> tool  = supplied_model();
     const std::shared_ptr<threepp::Object3D> world = supplied_model();
 
-    loadable_robot_stencil shown(two_joint_handle(), attached_models{tool, world}, *target, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw,
+    loadable_robot_stencil shown(two_joint_handle(), attachments{tool, world}, *target, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw,
                                  praxis::rigid_motion::screw_slot_set{});
 
     REQUIRE(shown.initialize().has_value());
@@ -134,7 +134,7 @@ TEST_CASE("a world reference object's placement is read in the robot's frame and
 
     const std::shared_ptr<threepp::Object3D> world = supplied_model();
 
-    loadable_robot_stencil shown(two_joint_handle(), attached_models{nullptr, world}, *target, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw,
+    loadable_robot_stencil shown(two_joint_handle(), attachments{nullptr, world}, *target, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw,
                                  praxis::rigid_motion::screw_slot_set{});
 
     REQUIRE(shown.initialize().has_value());
@@ -161,7 +161,7 @@ TEST_CASE("a composition supplying no world reference object composes, initializ
 
     const std::shared_ptr<threepp::Object3D> tool = supplied_model();
 
-    loadable_robot_stencil shown(two_joint_handle(), attached_models{tool, nullptr}, *target, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw,
+    loadable_robot_stencil shown(two_joint_handle(), attachments{tool, nullptr}, *target, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw,
                                  praxis::rigid_motion::screw_slot_set{});
 
     REQUIRE(shown.initialize().has_value());
@@ -182,7 +182,7 @@ TEST_CASE("a stencil built with neither model carries nothing at the flange unti
     const std::shared_ptr<threepp::Scene> target = threepp::Scene::create();
     const auto published                         = publishing(configuration(0.0, 0.0));
 
-    loadable_robot_stencil shown(two_joint_handle(), attached_models{}, *target, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw,
+    loadable_robot_stencil shown(two_joint_handle(), attachments{}, *target, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw,
                                  praxis::rigid_motion::screw_slot_set{});
 
     REQUIRE(shown.initialize().has_value());
@@ -208,7 +208,7 @@ TEST_CASE("setting a tool at run time detaches the object the stencil was built 
     const std::shared_ptr<threepp::Object3D> supplied = supplied_model();
     const std::shared_ptr<threepp::Object3D> swapped  = supplied_model();
 
-    loadable_robot_stencil shown(two_joint_handle(), attached_models{supplied, nullptr}, *target, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw,
+    loadable_robot_stencil shown(two_joint_handle(), attachments{supplied, nullptr}, *target, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw,
                                  praxis::rigid_motion::screw_slot_set{});
 
     REQUIRE(shown.initialize().has_value());
@@ -230,7 +230,7 @@ TEST_CASE("a stencil built with no robot object refuses rather than reading it",
     const auto published                         = publishing(configuration(0.0, 0.0));
     const std::size_t bare                       = descendants(*target);
 
-    CHECK_THROWS_AS(loadable_robot_stencil(nullptr, attached_models{supplied_model(), supplied_model()}, *target, loop.main_strand(), published->reader(),
+    CHECK_THROWS_AS(loadable_robot_stencil(nullptr, attachments{supplied_model(), supplied_model()}, *target, loop.main_strand(), published->reader(),
                                            praxis::rigid_motion::baseline().screw, praxis::rigid_motion::screw_slot_set{}),
                     std::invalid_argument);
     CHECK(descendants(*target) == bare);

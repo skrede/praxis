@@ -130,7 +130,7 @@ std::shared_ptr<praxis::scene::preset> placing_arm(const praxis::scene::preset_s
     const std::shared_ptr<threepp::Object3D> world = threepp::Object3D::create();
     auto published                                 = std::make_shared<arm_publisher>();
 
-    auto body  = std::make_shared<loadable_robot_stencil>(handle, attached_models{tool, world}, site.scene, site.render, published->reader(), praxis::rigid_motion::baseline().screw,
+    auto body  = std::make_shared<loadable_robot_stencil>(handle, attachments{tool, world}, site.scene, site.render, published->reader(), praxis::rigid_motion::baseline().screw,
                                                           praxis::rigid_motion::screw_slot_set{});
     auto built = std::make_shared<praxis::scene::preset>(body, std::vector<window_share>{}, site.add_window, site.remove_window);
 

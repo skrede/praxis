@@ -179,8 +179,7 @@ struct stage
             : loop(inline_workers)
             , scene(threepp::Scene::create())
             , published(std::make_shared<arm_publisher>())
-            , shown(two_joint_handle(), attached_models{}, *scene, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw,
-                    praxis::rigid_motion::screw_slot_set{})
+            , shown(two_joint_handle(), attachments{}, *scene, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw, praxis::rigid_motion::screw_slot_set{})
     {
         published->publish(std::make_shared<const arm_snapshot>(upright()));
         REQUIRE(shown.initialize().has_value());

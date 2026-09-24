@@ -221,7 +221,7 @@ TEST_CASE("a stencil whose arm has published nothing leaves the rendered robot a
     const std::shared_ptr<threepp::Scene> target = threepp::Scene::create();
     arm_publisher unheld;
 
-    loadable_robot_stencil shown(two_joint_handle(), attached_models{}, *target, loop.main_strand(), unheld.reader(), praxis::rigid_motion::baseline().screw,
+    loadable_robot_stencil shown(two_joint_handle(), attachments{}, *target, loop.main_strand(), unheld.reader(), praxis::rigid_motion::baseline().screw,
                                  praxis::rigid_motion::screw_slot_set{});
     REQUIRE(shown.initialize().has_value());
 
