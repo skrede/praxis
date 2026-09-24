@@ -1,4 +1,5 @@
 #include "frame_markers.h"
+#include "arm_pose_transformations.h"
 
 #include "praxis/presets/arm.h"
 
@@ -21,10 +22,27 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <string_view>
 
 namespace praxis::presets {
 
 namespace {
+
+using composed_windows = std::vector<std::shared_ptr<scene::imgui_window>>;
+
+constexpr std::string_view composer_name = "presets.arm_windows";
+
+composed_windows declined(manipulator::loadable_robot_stencil &on, const std::string &unbound)
+{
+    on.clear_flange_attachment(manipulator::flange_attachment::tool);
+    on.clear_world_object();
+
+    spdlog::error("praxis: '{}' was denied {}, which still hold their defaults; every pose it would show or command would be answered without being computed, so it composes no "
+                  "window and draws neither model",
+                  composer_name, unbound);
+
+    return composed_windows{};
+}
 
 std::shared_ptr<threepp::Object3D> loaded_mesh(const std::string &path)
 {
@@ -62,13 +80,16 @@ manipulator::arm_composition arm_windows(arm_scenario chosen)
     composed.draws_world = true;
     composed.windows     = [state = std::move(chosen)](const manipulator::arm_window_inputs &built)
     {
+        if(const std::string unbound = unbound_pose_transformations(built.inert); !unbound.empty())
+            return declined(built.stencil, unbound);
+
         install_frame_markers(built.stencil);
 
         // The task-space window and the two jog windows drive one pose between them, so the three are
         // handed the same one.
         auto edited = std::make_shared<manipulator::edited_pose>();
 
-        return std::vector<std::shared_ptr<scene::imgui_window>>{
+        return composed_windows{
                 std::make_shared<manipulator::world_object_window>("World object settings", built.stencil, built.frames, state.world_object, window_paths::world_object),
                 std::make_shared<manipulator::joint_control_window>("Joint control", built.seen, built.arm, state.joint_control, window_paths::joint_control),
                 std::make_shared<manipulator::task_space_window>("Task space", built.seen, built.arm, built.frames, edited, state.task_space, window_paths::task_space),

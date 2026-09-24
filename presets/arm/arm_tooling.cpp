@@ -1,9 +1,8 @@
 #include "frame_markers.h"
+#include "arm_pose_transformations.h"
 
 #include "praxis/presets/arm.h"
 
-#include "praxis/manipulator/robot.h"
-#include "praxis/manipulator/slots.h"
 #include "praxis/manipulator/pose_readout.h"
 #include "praxis/manipulator/robot_view_window.h"
 #include "praxis/manipulator/loadable_robot_stencil.h"
@@ -12,7 +11,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include <array>
 #include <memory>
 #include <string>
 #include <vector>
@@ -23,14 +21,6 @@ namespace praxis::presets {
 namespace {
 
 using composed_windows = std::vector<std::shared_ptr<scene::imgui_window>>;
-
-// The four frame transformations every pose this scenario shows is read through. Each of them
-// answers the origin unrotated where nobody bound it, and the origin unrotated is a pose an arm can
-// genuinely be at, so downstream of them a fabrication and a reading are the same value.
-constexpr std::array<manipulator::robot_slot, 4> pose_transformations{manipulator::robot_slot::tool_pose_from_flange_pose, manipulator::robot_slot::flange_pose_from_tool_pose,
-                                                                      manipulator::robot_slot::position_from_pose, manipulator::robot_slot::orientation_from_pose};
-
-constexpr manipulator::robot_ops slot_names{};
 
 // Said once, at composition, rather than branched on at every read: the four transformations cannot
 // refuse, so a window opened over an unbound one would show a plausible pose forever and no reader
@@ -77,8 +67,8 @@ manipulator::arm_composition arm_windows_tooling(arm_scenario chosen)
     composed.flange_marker = manipulator::flange_marker_policy::stands;
     composed.windows       = [state = std::move(chosen)](const manipulator::arm_window_inputs &built)
     {
-        if(const manipulator::robot_slot_set unbound = defaulted_among(built.inert, pose_transformations); !unbound.empty())
-            return declined(built.stencil, joined_slot_names(slot_names, unbound));
+        if(const std::string unbound = unbound_pose_transformations(built.inert); !unbound.empty())
+            return declined(built.stencil, unbound);
 
         draw_derived_chain(built.stencil, built.chain);
         install_frame_markers(built.stencil);

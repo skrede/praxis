@@ -12,9 +12,10 @@
 namespace praxis::manipulator {
 
 // The angles are degrees and they are Euler angles about `order`; the position and the pose they
-// compose are expressed in the space frame, which is the frame a published tool pose arrives in.
-// The angles are read in `order` where they are read, so moving `order` reinterprets the angles
-// already held rather than re-deriving them, and the pose the value stands for moves with it.
+// compose are expressed in the space frame, which is the frame a published tool pose arrives in, and
+// the pose stands for the tool, so every entry point it is handed to takes a tool pose. The angles
+// are read in `order` where they are read, so moving `order` reinterprets the angles already held
+// rather than re-deriving them, and the pose the value stands for moves with it.
 struct edited_pose
 {
     edited_pose();

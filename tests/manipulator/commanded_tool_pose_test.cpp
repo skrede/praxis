@@ -267,6 +267,22 @@ double closed_form_asked_at_strays(const transform &tool_offset)
     return apart(pose_the_closed_form_was_asked_at(), reaching);
 }
 
+double the_two_routes_apart(const transform &tool_offset)
+{
+    commanded_arm placed(tool_offset);
+    const transform target  = nudged(placed.tool_pose());
+    const joint_vector seed = placed.driven().joint_positions();
+
+    const expected<joint_vector, refusal> from_the_tool_pose = placed.driven().ik_solve_pose(target, seed);
+    const expected<joint_vector, refusal> from_the_conversion =
+            manipulator::baseline().motion.task_space_pose(placed.driven().solver(), placed.driven().flange_pose_from_tool_pose(target), seed);
+
+    REQUIRE(from_the_tool_pose.has_value());
+    REQUIRE(from_the_conversion.has_value());
+
+    return (*from_the_tool_pose - *from_the_conversion).cwiseAbs().maxCoeff();
+}
+
 }
 
 TEST_CASE("a tick along a bent tool's own x moves the tool centre point by the tick", "[manipulator]")
@@ -446,4 +462,9 @@ TEST_CASE("a closed-form solve is asked at the flange pose a bent tool's command
 TEST_CASE("a closed-form solve is asked at the flange pose the commanded pose of an arm wearing no tool converts to", "[manipulator]")
 {
     CHECK(closed_form_asked_at_strays(no_tool()) < recorded_exactly);
+}
+
+TEST_CASE("the tool-pose solve and the conversion ahead of a flange-pose solve answer one configuration on a bent tool", "[manipulator]")
+{
+    CHECK(the_two_routes_apart(bent_tool()) < recorded_exactly);
 }
