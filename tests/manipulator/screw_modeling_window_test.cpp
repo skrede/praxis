@@ -804,6 +804,12 @@ TEST_CASE("screws supplied beyond the chain's length are said on a line of their
         CHECK_FALSE(cell.stated.empty());
     CHECK(surplus.back().stated.find(std::to_string(axes + 2u)) != std::string::npos);
     CHECK(surplus.back().stated.find(std::to_string(axes)) != std::string::npos);
+
+    screw_modeling_window exactly_enough = opened_over(headless, only_the_rows(), opening{headless.chain.home, headless.chain.space_screws});
+    const scene::readout none            = exactly_enough.reading();
+
+    REQUIRE(none.rows.size() == whole_chain_rows + 1u + axes);
+    CHECK(none.rows.back()[named_cell].stated == "Joint " + std::to_string(axes));
 }
 
 TEST_CASE("a reset leaves every joint line saying it was not supplied", "[manipulator][modeling]")
