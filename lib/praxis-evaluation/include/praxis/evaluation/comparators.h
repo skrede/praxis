@@ -12,7 +12,8 @@ namespace praxis::evaluation {
 residual element_wise_residual(const Eigen::Ref<const Eigen::MatrixXd> &first, const Eigen::Ref<const Eigen::MatrixXd> &second);
 
 // The geodesic distance on SO(3): the rotation carried by `first` transposed times `second`,
-// reported in radians and never negative.
+// reported in radians and never negative. Defined only where that product is a rotation: where it is
+// not, no angle names it and the magnitude is unbounded, so the comparison differs at every bound.
 residual geodesic_residual(const Eigen::Matrix3d &first, const Eigen::Matrix3d &second);
 
 // The two halves of a pose discrepancy, carried apart and never summed: the geodesic angle between

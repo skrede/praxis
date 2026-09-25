@@ -1,7 +1,9 @@
+#include "praxis/evaluation/tolerance.h"
 #include "praxis/evaluation/comparators.h"
 
 #include <Eigen/Geometry>
 
+#include <limits>
 #include <algorithm>
 
 namespace praxis::evaluation {
@@ -13,6 +15,13 @@ namespace {
 bool carries_a_linear_half(residual_kind kind)
 {
     return kind == residual_kind::pose || kind == residual_kind::log_up_to_branch;
+}
+
+// A reflection is exactly orthonormal and a shear leaves the determinant where it was, so each term
+// catches a class the other misses.
+bool is_a_rotation(const Eigen::Matrix3d &m)
+{
+    return is_approx_equal(Eigen::Matrix3d(m.transpose() * m), Eigen::Matrix3d::Identity()) && is_approx_equal(m.determinant(), 1.0);
 }
 
 }
@@ -28,6 +37,8 @@ residual element_wise_residual(const Eigen::Ref<const Eigen::MatrixXd> &first, c
 residual geodesic_residual(const Eigen::Matrix3d &first, const Eigen::Matrix3d &second)
 {
     const Eigen::Matrix3d between(first.transpose() * second);
+    if(!is_a_rotation(between))
+        return residual{residual_kind::geodesic, std::numeric_limits<double>::infinity(), 0.0};
 
     return residual{residual_kind::geodesic, Eigen::AngleAxisd(between).angle(), 0.0};
 }

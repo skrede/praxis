@@ -2,6 +2,7 @@ praxis_add_test(tolerance_test.cpp LIBS praxis::rigid_motion praxis::trajectory)
 
 praxis_add_test(comparators_test.cpp LIBS praxis::evaluation)
 praxis_add_test(comparators_logarithm_test.cpp LIBS praxis::evaluation)
+praxis_add_test(comparators_rigidity_test.cpp LIBS praxis::evaluation)
 praxis_add_test(refusal_agreement_test.cpp LIBS praxis::evaluation)
 praxis_add_test(slot_fold_test.cpp LIBS praxis::evaluation)
 
