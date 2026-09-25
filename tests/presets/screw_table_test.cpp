@@ -221,6 +221,68 @@ TEST_CASE("a document carrying only some of the chain's rows leaves the rest uns
     }
 }
 
+// The screw a row nobody supplied opens at is one somebody could plausibly have written down, so
+// the two entries carry equal numbers and only where each came from tells them apart.
+TEST_CASE("a row naming exactly the numbers a row nobody supplied opens at is supplied, and its neighbour is not", "[presets][configuration]")
+{
+    const manipulator::screw_chain derived = derived_six();
+    const screw_axis padding               = manipulator::screw_modeling_window::opening_screw(motions().screw, derived.space_screws.front());
+
+    const supplied read = opened(authored(row(1u, padding), "padding-equal.xml"), derived);
+
+    REQUIRE(read.screws.size() == 6u);
+    REQUIRE(read.screws.front().has_value());
+    CHECK((*read.screws.front() - padding).norm() < 1.0e-5);
+    CHECK_FALSE(read.screws[1].has_value());
+}
+
+// A row is resolved by the identity it carries rather than by where it stands, so the order the
+// document lists its joints in is not the order they are read into.
+TEST_CASE("a table naming its joints out of the chain's order lands each screw at its own joint", "[presets][configuration]")
+{
+    const std::string body = row(3u, six_vector(3.0)) + row(1u, six_vector(1.0)) + row(2u, six_vector(2.0));
+
+    const supplied read = opened(authored(body, "named-out-of-order.xml"), derived_six());
+
+    REQUIRE(read.screws.size() == 6u);
+    for(std::size_t joint = 0u; joint < 3u; ++joint)
+    {
+        INFO("joint " << joint);
+        REQUIRE(read.screws[joint].has_value());
+        CHECK((*read.screws[joint] - six_vector(1.0 + static_cast<double>(joint))).norm() < 1.0e-5);
+    }
+    for(std::size_t joint = 3u; joint < read.screws.size(); ++joint)
+    {
+        INFO("joint " << joint);
+        CHECK_FALSE(read.screws[joint].has_value());
+    }
+}
+
+// An instance present is a row somebody wrote, whatever it leaves out, and a leaf left out is the
+// zero the declaration falls back to -- which is exactly what a writer emitting only what moved
+// leaves behind.
+TEST_CASE("a row the document carries an instance of with every leaf left out is supplied at zero", "[presets][configuration]")
+{
+    const supplied read = opened(authored(row(2u, std::nullopt), "a-bare-instance.xml"), derived_six());
+
+    REQUIRE(read.screws.size() == 6u);
+    REQUIRE(read.screws[1].has_value());
+    CHECK(read.screws[1]->norm() == 0.0);
+    CHECK_FALSE(read.screws.front().has_value());
+}
+
+TEST_CASE("a document naming no joint at all leaves every joint unsupplied", "[presets][configuration]")
+{
+    const supplied read = opened(authored(std::string(), "names-no-joint.xml"), derived_six());
+
+    REQUIRE(read.screws.size() == 6u);
+    for(std::size_t joint = 0u; joint < read.screws.size(); ++joint)
+    {
+        INFO("joint " << joint);
+        CHECK_FALSE(read.screws[joint].has_value());
+    }
+}
+
 // A row somebody kept for a longer machine names a joint this one does not have, and no reading of
 // it is a reading of this chain: the whole table is turned away rather than the surplus dropped.
 TEST_CASE("a table naming a joint the machine's chain does not have is refused with both counts", "[presets][configuration]")

@@ -848,6 +848,44 @@ TEST_CASE("a reset leaves every joint line saying it was not supplied", "[manipu
         CHECK(joint_line(shown, joint).back().stated == "not supplied");
 }
 
+// What the drawing shows for a joint and what the reading says about it are one record read twice.
+// A second table kept beside the provenance would let the two answer differently, so they are
+// asserted together across the three states one joint passes through.
+TEST_CASE("one joint's drawn axis and its line agree about what it was supplied", "[manipulator][modeling]")
+{
+    constexpr std::size_t watched = 0u;
+    const Eigen::Vector3d through(0.4, 0.0, 0.0);
+    const Eigen::Vector3d typed(0.25, 0.0, 0.0);
+
+    stage headless(described_chain(), at_rest());
+    std::vector<screw_axis> kept(axes, unit_z_axis());
+    kept[watched] = axis_through(through);
+
+    screw_modeling_window::controls reset_only;
+    reset_only.home = false;
+
+    screw_modeling_window panel = opened_over(headless, reset_only, opening{transform::Identity(), kept});
+    panel.initialize();
+    headless.draw();
+
+    REQUIRE(joint_line(panel.reading(), watched)[rotation_cell].stated.empty());
+    REQUIRE(covers(headless.axis_of(watched), through));
+
+    press_along(panel, reset_control, 0u);
+    headless.draw();
+
+    CHECK(joint_line(panel.reading(), watched).back().stated == "not supplied");
+    CHECK_FALSE(panel.state().screws[watched].has_value());
+    CHECK(headless.axis_of(watched).front().head<2>().norm() < read_back);
+
+    type_component(panel, below_reset + point_row, 0u, "0.25");
+    headless.draw();
+
+    CHECK(joint_line(panel.reading(), watched)[rotation_cell].stated.empty());
+    CHECK(panel.state().screws[watched].has_value());
+    CHECK(covers(headless.axis_of(watched), typed));
+}
+
 // The window a modeling scenario carrying no document opens is a window supplied nothing, and every
 // row of it is a row a person fills in by typing. What the reading is taken from is therefore what
 // stands in the rows now rather than what the composition handed over.

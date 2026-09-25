@@ -505,15 +505,21 @@ TEST_CASE("the edits the chain window mints reach the leaves the table's keyspac
 
 // A document is free to name the joints somebody wrote down and say nothing about the rest, and the
 // window it opens has to keep the two apart: a joint the document never named is not a joint
-// supplied with whatever this library would have drawn in its place.
+// supplied with whatever this library would have drawn in its place. The first named joint carries
+// exactly the numbers such a drawing would have used, so the two are told apart by where each came
+// from and never by what it reads.
 TEST_CASE("a joint the document is silent about says so in the window the scenario opens", "[presets][windows]")
 {
     const std::vector<std::size_t> named{0u, 1u, 3u, 4u, 5u};
 
     const described_arm described(6, "six");
     const presets::arm_scenario chosen     = described_by(described.where);
-    const std::vector<screw_axis> supplied = a_supplied_chain(6);
-    const config::document written         = kept_chain_naming(supplied, named, "a-hole-in-the-chain.xml");
+    const manipulator::screw_chain derived = derived_chain(described.where);
+
+    std::vector<screw_axis> supplied = a_supplied_chain(6);
+    supplied.front()                 = manipulator::screw_modeling_window::opening_screw(rigid_motion::baseline().screw, derived.space_screws.front());
+
+    const config::document written = kept_chain_naming(supplied, named, "a-hole-in-the-chain.xml");
 
     REQUIRE(written.identities(std::string(presets::screw_table_path) + "/joint").size() == named.size());
 
