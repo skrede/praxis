@@ -1,6 +1,7 @@
 #ifndef HPP_GUARD_PRAXIS_MANIPULATOR_COMPOSE_ARM_H
 #define HPP_GUARD_PRAXIS_MANIPULATOR_COMPOSE_ARM_H
 
+#include "praxis/manipulator/robot.h"
 #include "praxis/manipulator/slots.h"
 #include "praxis/manipulator/types.h"
 #include "praxis/manipulator/arm_state.h"
@@ -28,14 +29,16 @@ namespace praxis::manipulator {
 // still holding an inert default are named as enumerators, so nothing a window keeps points into the
 // composed aggregate. The chain is the one derived from this composition's own description, and the
 // joint kinds are already implicit in it: a screw whose angular part is zero is a prismatic joint.
-// The forward maps, the Jacobians and the path shapes are here and the solve is not, so a window has
-// nothing to compose a holder from and no solve it could run on the render strand.
+// The forward maps, the Jacobians, the path shapes and the conversions a pose is read through are
+// here and the solver they would be asked over is not, so a window has nothing to compose a holder
+// from and no solve it could run on the render strand.
 struct arm_window_inputs
 {
     loadable_robot_stencil &stencil;
     arm_reader seen;
     std::weak_ptr<owned_arm> arm;
     rigid_motion::frame_ops frames;
+    robot_ops robot;
     robot_slot_set inert;
     rigid_motion::screw_slot_set screw_inert;
     screw_chain chain;

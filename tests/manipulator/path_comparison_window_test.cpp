@@ -25,6 +25,8 @@
 #include <Eigen/Core>
 
 #include <span>
+#include <array>
+#include <cmath>
 #include <memory>
 #include <string>
 #include <vector>
@@ -59,6 +61,11 @@ constexpr std::size_t play_button        = 0;
 
 // How far apart the poses of a published traversed run stand, in metres along one axis.
 constexpr double traversed_step = 0.05;
+
+// The three commanded drawings in one order: the name each stands under on the stencil and the shape
+// each is sampled from, read by the same index.
+constexpr std::array<const char *, 3> drawn_names{path_comparison_window::joint_space_path, path_comparison_window::decoupled_path, path_comparison_window::screw_path};
+constexpr std::array<compared_path, 3> drawn_shapes{compared_path::joint_space, compared_path::decoupled, compared_path::screw};
 
 const Eigen::Vector3d origin(Eigen::Vector3d::Zero());
 const rotation upright(rotation::Identity());
@@ -160,6 +167,25 @@ transform bent_tool_offset()
     return frames.transformation_matrix_from_rotation_position(frames.rotate_z(0.35), Eigen::Vector3d(0.132, 0.082, 0.0));
 }
 
+// The publication a stage opens on where a tool stands at the flange. Every other member is what an
+// arm at rest reports, so the offset is the one thing separating this from the opening publication.
+arm_snapshot tooled_with(const transform &offset)
+{
+    arm_snapshot seen = at_rest(configuration(0.0, 0.0), origin, upright);
+    seen.tool_offset  = offset;
+
+    return seen;
+}
+
+std::vector<Eigen::Vector3d> positions_of(const std::vector<transform> &poses)
+{
+    std::vector<Eigen::Vector3d> standing;
+    for(const transform &pose : poses)
+        standing.push_back(pose.block<3, 1>(0, 3));
+
+    return standing;
+}
+
 std::vector<transform> carried_to_the_tool_frame(const std::vector<transform> &flange_poses)
 {
     std::vector<transform> standing;
@@ -167,6 +193,23 @@ std::vector<transform> carried_to_the_tool_frame(const std::vector<transform> &f
         standing.push_back(tool_pose_from_flange_pose(pose, bent_tool_offset()));
 
     return standing;
+}
+
+double reach_of(const transform &offset)
+{
+    return offset.block<3, 1>(0, 3).norm();
+}
+
+// The greatest a read line's separation from a run of positions departs from one stated distance. A
+// pose and the pose a tool offset carries it to stand that offset's own translation length apart at
+// every sample whatever the rotation there, so a converted drawing answers zero.
+double off_the_reach(const std::vector<Eigen::Vector3d> &drawn, const std::vector<Eigen::Vector3d> &from, double reach)
+{
+    double worst = 0.0;
+    for(std::size_t at = 0; at < drawn.size() && at < from.size(); ++at)
+        worst = std::max(worst, std::abs((drawn[at] - from[at]).norm() - reach));
+
+    return worst;
 }
 
 double worst_gap(const std::vector<transform> &one, const std::vector<transform> &other)
@@ -180,13 +223,15 @@ double worst_gap(const std::vector<transform> &one, const std::vector<transform>
 
 struct stage
 {
-    explicit stage(const path_comparison_window::settings &opened = ends_at(configuration(0.0, 0.0), configuration(1.0, 1.0)), std::weak_ptr<owned_arm> driving = {})
+    explicit stage(const path_comparison_window::settings &opened = ends_at(configuration(0.0, 0.0), configuration(1.0, 1.0)), std::weak_ptr<owned_arm> driving = {},
+                   const arm_snapshot &opening = tooled_with(transform::Identity()))
             : loop(inline_workers)
             , scene(threepp::Scene::create())
-            , published(publishing(at_rest(configuration(0.0, 0.0), origin, upright)))
+            , seen(opening)
+            , published(publishing(seen))
             , stencil(two_joint_handle(), attachments{}, *scene, loop.main_strand(), published->reader(), rigid_motion::baseline().screw, rigid_motion::screw_slot_set{})
-            , panel(panel_title, published->reader(), std::move(driving), stencil, rigid_motion::baseline().screw, baseline().fk, planar_chain(), trajectory::baseline().path, opened,
-                    comparison_at)
+            , panel(panel_title, published->reader(), std::move(driving), stencil, rigid_motion::baseline().screw, baseline().fk, planar_chain(), trajectory::baseline().path,
+                    baseline().robot, opened, comparison_at)
     {
         REQUIRE(stencil.initialize().has_value());
     }
@@ -212,10 +257,24 @@ struct stage
         return first_line_under(*scene, loadable_robot_stencil::pose_path_name(named));
     }
 
+    std::array<threepp::Object3D *, 3> commanded_nodes()
+    {
+        std::array<threepp::Object3D *, 3> standing{};
+        for(std::size_t at = 0; at < drawn_names.size(); ++at)
+            standing[at] = path_node(drawn_names[at]);
+
+        return standing;
+    }
+
     void publish_traversed(const std::vector<transform> &through)
     {
-        arm_snapshot seen = at_rest(configuration(0.0, 0.0), origin, upright);
-        seen.traversed    = std::make_shared<const std::vector<transform>>(through);
+        seen.traversed = std::make_shared<const std::vector<transform>>(through);
+        published->publish(std::make_shared<const arm_snapshot>(seen));
+    }
+
+    void publish_tool_offset(const transform &offset)
+    {
+        seen.tool_offset = offset;
         published->publish(std::make_shared<const arm_snapshot>(seen));
     }
 
@@ -251,6 +310,7 @@ struct stage
     imgui_frame frames;
     praxis::scheduler::scheduler loop;
     std::shared_ptr<threepp::Scene> scene;
+    arm_snapshot seen;
     std::shared_ptr<arm_publisher> published;
     loadable_robot_stencil stencil;
     path_comparison_window panel;
@@ -420,11 +480,65 @@ TEST_CASE("the chosen shape is the one the settings named", "[manipulator][compa
     CHECK(over.panel.state().played == compared_path::decoupled);
 }
 
-TEST_CASE("playing a task-space shape hands the controller the polyline it drew, carried to the tool frame", "[manipulator][comparison]")
+// A drawing standing the bent tool's own reach from the flange poses the window answers is a drawing
+// something converted; one agreeing with the bound conversion of those same poses is a drawing that
+// conversion made.
+TEST_CASE("the three commanded shapes are drawn at the tool centre point the published offset names", "[manipulator][comparison]")
+{
+    stage over(ends_at(configuration(0.0, 0.0), configuration(1.0, 1.0)), {}, tooled_with(bent_tool_offset()));
+    over.draw();
+
+    for(std::size_t at = 0; at < drawn_names.size(); ++at)
+    {
+        INFO(drawn_names[at]);
+
+        const std::vector<transform> flange     = over.panel.poses_along(drawn_shapes[at]);
+        const std::vector<Eigen::Vector3d> line = over.path(drawn_names[at]);
+
+        REQUIRE(flange.size() == path_comparison_window::drawn_points);
+        REQUIRE(line.size() == path_comparison_window::drawn_points);
+        CHECK(off_the_reach(line, positions_of(flange), reach_of(bent_tool_offset())) < read_back);
+        CHECK(apart(line, positions_of(carried_to_the_tool_frame(flange))) < read_back);
+    }
+}
+
+// The drawing is latched on the ends and the offset it was last drawn with, so an offset arriving
+// after the first frame reaches all three and a frame where neither moved reaches none of them.
+TEST_CASE("an offset arriving after the first drawing rebuilds the three shapes and the latch still holds", "[manipulator][comparison]")
+{
+    stage over;
+    over.draw();
+
+    const std::array<threepp::Object3D *, 3> opened = over.commanded_nodes();
+
+    over.publish_tool_offset(bent_tool_offset());
+    over.draw();
+
+    const std::array<threepp::Object3D *, 3> rebuilt = over.commanded_nodes();
+
+    over.draw();
+
+    const std::array<threepp::Object3D *, 3> standing = over.commanded_nodes();
+
+    for(std::size_t at = 0; at < drawn_names.size(); ++at)
+    {
+        INFO(drawn_names[at]);
+        REQUIRE(opened[at] != nullptr);
+        CHECK(rebuilt[at] != opened[at]);
+        CHECK(standing[at] == rebuilt[at]);
+        CHECK(apart(over.path(drawn_names[at]), positions_of(carried_to_the_tool_frame(over.panel.poses_along(drawn_shapes[at])))) < read_back);
+    }
+}
+
+// The two poses the factory is handed at the ends are named through the forward map rather than
+// through `poses_along`, so a conversion moved into that accessor or applied a second time on the way
+// to the controller fails here while the drawing beside it stands the offset away.
+TEST_CASE("playing a task-space shape hands the controller flange poses and draws at the tool centre point", "[manipulator][comparison]")
 {
     captured_log log;
     driven_by_the_window arm;
-    stage over(ends_at(configuration(0.0, 0.0), configuration(1.0, 1.0)), arm.driven.owned);
+    stage over(path_comparison_window::settings{configuration(0.0, 0.0), configuration(1.0, 1.0), true, true, true, compared_path::screw}, arm.driven.owned,
+               tooled_with(bent_tool_offset()));
     over.draw();
 
     handed_to_the_factory().clear();
@@ -432,11 +546,14 @@ TEST_CASE("playing a task-space shape hands the controller the polyline it drew,
     over.press_above_last(play_button);
     REQUIRE(arm.loop.drain().has_value());
 
-    const std::vector<transform> drawn = over.panel.poses_along(over.panel.state().played);
+    const std::vector<transform> drawn = over.panel.poses_along(compared_path::screw);
 
     REQUIRE(drawn.size() == path_comparison_window::drawn_points);
     REQUIRE(handed_to_the_factory().size() == drawn.size());
+    CHECK(handed_to_the_factory().front().isApprox(pose_at(over.panel.state().first), at_the_end));
+    CHECK(handed_to_the_factory().back().isApprox(pose_at(over.panel.state().second), at_the_end));
     CHECK(worst_gap(handed_to_the_factory(), drawn) < read_back);
     REQUIRE(carried_from_the_tool_frame().size() == drawn.size());
     CHECK(worst_gap(carried_from_the_tool_frame(), carried_to_the_tool_frame(drawn)) < read_back);
+    CHECK(off_the_reach(over.path(path_comparison_window::screw_path), positions_of(drawn), reach_of(bent_tool_offset())) < read_back);
 }

@@ -165,7 +165,7 @@ void release_arm(std::shared_ptr<owned_arm> &owned, std::shared_ptr<robot_contro
 // snapshot in its own constructor, so every reader handed out below it reads a published value.
 std::shared_ptr<scene::preset> composed_preset(const scene::preset_site &site, const std::shared_ptr<threepp::Robot> &handle, attachments attached,
                                                const std::shared_ptr<scene_robot> &robot, const std::shared_ptr<robot_controller> &controller, const rigid_motion::capabilities &motions,
-                                               forward_kinematics_ops forward, differential_kinematics_ops differential, trajectory::path_ops path, robot_slot_set inert,
+                                               forward_kinematics_ops forward, differential_kinematics_ops differential, trajectory::path_ops path, const robot_ops &injected,
                                                const arm_window_composer &windows)
 {
     const rigid_motion::screw_slot_set unbound = defaulted_slots_of(motions.screw);
@@ -178,7 +178,8 @@ std::shared_ptr<scene::preset> composed_preset(const scene::preset_site &site, c
                                   published->reader(),
                                   owned,
                                   motions.frame,
-                                  inert,
+                                  injected,
+                                  defaulted_slots_of(injected),
                                   unbound,
                                   robot->solver().space_chain(),
                                   motions.screw,
@@ -247,7 +248,7 @@ std::shared_ptr<scene::preset> compose_arm(const meios::model<> &description, co
     auto controller = std::make_shared<robot_controller>(*robot, arm.motion, shapes.path, arm.trajectory, shapes.time_scaling, shapes.trajectory, motions.screw, motions.frame,
                                                          site.ask_unload, site.root);
 
-    return composed_preset(site, *handle, std::move(attached), robot, controller, motions, arm.fk, arm.dk, shapes.path, defaulted_slots_of(arm.robot), windows);
+    return composed_preset(site, *handle, std::move(attached), robot, controller, motions, arm.fk, arm.dk, shapes.path, arm.robot, windows);
 }
 
 }

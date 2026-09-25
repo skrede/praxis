@@ -50,6 +50,17 @@ std::vector<transform> mapped(const rigid_motion::screw_ops &screw, const forwar
     return reached;
 }
 
+// The forward map answers flange poses and all four polylines are drawn at the tool centre point.
+std::vector<transform> at_the_tool(const robot_ops &robot, const transform &tool_offset, const std::vector<transform> &flange_poses)
+{
+    std::vector<transform> standing;
+    standing.reserve(flange_poses.size());
+    for(const transform &pose : flange_poses)
+        standing.push_back(robot.tool_pose_from_flange_pose(pose, tool_offset));
+
+    return standing;
+}
+
 std::vector<transform> between(expected<transform, refusal> (*shape)(const transform &, const transform &, double), const transform &from, const transform &to)
 {
     std::vector<transform> through;
@@ -120,19 +131,25 @@ std::vector<transform> path_comparison_window::poses_along(compared_path shape) 
     return between(shape == compared_path::screw ? m_shapes.screw : m_shapes.decoupled, ends.front(), ends.back());
 }
 
-// Three polylines of sixty-five poses are rebuilt where an end changed and not on every frame.
+// Three polylines of sixty-five poses are rebuilt where an end or the tool offset they are carried to
+// moved, and not on every frame.
 void path_comparison_window::draw_paths()
 {
-    if(m_told && unchanged(m_told_first, m_first) && unchanged(m_told_second, m_second))
+    const std::shared_ptr<const arm_snapshot> published = m_seen.read();
+    if(published == nullptr)
+        return;
+
+    if(m_told && unchanged(m_told_first, m_first) && unchanged(m_told_second, m_second) && m_told_offset == published->tool_offset)
         return;
 
     m_told_first  = m_first;
     m_told_second = m_second;
+    m_told_offset = published->tool_offset;
     m_told        = true;
 
-    static_cast<void>(m_drawn.set_pose_path(joint_space_path, poses_along(compared_path::joint_space)));
-    static_cast<void>(m_drawn.set_pose_path(decoupled_path, poses_along(compared_path::decoupled), threepp::Color(decoupled_tone)));
-    static_cast<void>(m_drawn.set_pose_path(screw_path, poses_along(compared_path::screw), threepp::Color(screw_tone)));
+    static_cast<void>(m_drawn.set_pose_path(joint_space_path, at_the_tool(m_robot, m_told_offset, poses_along(compared_path::joint_space))));
+    static_cast<void>(m_drawn.set_pose_path(decoupled_path, at_the_tool(m_robot, m_told_offset, poses_along(compared_path::decoupled)), threepp::Color(decoupled_tone)));
+    static_cast<void>(m_drawn.set_pose_path(screw_path, at_the_tool(m_robot, m_told_offset, poses_along(compared_path::screw)), threepp::Color(screw_tone)));
     show_paths();
 }
 

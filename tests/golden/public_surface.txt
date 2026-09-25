@@ -452,6 +452,7 @@ lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	stencil	member	-
 lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	seen	member	-	typename:arm_reader
 lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	arm	member	-	typename:std::weak_ptr<owned_arm>
 lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	frames	member	-	typename:rigid_motion::frame_ops
+lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	robot	member	-	typename:robot_ops
 lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	inert	member	-	typename:robot_slot_set
 lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	screw_inert	member	-	typename:rigid_motion::screw_slot_set
 lib/praxis-manipulator/include/praxis/manipulator/compose_arm.h	chain	member	-	typename:screw_chain
@@ -1137,8 +1138,8 @@ lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	screw
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	drawn_points	member	-	typename:std::size_t
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	opening_first	prototype	(std::size_t joints)	typename:joint_vector
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	opening_second	prototype	(std::size_t joints)	typename:joint_vector
-lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	path_comparison_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,loadable_robot_stencil & drawn,rigid_motion::screw_ops screw,forward_kinematics_ops forward,screw_chain chain,trajectory::path_ops shapes)	-
-lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	path_comparison_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,loadable_robot_stencil & drawn,rigid_motion::screw_ops screw,forward_kinematics_ops forward,screw_chain chain,trajectory::path_ops shapes,const settings & state,std::string at=std::string ())	-
+lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	path_comparison_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,loadable_robot_stencil & drawn,rigid_motion::screw_ops screw,forward_kinematics_ops forward,screw_chain chain,trajectory::path_ops shapes,robot_ops robot)	-
+lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	path_comparison_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,loadable_robot_stencil & drawn,rigid_motion::screw_ops screw,forward_kinematics_ops forward,screw_chain chain,trajectory::path_ops shapes,robot_ops robot,const settings & state,std::string at=std::string ())	-
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	state	prototype	() const	typename:settings
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	poses_along	prototype	(compared_path shape) const	typename:std::vector<transform>
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	render	prototype	()	typename:void
@@ -1154,6 +1155,7 @@ lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_set
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_screw_ops	member	-	typename:rigid_motion::screw_ops
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_fk	member	-	typename:forward_kinematics_ops
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_shapes	member	-	typename:trajectory::path_ops
+lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_robot	member	-	typename:robot_ops
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_played	member	-	typename:compared_path_cycle
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_arm	member	-	typename:std::weak_ptr<owned_arm>
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_drawn	member	-	typename:loadable_robot_stencil &
@@ -1162,6 +1164,7 @@ lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_sec
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_told_first	member	-	typename:Eigen::VectorXf
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_told_second	member	-	typename:Eigen::VectorXf
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_told	member	-	typename:bool
+lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_told_offset	member	-	typename:transform
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_told_traversed	member	-	typename:std::shared_ptr<const std::vector<transform>>
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	accept	prototype	(const joint_vector & end,std::string_view named,std::size_t joints,Eigen::VectorXf & into)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	render_controls	prototype	()	typename:void

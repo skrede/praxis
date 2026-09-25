@@ -1,6 +1,7 @@
 #ifndef HPP_GUARD_PRAXIS_MANIPULATOR_PATH_COMPARISON_WINDOW_H
 #define HPP_GUARD_PRAXIS_MANIPULATOR_PATH_COMPARISON_WINDOW_H
 
+#include "praxis/manipulator/robot.h"
 #include "praxis/manipulator/types.h"
 #include "praxis/manipulator/arm_state.h"
 #include "praxis/manipulator/kinematics.h"
@@ -42,8 +43,9 @@ compared_path_cycle every_compared_path(compared_path chosen);
 
 // Three paths over one pair of configurations, drawn at once. The ends are configurations, so the
 // two poses the task-space shapes run between come from the forward map and no solve enters any of
-// the three drawings. Every pose here is the forward map's own, which is the flange frame; a
-// composition attaching no tool leaves that the frame the traversed path is recorded in too.
+// the three drawings. All four polylines trace the tool centre point: the forward map answers flange
+// poses, and each of the three drawings is carried through the bound flange-to-tool conversion at the
+// published tool offset before it is drawn.
 class path_comparison_window : public scene::imgui_window, public config::configurable
 {
 public:
@@ -77,15 +79,16 @@ public:
     static joint_vector opening_second(std::size_t joints);
 
     path_comparison_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, loadable_robot_stencil &drawn, rigid_motion::screw_ops screw, forward_kinematics_ops forward,
-                           screw_chain chain, trajectory::path_ops shapes);
+                           screw_chain chain, trajectory::path_ops shapes, robot_ops robot);
     path_comparison_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, loadable_robot_stencil &drawn, rigid_motion::screw_ops screw, forward_kinematics_ops forward,
-                           screw_chain chain, trajectory::path_ops shapes, const settings &state, std::string at = std::string());
+                           screw_chain chain, trajectory::path_ops shapes, robot_ops robot, const settings &state, std::string at = std::string());
 
     settings state() const;
 
-    // The three polylines the ends held here give, in the same path parameters and the same count.
-    // Empty where the forward map or the shape refused, so a caller draws what it was given rather
-    // than a run with holes in it.
+    // The three polylines the ends held here give, in the same path parameters and the same count, as
+    // the forward map's own flange poses rather than the tool poses the drawings carry them to. Empty
+    // where the forward map or the shape refused, so a caller draws what it was given rather than a
+    // run with holes in it.
     std::vector<transform> poses_along(compared_path shape) const;
 
     // The drawings are told here rather than from the controls, so a collapsed panel still draws the
@@ -115,6 +118,7 @@ private:
     rigid_motion::screw_ops m_screw_ops;
     forward_kinematics_ops m_fk;
     trajectory::path_ops m_shapes;
+    robot_ops m_robot;
     compared_path_cycle m_played;
     std::weak_ptr<owned_arm> m_arm;
     loadable_robot_stencil &m_drawn;
@@ -123,10 +127,11 @@ private:
     Eigen::VectorXf m_first;
     Eigen::VectorXf m_second;
     // What the drawing was last told, held so that three polylines of sixty-five poses are rebuilt
-    // where an end changed and not on every frame.
+    // where an end or the tool offset they are carried to changed and not on every frame.
     Eigen::VectorXf m_told_first;
     Eigen::VectorXf m_told_second;
     bool m_told;
+    transform m_told_offset;
     // The traversed run the stencil was last told, held to compare the published handle against by
     // pointer identity: it is replaced whole and never appended to, so an unchanged handle is an
     // unchanged run and rebuilding a polyline from it would cost a thousand poses a frame.
