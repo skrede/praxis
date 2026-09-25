@@ -1476,6 +1476,26 @@ lib/praxis-manipulator/include/praxis/manipulator/screw_chain_builder.h	build_sc
 lib/praxis-manipulator/include/praxis/manipulator/screw_chain_builder.h	build_screw_chain	prototype	(const meios::model<> & model)	typename:expected<screw_chain,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/screw_chain_builder.h	actuated_joint_names	prototype	(const meios::model<> & model,const screw_chain_options & options)	typename:expected<std::vector<std::string>,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/screw_chain_builder.h	tip_link_name	prototype	(const meios::model<> & model,const screw_chain_options & options)	typename:expected<std::string,refusal>
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	manipulator	namespace	-	-
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	praxis	namespace	-	-
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	chain_joint_reading	enum	-	typename:std::uint8_t
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	measured	enumerator	-	-
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	kinds_differed	enumerator	-	-
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	not_supplied	enumerator	-	-
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	chain_joint_difference	struct	-	-
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	read	member	-	typename:chain_joint_reading
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	direction_radians	member	-	typename:std::optional<double>
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	length	member	-	typename:std::optional<double>
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	moment_metres	member	-	typename:std::optional<double>
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	chain_home_difference	struct	-	-
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	turned_radians	member	-	typename:double
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	moved_metres	member	-	typename:double
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	rigidity	member	-	typename:double
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	screw_chain_difference	struct	-	-
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	home	member	-	typename:chain_home_difference
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	joints	member	-	typename:std::vector<chain_joint_difference>
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	supplied	member	-	typename:std::size_t
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	supplied_chain_difference	prototype	(const screw_chain & derived,const transform & supplied_home,std::span<const screw_axis> supplied)	typename:screw_chain_difference
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	screw_jog_window	class	-	-

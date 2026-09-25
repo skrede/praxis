@@ -11,6 +11,7 @@
 #include "praxis/manipulator/screw_chain_builder.h"
 #include "praxis/manipulator/scene_robot_builder.h"
 #include "praxis/manipulator/screw_modeling_window.h"
+#include "praxis/manipulator/screw_chain_difference.h"
 #include "praxis/manipulator/baseline/kinematics.h"
 #include "praxis/manipulator/loadable_robot_stencil.h"
 
@@ -38,12 +39,15 @@
 #include <imgui.h>
 
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include <span>
+#include <cmath>
 #include <string>
 #include <memory>
 #include <vector>
 #include <cstddef>
+#include <numbers>
 #include <optional>
 #include <filesystem>
 #include <string_view>
@@ -83,6 +87,24 @@ constexpr std::size_t reset_control = 0u;
 constexpr std::size_t below_reset   = 1u;
 
 constexpr std::size_t translating_joint = 2u;
+
+// What a term read back out of a readout's float cell is comparable at.
+constexpr double printed = 1.0e-6;
+
+constexpr double half_a_turn    = std::numbers::pi_v<double>;
+constexpr double an_eighth_turn = half_a_turn / 4.0;
+
+// Where a line of the per-joint reading stands and which cell of it carries which unit: the two
+// whole-chain rows come first, the home line next, and one line per joint after that.
+constexpr std::size_t whole_chain_rows = 2u;
+constexpr std::size_t named_cell       = 0u;
+constexpr std::size_t rotation_cell    = 1u;
+constexpr std::size_t distance_cell    = 2u;
+constexpr std::size_t defect_cell      = 3u;
+
+// A joint away from the origin, so its screw carries a moment the negation and the doubling both
+// reach rather than a zero either leaves where it was.
+constexpr std::size_t wrong_joint = 2u;
 
 rigid_motion::screw_ops turning()
 {
@@ -428,6 +450,34 @@ config::document elsewhere()
     return answered.values;
 }
 
+const std::vector<scene::labeled_value> &home_line(const scene::readout &shown)
+{
+    return shown.rows[whole_chain_rows];
+}
+
+const std::vector<scene::labeled_value> &joint_line(const scene::readout &shown, std::size_t joint)
+{
+    return shown.rows[whole_chain_rows + 1u + joint];
+}
+
+// A cell carrying a statement carries no number, so reading one as a number is itself the failure.
+double number_in(const std::vector<scene::labeled_value> &line, std::size_t cell)
+{
+    REQUIRE(line[cell].stated.empty());
+
+    return static_cast<double>(line[cell].value);
+}
+
+// A rotation of an eighth of a turn about z with one over root two written to the four decimals a
+// person copies off the page, which is orthonormal to about a hundred-thousandth and no further.
+rotation an_eighth_turn_to_four_decimals()
+{
+    rotation written;
+    written << 0.7071, -0.7071, 0.0, 0.7071, 0.7071, 0.0, 0.0, 0.0, 1.0;
+
+    return written;
+}
+
 bool same_edits(std::span<const config::edit> first, std::span<const config::edit> second)
 {
     if(first.size() != second.size())
@@ -589,16 +639,134 @@ TEST_CASE("the difference between the supplied chain and the derived one is take
     const scene::readout agreed = matched.reading();
 
     REQUIRE(agreed.message.empty());
-    REQUIRE(agreed.rows.size() == 2u);
+    REQUIRE(agreed.rows.size() == whole_chain_rows + 1u + axes);
     CHECK(static_cast<double>(agreed.rows.front().front().value) <= evaluation::pose_tolerance_radians);
-    CHECK(static_cast<double>(agreed.rows.back().front().value) <= evaluation::pose_tolerance_metres);
+    CHECK(static_cast<double>(agreed.rows[1].front().value) <= evaluation::pose_tolerance_metres);
 
     screw_modeling_window degenerate(panel_title, headless.shown, headless.published->reader(), turning(), framing(), substituted, headless.chain, screw_modeling_window::controls(),
                                      opening{}, writer(), route());
     const scene::readout apart = degenerate.reading();
 
     REQUIRE(apart.message.empty());
-    CHECK(static_cast<double>(apart.rows.back().front().value) > evaluation::pose_tolerance_metres);
+    CHECK(static_cast<double>(apart.rows[1].front().value) > evaluation::pose_tolerance_metres);
+}
+
+TEST_CASE("a supplied chain equal to the derived one reads zero on every joint line", "[manipulator][modeling]")
+{
+    stage headless(described_chain(), folded());
+    screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{headless.chain.home, headless.chain.space_screws});
+    const scene::readout shown  = panel.reading();
+
+    REQUIRE(shown.message.empty());
+    REQUIRE(shown.rows.size() == whole_chain_rows + 1u + axes);
+    CHECK(shown.rows.front().front().label == "Turned from the described chain (rad)");
+    CHECK(shown.rows[1].front().label == "Moved from the described chain (m)");
+    CHECK(home_line(shown)[named_cell].stated == "Home");
+    CHECK(number_in(home_line(shown), rotation_cell) < printed);
+    CHECK(number_in(home_line(shown), distance_cell) < printed);
+    CHECK(number_in(home_line(shown), defect_cell) < printed);
+
+    for(std::size_t joint = 0u; joint < axes; ++joint)
+    {
+        CHECK(joint_line(shown, joint)[named_cell].stated == "Joint " + std::to_string(joint + 1u));
+        CHECK(number_in(joint_line(shown, joint), rotation_cell) < printed);
+        CHECK(number_in(joint_line(shown, joint), distance_cell) < printed);
+        CHECK(number_in(joint_line(shown, joint), defect_cell) < printed);
+    }
+}
+
+// A joint standing at zero turns the arm nowhere, so a chain whose screw for that joint points the
+// other way poses exactly where the described one does and the whole-chain difference reads nothing.
+// The joint's own line is what finds it, and a flipped direction is a half turn rather than an
+// agreement.
+TEST_CASE("a wrong joint is read where the whole-chain difference is blind to it", "[manipulator][modeling]")
+{
+    stage headless(described_chain(), at_rest());
+    std::vector<screw_axis> supplied = headless.chain.space_screws;
+    supplied[wrong_joint]            = -supplied[wrong_joint];
+
+    screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{headless.chain.home, supplied});
+    const scene::readout shown  = panel.reading();
+
+    REQUIRE(shown.rows.size() == whole_chain_rows + 1u + axes);
+    REQUIRE(static_cast<double>(shown.rows.front().front().value) <= evaluation::pose_tolerance_radians);
+    REQUIRE(static_cast<double>(shown.rows[1].front().value) <= evaluation::pose_tolerance_metres);
+    CHECK(number_in(joint_line(shown, wrong_joint), rotation_cell) > half_a_turn - printed);
+
+    const screw_chain_difference apart = supplied_chain_difference(headless.chain, headless.chain.home, supplied);
+
+    REQUIRE(apart.joints.size() == axes);
+    REQUIRE(apart.joints[wrong_joint].direction_radians.has_value());
+    CHECK(std::fabs(*apart.joints[wrong_joint].direction_radians - half_a_turn) < 1.0e-9);
+
+    for(std::size_t joint = 0u; joint < axes; ++joint)
+        if(joint != wrong_joint)
+        {
+            CHECK(number_in(joint_line(shown, joint), rotation_cell) < printed);
+            CHECK(number_in(joint_line(shown, joint), distance_cell) < printed);
+            CHECK(number_in(joint_line(shown, joint), defect_cell) < printed);
+        }
+}
+
+// An axis whose line is exactly the one described and whose length is twice what it should be is one
+// mistake, so exactly one term carries it. A chain holding such an axis names no rigid motion and
+// poses nowhere, and the comparison takes no pose: it reads the two chains' own numbers, so it
+// answers this joint where anything asking the chain where it stands cannot.
+TEST_CASE("a doubled axis on the line it describes reads its length and nothing else", "[manipulator][modeling]")
+{
+    const screw_chain derived        = described_chain();
+    std::vector<screw_axis> supplied = derived.space_screws;
+    supplied[wrong_joint]            = 2.0 * supplied[wrong_joint];
+
+    const screw_chain_difference apart = supplied_chain_difference(derived, derived.home, supplied);
+
+    REQUIRE(apart.joints.size() == axes);
+    REQUIRE(apart.supplied == axes);
+
+    const chain_joint_difference &line = apart.joints[wrong_joint];
+
+    REQUIRE(line.read == chain_joint_reading::measured);
+    REQUIRE(line.direction_radians.has_value());
+    REQUIRE(line.length.has_value());
+    REQUIRE(line.moment_metres.has_value());
+    CHECK(*line.direction_radians < exactly);
+    CHECK(std::fabs(*line.length - 1.0) < exactly);
+    CHECK(*line.moment_metres < exactly);
+}
+
+// A home pose a person derives off the page carries one over root two to the decimals it was written
+// with, and a block orthonormal only to that names no rigid motion, so nothing that poses the chain
+// answers anything about it. The comparison poses nothing: it reads the turn against the nearest
+// rotation to the block and carries how far the block stands from being a rotation at all as a term
+// of its own, so it answers both rather than answering nothing for either.
+TEST_CASE("a home pose typed to four decimals reads a turn and a rigidity of its own", "[manipulator][modeling]")
+{
+    screw_chain derived            = described_chain();
+    derived.home.block<3, 3>(0, 0) = Eigen::AngleAxisd(an_eighth_turn, Eigen::Vector3d::UnitZ()).toRotationMatrix();
+
+    transform typed         = derived.home;
+    typed.block<3, 3>(0, 0) = an_eighth_turn_to_four_decimals();
+
+    const screw_chain_difference apart = supplied_chain_difference(derived, typed, derived.space_screws);
+
+    CHECK(std::isfinite(apart.home.turned_radians));
+    CHECK(apart.home.turned_radians < exactly);
+    CHECK(apart.home.moved_metres < exactly);
+    CHECK(std::isfinite(apart.home.rigidity));
+    CHECK(apart.home.rigidity > 1.0e-5);
+}
+
+TEST_CASE("a window whose arm has published nothing answers a message and no rows at all", "[manipulator][modeling]")
+{
+    stage headless(described_chain(), at_rest());
+    const std::shared_ptr<arm_publisher> silent = std::make_shared<arm_publisher>();
+
+    screw_modeling_window panel(panel_title, headless.shown, silent->reader(), turning(), framing(), solving(), headless.chain, only_the_rows(),
+                                opening{headless.chain.home, headless.chain.space_screws}, writer(), route());
+    const scene::readout shown = panel.reading();
+
+    CHECK_FALSE(shown.message.empty());
+    CHECK(shown.rows.empty());
 }
 
 TEST_CASE("a window named no key path and no route offers nothing, and one named both hands the route the chain it holds", "[manipulator][configuration]")

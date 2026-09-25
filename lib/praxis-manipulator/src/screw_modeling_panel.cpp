@@ -1,5 +1,8 @@
+#include "screw_modeling_table.h"
+
 #include "praxis/manipulator/option_widgets.h"
 #include "praxis/manipulator/screw_modeling_window.h"
+#include "praxis/manipulator/screw_chain_difference.h"
 
 #include "praxis/evaluation/comparators.h"
 
@@ -13,7 +16,6 @@
 
 #include <array>
 #include <memory>
-#include <vector>
 #include <cstddef>
 
 namespace praxis::manipulator {
@@ -31,6 +33,8 @@ constexpr std::array<screw_modeling_window::parameterization, 2> parameterizatio
 constexpr std::array<const char *, 2> parameterization_labels{"Point, direction, pitch", "Angular and linear"};
 
 constexpr const char *const position_labels[3]{"X", "Y", "Z"};
+
+constexpr std::size_t whole_chain_rows = 2u;
 
 // A value box prints three digits after the point, so half of the last of them is the smallest
 // difference between two points a row is able to show.
@@ -173,7 +177,7 @@ scene::readout screw_modeling_window::reading() const
     const scene::labeled_value turned{static_cast<float>(apart.magnitude), "Turned from the described chain (rad)"};
     const scene::labeled_value moved{static_cast<float>(apart.linear_error_metres), "Moved from the described chain (m)"};
 
-    return scene::readout{{}, {{turned}, {moved}}};
+    return screw_modeling_reading(supplied_chain_difference(m_derived, m_home, m_screws), scene::readout{{}, {{turned}, {moved}}});
 }
 
 void screw_modeling_window::render_reading()
@@ -182,8 +186,9 @@ void screw_modeling_window::render_reading()
     if(!shown.message.empty())
         return ImGui::TextUnformatted(shown.message.c_str());
 
-    for(const std::vector<scene::labeled_value> &line : shown.rows)
-        ImGui::Text("%s %.6f", line.front().label.c_str(), static_cast<double>(line.front().value));
+    for(std::size_t row = 0u; row < whole_chain_rows && row < shown.rows.size(); ++row)
+        ImGui::Text("%s %.6f", shown.rows[row].front().label.c_str(), static_cast<double>(shown.rows[row].front().value));
+    render_screw_modeling_table(shown, whole_chain_rows);
 }
 
 void screw_modeling_window::render_save()

@@ -46,6 +46,7 @@ praxis_add_module(manipulator
     include/praxis/manipulator/scene_robot_builder.h
     include/praxis/manipulator/screw_chain.h
     include/praxis/manipulator/screw_chain_builder.h
+    include/praxis/manipulator/screw_chain_difference.h
     include/praxis/manipulator/screw_jog_window.h
     include/praxis/manipulator/screw_modeling_window.h
     include/praxis/manipulator/slots.h
@@ -182,8 +183,11 @@ praxis_add_module(manipulator
     src/scene_robot_builder.cpp
     src/screw_chain.cpp
     src/screw_chain_builder.cpp
+    src/screw_chain_difference.cpp
     src/screw_jog_window.cpp
     src/screw_modeling_panel.cpp
+    src/screw_modeling_table.h
+    src/screw_modeling_table.cpp
     src/screw_modeling_window.cpp
     src/task_space_window.cpp
     src/tool_attachment.cpp
