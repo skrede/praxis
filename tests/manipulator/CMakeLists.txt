@@ -128,6 +128,7 @@ praxis_add_test(motion_row_bounds_test.cpp LIBS praxis::manipulator praxis::eval
 target_include_directories(motion_row_bounds_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-manipulator/src)
 
 praxis_add_test(screw_chain_difference_test.cpp HEADERS supplied_chain.h LIBS praxis::manipulator praxis::evaluation)
+praxis_add_test(screw_chain_difference_inputs_test.cpp HEADERS supplied_chain.h LIBS praxis::manipulator praxis::evaluation)
 
 praxis_add_test(empty_difference_test.cpp HEADERS solve_rows.h bent_solver.h bent_chain.h bent_manipulator.h bent_motions.h bend_kinds.h LIBS praxis::manipulator praxis::evaluation)
 target_include_directories(empty_difference_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-manipulator/src)
