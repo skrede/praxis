@@ -24,6 +24,7 @@
 #include <vector>
 #include <cstddef>
 #include <fstream>
+#include <algorithm>
 #include <filesystem>
 #include <system_error>
 
@@ -84,6 +85,32 @@ inline config::document kept_chain(const std::vector<screw_axis> &screws, const 
 inline config::document kept_chain(const std::vector<screw_axis> &screws, const char *name)
 {
     return kept_chain(screws, Eigen::Vector3d::Zero(), name);
+}
+
+inline bool names_joint(const std::vector<std::size_t> &named, std::size_t joint)
+{
+    return std::find(named.begin(), named.end(), joint) != named.end();
+}
+
+// The same table written for a caller that names only some of the chain's joints, so the document
+// is silent about the rest rather than carrying a row for every one of them.
+inline config::document kept_chain_naming(const std::vector<screw_axis> &screws, const std::vector<std::size_t> &named, const char *name)
+{
+    const std::filesystem::path where = chain_scratch() / name;
+    std::ofstream out(where, std::ios::binary | std::ios::trunc);
+    out << "<screw_table><screws>";
+    out << "<home>" << chain_triple("position", Eigen::Vector3d::Zero()) << chain_triple("orientation", Eigen::Vector3d::Zero()) << "</home>";
+    for(std::size_t joint = 0u; joint < screws.size(); ++joint)
+        if(names_joint(named, joint))
+            out << "<joint index=\"" << joint + 1u << "\">" << chain_triple("angular", screws[joint].head<3>()) << chain_triple("linear", screws[joint].tail<3>()) << "</joint>";
+    out << "</screws></screw_table>\n";
+    out.close();
+
+    const expected<config::document, config::error> read = config::load(presets::screw_table_keyspace(), config::resolve(where, chain_scratch()));
+    INFO((read ? std::string() : read.error().message));
+    REQUIRE(read.has_value());
+
+    return read.value();
 }
 
 inline config::binding chain_binding(const char *name)

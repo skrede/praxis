@@ -831,6 +831,41 @@ TEST_CASE("a reset leaves every joint line saying it was not supplied", "[manipu
         CHECK(joint_line(shown, joint).back().stated == "not supplied");
 }
 
+// The window a modeling scenario carrying no document opens is a window supplied nothing, and every
+// row of it is a row a person fills in by typing. What the reading is taken from is therefore what
+// stands in the rows now rather than what the composition handed over.
+TEST_CASE("a chain typed into every row is the chain the reading is taken from", "[manipulator][modeling]")
+{
+    stage headless(described_chain(), at_rest());
+    screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{});
+    panel.initialize();
+
+    for(std::size_t joint = 0u; joint < axes; ++joint)
+    {
+        INFO("joint " << joint);
+        REQUIRE(joint_line(panel.reading(), joint).back().stated == "not supplied");
+    }
+
+    for(std::size_t joint = 0u; joint < axes; ++joint)
+    {
+        const std::string along = std::to_string(0.1 * static_cast<double>(joint + 1u));
+
+        select_joint(panel, joint_selector, joint);
+        type_component(panel, point_row, 0u, along.c_str());
+        type_component(panel, point_row, 1u, "0.2");
+        type_component(panel, pitch_row, 0u, "0.125");
+    }
+
+    const scene::readout shown = panel.reading();
+
+    REQUIRE(shown.rows.size() == whole_chain_rows + 1u + axes);
+    for(std::size_t joint = 0u; joint < axes; ++joint)
+    {
+        INFO("joint " << joint);
+        CHECK(joint_line(shown, joint)[rotation_cell].stated.empty());
+    }
+}
+
 // A chain carrying an axis of twice unit length names no rigid motion and poses nowhere, so the two
 // whole-chain lines have no pose to take a difference between. They say that where their numbers
 // would stand, and the lines beneath them -- which reach no pose at all -- answer as they always do.

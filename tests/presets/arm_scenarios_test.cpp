@@ -126,6 +126,26 @@ std::vector<std::pair<const char *, manipulator::arm_composition>> marking_scena
     return standing;
 }
 
+// Where a joint's line stands in the chain window's reading: the two whole-chain rows come first,
+// the home line next, and one line per joint of the derived chain after that.
+constexpr std::size_t whole_chain_rows = 2u;
+constexpr std::size_t rotation_cell    = 1u;
+
+const std::vector<scene::labeled_value> &joint_line(const scene::readout &shown, std::size_t joint)
+{
+    return shown.rows[whole_chain_rows + 1u + joint];
+}
+
+// The chain window a modeling scenario composed, read as the window it is rather than as the panel
+// the composition holds it by, which is the only way its reading is reachable.
+std::shared_ptr<manipulator::screw_modeling_window> chain_window_of(const std::shared_ptr<scene::preset> &composed)
+{
+    const auto held = std::dynamic_pointer_cast<manipulator::screw_modeling_window>(panel_named(composed, "Chain"));
+    REQUIRE(held != nullptr);
+
+    return held;
+}
+
 presets::arm_scenario driving_on_edit(const std::filesystem::path &description)
 {
     presets::arm_scenario chosen = described_by(description);
@@ -479,6 +499,34 @@ TEST_CASE("the edits the chain window mints reach the leaves the table's keyspac
     {
         INFO("joint " << joint);
         REQUIRE((read.value().screws[joint] - supplied[joint]).norm() == 0.0);
+    }
+}
+
+// A document is free to name the joints somebody wrote down and say nothing about the rest, and the
+// window it opens has to keep the two apart: a joint the document never named is not a joint
+// supplied with whatever this library would have drawn in its place.
+TEST_CASE("a joint the document is silent about says so in the window the scenario opens", "[presets][windows]")
+{
+    const std::vector<std::size_t> named{0u, 1u, 3u, 4u, 5u};
+
+    const described_arm described(6, "six");
+    const presets::arm_scenario chosen     = described_by(described.where);
+    const std::vector<screw_axis> supplied = a_supplied_chain(6);
+    const config::document written         = kept_chain_naming(supplied, named, "a-hole-in-the-chain.xml");
+
+    REQUIRE(written.identities(std::string(presets::screw_table_path) + "/joint").size() == named.size());
+
+    opened_arm built;
+    const std::shared_ptr<scene::preset> composed = built.open(chosen, presets::arm_windows_modeling(chosen, supplied_from(written, chain_binding("a-hole-in-the-chain-into.xml"))));
+    const scene::readout shown                    = chain_window_of(composed)->reading();
+
+    INFO(shown.message);
+    REQUIRE(shown.rows.size() == whole_chain_rows + 1u + 6u);
+    CHECK(joint_line(shown, 2u).back().stated == "not supplied");
+    for(const std::size_t joint : named)
+    {
+        INFO("joint " << joint);
+        CHECK(joint_line(shown, joint)[rotation_cell].stated.empty());
     }
 }
 
