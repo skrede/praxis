@@ -28,7 +28,13 @@ residual axis_up_to_sign_residual(const Eigen::Vector<double, 6> &first, const E
 // A logarithm is not unique, so neither comparator below compares the axes or the angles it is
 // given. Each exponentiates both answers and compares the two group elements, which is what the
 // caller relies on: a branch differing by a full turn, or an axis-sign flip that names the same
-// element, agrees, while an answer naming a different element does not.
+// element, agrees, while an answer naming a different element does not. Both check each angular
+// part before building anything and answer the same way about the same one: an angular part of no
+// length is a translation and is taken as given, and one within a bound of unit length is taken as
+// the unit direction it names, at the angle stated. Beyond that bound the axis names no element, so
+// the magnitude is unbounded and the comparison differs at every bound -- in radians for the
+// rotation form, which leaves its linear half at zero, and in radians and metres for the pose form,
+// which answers unbounded in both halves.
 residual log_up_to_branch_rotation_residual(const Eigen::Vector3d &first_axis, double first_theta_radians, const Eigen::Vector3d &second_axis, double second_theta_radians);
 
 residual log_up_to_branch_pose_residual(const Eigen::Vector<double, 6> &first_axis, double first_theta_radians, const Eigen::Vector<double, 6> &second_axis,
