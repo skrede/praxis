@@ -157,7 +157,8 @@ arm_snapshot arm_state::assemble() const
                         m_controller->preview(),
                         m_controller->traversed(),
                         m_controller->time_scaling(),
-                        m_controller->trapezoid_bounds()};
+                        m_controller->trapezoid_bounds(),
+                        m_robot->tool_offset_known()};
 }
 
 void arm_state::report_pose_refusal(const arm_snapshot &assembled)

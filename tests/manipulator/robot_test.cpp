@@ -68,7 +68,8 @@ arm_snapshot reading(expected<Eigen::Vector3d, refusal> position, expected<rotat
                         nullptr,
                         nullptr,
                         {},
-                        {}};
+                        {},
+                        false};
 }
 
 arm_snapshot valued()

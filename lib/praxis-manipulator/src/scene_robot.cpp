@@ -10,6 +10,7 @@ scene_robot::scene_robot(kinematics solver, const robot_ops &injected, const rig
         : m_robot(injected)
         , m_frames(frames)
         , m_offset(transform::Identity())
+        , m_offset_known(false)
         , m_solver(std::move(solver))
         , m_joints(joint_vector::Zero(static_cast<Eigen::Index>(m_solver.joint_count())))
         , m_limits(m_solver.space_chain().limits)
@@ -60,7 +61,13 @@ const transform &scene_robot::tool_offset() const
 
 void scene_robot::set_tool_offset(const transform &offset)
 {
-    m_offset = offset;
+    m_offset       = offset;
+    m_offset_known = true;
+}
+
+bool scene_robot::tool_offset_known() const
+{
+    return m_offset_known;
 }
 
 Eigen::Vector3d scene_robot::position_of(const transform &pose) const

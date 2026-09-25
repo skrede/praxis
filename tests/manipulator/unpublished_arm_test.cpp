@@ -89,7 +89,8 @@ arm_snapshot at_rest()
                         nullptr,
                         nullptr,
                         {},
-                        {}};
+                        {},
+                        false};
 }
 
 std::shared_ptr<arm_publisher> publishing()

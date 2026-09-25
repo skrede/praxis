@@ -53,7 +53,8 @@ arm_snapshot published_at(const expected<Eigen::Vector3d, refusal> &position, co
                         nullptr,
                         nullptr,
                         {},
-                        {}};
+                        {},
+                        false};
 }
 
 }

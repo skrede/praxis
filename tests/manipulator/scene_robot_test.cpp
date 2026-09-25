@@ -188,11 +188,23 @@ TEST_CASE("the_tool_offset_is_the_adapters_own_state")
     scene_robot robot = adapter(robot_ops{});
 
     CHECK(is_approx_equal(robot.tool_offset(), transform::Identity()));
+    CHECK_FALSE(robot.tool_offset_known());
 
-    transform offset = transform::Identity();
-    offset(2, 3)     = 0.15;
-    robot.set_tool_offset(offset);
-    CHECK(is_approx_equal(robot.tool_offset(), offset));
+    robot.set_tool_offset(bent_tool_offset());
+    CHECK(is_approx_equal(robot.tool_offset(), bent_tool_offset()));
+    CHECK(robot.tool_offset_known());
+}
+
+TEST_CASE("an offset handed over that happens to be the identity is known all the same")
+{
+    scene_robot robot = adapter(robot_ops{});
+
+    REQUIRE_FALSE(robot.tool_offset_known());
+
+    robot.set_tool_offset(transform::Identity());
+
+    CHECK(robot.tool_offset_known());
+    CHECK(is_approx_equal(robot.tool_offset(), transform::Identity()));
 }
 
 TEST_CASE("the two frame conversions the holder publishes are inverses of each other on a bent tool offset")

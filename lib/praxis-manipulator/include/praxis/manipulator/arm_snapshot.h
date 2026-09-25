@@ -123,6 +123,9 @@ struct arm_snapshot
     time_scaling_choice time_scaling;
     // Absent leaves a trapezoidal motion at the bounds the motion's own extent gives.
     std::optional<path_parameter_bounds> trapezoid;
+    // An arm wearing no tool is handed the identity, so this is not whether a tool hangs at the flange
+    // but whether the offset above is the arm's own or the identity it was constructed with.
+    bool tool_offset_known;
 };
 
 // Which of the distinct configurations above the arm itself stands at: the nearest of them to the

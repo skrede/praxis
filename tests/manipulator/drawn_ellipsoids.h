@@ -122,7 +122,8 @@ inline arm_snapshot published(jacobian_manipulability space, jacobian_manipulabi
                         nullptr,
                         nullptr,
                         {},
-                        {}};
+                        {},
+                        false};
 }
 
 inline std::vector<screw_axis> two_axes()

@@ -332,3 +332,22 @@ TEST_CASE("a composition binding neither Jacobian slot publishes two refusals an
     CHECK(seen->body_jacobian.error() == praxis::refusal::not_implemented);
     CHECK(reported.empty());
 }
+
+// The identity is the one offset whose published value cannot tell the two states apart, so it is what
+// the command hands over here.
+TEST_CASE("a publication says whether the tool offset it carries is the arm's own", "[manipulator][ownership]")
+{
+    scheduler loop(inline_workers, dictating());
+    const arm_pipe arm                      = pipe(loop);
+    const std::weak_ptr<owned_arm> observer = arm.owned;
+
+    REQUIRE_FALSE(arm.seen.read()->tool_offset_known);
+
+    command(observer, [](robot_controller &, scene_robot &driven) { driven.set_tool_offset(praxis::transform::Identity()); });
+    REQUIRE(loop.drain().has_value());
+
+    const std::shared_ptr<const arm_snapshot> seeded = arm.seen.read();
+
+    CHECK(seeded->tool_offset_known);
+    CHECK(seeded->tool_offset.isApprox(praxis::transform::Identity()));
+}

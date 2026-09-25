@@ -90,7 +90,8 @@ arm_snapshot showing(const expected<Eigen::Vector3d, refusal> &position, const e
                         nullptr,
                         nullptr,
                         {},
-                        {}};
+                        {},
+                        false};
 }
 
 arm_snapshot valued(const rotation &orientation)

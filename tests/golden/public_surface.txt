@@ -376,6 +376,7 @@ lib/praxis-manipulator/include/praxis/manipulator/arm_snapshot.h	preview	member	
 lib/praxis-manipulator/include/praxis/manipulator/arm_snapshot.h	traversed	member	-	typename:std::shared_ptr<const std::vector<transform>>
 lib/praxis-manipulator/include/praxis/manipulator/arm_snapshot.h	time_scaling	member	-	typename:time_scaling_choice
 lib/praxis-manipulator/include/praxis/manipulator/arm_snapshot.h	trapezoid	member	-	typename:std::optional<path_parameter_bounds>
+lib/praxis-manipulator/include/praxis/manipulator/arm_snapshot.h	tool_offset_known	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/arm_snapshot.h	solution_at	prototype	(const arm_snapshot & seen)	typename:std::optional<std::size_t>
 lib/praxis-manipulator/include/praxis/manipulator/arm_snapshot.h	arm_publisher	typedef	-	typename:scheduler::snapshot_publisher<std::shared_ptr<const arm_snapshot>>
 lib/praxis-manipulator/include/praxis/manipulator/arm_snapshot.h	arm_reader	typedef	-	typename:scheduler::snapshot_reader<std::shared_ptr<const arm_snapshot>>
@@ -1419,6 +1420,7 @@ lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	set_joint_positi
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	limits	prototype	() const	typename:const joint_limits &
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	tool_offset	prototype	() const	typename:const transform &
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	set_tool_offset	prototype	(const transform & offset)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	tool_offset_known	prototype	() const	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	position_of	prototype	(const transform & pose) const	typename:Eigen::Vector3d
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	orientation_of	prototype	(const transform & pose) const	typename:rotation
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	flange_pose_from_tool_pose	prototype	(const transform & tool_pose) const	typename:transform
@@ -1436,6 +1438,7 @@ lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	scene_robot	prot
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	m_robot	member	-	typename:robot_ops
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	m_frames	member	-	typename:rigid_motion::frame_ops
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	m_offset	member	-	typename:transform
+lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	m_offset_known	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	m_solver	member	-	typename:kinematics
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	m_joints	member	-	typename:joint_vector
 lib/praxis-manipulator/include/praxis/manipulator/scene_robot.h	m_limits	member	-	typename:joint_limits

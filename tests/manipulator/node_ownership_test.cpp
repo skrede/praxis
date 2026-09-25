@@ -67,7 +67,8 @@ arm_snapshot at_rest(const joint_vector &joints)
                         nullptr,
                         nullptr,
                         {},
-                        {}};
+                        {},
+                        false};
 }
 
 // Everything a frame needs to reach the node: the scene it is added to, the publication it mirrors,

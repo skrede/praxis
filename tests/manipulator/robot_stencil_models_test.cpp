@@ -65,7 +65,8 @@ arm_snapshot at_rest(const joint_vector &joints)
                         nullptr,
                         nullptr,
                         {},
-                        {}};
+                        {},
+                        false};
 }
 
 // What the composing side hands over is an object that already exists, and nothing under test reads

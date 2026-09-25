@@ -39,6 +39,9 @@ public:
 
     const transform &tool_offset() const;
     void set_tool_offset(const transform &offset);
+    // False until set_tool_offset has been called, whatever offset it was handed: the offset above reads
+    // as the identity both before that call and after one handing it the identity.
+    bool tool_offset_known() const;
 
     // The two derivations a pose is read through. Neither can refuse, so a caller holding a pose it
     // already has takes them directly instead of paying for the forward solve a second time.
@@ -73,6 +76,7 @@ private:
     robot_ops m_robot;
     rigid_motion::frame_ops m_frames;
     transform m_offset;
+    bool m_offset_known;
     kinematics m_solver;
     joint_vector m_joints;
     joint_limits m_limits;

@@ -60,7 +60,8 @@ arm_snapshot at_rest(const joint_vector &joints)
                         nullptr,
                         nullptr,
                         {},
-                        {}};
+                        {},
+                        false};
 }
 
 std::vector<praxis::screw_axis> two_axes()

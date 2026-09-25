@@ -199,7 +199,8 @@ arm_snapshot standing(const joint_vector &joints)
                         nullptr,
                         nullptr,
                         {},
-                        {}};
+                        {},
+                        false};
 }
 
 // A composition binding every screw slot but the construction each row is built through. A

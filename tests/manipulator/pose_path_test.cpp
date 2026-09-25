@@ -97,7 +97,8 @@ arm_snapshot at_rest(const joint_vector &joints)
                         nullptr,
                         nullptr,
                         {},
-                        {}};
+                        {},
+                        false};
 }
 
 praxis::screw_axis revolute_screw(const Eigen::Vector3d &through, const Eigen::Vector3d &along)

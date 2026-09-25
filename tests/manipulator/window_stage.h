@@ -63,7 +63,8 @@ inline composed_arm compose(scheduler::scheduler &loop, const motion_ops &moving
 }
 
 // Only the joints and the tool pose reach a control window, so the rest of a publication is what an
-// arm at rest reports: every other pose at the origin and every other orientation upright.
+// arm at rest reports: every other pose at the origin, every other orientation upright, and the tool
+// offset known.
 inline arm_snapshot at_rest(const joint_vector &joints, const expected<Eigen::Vector3d, refusal> &position, const expected<rotation, refusal> &orientation)
 {
     const transform identity = transform::Identity();
@@ -91,7 +92,8 @@ inline arm_snapshot at_rest(const joint_vector &joints, const expected<Eigen::Ve
                         nullptr,
                         nullptr,
                         {},
-                        {}};
+                        {},
+                        true};
 }
 
 inline std::shared_ptr<arm_publisher> publishing(const arm_snapshot &seen)

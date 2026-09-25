@@ -110,7 +110,8 @@ arm_snapshot undriven_snapshot(const joint_vector &initial, refusal reason)
                         nullptr,
                         nullptr,
                         time_scaling_choice{},
-                        std::nullopt};
+                        std::nullopt,
+                        false};
 }
 
 // Which of a capability's slots still hold their defaults. The enumeration indexing the answer is

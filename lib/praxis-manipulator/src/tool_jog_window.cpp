@@ -90,7 +90,7 @@ void tool_jog_window::render()
 
 bool tool_jog_window::render_jog_start_pose(const arm_snapshot &seen)
 {
-    if(!m_start_pose_chosen)
+    if(!m_start_pose_chosen && seen.tool_offset_known)
         m_start_pose_chosen = seed_from(*m_edited, seen, m_frame);
 
     bool moved = ImGui::InputFloat3("XYZ", m_edited->position.data());
