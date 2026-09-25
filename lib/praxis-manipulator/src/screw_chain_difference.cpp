@@ -104,14 +104,18 @@ chain_home_difference home_compared(const screw_chain &derived, const transform 
 
 }
 
-screw_chain_difference supplied_chain_difference(const screw_chain &derived, const transform &supplied_home, std::span<const screw_axis> supplied)
+screw_chain_difference supplied_chain_difference(const screw_chain &derived, const transform &supplied_home, std::span<const supplied_screw> supplied)
 {
     const chain_joint_difference unsupplied{chain_joint_reading::not_supplied, std::optional<double>(), std::optional<double>(), std::optional<double>()};
 
     std::vector<chain_joint_difference> joints;
     joints.reserve(derived.joint_count());
     for(std::size_t joint = 0u; joint < derived.joint_count(); ++joint)
-        joints.push_back(joint < supplied.size() ? compared(supplied[joint], derived.space_screws[joint]) : unsupplied);
+    {
+        const bool held = joint < supplied.size() && supplied[joint].has_value();
+
+        joints.push_back(held ? compared(*supplied[joint], derived.space_screws[joint]) : unsupplied);
+    }
 
     return screw_chain_difference{home_compared(derived, supplied_home), std::move(joints), supplied.size()};
 }

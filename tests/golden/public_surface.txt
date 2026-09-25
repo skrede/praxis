@@ -1478,6 +1478,7 @@ lib/praxis-manipulator/include/praxis/manipulator/screw_chain_builder.h	actuated
 lib/praxis-manipulator/include/praxis/manipulator/screw_chain_builder.h	tip_link_name	prototype	(const meios::model<> & model,const screw_chain_options & options)	typename:expected<std::string,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	praxis	namespace	-	-
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	supplied_screw	typedef	-	typename:std::optional<screw_axis>
 lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	chain_joint_reading	enum	-	typename:std::uint8_t
 lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	measured	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	kinds_differed	enumerator	-	-
@@ -1495,7 +1496,7 @@ lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	screw
 lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	home	member	-	typename:chain_home_difference
 lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	joints	member	-	typename:std::vector<chain_joint_difference>
 lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	supplied	member	-	typename:std::size_t
-lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	supplied_chain_difference	prototype	(const screw_chain & derived,const transform & supplied_home,std::span<const screw_axis> supplied)	typename:screw_chain_difference
+lib/praxis-manipulator/include/praxis/manipulator/screw_chain_difference.h	supplied_chain_difference	prototype	(const screw_chain & derived,const transform & supplied_home,std::span<const supplied_screw> supplied)	typename:screw_chain_difference
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	screw_jog_window	class	-	-
@@ -1533,8 +1534,9 @@ lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	point_
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	angular_linear	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	settings	struct	-	-
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	home	member	-	typename:transform
-lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	screws	member	-	typename:std::vector<screw_axis>
-lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	settings	prototype	(transform chosen_home=transform::Identity (),std::vector<screw_axis> chosen_screws=std::vector<screw_axis> ())	-
+lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	screws	member	-	typename:std::vector<supplied_screw>
+lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	settings	prototype	(transform chosen_home=transform::Identity (),std::vector<supplied_screw> chosen_screws=std::vector<supplied_screw> ())	-
+lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	settings	prototype	(transform chosen_home,const std::vector<screw_axis> & chosen_screws)	-
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	controls	struct	-	-
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	controls	prototype	()	-
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	home	member	-	typename:bool
@@ -1568,7 +1570,7 @@ lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_cont
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_derived	member	-	typename:screw_chain
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_rows	member	-	typename:std::vector<row>
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_selected	member	-	typename:std::size_t
-lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_supplied	member	-	typename:std::size_t
+lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_supplied	member	-	typename:std::vector<supplied_screw>
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_entries	member	-	typename:std::vector<std::string>
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_settings_at	member	-	typename:std::string
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_kinematics	member	-	typename:forward_kinematics_ops
@@ -1576,7 +1578,6 @@ lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_home
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_frame	member	-	typename:rigid_motion::frame_ops
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_screw	member	-	typename:rigid_motion::screw_ops
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_unbound	member	-	typename:bool
-lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_screws	member	-	typename:std::vector<screw_axis>
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_home_euler_degrees	member	-	typename:Eigen::Vector3f
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_stencil	member	-	typename:loadable_robot_stencil &
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_edits_cb	member	-	typename:edit_route

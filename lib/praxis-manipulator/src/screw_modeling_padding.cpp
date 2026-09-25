@@ -4,9 +4,9 @@
 
 #include <Eigen/Geometry>
 
+#include <span>
 #include <vector>
 #include <cstddef>
-#include <algorithm>
 
 namespace praxis::manipulator {
 
@@ -15,13 +15,19 @@ screw_modeling_window::parameterization typed_as(const screw_axis &screw)
     return screw.head<3>().norm() <= angular_epsilon ? screw_modeling_window::parameterization::angular_linear : screw_modeling_window::parameterization::point_direction_pitch;
 }
 
-std::vector<screw_axis> as_supplied(const std::vector<screw_axis> &table, std::size_t supplied)
+screw_axis supplied_or_opening(const rigid_motion::screw_ops &turning, const screw_axis &derived, const supplied_screw &held)
 {
-    std::vector<screw_axis> taken(table.begin(), table.begin() + static_cast<std::ptrdiff_t>(std::min(supplied, table.size())));
+    return held ? *held : screw_modeling_window::opening_screw(turning, derived);
+}
 
-    taken.resize(supplied, screw_axis(screw_axis::Zero()));
+std::vector<screw_axis> as_drawn(const screw_chain &derived, const rigid_motion::screw_ops &turning, std::span<const supplied_screw> supplied)
+{
+    std::vector<screw_axis> drawn;
+    drawn.reserve(derived.joint_count());
+    for(std::size_t joint = 0u; joint < derived.joint_count(); ++joint)
+        drawn.push_back(supplied_or_opening(turning, derived.space_screws[joint], joint < supplied.size() ? supplied[joint] : supplied_screw()));
 
-    return taken;
+    return drawn;
 }
 
 // A turning joint's `(z, 0)` and a translating joint's `(0, z)` are both what the published

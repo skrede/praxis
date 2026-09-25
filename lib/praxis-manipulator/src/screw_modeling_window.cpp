@@ -11,12 +11,19 @@
 #include <vector>
 #include <cstddef>
 #include <utility>
+#include <algorithm>
 
 namespace praxis::manipulator {
 
-screw_modeling_window::settings::settings(transform chosen_home, std::vector<screw_axis> chosen_screws)
+screw_modeling_window::settings::settings(transform chosen_home, std::vector<supplied_screw> chosen_screws)
         : home(std::move(chosen_home))
         , screws(std::move(chosen_screws))
+{
+}
+
+screw_modeling_window::settings::settings(transform chosen_home, const std::vector<screw_axis> &chosen_screws)
+        : home(std::move(chosen_home))
+        , screws(chosen_screws.begin(), chosen_screws.end())
 {
 }
 
@@ -41,14 +48,12 @@ screw_modeling_window::screw_modeling_window(std::string name, loadable_robot_st
         , m_controls(offered)
         , m_derived(std::move(derived))
         , m_selected(0u)
-        , m_supplied(0u)
         , m_settings_at(std::move(at))
         , m_kinematics(solving)
         , m_home_position(Eigen::Vector3f::Zero())
         , m_frame(framing)
         , m_screw(turning)
         , m_unbound(false)
-        , m_screws(state.screws)
         , m_home_euler_degrees(Eigen::Vector3f::Zero())
         , m_stencil(target)
         , m_edits_cb(std::move(edits))
@@ -57,8 +62,9 @@ screw_modeling_window::screw_modeling_window(std::string name, loadable_robot_st
     seed(state);
 }
 
-// The table is as long as the derived chain, because that chain is what the rendered arm is posed
-// from and what carries the limits a solve reads. A row nobody supplied opens degenerate.
+// There is a row per joint of the derived chain, because that chain is what the rendered arm is
+// posed from and what carries the limits a solve reads. A row nobody supplied opens degenerate, and
+// an entry standing past the last joint is drawn against nothing and kept only to be counted.
 void screw_modeling_window::seed(const settings &opened)
 {
     const rotation held = m_home.block<3, 3>(0, 0);
@@ -71,23 +77,27 @@ void screw_modeling_window::seed(const settings &opened)
     m_home_euler_degrees = (m_frame.euler_from_rotation_matrix(held, home_axis_order) * degrees_per_radian).cast<float>();
 
     m_selected = 0u;
-    m_supplied = opened.screws.size();
     m_entries.clear();
-    m_screws.resize(m_derived.joint_count());
-    for(std::size_t joint = 0u; joint < m_screws.size(); ++joint)
+    m_supplied = opened.screws;
+    m_supplied.resize(std::max(m_derived.joint_count(), m_supplied.size()));
+    for(std::size_t joint = 0u; joint < m_derived.joint_count(); ++joint)
     {
-        if(joint >= opened.screws.size())
-            m_screws[joint] = opening_screw(m_screw, m_derived.space_screws[joint]);
+        const screw_axis drawn = supplied_or_opening(m_screw, m_derived.space_screws[joint], m_supplied[joint]);
 
         m_entries.push_back("Joint " + std::to_string(joint + 1u));
-        m_rows.emplace_back(typed_as(m_screws[joint]));
-        m_rows.back().show(m_screws[joint]);
+        m_rows.emplace_back(typed_as(drawn));
+        m_rows.back().show(drawn);
     }
 }
 
+// The chain a caller takes back out is one entry per joint of the derived chain: an entry past the
+// last joint stands against no joint and belongs in no document that names one.
 screw_modeling_window::settings screw_modeling_window::state() const
 {
-    return settings{m_home, m_screws};
+    std::vector<supplied_screw> kept(m_supplied);
+    kept.resize(m_derived.joint_count());
+
+    return settings{m_home, kept};
 }
 
 void screw_modeling_window::initialize()
@@ -128,15 +138,15 @@ void screw_modeling_window::push()
                           "'" + display_name() + "' composes no chain from the rows it holds", m_unbound))
         return;
 
-    if(!m_stencil.set_joint_screws(m_home, m_screws))
-        spdlog::error("praxis: '{}' holds {} screws and the arm they are drawn against does not take that many", display_name(), m_screws.size());
+    const std::vector<screw_axis> drawn = as_drawn(m_derived, m_screw, m_supplied);
+    if(!m_stencil.set_joint_screws(m_home, drawn))
+        spdlog::error("praxis: '{}' holds {} screws and the arm they are drawn against does not take that many", display_name(), drawn.size());
 }
 
 void screw_modeling_window::reset()
 {
     m_home = transform::Identity();
     m_rows.clear();
-    m_screws.clear();
     seed(settings{});
     push();
     tell_selection();
@@ -147,7 +157,7 @@ void screw_modeling_window::rebuild_row(std::size_t joint)
     const row &shown = m_rows[joint];
     if(shown.typed == parameterization::angular_linear)
     {
-        m_screws[joint] = m_screw.screw_axis_from_angular_linear(shown.angular.cast<double>(), shown.linear.cast<double>());
+        m_supplied[joint] = m_screw.screw_axis_from_angular_linear(shown.angular.cast<double>(), shown.linear.cast<double>());
 
         return push();
     }
@@ -159,7 +169,7 @@ void screw_modeling_window::rebuild_row(std::size_t joint)
     if(!built)
         return refuse(joint, "'rigid_motion.screw.screw_axis_from_point_direction_pitch'");
 
-    m_screws[joint] = built.value();
+    m_supplied[joint] = built.value();
     push();
 }
 
@@ -171,7 +181,7 @@ void screw_modeling_window::refuse(std::size_t joint, const char *what)
 
 void screw_modeling_window::canonicalize(std::size_t joint)
 {
-    m_rows[joint].show(m_screws[joint]);
+    m_rows[joint].show(supplied_or_opening(m_screw, m_derived.space_screws[joint], m_supplied[joint]));
 }
 
 }

@@ -2,6 +2,7 @@
 #define HPP_GUARD_PRAXIS_TESTS_MANIPULATOR_SUPPLIED_CHAIN_H
 
 #include "praxis/manipulator/screw_chain.h"
+#include "praxis/manipulator/screw_chain_difference.h"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -53,6 +54,13 @@ inline transform a_home_pose()
 inline screw_chain a_chain()
 {
     return screw_chain(a_home_pose(), described_screws(), joint_limits{});
+}
+
+// A chain every joint of which somebody supplied, which is what a caller handing a bare list of
+// screws means by it.
+inline std::vector<supplied_screw> all_supplied(std::vector<screw_axis> screws)
+{
+    return std::vector<supplied_screw>(screws.begin(), screws.end());
 }
 
 inline std::vector<screw_axis> with_one_changed(std::vector<screw_axis> screws, std::size_t joint, const screw_axis &instead)

@@ -35,15 +35,16 @@ config::declaration screw_table_keyspace();
 // beside: nothing is searched for, and a document that is not there is not an error.
 config::binding screw_table_binding(const std::filesystem::path &named, const std::filesystem::path &beside);
 
-// The chain `values` carries under `at`, one row per joint of `derived`. A row the document carries
-// no instance of opens at the degenerate screw for the joint standing there, and a table naming a
-// joint the chain does not have is refused with both counts rather than remapped onto it.
+// The chain `values` carries under `at`, one entry per joint of `derived`. An entry for a row the
+// document carries no instance of holds nothing, because nobody supplied that joint, and a table
+// naming a joint the chain does not have is refused with both counts rather than remapped onto it.
 expected<manipulator::screw_modeling_window::settings, config::error> read_screw_table(const config::document &values, std::string_view at, const manipulator::screw_chain &derived,
                                                                                        const rigid_motion::screw_ops &turning, const rigid_motion::frame_ops &framing);
 
 // The leaves of `state` that `values` does not already read as, with the identity of a row the
 // document carries no instance of written ahead of that row's own values, so the ordinal the row is
-// appended at is the one the rest of it is addressed by.
+// appended at is the one the rest of it is addressed by. A joint whose entry holds nothing has no
+// values to write and is left out, so a joint nobody supplied stays a joint nobody supplied.
 std::vector<config::edit> write_screw_table(const config::document &values, std::string_view at, const manipulator::screw_modeling_window::settings &state,
                                             const rigid_motion::frame_ops &framing);
 

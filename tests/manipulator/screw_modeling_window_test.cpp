@@ -339,14 +339,23 @@ struct stage
 };
 
 // The window carries no spelling of a chain, so the suite hands it one nothing in the library would
-// have written: a single leaf per joint naming that joint's first component.
+// have written: a single leaf per joint naming that joint's first component, and nothing at all for
+// a joint nobody supplied.
 std::vector<config::edit> spelled(const opening &state)
 {
     std::vector<config::edit> spelling;
     for(std::size_t joint = 0u; joint < state.screws.size(); ++joint)
-        spelling.push_back(config::edit{std::string(screws_at) + "/joint" + std::to_string(joint + 1u), config::exact_text(state.screws[joint][0])});
+        if(state.screws[joint])
+            spelling.push_back(config::edit{std::string(screws_at) + "/joint" + std::to_string(joint + 1u), config::exact_text((*state.screws[joint])[0])});
 
     return spelling;
+}
+
+// A chain every joint of which somebody supplied, which is what handing the window a bare list of
+// screws means.
+std::vector<supplied_screw> all_supplied(const std::vector<screw_axis> &screws)
+{
+    return std::vector<supplied_screw>(screws.begin(), screws.end());
 }
 
 writer a_writer()
@@ -503,8 +512,10 @@ TEST_CASE("a chain nobody supplied opens at one coincident axis through the orig
 
     REQUIRE(opened.screws.size() == axes);
     CHECK((opened.home - transform::Identity()).norm() < exactly);
-    for(const screw_axis &screw : opened.screws)
-        CHECK((screw - unit_z_axis()).norm() < exactly);
+    for(const supplied_screw &entry : opened.screws)
+        CHECK_FALSE(entry.has_value());
+    for(std::size_t joint = 0u; joint < axes; ++joint)
+        CHECK((screw_modeling_window::opening_screw(turning(), headless.chain.space_screws[joint]) - unit_z_axis()).norm() < exactly);
 
     const std::vector<Eigen::Vector3d> first = headless.axis_of(0u);
 
@@ -526,10 +537,9 @@ TEST_CASE("a joint whose derived screw only translates opens as a direction and 
 
     const opening opened = panel.state();
 
-    CHECK((opened.screws[translating_joint] - unit_z_direction()).norm() < exactly);
-    for(std::size_t joint = 0u; joint < axes; ++joint)
-        if(joint != translating_joint)
-            CHECK((opened.screws[joint] - unit_z_axis()).norm() < exactly);
+    for(const supplied_screw &entry : opened.screws)
+        CHECK_FALSE(entry.has_value());
+    CHECK((screw_modeling_window::opening_screw(turning(), headless.chain.space_screws[translating_joint]) - unit_z_direction()).norm() < exactly);
 
     // The window draws the joint its selector names and no other, so the two panels are compared at
     // the joint whose numbers differ rather than at the one they both open on.
@@ -553,7 +563,8 @@ TEST_CASE("a point, a direction and a pitch typed into a row name the screw the 
     const expected<screw_axis, refusal> built = turning().screw_axis_from_point_direction_pitch(Eigen::Vector3d(0.25, 0.5, 0.0), Eigen::Vector3d::UnitX(), 0.125);
 
     REQUIRE(built.has_value());
-    CHECK((panel.state().screws.front() - built.value()).norm() < exactly);
+    REQUIRE(panel.state().screws.front().has_value());
+    CHECK((*panel.state().screws.front() - built.value()).norm() < exactly);
 }
 
 TEST_CASE("the same axis named through a different point on it leaves the drawn line where it was", "[manipulator][modeling]")
@@ -593,39 +604,45 @@ TEST_CASE("a row's selector is a choice of input, and is restored from the screw
 
     CHECK(items_offered(supplied) + 1u == items_offered(derived));
 
-    screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{});
-    const screw_axis opened     = panel.state().screws.front();
+    screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{transform::Identity(), kept});
+    const supplied_screw opened = panel.state().screws.front();
 
     imgui_frame frames;
     const drawing draw = over(panel);
     stand_below_top(frames, draw, selector_row);
     take_next_entry(frames, draw);
 
-    CHECK((panel.state().screws.front() - opened).norm() < exactly);
+    const opening after = panel.state();
+
+    REQUIRE(opened.has_value());
+    REQUIRE(after.screws.front().has_value());
+    CHECK((*after.screws.front() - *opened).norm() < exactly);
 }
 
 TEST_CASE("a direction of no length names no axis, so the screw the row carried is kept and the refusal is said", "[manipulator][modeling]")
 {
     stage headless(described_chain(), at_rest());
-    screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{});
-    const screw_axis opened     = panel.state().screws.front();
+    const std::vector<screw_axis> kept(axes, unit_z_axis());
+    screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{transform::Identity(), kept});
 
     const std::string said = reported_by([&panel] { type_component(panel, direction_row, 2u, "0"); });
 
-    CHECK((panel.state().screws.front() - opened).norm() < exactly);
+    REQUIRE(panel.state().screws.front().has_value());
+    CHECK((*panel.state().screws.front() - kept.front()).norm() < exactly);
     CHECK(said.find("named no axis for joint 1") != std::string::npos);
 }
 
 TEST_CASE("a direction of no length is refused by the window whatever the construction it is built through answers", "[manipulator][modeling]")
 {
     stage headless(described_chain(), at_rest());
-    screw_modeling_window panel(panel_title, headless.shown, headless.published->reader(), answering_every_direction(), framing(), solving(), headless.chain, only_the_rows(), opening{},
-                                writer(), route());
-    const screw_axis opened = panel.state().screws.front();
+    const std::vector<screw_axis> kept(axes, unit_z_axis());
+    screw_modeling_window panel(panel_title, headless.shown, headless.published->reader(), answering_every_direction(), framing(), solving(), headless.chain, only_the_rows(),
+                                opening{transform::Identity(), kept}, writer(), route());
 
     const std::string said = reported_by([&panel] { type_component(panel, direction_row, 2u, "0"); });
 
-    CHECK((panel.state().screws.front() - opened).norm() < exactly);
+    REQUIRE(panel.state().screws.front().has_value());
+    CHECK((*panel.state().screws.front() - kept.front()).norm() < exactly);
     CHECK(said.find("named no axis for joint 1") != std::string::npos);
 }
 
@@ -693,7 +710,7 @@ TEST_CASE("a wrong joint is read where the whole-chain difference is blind to it
     REQUIRE(static_cast<double>(shown.rows[1].front().value) <= evaluation::pose_tolerance_metres);
     CHECK(number_in(joint_line(shown, wrong_joint), rotation_cell) > half_a_turn - printed);
 
-    const screw_chain_difference apart = supplied_chain_difference(headless.chain, headless.chain.home, supplied);
+    const screw_chain_difference apart = supplied_chain_difference(headless.chain, headless.chain.home, all_supplied(supplied));
 
     REQUIRE(apart.joints.size() == axes);
     REQUIRE(apart.joints[wrong_joint].direction_radians.has_value());
@@ -718,7 +735,7 @@ TEST_CASE("a doubled axis on the line it describes reads its length and nothing 
     std::vector<screw_axis> supplied = derived.space_screws;
     supplied[wrong_joint]            = 2.0 * supplied[wrong_joint];
 
-    const screw_chain_difference apart = supplied_chain_difference(derived, derived.home, supplied);
+    const screw_chain_difference apart = supplied_chain_difference(derived, derived.home, all_supplied(supplied));
 
     REQUIRE(apart.joints.size() == axes);
     REQUIRE(apart.supplied == axes);
@@ -747,7 +764,7 @@ TEST_CASE("a home pose typed to four decimals reads a turn and a rigidity of its
     transform typed         = derived.home;
     typed.block<3, 3>(0, 0) = an_eighth_turn_to_four_decimals();
 
-    const screw_chain_difference apart = supplied_chain_difference(derived, typed, derived.space_screws);
+    const screw_chain_difference apart = supplied_chain_difference(derived, typed, all_supplied(derived.space_screws));
 
     CHECK(std::isfinite(apart.home.turned_radians));
     CHECK(apart.home.turned_radians < exactly);
@@ -977,17 +994,20 @@ TEST_CASE("a window named a key path and handed no writer offers nothing", "[man
 TEST_CASE("a refused row is put back to the screw it kept, so the next accepted edit builds from that", "[manipulator][modeling]")
 {
     stage headless(described_chain(), at_rest());
-    screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{});
-    const screw_axis opened     = panel.state().screws.front();
+    const std::vector<screw_axis> kept(axes, unit_z_axis());
+    screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{transform::Identity(), kept});
+    const screw_axis opened     = kept.front();
 
     static_cast<void>(reported_by([&panel] { type_component(panel, direction_row, 2u, "0"); }));
 
-    REQUIRE((panel.state().screws.front() - opened).norm() < exactly);
+    REQUIRE(panel.state().screws.front().has_value());
+    REQUIRE((*panel.state().screws.front() - opened).norm() < exactly);
 
     type_component(panel, pitch_row, 0u, "0.1");
 
-    CHECK((panel.state().screws.front() - opened).norm() > exactly);
-    CHECK(panel.state().screws.front().head<3>().isApprox(opened.head<3>()));
+    REQUIRE(panel.state().screws.front().has_value());
+    CHECK((*panel.state().screws.front() - opened).norm() > exactly);
+    CHECK(panel.state().screws.front()->head<3>().isApprox(opened.head<3>()));
 }
 
 // The table is as long as the derived chain whatever it is supplied, and a composition handing it
@@ -1023,11 +1043,12 @@ TEST_CASE("a point typed along the axis it already names is taken, and the row s
     stage headless(described_chain(), at_rest());
     const std::vector<screw_axis> kept(axes, axis_through(Eigen::Vector3d(0.4, 0.0, 0.0)));
     screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{transform::Identity(), kept});
-    const screw_axis opened     = panel.state().screws.front();
+    const screw_axis opened     = kept.front();
 
     type_component(panel, point_row, 2u, "0.5");
 
-    CHECK((panel.state().screws.front() - opened).norm() < read_back);
+    REQUIRE(panel.state().screws.front().has_value());
+    CHECK((*panel.state().screws.front() - opened).norm() < read_back);
     CHECK_FALSE(panel.shows_stored_point(0u));
 }
 
@@ -1038,13 +1059,15 @@ TEST_CASE("the control on the point row writes the stored point into it and leav
     screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{transform::Identity(), kept});
 
     type_component(panel, point_row, 2u, "0.5");
-    const screw_axis before = panel.state().screws.front();
+    const supplied_screw before = panel.state().screws.front();
 
+    REQUIRE(before.has_value());
     REQUIRE_FALSE(panel.shows_stored_point(0u));
 
     press_along(panel, point_row, 3u);
 
-    CHECK((panel.state().screws.front() - before).norm() < read_back);
+    REQUIRE(panel.state().screws.front().has_value());
+    CHECK((*panel.state().screws.front() - *before).norm() < read_back);
     CHECK(panel.shows_stored_point(0u));
 }
 
@@ -1117,9 +1140,10 @@ TEST_CASE("the chain window opens on the first joint and tells the drawing which
 
     type_component(panel, point_row, 0u, "0.75");
 
-    CHECK(panel.state().screws.front().tail<3>().norm() > read_back);
+    REQUIRE(panel.state().screws.front().has_value());
+    CHECK(panel.state().screws.front()->tail<3>().norm() > read_back);
     for(std::size_t joint = 1u; joint < axes; ++joint)
-        CHECK(panel.state().screws[joint].tail<3>().norm() < read_back);
+        CHECK_FALSE(panel.state().screws[joint].has_value());
 }
 
 TEST_CASE("taking a different entry draws that joint's row and tells the drawing that joint", "[manipulator][modeling]")
@@ -1138,10 +1162,11 @@ TEST_CASE("taking a different entry draws that joint's row and tells the drawing
 
     type_component(panel, point_row, 0u, "0.75");
 
-    CHECK(panel.state().screws[taken].tail<3>().norm() > read_back);
+    REQUIRE(panel.state().screws[taken].has_value());
+    CHECK(panel.state().screws[taken]->tail<3>().norm() > read_back);
     for(std::size_t joint = 0u; joint < axes; ++joint)
         if(joint != taken)
-            CHECK(panel.state().screws[joint].tail<3>().norm() < read_back);
+            CHECK_FALSE(panel.state().screws[joint].has_value());
 }
 
 // Which row somebody was looking at is not a fact about a chain, so it reaches neither the table the
@@ -1178,7 +1203,8 @@ TEST_CASE("resetting the chain leaves the selector naming a joint the table stil
     select_joint(panel, below_reset + joint_selector, axes - 1u);
     type_component(panel, below_reset + point_row, 0u, "0.75");
 
-    REQUIRE(panel.state().screws.back().tail<3>().norm() > read_back);
+    REQUIRE(panel.state().screws.back().has_value());
+    REQUIRE(panel.state().screws.back()->tail<3>().norm() > read_back);
 
     press_along(panel, reset_control, 0u);
     headless.draw();
@@ -1189,8 +1215,9 @@ TEST_CASE("resetting the chain leaves the selector naming a joint the table stil
 
     type_component(panel, below_reset + point_row, 0u, "0.75");
 
-    CHECK(panel.state().screws.front().tail<3>().norm() > read_back);
-    CHECK(panel.state().screws.back().tail<3>().norm() < read_back);
+    REQUIRE(panel.state().screws.front().has_value());
+    CHECK(panel.state().screws.front()->tail<3>().norm() > read_back);
+    CHECK_FALSE(panel.state().screws.back().has_value());
 }
 
 // Every row is built through a construction carrying no refusal channel, so a composition that left

@@ -498,7 +498,8 @@ TEST_CASE("the edits the chain window mints reach the leaves the table's keyspac
     for(std::size_t joint = 0; joint < supplied.size(); ++joint)
     {
         INFO("joint " << joint);
-        REQUIRE((read.value().screws[joint] - supplied[joint]).norm() == 0.0);
+        REQUIRE(read.value().screws[joint].has_value());
+        REQUIRE((*read.value().screws[joint] - supplied[joint]).norm() == 0.0);
     }
 }
 

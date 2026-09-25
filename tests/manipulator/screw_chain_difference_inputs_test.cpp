@@ -37,7 +37,7 @@ rotation with_one_column_negated(const rotation &block)
 TEST_CASE("a supplied span of no screws leaves every joint unsupplied and the home line still answered", "[manipulator][modeling]")
 {
     const screw_chain derived          = a_chain();
-    const screw_chain_difference apart = supplied_chain_difference(derived, derived.home, std::span<const screw_axis>());
+    const screw_chain_difference apart = supplied_chain_difference(derived, derived.home, std::span<const supplied_screw>());
 
     REQUIRE(apart.supplied == 0u);
     REQUIRE(apart.joints.size() == chain_joints);
@@ -60,7 +60,7 @@ TEST_CASE("a supplied span shorter than the chain reads what it reaches and leav
     const screw_chain derived = a_chain();
     const std::vector<screw_axis> supplied(derived.space_screws.begin(), derived.space_screws.begin() + 2);
 
-    const screw_chain_difference apart = supplied_chain_difference(derived, derived.home, supplied);
+    const screw_chain_difference apart = supplied_chain_difference(derived, derived.home, all_supplied(supplied));
 
     REQUIRE(apart.supplied == 2u);
     REQUIRE(apart.joints.size() == chain_joints);
@@ -78,7 +78,7 @@ TEST_CASE("a supplied span longer than the chain leaves the joint list the chain
     std::vector<screw_axis> supplied = derived.space_screws;
     supplied.insert(supplied.end(), derived.space_screws.begin(), derived.space_screws.begin() + 2);
 
-    const screw_chain_difference apart = supplied_chain_difference(derived, derived.home, supplied);
+    const screw_chain_difference apart = supplied_chain_difference(derived, derived.home, all_supplied(supplied));
 
     REQUIRE(supplied.size() > derived.joint_count());
     CHECK(apart.joints.size() == derived.joint_count());
@@ -91,7 +91,7 @@ TEST_CASE("a derived chain of no joints answers the home line and an empty joint
     const screw_chain derived(a_home_pose(), std::vector<screw_axis>(), joint_limits{});
     const std::vector<screw_axis> supplied = described_screws();
 
-    const screw_chain_difference apart = supplied_chain_difference(derived, derived.home, supplied);
+    const screw_chain_difference apart = supplied_chain_difference(derived, derived.home, all_supplied(supplied));
 
     CHECK(apart.joints.empty());
     CHECK(apart.supplied == chain_joints);
@@ -107,7 +107,7 @@ TEST_CASE("a home pose typed to four decimals reads a finite turn beside a rigid
     transform typed         = derived.home;
     typed.block<3, 3>(0, 0) = rounded_to_four_decimals(rotation(derived.home.block<3, 3>(0, 0)));
 
-    const screw_chain_difference apart = supplied_chain_difference(derived, typed, derived.space_screws);
+    const screw_chain_difference apart = supplied_chain_difference(derived, typed, all_supplied(derived.space_screws));
 
     REQUIRE(std::isfinite(apart.home.turned_radians));
     REQUIRE(std::isfinite(apart.home.moved_metres));
@@ -126,7 +126,7 @@ TEST_CASE("a home pose whose rotation block is a reflection reads a finite turn 
     transform mirrored         = derived.home;
     mirrored.block<3, 3>(0, 0) = with_one_column_negated(rotation(derived.home.block<3, 3>(0, 0)));
 
-    const screw_chain_difference apart = supplied_chain_difference(derived, mirrored, derived.space_screws);
+    const screw_chain_difference apart = supplied_chain_difference(derived, mirrored, all_supplied(derived.space_screws));
 
     REQUIRE(std::isfinite(apart.home.turned_radians));
     REQUIRE(std::isfinite(apart.home.moved_metres));

@@ -54,18 +54,6 @@ screw_axis six_vector(double from)
     return named;
 }
 
-// The two states a row nobody supplied opens at, written out here so the case pins the values
-// rather than asking the same function the reader asked.
-screw_axis turning_at_the_origin()
-{
-    return (screw_axis() << 0.0, 0.0, 1.0, 0.0, 0.0, 0.0).finished();
-}
-
-screw_axis translating_along_z()
-{
-    return (screw_axis() << 0.0, 0.0, 0.0, 0.0, 0.0, 1.0).finished();
-}
-
 // Five joints that turn and one that only translates, so the opening state is not one value
 // repeated and a row filled with the wrong one is visible.
 manipulator::screw_chain derived_six()
@@ -175,7 +163,9 @@ void require_same_screws(const supplied &read, const supplied &chosen)
     for(std::size_t joint = 0u; joint < chosen.screws.size(); ++joint)
     {
         INFO("joint " << joint);
-        REQUIRE((read.screws[joint] - chosen.screws[joint]).norm() == 0.0);
+        REQUIRE(read.screws[joint].has_value());
+        REQUIRE(chosen.screws[joint].has_value());
+        REQUIRE((*read.screws[joint] - *chosen.screws[joint]).norm() == 0.0);
     }
 }
 
@@ -195,7 +185,7 @@ TEST_CASE("a chain written into a document reads back as the chain it was", "[pr
     require_same_screws(read, chosen);
 }
 
-TEST_CASE("a chain no document names opens every row at the degenerate screw and its home at the identity", "[presets][configuration]")
+TEST_CASE("a chain no document names leaves every joint unsupplied and its home at the identity", "[presets][configuration]")
 {
     const config::outcome absent = config::load_or_defaults(binding_at("no-chain-was-kept.xml"));
     REQUIRE(absent.failure.has_value());
@@ -203,15 +193,14 @@ TEST_CASE("a chain no document names opens every row at the degenerate screw and
     const supplied read = opened(absent.values, derived_six());
     REQUIRE((read.home - transform::Identity()).norm() == 0.0);
     REQUIRE(read.screws.size() == 6u);
-    for(std::size_t joint = 0u; joint + 1u < read.screws.size(); ++joint)
+    for(std::size_t joint = 0u; joint < read.screws.size(); ++joint)
     {
         INFO("joint " << joint);
-        REQUIRE(read.screws[joint] == turning_at_the_origin());
+        REQUIRE_FALSE(read.screws[joint].has_value());
     }
-    REQUIRE(read.screws.back() == translating_along_z());
 }
 
-TEST_CASE("a document carrying only some of the chain's rows opens the rest at the degenerate screw", "[presets][configuration]")
+TEST_CASE("a document carrying only some of the chain's rows leaves the rest unsupplied", "[presets][configuration]")
 {
     std::string body;
     for(std::size_t joint = 0u; joint < 3u; ++joint)
@@ -222,11 +211,14 @@ TEST_CASE("a document carrying only some of the chain's rows opens the rest at t
     for(std::size_t joint = 0u; joint < 3u; ++joint)
     {
         INFO("joint " << joint);
-        REQUIRE((read.screws[joint] - six_vector(1.0 + static_cast<double>(joint))).norm() < 1.0e-5);
+        REQUIRE(read.screws[joint].has_value());
+        REQUIRE((*read.screws[joint] - six_vector(1.0 + static_cast<double>(joint))).norm() < 1.0e-5);
     }
-    for(std::size_t joint = 3u; joint < 5u; ++joint)
-        REQUIRE(read.screws[joint] == turning_at_the_origin());
-    REQUIRE(read.screws.back() == translating_along_z());
+    for(std::size_t joint = 3u; joint < read.screws.size(); ++joint)
+    {
+        INFO("joint " << joint);
+        REQUIRE_FALSE(read.screws[joint].has_value());
+    }
 }
 
 // A row somebody kept for a longer machine names a joint this one does not have, and no reading of

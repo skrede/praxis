@@ -17,6 +17,7 @@
 
 #include <array>
 #include <memory>
+#include <vector>
 #include <cstddef>
 
 namespace praxis::manipulator {
@@ -72,7 +73,7 @@ void screw_modeling_window::row::show(const screw_axis &screw)
 Eigen::Vector3f screw_modeling_window::stored_point(std::size_t joint) const
 {
     row carried = m_rows[joint];
-    carried.show(m_screws[joint]);
+    carried.show(supplied_or_opening(m_screw, m_derived.space_screws[joint], m_supplied[joint]));
 
     return carried.point;
 }
@@ -170,8 +171,9 @@ scene::readout screw_modeling_window::reading() const
     if(!share)
         return scene::readout{"The arm has published nothing yet.", {}};
 
-    const screw_chain_difference apart           = supplied_chain_difference(m_derived, m_home, as_supplied(m_screws, m_supplied));
-    const expected<transform, refusal> supplied  = m_kinematics.forward_kinematics(m_screw, m_home, m_screws, share->joints);
+    const std::vector<screw_axis> drawn          = as_drawn(m_derived, m_screw, m_supplied);
+    const screw_chain_difference apart           = supplied_chain_difference(m_derived, m_home, m_supplied);
+    const expected<transform, refusal> supplied  = m_kinematics.forward_kinematics(m_screw, m_home, drawn, share->joints);
     const expected<transform, refusal> described = m_kinematics.forward_kinematics(m_screw, m_derived.home, m_derived.space_screws, share->joints);
     if(!supplied || !described)
         return screw_modeling_reading(apart, whole_chain_without_pose(supplied ? described_without_pose : supplied_without_pose));

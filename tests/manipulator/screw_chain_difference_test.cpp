@@ -15,7 +15,7 @@ using namespace praxis::fixture;
 TEST_CASE("a chain compared against itself reads zero on every term every line carries", "[manipulator][modeling]")
 {
     const screw_chain derived          = a_chain();
-    const screw_chain_difference apart = supplied_chain_difference(derived, derived.home, derived.space_screws);
+    const screw_chain_difference apart = supplied_chain_difference(derived, derived.home, all_supplied(derived.space_screws));
 
     REQUIRE(apart.joints.size() == chain_joints);
     REQUIRE(apart.supplied == chain_joints);
@@ -44,7 +44,7 @@ TEST_CASE("a direction flipped against the one described reads a half turn rathe
 {
     const screw_chain derived              = a_chain();
     const std::vector<screw_axis> supplied = with_one_changed(derived.space_screws, turning_joint, -derived.space_screws[turning_joint]);
-    const screw_chain_difference apart     = supplied_chain_difference(derived, derived.home, supplied);
+    const screw_chain_difference apart     = supplied_chain_difference(derived, derived.home, all_supplied(supplied));
     const chain_joint_difference &flipped  = apart.joints[turning_joint];
 
     REQUIRE(flipped.read == chain_joint_reading::measured);
@@ -67,7 +67,7 @@ TEST_CASE("a doubled axis whose line is exactly right reads its length and nothi
 {
     const screw_chain derived              = a_chain();
     const std::vector<screw_axis> supplied = with_one_changed(derived.space_screws, turning_joint, 2.0 * derived.space_screws[turning_joint]);
-    const screw_chain_difference apart     = supplied_chain_difference(derived, derived.home, supplied);
+    const screw_chain_difference apart     = supplied_chain_difference(derived, derived.home, all_supplied(supplied));
     const chain_joint_difference &doubled  = apart.joints[turning_joint];
 
     REQUIRE(doubled.read == chain_joint_reading::measured);
@@ -84,7 +84,7 @@ TEST_CASE("two screws that both translate read the angle between their linear ha
 {
     const screw_chain derived              = a_chain();
     const std::vector<screw_axis> supplied = with_one_changed(derived.space_screws, translating_joint, axis_of(0.0, 0.0, 0.0, 1.5, 0.0, 0.0));
-    const screw_chain_difference apart     = supplied_chain_difference(derived, derived.home, supplied);
+    const screw_chain_difference apart     = supplied_chain_difference(derived, derived.home, all_supplied(supplied));
     const chain_joint_difference &shifted  = apart.joints[translating_joint];
 
     REQUIRE(shifted.read == chain_joint_reading::measured);
@@ -99,7 +99,7 @@ TEST_CASE("one screw turning against one translating fills no term at all and sa
 {
     const screw_chain derived              = a_chain();
     const std::vector<screw_axis> supplied = with_one_changed(derived.space_screws, translating_joint, axis_of(0.0, 1.0, 0.0, 0.0, 0.0, 0.0));
-    const screw_chain_difference apart     = supplied_chain_difference(derived, derived.home, supplied);
+    const screw_chain_difference apart     = supplied_chain_difference(derived, derived.home, all_supplied(supplied));
     const chain_joint_difference &mixed    = apart.joints[translating_joint];
 
     REQUIRE(mixed.read == chain_joint_reading::kinds_differed);
@@ -112,7 +112,7 @@ TEST_CASE("a translating screw whose linear half has no length names no directio
 {
     const screw_chain derived              = a_chain();
     const std::vector<screw_axis> supplied = with_one_changed(derived.space_screws, translating_joint, axis_of(0.0, 0.0, 0.0, 0.0, 0.0, 0.0));
-    const screw_chain_difference apart     = supplied_chain_difference(derived, derived.home, supplied);
+    const screw_chain_difference apart     = supplied_chain_difference(derived, derived.home, all_supplied(supplied));
     const chain_joint_difference &nowhere  = apart.joints[translating_joint];
 
     REQUIRE(nowhere.read == chain_joint_reading::measured);
@@ -128,8 +128,8 @@ TEST_CASE("the length term is symmetric in which of the two chains is called the
     const std::vector<screw_axis> supplied = with_one_changed(derived.space_screws, turning_joint, 2.0 * derived.space_screws[turning_joint]);
     const screw_chain swapped(derived.home, supplied, derived.limits);
 
-    const screw_chain_difference one_way   = supplied_chain_difference(derived, derived.home, supplied);
-    const screw_chain_difference other_way = supplied_chain_difference(swapped, derived.home, derived.space_screws);
+    const screw_chain_difference one_way   = supplied_chain_difference(derived, derived.home, all_supplied(supplied));
+    const screw_chain_difference other_way = supplied_chain_difference(swapped, derived.home, all_supplied(derived.space_screws));
 
     REQUIRE(one_way.joints.size() == other_way.joints.size());
 

@@ -14,8 +14,12 @@
 
 namespace praxis::manipulator {
 
+// One joint's entry in a supplied chain: the screw somebody supplied for that joint, or nothing
+// where nobody supplied one.
+using supplied_screw = std::optional<screw_axis>;
+
 // Which of three answers a joint's line carries. `kinds_differed` is a screw that translates read
-// against one that turns, and `not_supplied` is a joint past the end of what was supplied.
+// against one that turns, and `not_supplied` is a joint whose entry holds no screw.
 enum class chain_joint_reading : std::uint8_t
 {
     measured,
@@ -31,8 +35,8 @@ enum class chain_joint_reading : std::uint8_t
 //
 // A term the comparison does not answer carries no number rather than a zero. A screw whose angular
 // part names no axis has no moment to compare, because a translation is the same motion wherever its
-// axis is put; a pair whose kinds differ fills no term at all; and a joint nobody supplied fills none
-// either. A direction flipped against the one described reads a half turn rather than zero: a
+// axis is put; a pair whose kinds differ fills no term at all; and a joint whose entry holds nothing
+// fills none either. A direction flipped against the one described reads a half turn rather than zero: a
 // positive angle about it turns the arm the other way, so it names a different chain rather than the
 // same one up to a sign.
 struct chain_joint_difference
@@ -56,7 +60,7 @@ struct chain_home_difference
 };
 
 // The home line, one line per joint of the derived chain in that chain's own order, and how many
-// screws were supplied. A count above the derived chain's length is a surplus the joints do not
+// entries were handed over. A count above the derived chain's length is a surplus the joints do not
 // carry; a count below it leaves every joint past the end unsupplied.
 struct screw_chain_difference
 {
@@ -67,10 +71,11 @@ struct screw_chain_difference
 
 // A chain somebody supplied read against the one derived from a description, compared directly: no
 // pose is taken and no configuration is named, so a joint standing at an angle that hides its own
-// screw is read here exactly as every other joint is. Nothing below judges -- each term is reported
-// in its own unit and what it is worth is the caller's to decide. Lynch & Park, Modern Robotics,
-// section 3.3.
-screw_chain_difference supplied_chain_difference(const screw_chain &derived, const transform &supplied_home, std::span<const screw_axis> supplied);
+// screw is read here exactly as every other joint is. An entry holding nothing is a joint nobody
+// supplied and carries no term, wherever in the chain it stands. Nothing below judges -- each term is
+// reported in its own unit and what it is worth is the caller's to decide. Lynch & Park, Modern
+// Robotics, section 3.3.
+screw_chain_difference supplied_chain_difference(const screw_chain &derived, const transform &supplied_home, std::span<const supplied_screw> supplied);
 
 }
 

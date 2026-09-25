@@ -51,12 +51,12 @@ transform read_home(const config::document &values, const std::string &at, const
 
 // A row the document carries an instance of is a row somebody wrote, and a leaf it leaves out of
 // one is the zero the declaration falls back to -- which is exactly what a writer emitting only
-// what moved leaves out. Only a row with no instance at all opens at the degenerate screw.
-screw_axis read_row(const config::document &values, const std::string &collection, std::size_t joint, const screw_axis &opening)
+// what moved leaves out. A row with no instance at all is a joint nobody supplied.
+manipulator::supplied_screw read_row(const config::document &values, const std::string &collection, std::size_t joint)
 {
     const std::optional<std::string> instance = keys::instance_at(values, collection, std::to_string(joint + 1u));
     if(!instance)
-        return opening;
+        return manipulator::supplied_screw();
 
     screw_axis read;
     read.head<3>() = keys::read_triple(values, keys::under(*instance, names::angular), Eigen::Vector3d::Zero());
@@ -111,7 +111,7 @@ config::binding screw_table_binding(const std::filesystem::path &named, const st
     return config::binding{screw_table_keyspace(), config::resolve(named, beside), config::expectation::partial};
 }
 
-expected<supplied, config::error> read_screw_table(const config::document &values, std::string_view at, const manipulator::screw_chain &derived, const rigid_motion::screw_ops &turning,
+expected<supplied, config::error> read_screw_table(const config::document &values, std::string_view at, const manipulator::screw_chain &derived, const rigid_motion::screw_ops &,
                                                    const rigid_motion::frame_ops &framing)
 {
     const std::string rows                 = keys::under(at, names::joint);
@@ -123,7 +123,7 @@ expected<supplied, config::error> read_screw_table(const config::document &value
     supplied opened;
     opened.home = read_home(values, keys::under(at, names::home), framing);
     for(std::size_t joint = 0u; joint < derived.joint_count(); ++joint)
-        opened.screws.push_back(read_row(values, rows, joint, manipulator::screw_modeling_window::opening_screw(turning, derived.space_screws[joint])));
+        opened.screws.push_back(read_row(values, rows, joint));
 
     return opened;
 }
@@ -136,9 +136,12 @@ std::vector<config::edit> write_screw_table(const config::document &values, std:
     std::size_t appended = values.identities(rows).size();
     for(std::size_t joint = 0u; joint < state.screws.size(); ++joint)
     {
+        if(!state.screws[joint])
+            continue;
+
         const std::optional<std::string> instance = keys::instance_at(values, rows, std::to_string(joint + 1u));
         const std::string where                   = instance ? *instance : rows + "[" + std::to_string(appended) + "]";
-        const std::vector<config::edit> moved     = config::unsaved_edits(values, row_edits(where, state.screws[joint]));
+        const std::vector<config::edit> moved     = config::unsaved_edits(values, row_edits(where, *state.screws[joint]));
         if(moved.empty())
             continue;
 

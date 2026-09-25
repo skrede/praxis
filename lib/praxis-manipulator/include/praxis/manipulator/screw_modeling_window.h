@@ -7,6 +7,7 @@
 #include "praxis/manipulator/arm_snapshot.h"
 #include "praxis/manipulator/option_cycle.h"
 #include "praxis/manipulator/loadable_robot_stencil.h"
+#include "praxis/manipulator/screw_chain_difference.h"
 
 #include "praxis/scene/imgui_window.h"
 #include "praxis/scene/labeled_value_window.h"
@@ -45,15 +46,17 @@ public:
         angular_linear
     };
 
-    // The chain a composition opens the window at: the home pose and one screw axis per joint, in
-    // the frame of the model's root link. Which construction a row was typed in is not carried -- a
-    // screw holds no such fact, and each row's is inferred from its own angular part.
+    // The chain a composition opens the window at: the home pose and one entry per joint, in the
+    // frame of the model's root link. An entry holds the screw somebody supplied for that joint or
+    // holds nothing. Which construction a row was typed in is not carried -- a screw holds no such
+    // fact, and each row's is inferred from its own angular part.
     struct settings
     {
         transform home;
-        std::vector<screw_axis> screws;
+        std::vector<supplied_screw> screws;
 
-        explicit settings(transform chosen_home = transform::Identity(), std::vector<screw_axis> chosen_screws = std::vector<screw_axis>());
+        explicit settings(transform chosen_home = transform::Identity(), std::vector<supplied_screw> chosen_screws = std::vector<supplied_screw>());
+        settings(transform chosen_home, const std::vector<screw_axis> &chosen_screws);
     };
 
     // Which controls a composition offers. A control this does not ask for is not drawn, so the
@@ -79,8 +82,8 @@ public:
     static constexpr axis_order home_axis_order = axis_order::zyx;
 
     // The screw a row nobody supplied opens at: the unit z-axis through the origin, taken in
-    // whichever of the two constructions the joint `derived` describes is typed in. Published so a
-    // reader filling a row a document says nothing about fills it where this window would.
+    // whichever of the two constructions the joint `derived` describes is typed in. It is what such
+    // a row shows and what the arm is drawn against; the comparison never sees it.
     static screw_axis opening_screw(const rigid_motion::screw_ops &turning, const screw_axis &derived);
 
     screw_modeling_window(std::string name, loadable_robot_stencil &target, arm_reader seen, const rigid_motion::screw_ops &turning, const rigid_motion::frame_ops &framing,
@@ -126,7 +129,7 @@ public:
 
 private:
     // One joint's numbers as each of the two constructions asks for them, with the one it is typed
-    // in. The screw is not here: it is what the window stores and what the drawing is told.
+    // in. The screw is not here: it is the entry the window keeps for that joint.
     struct row
     {
         explicit row(parameterization opening);
@@ -150,7 +153,7 @@ private:
     screw_chain m_derived;
     std::vector<row> m_rows;
     std::size_t m_selected;
-    std::size_t m_supplied;
+    std::vector<supplied_screw> m_supplied;
     std::vector<std::string> m_entries;
     std::string m_settings_at;
     forward_kinematics_ops m_kinematics;
@@ -160,7 +163,6 @@ private:
     // The construction each row is built through holds no refusal channel, so a composition that
     // left it at its default is said once for as long as that stands rather than once per push.
     bool m_unbound;
-    std::vector<screw_axis> m_screws;
     Eigen::Vector3f m_home_euler_degrees;
     loadable_robot_stencil &m_stencil;
     edit_route m_edits_cb;
