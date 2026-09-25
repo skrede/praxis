@@ -1568,6 +1568,7 @@ lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_cont
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_derived	member	-	typename:screw_chain
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_rows	member	-	typename:std::vector<row>
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_selected	member	-	typename:std::size_t
+lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_supplied	member	-	typename:std::size_t
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_entries	member	-	typename:std::vector<std::string>
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_settings_at	member	-	typename:std::string
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_kinematics	member	-	typename:forward_kinematics_ops
@@ -1586,7 +1587,6 @@ lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	render
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	render_selector	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	tell_selection	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	render_save	prototype	()	typename:void
-lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	render_reading	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	assemble_home	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	seed	prototype	(const settings & opened)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	rebuild_row	prototype	(std::size_t joint)	typename:void

@@ -91,9 +91,13 @@ public:
 
     settings state() const;
 
-    // How far the supplied chain stands from the derived one at the published configuration, as a
-    // rotation in radians and a distance in metres carried apart and never summed. A chain either
-    // side declines to pose reads as a message in their place.
+    // How far the supplied chain stands from the derived one. Two lines carry the whole chain's
+    // rotation in radians and its distance in metres at the published configuration, apart and never
+    // summed; beneath them stand one line for the home pose and one per joint of the derived chain.
+    // A joint nobody supplied says so in place of its terms, and a surplus of supplied screws is a
+    // line of its own naming both counts. Where either chain declines to pose the first two lines
+    // say so in place of their numbers and the lines beneath them stand, since those take no pose.
+    // An arm that has published nothing reads as a message and no lines at all.
     scene::readout reading() const;
 
     // Whether the point a joint's row shows is the point the screw that row holds carries. A screw
@@ -146,6 +150,7 @@ private:
     screw_chain m_derived;
     std::vector<row> m_rows;
     std::size_t m_selected;
+    std::size_t m_supplied;
     std::vector<std::string> m_entries;
     std::string m_settings_at;
     forward_kinematics_ops m_kinematics;
@@ -172,8 +177,6 @@ private:
     void tell_selection();
 
     void render_save();
-
-    void render_reading();
 
     void assemble_home();
 

@@ -756,6 +756,118 @@ TEST_CASE("a home pose typed to four decimals reads a turn and a rigidity of its
     CHECK(apart.home.rigidity > 1.0e-5);
 }
 
+// The screw a row nobody supplied opens at is a screw a person could plausibly type, so the numbers
+// on the two lines are the same numbers and only the statement tells them apart.
+TEST_CASE("a padded joint is told apart from a supplied screw equal to the padding", "[manipulator][modeling]")
+{
+    stage headless(described_chain(), at_rest());
+    std::vector<screw_axis> supplied = headless.chain.space_screws;
+    supplied.pop_back();
+    supplied.back() = screw_modeling_window::opening_screw(turning(), headless.chain.space_screws[axes - 2u]);
+
+    screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{headless.chain.home, supplied});
+    const scene::readout shown  = panel.reading();
+
+    REQUIRE(shown.rows.size() == whole_chain_rows + 1u + axes);
+
+    const std::vector<scene::labeled_value> &typed = joint_line(shown, axes - 2u);
+
+    CHECK(std::isfinite(number_in(typed, rotation_cell)));
+    CHECK(std::isfinite(number_in(typed, distance_cell)));
+    CHECK(std::isfinite(number_in(typed, defect_cell)));
+
+    const std::vector<scene::labeled_value> &padded = joint_line(shown, axes - 1u);
+
+    REQUIRE(padded.size() > 1u);
+    for(const scene::labeled_value &cell : padded)
+        CHECK_FALSE(cell.stated.empty());
+    CHECK(padded.back().stated == "not supplied");
+}
+
+// The terms measure a transform and a surplus fills none of them, so the fact is a line of its own
+// rather than a number standing in a column that means something else.
+TEST_CASE("screws supplied beyond the chain's length are said on a line of their own", "[manipulator][modeling]")
+{
+    stage headless(described_chain(), at_rest());
+    std::vector<screw_axis> too_many = headless.chain.space_screws;
+    too_many.push_back(unit_z_axis());
+    too_many.push_back(unit_z_axis());
+
+    screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{headless.chain.home, too_many});
+    const scene::readout shown  = panel.reading();
+
+    REQUIRE(shown.rows.size() == whole_chain_rows + 1u + axes + 1u);
+
+    const std::vector<scene::labeled_value> &surplus = shown.rows.back();
+
+    for(const scene::labeled_value &cell : surplus)
+        CHECK_FALSE(cell.stated.empty());
+    CHECK(surplus.back().stated.find(std::to_string(axes + 2u)) != std::string::npos);
+    CHECK(surplus.back().stated.find(std::to_string(axes)) != std::string::npos);
+}
+
+TEST_CASE("a reset leaves every joint line saying it was not supplied", "[manipulator][modeling]")
+{
+    stage headless(described_chain(), at_rest());
+    screw_modeling_window::controls reset_only;
+    reset_only.home = false;
+
+    screw_modeling_window panel = opened_over(headless, reset_only, opening{headless.chain.home, headless.chain.space_screws});
+    panel.initialize();
+
+    REQUIRE(joint_line(panel.reading(), 0u)[rotation_cell].stated.empty());
+
+    press_along(panel, reset_control, 0u);
+    const scene::readout shown = panel.reading();
+
+    REQUIRE(shown.rows.size() == whole_chain_rows + 1u + axes);
+    for(std::size_t joint = 0u; joint < axes; ++joint)
+        CHECK(joint_line(shown, joint).back().stated == "not supplied");
+}
+
+// A chain carrying an axis of twice unit length names no rigid motion and poses nowhere, so the two
+// whole-chain lines have no pose to take a difference between. They say that where their numbers
+// would stand, and the lines beneath them -- which reach no pose at all -- answer as they always do.
+TEST_CASE("a supplied chain that poses nowhere still reads joint by joint", "[manipulator][modeling]")
+{
+    stage headless(described_chain(), at_rest());
+    std::vector<screw_axis> supplied = headless.chain.space_screws;
+    supplied[wrong_joint]            = 2.0 * supplied[wrong_joint];
+
+    screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{headless.chain.home, supplied});
+    const scene::readout shown  = panel.reading();
+
+    REQUIRE(shown.message.empty());
+    REQUIRE(shown.rows.size() == whole_chain_rows + 1u + axes);
+    CHECK(shown.rows.front().front().label == "Turned from the described chain (rad)");
+    CHECK_FALSE(shown.rows.front().front().stated.empty());
+    CHECK(shown.rows[1].front().label == "Moved from the described chain (m)");
+    CHECK_FALSE(shown.rows[1].front().stated.empty());
+    CHECK(std::fabs(number_in(joint_line(shown, wrong_joint), defect_cell) - 1.0) < printed);
+    CHECK(number_in(joint_line(shown, 0u), defect_cell) < printed);
+}
+
+// A home pose carrying one over root two to the decimals a person copies off the page is orthonormal
+// to about a hundred-thousandth, which is not a rigid motion, so again nothing poses. The home line
+// is where that defect is read, and it is drawn only because the refusal stayed in the two lines
+// above it.
+TEST_CASE("a home pose typed to four decimals still reads joint by joint", "[manipulator][modeling]")
+{
+    stage headless(described_chain(), at_rest());
+    transform typed         = headless.chain.home;
+    typed.block<3, 3>(0, 0) = an_eighth_turn_to_four_decimals();
+
+    screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{typed, headless.chain.space_screws});
+    const scene::readout shown  = panel.reading();
+
+    REQUIRE(shown.message.empty());
+    REQUIRE(shown.rows.size() == whole_chain_rows + 1u + axes);
+    CHECK_FALSE(shown.rows.front().front().stated.empty());
+    CHECK_FALSE(shown.rows[1].front().stated.empty());
+    CHECK(number_in(home_line(shown), defect_cell) > 1.0e-5);
+    CHECK(number_in(joint_line(shown, 0u), rotation_cell) < printed);
+}
+
 TEST_CASE("a window whose arm has published nothing answers a message and no rows at all", "[manipulator][modeling]")
 {
     stage headless(described_chain(), at_rest());

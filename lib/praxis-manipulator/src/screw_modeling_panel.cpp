@@ -1,4 +1,5 @@
 #include "screw_modeling_table.h"
+#include "screw_modeling_padding.h"
 
 #include "praxis/manipulator/option_widgets.h"
 #include "praxis/manipulator/screw_modeling_window.h"
@@ -34,7 +35,8 @@ constexpr std::array<const char *, 2> parameterization_labels{"Point, direction,
 
 constexpr const char *const position_labels[3]{"X", "Y", "Z"};
 
-constexpr std::size_t whole_chain_rows = 2u;
+constexpr const char *supplied_without_pose  = "the supplied chain has no pose here";
+constexpr const char *described_without_pose = "the described chain has no pose here";
 
 // A value box prints three digits after the point, so half of the last of them is the smallest
 // difference between two points a row is able to show.
@@ -93,7 +95,7 @@ void screw_modeling_window::render()
         render_row(m_selected);
 
     ImGui::Separator();
-    render_reading();
+    render_screw_modeling_reading(reading());
     render_save();
     ImGui::End();
 }
@@ -168,27 +170,13 @@ scene::readout screw_modeling_window::reading() const
     if(!share)
         return scene::readout{"The arm has published nothing yet.", {}};
 
+    const screw_chain_difference apart           = supplied_chain_difference(m_derived, m_home, as_supplied(m_screws, m_supplied));
     const expected<transform, refusal> supplied  = m_kinematics.forward_kinematics(m_screw, m_home, m_screws, share->joints);
     const expected<transform, refusal> described = m_kinematics.forward_kinematics(m_screw, m_derived.home, m_derived.space_screws, share->joints);
     if(!supplied || !described)
-        return scene::readout{supplied ? "The described chain has no pose here." : "The supplied chain has no pose here.", {}};
+        return screw_modeling_reading(apart, whole_chain_without_pose(supplied ? described_without_pose : supplied_without_pose));
 
-    const evaluation::residual apart = evaluation::pose_residual(supplied.value(), described.value());
-    const scene::labeled_value turned{static_cast<float>(apart.magnitude), "Turned from the described chain (rad)"};
-    const scene::labeled_value moved{static_cast<float>(apart.linear_error_metres), "Moved from the described chain (m)"};
-
-    return screw_modeling_reading(supplied_chain_difference(m_derived, m_home, m_screws), scene::readout{{}, {{turned}, {moved}}});
-}
-
-void screw_modeling_window::render_reading()
-{
-    const scene::readout shown = reading();
-    if(!shown.message.empty())
-        return ImGui::TextUnformatted(shown.message.c_str());
-
-    for(std::size_t row = 0u; row < whole_chain_rows && row < shown.rows.size(); ++row)
-        ImGui::Text("%s %.6f", shown.rows[row].front().label.c_str(), static_cast<double>(shown.rows[row].front().value));
-    render_screw_modeling_table(shown, whole_chain_rows);
+    return screw_modeling_reading(apart, whole_chain_lines(evaluation::pose_residual(supplied.value(), described.value())));
 }
 
 void screw_modeling_window::render_save()

@@ -41,6 +41,7 @@ screw_modeling_window::screw_modeling_window(std::string name, loadable_robot_st
         , m_controls(offered)
         , m_derived(std::move(derived))
         , m_selected(0u)
+        , m_supplied(0u)
         , m_settings_at(std::move(at))
         , m_kinematics(solving)
         , m_home_position(Eigen::Vector3f::Zero())
@@ -70,6 +71,7 @@ void screw_modeling_window::seed(const settings &opened)
     m_home_euler_degrees = (m_frame.euler_from_rotation_matrix(held, home_axis_order) * degrees_per_radian).cast<float>();
 
     m_selected = 0u;
+    m_supplied = opened.screws.size();
     m_entries.clear();
     m_screws.resize(m_derived.joint_count());
     for(std::size_t joint = 0u; joint < m_screws.size(); ++joint)
