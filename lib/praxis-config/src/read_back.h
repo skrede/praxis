@@ -2,6 +2,7 @@
 #define HPP_GUARD_PRAXIS_CONFIG_READ_BACK_H
 
 #include "praxis/config/error.h"
+#include "praxis/config/writer.h"
 #include "praxis/config/document.h"
 #include "praxis/config/declaration.h"
 
@@ -27,10 +28,12 @@ std::optional<std::string> reading(const document &reloaded, field_kind kind, co
 std::optional<std::string> canonical(field_kind kind, const std::string &value);
 
 // The document at `candidate` loaded through this module's own load, with every one of `keys`
-// required to read as the matching entry of `values` does. Each key is read as the kind it was
-// declared with, so a real leaf agrees only where the two are the same value bit for bit, and a
+// required to read as the matching entry of `values` does, and no identity a removal among `gone`
+// names still carried by the collection it names. Each key is read as the kind it was declared
+// with, so a real leaf agrees only where the two are the same value bit for bit, and a
 // disagreement is reported by naming the key together with what was written and what came back.
-expected<void, error> reads_as_written(const declaration &shape, const std::filesystem::path &candidate, std::span<const std::string> keys, std::span<const std::string> values);
+expected<void, error> reads_as_written(const declaration &shape, const std::filesystem::path &candidate, std::span<const std::string> keys, std::span<const std::string> values,
+                                       std::span<const edit> gone);
 
 }
 

@@ -27,7 +27,7 @@ std::vector<edit> unsaved_edits(const document &carried, std::span<const edit> c
     std::vector<edit> outstanding;
     for(const edit &change : changes)
     {
-        const std::optional<field_kind> kind = carried.kind_of(change.key);
+        const std::optional<field_kind> kind = change.kind == edit_kind::bound ? carried.kind_of(change.key) : std::nullopt;
         if(!kind)
         {
             outstanding.push_back(change);

@@ -81,6 +81,14 @@ pugi::xml_node reached(pugi::xml_node from, const step &one)
     return found;
 }
 
+pugi::xml_node holder_of(pugi::xml_node root, const std::vector<std::string_view> &parts)
+{
+    pugi::xml_node holding = root;
+    for(std::size_t taken = 0; taken + 1 < parts.size() && holding; ++taken)
+        holding = reached(holding, parsed(parts[taken]));
+    return holding;
+}
+
 std::size_t offset_of(pugi::xml_node held)
 {
     return static_cast<std::size_t>(held.offset_debug());

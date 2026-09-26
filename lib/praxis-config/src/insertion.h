@@ -7,9 +7,14 @@
 #include <span>
 #include <string>
 #include <vector>
+#include <optional>
 #include <string_view>
 
 namespace praxis::config {
+
+// The leaf the instances of the collection `shape` declares at `path` are keyed by, or nothing where
+// it declares no collection there.
+std::optional<std::string> keyed_by(const declaration &shape, const std::string &path);
 
 // The element paths the leaves of `wanted` hang under that `source` does not carry, each named once
 // however many keys share it and an ancestor always before what hangs below it. An instance of a

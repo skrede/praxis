@@ -14,9 +14,7 @@
 #include <string>
 #include <vector>
 #include <cstddef>
-#include <charconv>
 #include <optional>
-#include <algorithm>
 #include <filesystem>
 #include <string_view>
 
@@ -26,42 +24,6 @@ namespace {
 
 using names    = keys::screw_table_names;
 using supplied = manipulator::screw_modeling_window::settings;
-
-config::error unreadable(const std::string &identity, const std::string &fault)
-{
-    return config::error{config::error_code::rejected_content, "the chain kept here addresses a row by '" + identity + "', which " + fault};
-}
-
-// A row is addressed by the place its joint takes in the chain, counted from one, in the one
-// spelling that place reads back as -- which is the text every lookup of the row compares against.
-std::optional<std::size_t> ordinal_of(const std::string &identity)
-{
-    std::size_t named                 = 0u;
-    const char *const last            = identity.data() + identity.size();
-    const std::from_chars_result read = std::from_chars(identity.data(), last, named);
-    const bool canonical              = read.ec == std::errc() && read.ptr == last && named >= 1u && std::to_string(named) == identity;
-
-    return canonical ? std::optional<std::size_t>(named) : std::optional<std::size_t>();
-}
-
-// How far the reading stretches: to the furthest joint any row names, and no further out than the
-// surplus a document may name past the chain's end.
-expected<std::size_t, config::error> reach_of(const std::vector<std::string> &present, std::size_t joints)
-{
-    std::size_t reach = joints;
-    for(const std::string &identity : present)
-    {
-        const std::optional<std::size_t> named = ordinal_of(identity);
-        if(!named)
-            return unexpected(unreadable(identity, "names no joint's place in a chain"));
-        if(*named > joints + screw_table_greatest_surplus)
-            return unexpected(unreadable(identity, "names a joint further past the end of this chain than a chain is read out to"));
-
-        reach = std::max(reach, *named);
-    }
-
-    return reach;
-}
 
 transform read_home(const config::document &values, const std::string &at, const rigid_motion::frame_ops &framing)
 {
@@ -109,6 +71,56 @@ std::vector<config::edit> row_edits(const std::string &where, const screw_axis &
     return changes;
 }
 
+// What one joint costs the document. An entry holding nothing takes out whatever row the document
+// carries for it; one holding a screw is written because somebody supplied that joint rather than
+// because a leaf of it moved, so a row the document has no instance of is named ahead of its own
+// values and `appending` moves on to the ordinal the next such row lands at.
+std::vector<config::edit> joint_edits(const config::document &values, const std::string &rows, const manipulator::supplied_screw &entry, std::size_t joint, std::size_t &appending)
+{
+    const std::string identity                = std::to_string(joint + 1u);
+    const std::optional<std::string> instance = keys::instance_at(values, rows, identity);
+    if(!entry && !instance)
+        return {};
+    if(!entry)
+        return {config::edit{rows, identity, config::edit_kind::taken_out}};
+
+    const std::string where           = instance ? *instance : rows + "[" + std::to_string(appending) + "]";
+    std::vector<config::edit> written = config::unsaved_edits(values, row_edits(where, *entry));
+    if(instance)
+        return written;
+
+    written.insert(written.begin(), config::edit{keys::under(where, names::index), identity});
+    ++appending;
+
+    return written;
+}
+
+// A removal for every row the document carries past the last of `entries` a state holds. A row
+// whose identity names no joint's place is never one of them.
+std::vector<config::edit> rows_past(const config::document &values, const std::string &rows, std::size_t entries)
+{
+    std::vector<config::edit> changes;
+    for(const std::string &identity : values.identities(rows))
+        if(const std::optional<std::size_t> named = keys::ordinal_of(identity); named && *named > entries)
+            changes.push_back(config::edit{rows, identity, config::edit_kind::taken_out});
+
+    return changes;
+}
+
+// A refusal naming the last joint `state` holds a screw for, where that joint lies further out than
+// a document may name past the end of a chain of `joints`.
+std::optional<config::error> beyond_reach(const supplied &state, std::size_t joints)
+{
+    const std::size_t furthest = joints + screw_table_greatest_surplus;
+    for(std::size_t joint = state.screws.size(); joint > furthest; --joint)
+        if(state.screws[joint - 1u])
+            return config::error{config::error_code::rejected_content,
+                                 "the chain handed here holds a screw for joint " + std::to_string(joint) + ", further past the end of this chain than joint " +
+                                         std::to_string(furthest) + ", the furthest a document may name"};
+
+    return std::nullopt;
+}
+
 }
 
 config::declaration screw_table_keyspace()
@@ -138,7 +150,7 @@ expected<supplied, config::error> read_screw_table(const config::document &value
                                                    const rigid_motion::frame_ops &framing)
 {
     const std::string rows                           = keys::under(at, names::joint);
-    const expected<std::size_t, config::error> reach = reach_of(values.identities(rows), derived.joint_count());
+    const expected<std::size_t, config::error> reach = keys::reach_of(values.identities(rows), derived.joint_count());
     if(!reach)
         return unexpected(reach.error());
 
@@ -150,46 +162,53 @@ expected<supplied, config::error> read_screw_table(const config::document &value
     return opened;
 }
 
-std::vector<config::edit> write_screw_table(const config::document &values, std::string_view at, const supplied &state, const rigid_motion::frame_ops &framing)
+expected<std::vector<config::edit>, config::error> write_screw_table(const config::document &values, std::string_view at, const manipulator::screw_chain &derived, const supplied &state,
+                                                                     const rigid_motion::frame_ops &framing)
 {
-    const std::string rows            = keys::under(at, names::joint);
-    std::vector<config::edit> changes = config::unsaved_edits(values, home_edits(keys::under(at, names::home), state.home, framing));
+    const std::string rows = keys::under(at, names::joint);
+    if(const expected<std::size_t, config::error> reach = keys::reach_of(values.identities(rows), derived.joint_count()); !reach)
+        return unexpected(reach.error());
+    if(const std::optional<config::error> refused = beyond_reach(state, derived.joint_count()); refused)
+        return unexpected(*refused);
 
-    std::size_t appended = values.identities(rows).size();
+    std::vector<config::edit> changes = config::unsaved_edits(values, home_edits(keys::under(at, names::home), state.home, framing));
+    std::size_t appending             = values.identities(rows).size();
     for(std::size_t joint = 0u; joint < state.screws.size(); ++joint)
     {
-        if(!state.screws[joint])
-            continue;
-
-        const std::optional<std::string> instance = keys::instance_at(values, rows, std::to_string(joint + 1u));
-        const std::string where                   = instance ? *instance : rows + "[" + std::to_string(appended) + "]";
-        const std::vector<config::edit> moved     = config::unsaved_edits(values, row_edits(where, *state.screws[joint]));
-        if(moved.empty())
-            continue;
-
-        if(!instance)
-            changes.push_back(config::edit{keys::under(where, names::index), std::to_string(joint + 1u)});
-        appended += instance ? 0u : 1u;
-        changes.insert(changes.end(), moved.begin(), moved.end());
+        const std::vector<config::edit> row = joint_edits(values, rows, state.screws[joint], joint, appending);
+        changes.insert(changes.end(), row.begin(), row.end());
     }
+
+    const std::vector<config::edit> past = rows_past(values, rows, state.screws.size());
+    changes.insert(changes.end(), past.begin(), past.end());
 
     return changes;
 }
 
-manipulator::screw_modeling_window::edit_route screw_table_edits(const rigid_motion::frame_ops &framing)
+manipulator::screw_modeling_window::edit_route screw_table_edits(const manipulator::screw_chain &derived, const rigid_motion::frame_ops &framing)
 {
-    return [framing](const config::document &values, std::string_view at, const supplied &state) { return write_screw_table(values, at, state, framing); };
+    return [derived, framing](const config::document &values, std::string_view at, const supplied &state)
+    {
+        const expected<std::vector<config::edit>, config::error> changes = write_screw_table(values, at, derived, state, framing);
+        if(changes)
+            return changes.value();
+
+        spdlog::error("praxis: the chain offers nothing on leaving: {}", changes.error().message);
+        return std::vector<config::edit>();
+    };
 }
 
-manipulator::screw_modeling_window::save_route screw_table_route(const std::optional<config::binding> &bound, const rigid_motion::frame_ops &framing)
+manipulator::screw_modeling_window::save_route screw_table_route(const std::optional<config::binding> &bound, const manipulator::screw_chain &derived,
+                                                                 const rigid_motion::frame_ops &framing)
 {
     if(!bound || bound->at.resolved.empty())
         return manipulator::screw_modeling_window::save_route();
 
-    return [kept = *bound, framing](std::string_view at, const supplied &state)
+    return [kept = *bound, derived, framing](std::string_view at, const supplied &state)
     {
-        const config::outcome carried               = config::load_or_defaults(kept);
-        const expected<void, config::error> written = config::save(kept, write_screw_table(carried.values, at, state, framing));
+        const config::outcome carried                                    = config::load_or_defaults(kept);
+        const expected<std::vector<config::edit>, config::error> changes = write_screw_table(carried.values, at, derived, state, framing);
+        const expected<void, config::error> written                      = changes ? config::save(kept, changes.value()) : expected<void, config::error>(unexpected(changes.error()));
         if(!written)
             spdlog::error("praxis: the chain was not kept: {}", written.error().message);
     };

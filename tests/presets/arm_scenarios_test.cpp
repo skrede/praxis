@@ -17,6 +17,7 @@
 #include "praxis/scene/preset.h"
 
 #include "praxis/config/store.h"
+#include "praxis/config/writer.h"
 #include "praxis/config/binding.h"
 #include "praxis/config/configurable.h"
 
@@ -35,6 +36,7 @@
 #include <cstddef>
 #include <utility>
 #include <optional>
+#include <algorithm>
 #include <filesystem>
 
 using namespace praxis;
@@ -144,6 +146,74 @@ std::shared_ptr<manipulator::screw_modeling_window> chain_window_of(const std::s
     REQUIRE(held != nullptr);
 
     return held;
+}
+
+// Where the chain window's own controls stand in the walk down its panel in a modeling scenario: the
+// home position and its turn are three fields each above the reset, and the save is the last control.
+constexpr std::size_t reset_chain_control = 6u;
+constexpr std::size_t save_chain_control  = 13u;
+
+std::size_t removals_offered(const manipulator::screw_modeling_window &window, const config::binding &into)
+{
+    const config::configurable *routed = window.as_configurable();
+    REQUIRE(routed != nullptr);
+
+    const std::vector<config::edit> offered = routed->settings_edits(config::load_or_defaults(into).values);
+
+    return static_cast<std::size_t>(std::count_if(offered.begin(), offered.end(), [](const config::edit &change) { return change.kind == config::edit_kind::taken_out; }));
+}
+
+bool offers_nothing(const manipulator::screw_modeling_window &window, const config::binding &into)
+{
+    const config::configurable *routed = window.as_configurable();
+    REQUIRE(routed != nullptr);
+
+    return routed->settings_edits(config::load_or_defaults(into).values).empty();
+}
+
+// A chain discarded with the window's own control is a chain the document stops carrying once saved,
+// every row it named past the arm's end included: the scenario opens from the file its save writes
+// into, so a save that kept any old row would open some of the discarded chain again.
+void require_discarded_across_a_save(std::size_t kept_joints, const char *name)
+{
+    const described_arm described(6, "six_discarded");
+    const presets::arm_scenario chosen = described_by(described.where);
+    const config::binding into         = chain_binding(name);
+    const config::document written     = kept_chain(a_supplied_chain(kept_joints), name);
+
+    opened_arm built;
+    const std::shared_ptr<scene::preset> composed                    = built.open(chosen, presets::arm_windows_modeling(chosen, supplied_from(written, into)));
+    const std::shared_ptr<manipulator::screw_modeling_window> window = chain_window_of(composed);
+    for(std::size_t joint = 0u; joint < 6u; ++joint)
+    {
+        INFO("joint " << joint);
+        REQUIRE(joint_line(window->reading(), joint)[rotation_cell].stated.empty());
+    }
+    REQUIRE(removals_offered(*window, into) == 0u);
+
+    press_at(*window, reset_chain_control);
+    for(std::size_t joint = 0u; joint < 6u; ++joint)
+    {
+        INFO("joint " << joint);
+        REQUIRE(joint_line(window->reading(), joint).back().stated == "not supplied");
+    }
+    CHECK(removals_offered(*window, into) == kept_joints);
+
+    press_at(*window, save_chain_control);
+    CHECK(offers_nothing(*window, into));
+
+    opened_arm reopened;
+    const std::shared_ptr<scene::preset> again = reopened.open(chosen, presets::arm_windows_modeling(chosen, supplied_from(config::load_or_defaults(into).values, into)));
+    const scene::readout shown                 = chain_window_of(again)->reading();
+
+    INFO(shown.message);
+    REQUIRE(shown.rows.size() >= whole_chain_rows + 1u + 6u);
+    CHECK(shown.rows.size() == whole_chain_rows + 1u + 6u);
+    for(std::size_t joint = 0u; joint < 6u; ++joint)
+    {
+        INFO("joint " << joint);
+        CHECK(joint_line(shown, joint).back().stated == "not supplied");
+    }
 }
 
 presets::arm_scenario driving_on_edit(const std::filesystem::path &description)
@@ -690,4 +760,54 @@ TEST_CASE("a chain window saved into its own document reports nothing left to de
     REQUIRE(config::save(into, routed->settings_edits(config::load_or_defaults(into).values)).has_value());
 
     CHECK(routed->settings_edits(config::load_or_defaults(into).values).empty());
+}
+
+// Every leaf of a zero screw reads as the fallback a document carrying no row for that joint already
+// reads as, so what carries it into a fresh document is that somebody supplied it.
+TEST_CASE("a screw supplied at zero stays supplied across a save and an open", "[presets][configuration]")
+{
+    constexpr std::size_t zero_joint = 2u;
+
+    const described_arm described(6, "six_zero");
+    const presets::arm_scenario chosen = described_by(described.where);
+    std::vector<screw_axis> supplied   = a_supplied_chain(6);
+    supplied[zero_joint]               = screw_axis::Zero();
+    const config::document written     = kept_chain(supplied, "window-zero-source.xml");
+    const config::binding into         = chain_binding("window-zero.xml");
+
+    opened_arm built;
+    const std::shared_ptr<scene::preset> composed                    = built.open(chosen, presets::arm_windows_modeling(chosen, supplied_from(written, into)));
+    const std::shared_ptr<manipulator::screw_modeling_window> window = chain_window_of(composed);
+    REQUIRE(joint_line(window->reading(), zero_joint).back().stated != "not supplied");
+
+    press_at(*window, save_chain_control);
+
+    opened_arm reopened;
+    const std::shared_ptr<scene::preset> again = reopened.open(chosen, presets::arm_windows_modeling(chosen, supplied_from(config::load_or_defaults(into).values, into)));
+    const scene::readout shown                 = chain_window_of(again)->reading();
+
+    INFO(shown.message);
+    REQUIRE(shown.rows.size() == whole_chain_rows + 1u + 6u);
+    CHECK(joint_line(shown, zero_joint).back().stated != "not supplied");
+
+    const rigid_motion::capabilities motions = rigid_motion::baseline();
+    const expected<manipulator::screw_modeling_window::settings, config::error> read =
+            presets::read_screw_table(config::load_or_defaults(into).values, presets::screw_table_path, derived_chain(described.where), motions.screw, motions.frame);
+    INFO((read ? std::string() : read.error().message));
+    REQUIRE(read.has_value());
+    REQUIRE(read.value().screws.size() > zero_joint);
+    REQUIRE(read.value().screws[zero_joint].has_value());
+    CHECK(read.value().screws[zero_joint]->norm() == 0.0);
+}
+
+TEST_CASE("a chain discarded in the window and saved stays discarded when the scenario is opened again", "[presets][configuration]")
+{
+    require_discarded_across_a_save(6u, "window-discarded.xml");
+}
+
+// The window holds one entry per joint of the arm once it is reset, so the row a document named past
+// the arm's end is one no entry stands for, and the discarded chain still has to take it out.
+TEST_CASE("a chain discarded over a document naming a joint past the arm's end reopens with no surplus line", "[presets][configuration]")
+{
+    require_discarded_across_a_save(7u, "window-discarded-surplus.xml");
 }

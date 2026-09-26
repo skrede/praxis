@@ -35,6 +35,10 @@ struct placement
 // value stepped over whole so a `>` inside one is not mistaken for it.
 std::size_t past_tag(std::string_view source, std::size_t from);
 
+// Where the content of the element whose name begins at `from` ends: the `<` of its end tag, or the
+// byte its self-closing `/` sits on where it has no content to end.
+std::size_t content_ends(std::string_view source, std::size_t from);
+
 // The bytes between the quotes of the attribute `named` in the start tag whose element name begins
 // at `from`, or nothing where that tag writes no such attribute.
 std::optional<placement> attribute_bytes(std::string_view source, std::size_t from, std::string_view named, std::string current);

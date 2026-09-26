@@ -1,8 +1,11 @@
 #include "engine.h"
 
+#include "praxis/config/writer.h"
+
 #include <ios>
-#include <string>
+#include <array>
 #include <locale>
+#include <string>
 #include <cstddef>
 #include <sstream>
 #include <charconv>
@@ -53,6 +56,13 @@ std::optional<std::int64_t> as_integer(std::string_view text)
     if(done.ec != std::errc() || done.ptr != value.data() + value.size())
         return std::nullopt;
     return parsed;
+}
+
+std::string exact_text(double value)
+{
+    std::array<char, 40> digits{};
+    const std::to_chars_result printed = std::to_chars(digits.data(), digits.data() + digits.size(), value);
+    return printed.ec == std::errc() ? std::string(digits.data(), printed.ptr) : std::string();
 }
 
 }

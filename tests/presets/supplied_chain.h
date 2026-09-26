@@ -123,7 +123,7 @@ inline config::binding chain_binding(const char *name)
 
 inline presets::screw_table_source supplied_from(const config::document &values, const config::binding &into)
 {
-    return presets::screw_table_source{std::string(presets::screw_table_path), values, presets::screw_table_route(into, rigid_motion::baseline().frame)};
+    return presets::screw_table_source{std::string(presets::screw_table_path), values, into};
 }
 
 }

@@ -67,8 +67,8 @@ manipulator::arm_composition arm_windows_modeling(arm_scenario chosen, screw_tab
         return std::vector<std::shared_ptr<scene::imgui_window>>{
                 std::make_shared<manipulator::joint_control_window>("Joint control", built.seen, built.arm, state.joint_control),
                 std::make_shared<manipulator::screw_modeling_window>("Chain", built.stencil, built.seen, built.screw, built.frames, built.fk, built.chain,
-                                                                     manipulator::screw_modeling_window::controls(), opened_chain(kept, built), screw_table_edits(built.frames),
-                                                                     kept.save, kept.at),
+                                                                     manipulator::screw_modeling_window::controls(), opened_chain(kept, built),
+                                                                     screw_table_edits(built.chain, built.frames), screw_table_route(kept.into, built.chain, built.frames), kept.at),
                 std::make_shared<manipulator::robot_view_window>("View", built.stencil, chain_view_controls(), chain_view(state.robot_view)),
         };
     };

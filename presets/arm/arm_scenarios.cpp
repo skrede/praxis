@@ -45,13 +45,13 @@ opened_scenario windows_over(const arm_scenario &machine, const scenario_documen
 // A chain typed into this scenario is what its windows write back, so the document that chain is
 // kept in is the one announced and every other window beside it is composed with no key path at all.
 // An arm keeping no chain announces its own document and keeps nothing.
-opened_scenario modeling_windows(const arm_scenario &machine, const scenario_documents &documents, const rigid_motion::capabilities &motions)
+opened_scenario modeling_windows(const arm_scenario &machine, const scenario_documents &documents, const rigid_motion::capabilities &)
 {
     if(!documents.keeping)
         return opened_scenario{arm_windows_modeling(machine, screw_table_source{}), documents.bound, documents.carried};
 
     const config::outcome kept = config::load_or_defaults(*documents.keeping);
-    const screw_table_source supplied{screw_table_path, kept.values, screw_table_route(documents.keeping, motions.frame)};
+    const screw_table_source supplied{screw_table_path, kept.values, documents.keeping};
 
     return opened_scenario{arm_windows_modeling(machine, supplied), *documents.keeping, kept.values};
 }

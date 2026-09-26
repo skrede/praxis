@@ -29,6 +29,9 @@ step parsed(std::string_view part);
 
 pugi::xml_node reached(pugi::xml_node from, const step &one);
 
+// The element the last of `parts` hangs under, or nothing where the document does not carry it.
+pugi::xml_node holder_of(pugi::xml_node root, const std::vector<std::string_view> &parts);
+
 std::size_t offset_of(pugi::xml_node held);
 
 // Where each of `keys` sits in `source`, in the same order, answering nothing where the document

@@ -17,51 +17,6 @@
 namespace praxis::config {
 namespace {
 
-// One markup construct consumed from the `<` at `opens`, with `depth` following the element nesting
-// across it, so a comment, a processing instruction and a character-data section carry no nesting.
-std::size_t stepped_over(std::string_view source, std::size_t opens, std::size_t &depth)
-{
-    if(source.compare(opens, 4, "<!--") == 0)
-        return std::min(source.find("-->", opens + 4), source.size());
-    if(source.compare(opens, 9, "<![CDATA[") == 0)
-        return std::min(source.find("]]>", opens + 9), source.size());
-    if(opens + 1 >= source.size())
-        return source.size();
-    if(source[opens + 1] == '?' || source[opens + 1] == '!')
-        return std::min(source.find('>', opens + 1), source.size());
-    if(source[opens + 1] == '/')
-    {
-        --depth;
-        return std::min(source.find('>', opens + 1), source.size());
-    }
-
-    const std::size_t closes = past_tag(source, opens + 1);
-    if(!(closes > 0 && closes < source.size() && source[closes - 1] == '/'))
-        ++depth;
-    return closes;
-}
-
-// Where the content of the element whose name begins at `from` ends: the `<` of its end tag, or the
-// byte its self-closing `/` sits on where it has no content to end.
-std::size_t content_ends(std::string_view source, std::size_t from)
-{
-    const std::size_t closes = past_tag(source, from);
-    if(closes > 0 && closes < source.size() && source[closes - 1] == '/')
-        return closes - 1;
-
-    std::size_t depth = 1;
-    for(std::size_t at = closes; at < source.size();)
-    {
-        const std::size_t opens = source.find('<', at + 1);
-        if(opens == std::string_view::npos)
-            break;
-        at = stepped_over(source, opens, depth);
-        if(depth == 0)
-            return opens;
-    }
-    return source.size();
-}
-
 // The blanks the line `opens` sits on begins with, and nothing where that line begins at `opens`.
 std::string indent_at(std::string_view source, std::size_t opens)
 {
@@ -120,17 +75,6 @@ std::string opened_around(std::string_view source, pugi::xml_node holding, const
 {
     const std::string outer = indent_at(source, offset_of(holding));
     return ">\n" + outer + one_level(source) + "<" + named + "/>\n" + outer + "</" + holding.name();
-}
-
-// The leaf the instances of the collection `shape` declares at `path` are keyed by, or nothing where
-// it declares no collection there.
-std::optional<std::string> keyed_by(const declaration &shape, const std::string &path)
-{
-    for(const node &declared : shape.nodes())
-        if(declared.shape == node_kind::collection && declared.path == path)
-            return declared.identity;
-
-    return std::nullopt;
 }
 
 std::size_t children_named(pugi::xml_node holding, const char *named)
@@ -199,15 +143,6 @@ std::vector<std::string> missing_above(const declaration &shape, std::span<const
     return named;
 }
 
-// The element the last of `parts` hangs under, or nothing where the document does not carry it.
-pugi::xml_node holder_of(pugi::xml_node root, const std::vector<std::string_view> &parts)
-{
-    pugi::xml_node holding = root;
-    for(std::size_t taken = 0; taken + 1 < parts.size() && holding; ++taken)
-        holding = reached(holding, parsed(parts[taken]));
-    return holding;
-}
-
 std::string grown_with(std::string source, const std::string &path)
 {
     pugi::xml_document held;
@@ -231,6 +166,17 @@ std::string grown_with(std::string source, const std::string &path)
     return source;
 }
 
+}
+
+// The leaf the instances of the collection `shape` declares at `path` are keyed by, or nothing where
+// it declares no collection there.
+std::optional<std::string> keyed_by(const declaration &shape, const std::string &path)
+{
+    for(const node &declared : shape.nodes())
+        if(declared.shape == node_kind::collection && declared.path == path)
+            return declared.identity;
+
+    return std::nullopt;
 }
 
 std::vector<std::string> absent_elements(const declaration &shape, std::string_view source, std::span<const edit> wanted)

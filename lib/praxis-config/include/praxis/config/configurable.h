@@ -33,9 +33,11 @@ public:
 
 // Which of `changes` the document does not already read as, compared through the conversions each
 // key's declared kind is written by, so a real spelled two ways is one value. A key the document
-// names no declared leaf for is one of them. An implementor whose reading of an absent leaf is the
-// document's own narrows its offer with this; one reading such a leaf as something else answers
-// against its own reference instead.
+// names no declared leaf for is one of them, and so is every edit taking an instance out, whether
+// or not the document carries it, so an offer converges only by naming a removal while the instance
+// is there to take. An implementor whose reading of an absent leaf is the document's own narrows its
+// offer with this; one reading such a leaf as something else answers against its own reference
+// instead.
 std::vector<edit> unsaved_edits(const document &carried, std::span<const edit> changes);
 
 }

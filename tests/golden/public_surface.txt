@@ -121,9 +121,13 @@ lib/praxis-config/include/praxis/config/store.h	load_or_defaults	prototype	(cons
 lib/praxis-config/include/praxis/config/store.h	write_template	prototype	(const declaration & shape,const std::filesystem::path & target)	typename:expected<void,error>
 lib/praxis-config/include/praxis/config/writer.h	config	namespace	-	-
 lib/praxis-config/include/praxis/config/writer.h	praxis	namespace	-	-
+lib/praxis-config/include/praxis/config/writer.h	edit_kind	enum	-	typename:std::uint8_t
+lib/praxis-config/include/praxis/config/writer.h	bound	enumerator	-	-
+lib/praxis-config/include/praxis/config/writer.h	taken_out	enumerator	-	-
 lib/praxis-config/include/praxis/config/writer.h	edit	struct	-	-
 lib/praxis-config/include/praxis/config/writer.h	key	member	-	typename:std::string
 lib/praxis-config/include/praxis/config/writer.h	value	member	-	typename:std::string
+lib/praxis-config/include/praxis/config/writer.h	kind	member	-	typename:edit_kind
 lib/praxis-config/include/praxis/config/writer.h	write_policy	enum	-	typename:std::uint8_t
 lib/praxis-config/include/praxis/config/writer.h	every_edit	enumerator	-	-
 lib/praxis-config/include/praxis/config/writer.h	file_backed_only	enumerator	-	-
@@ -3255,13 +3259,13 @@ presets/include/praxis/presets/screw_table.h	screw_table_keyspace	prototype	()	t
 presets/include/praxis/presets/screw_table.h	screw_table_binding	prototype	(const std::filesystem::path & named,const std::filesystem::path & beside)	typename:config::binding
 presets/include/praxis/presets/screw_table.h	screw_table_greatest_surplus	variable	-	typename:std::size_t
 presets/include/praxis/presets/screw_table.h	read_screw_table	prototype	(const config::document & values,std::string_view at,const manipulator::screw_chain & derived,const rigid_motion::screw_ops & turning,const rigid_motion::frame_ops & framing)	typename:expected<manipulator::screw_modeling_window::settings,config::error>
-presets/include/praxis/presets/screw_table.h	write_screw_table	prototype	(const config::document & values,std::string_view at,const manipulator::screw_modeling_window::settings & state,const rigid_motion::frame_ops & framing)	typename:std::vector<config::edit>
-presets/include/praxis/presets/screw_table.h	screw_table_edits	prototype	(const rigid_motion::frame_ops & framing)	typename:manipulator::screw_modeling_window::edit_route
-presets/include/praxis/presets/screw_table.h	screw_table_route	prototype	(const std::optional<config::binding> & bound,const rigid_motion::frame_ops & framing)	typename:manipulator::screw_modeling_window::save_route
+presets/include/praxis/presets/screw_table.h	write_screw_table	prototype	(const config::document & values,std::string_view at,const manipulator::screw_chain & derived,const manipulator::screw_modeling_window::settings & state,const rigid_motion::frame_ops & framing)	typename:expected<std::vector<config::edit>,config::error>
+presets/include/praxis/presets/screw_table.h	screw_table_edits	prototype	(const manipulator::screw_chain & derived,const rigid_motion::frame_ops & framing)	typename:manipulator::screw_modeling_window::edit_route
+presets/include/praxis/presets/screw_table.h	screw_table_route	prototype	(const std::optional<config::binding> & bound,const manipulator::screw_chain & derived,const rigid_motion::frame_ops & framing)	typename:manipulator::screw_modeling_window::save_route
 presets/include/praxis/presets/screw_table.h	screw_table_source	struct	-	-
 presets/include/praxis/presets/screw_table.h	at	member	-	typename:std::string
 presets/include/praxis/presets/screw_table.h	values	member	-	typename:std::optional<config::document>
-presets/include/praxis/presets/screw_table.h	save	member	-	typename:manipulator::screw_modeling_window::save_route
+presets/include/praxis/presets/screw_table.h	into	member	-	typename:std::optional<config::binding>
 presets/include/praxis/presets/twist_axis.h	praxis	namespace	-	-
 presets/include/praxis/presets/twist_axis.h	presets	namespace	-	-
 presets/include/praxis/presets/twist_axis.h	twist_axis_preset	prototype	(const scene::preset_site & site,const rigid_motion::capabilities & motions)	typename:std::shared_ptr<scene::preset>

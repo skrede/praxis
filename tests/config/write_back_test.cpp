@@ -3,17 +3,22 @@
 #include "praxis/config/error.h"
 #include "praxis/config/store.h"
 #include "praxis/config/writer.h"
+#include "praxis/config/binding.h"
 #include "praxis/config/document.h"
 #include "praxis/config/declaration.h"
+#include "praxis/config/configurable.h"
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <span>
+#include <array>
 #include <limits>
 #include <string>
 #include <vector>
 #include <cstddef>
 #include <fstream>
 #include <sstream>
+#include <utility>
 #include <optional>
 #include <filesystem>
 #include <string_view>
@@ -83,6 +88,23 @@ constexpr std::string_view an_empty_title = "<probe>\n"
                                             "    <window height=\"720\"><title/></window>\n"
                                             "</probe>\n";
 
+// Two instances carrying one identity, standing apart with another between them.
+constexpr std::string_view a_name_carried_twice = "<probe>\n"
+                                                  "    <stations>\n"
+                                                  "        <station name=\"alpha\"><panel scale=\"1.5\"/></station>\n"
+                                                  "        <station name=\"beta\"><panel scale=\"2.5\"/></station>\n"
+                                                  "        <station name=\"alpha\"><panel scale=\"3.5\"/></station>\n"
+                                                  "    </stations>\n"
+                                                  "</probe>\n";
+
+// A collection whose instances each hold a collection of their own.
+constexpr std::string_view slots_in_stations = "<probe>\n"
+                                               "    <stations>\n"
+                                               "        <station name=\"alpha\"><slot id=\"x\"/></station>\n"
+                                               "        <station name=\"beta\"><slot id=\"y\"/></station>\n"
+                                               "    </stations>\n"
+                                               "</probe>\n";
+
 // The groups are declared in an order the document does not follow, so the document's own ordering
 // is nobody's default and survives only by not being touched.
 declaration described()
@@ -99,6 +121,36 @@ declaration described()
             .choice("window/mode", {"docked", "floating"}, "docked");
     return shape;
 }
+
+declaration nested()
+{
+    declaration shape("probe");
+    shape.group("stations").collection("stations/station", "name").collection("stations/station/slot", "id");
+    return shape;
+}
+
+// An implementor standing for exactly the edits it was handed, whatever the document carries.
+class offering final : public configurable
+{
+public:
+    explicit offering(std::vector<edit> held)
+            : m_held(std::move(held))
+    {
+    }
+
+    std::string_view settings_path() const override
+    {
+        return "stations";
+    }
+
+    std::vector<edit> settings_edits(const document &) const override
+    {
+        return m_held;
+    }
+
+private:
+    std::vector<edit> m_held;
+};
 
 std::filesystem::path scratch()
 {
@@ -716,4 +768,198 @@ TEST_CASE("the file-backed policy is the only thing that leaves a value the docu
     INFO(why(every));
     REQUIRE(every.has_value());
     REQUIRE(text_of(where).find("mode=\"floating\"") != std::string::npos);
+}
+
+TEST_CASE("an instance a save takes out goes whole and leaves every byte around it as it was", "[config]")
+{
+    const std::filesystem::path where = authored("taken-out.xml", hand_written);
+    const std::string before          = text_of(where);
+
+    const std::vector<edit> one{edit{"stations/station", "alpha", edit_kind::taken_out}};
+    const expected<void, error> saved = save(described(), resolve(where, scratch()), one);
+    INFO(why(saved));
+    REQUIRE(saved.has_value());
+
+    const std::string gone = "\n        <station name=\"alpha\"><panel scale=\"1.5\"/></station>";
+    REQUIRE(before.find(gone) != std::string::npos);
+
+    std::string only_that_station = before;
+    only_that_station.erase(before.find(gone), gone.size());
+    REQUIRE(text_of(where) == only_that_station);
+
+    const expected<document, error> reloaded = load(described(), resolve(where, scratch()));
+    REQUIRE(reloaded.has_value());
+    REQUIRE(reloaded.value().identities("stations/station") == std::vector<std::string>{"beta"});
+}
+
+// The keys a save carries address the document as it stands, so the instance the same save writes
+// into is the one it named and not whichever instance took that ordinal once the other was gone.
+TEST_CASE("a value written into an instance standing after one the same save takes out lands in the one it named", "[config]")
+{
+    const std::filesystem::path where = authored("taken-out-beside.xml", hand_written);
+
+    const std::vector<edit> changes{edit{"stations/station", "alpha", edit_kind::taken_out}, edit{"stations/station[1]/panel/scale", "3.25"}};
+    const expected<void, error> saved = save(described(), resolve(where, scratch()), changes);
+    INFO(why(saved));
+    REQUIRE(saved.has_value());
+
+    const expected<document, error> reloaded = load(described(), resolve(where, scratch()));
+    REQUIRE(reloaded.has_value());
+    REQUIRE(reloaded.value().identities("stations/station") == std::vector<std::string>{"beta"});
+    REQUIRE(reloaded.value().real("stations/station[0]/panel/scale").value() == 3.25);
+}
+
+// An instance is appended at the ordinal the collection ends at, counted before anything is taken
+// out of it, so the two have to agree about where the end is.
+TEST_CASE("an instance created by the same save that takes another out is created once, at the end", "[config]")
+{
+    const std::filesystem::path where = authored("taken-out-and-made.xml", hand_written);
+
+    const std::vector<edit> changes{edit{"stations/station", "alpha", edit_kind::taken_out}, edit{"stations/station[2]/name", "gamma"}, edit{"stations/station[2]/panel/scale", "4.5"}};
+    const expected<void, error> saved = save(described(), resolve(where, scratch()), changes);
+    INFO(why(saved));
+    REQUIRE(saved.has_value());
+
+    const std::string after = text_of(where);
+    REQUIRE(occurrences(after, "<station ") == 2u);
+
+    const expected<document, error> reloaded = load(described(), resolve(where, scratch()));
+    REQUIRE(reloaded.has_value());
+    REQUIRE(reloaded.value().identities("stations/station") == std::vector<std::string>{"beta", "gamma"});
+    REQUIRE(reloaded.value().real("stations/station[1]/panel/scale").value() == 4.5);
+}
+
+TEST_CASE("a save naming an instance the document does not carry takes nothing out and leaves it as it was", "[config]")
+{
+    const std::filesystem::path where = authored("taken-out-absent.xml", hand_written);
+    const std::string before          = text_of(where);
+
+    const std::vector<edit> one{edit{"stations/station", "gamma", edit_kind::taken_out}};
+    const expected<void, error> saved = save(described(), resolve(where, scratch()), one);
+    INFO(why(saved));
+    REQUIRE(saved.has_value());
+    REQUIRE(text_of(where) == before);
+}
+
+TEST_CASE("a save asked to take an instance out of something the declaration names no collection at is refused by name", "[config]")
+{
+    const std::filesystem::path where = authored("taken-out-undeclared.xml", hand_written);
+    const std::string before          = text_of(where);
+
+    const std::vector<edit> changes{edit{"window", "alpha", edit_kind::taken_out}, edit{"window/width", "2464"}};
+    const expected<void, error> saved = save(described(), resolve(where, scratch()), changes);
+    REQUIRE_FALSE(saved.has_value());
+
+    CHECK(saved.error().code == error_code::unlocatable_key);
+    CHECK(saved.error().message.find("window") != std::string::npos);
+    CHECK(text_of(where) == before);
+}
+
+// A value addressed to the instance a save takes out has nowhere left to land, and the instance
+// taking that ordinal once the other is gone is not the one it named.
+TEST_CASE("a save asked to write into an instance it also takes out is refused by name and nothing at all is written", "[config]")
+{
+    const std::filesystem::path where = authored("taken-out-and-written.xml", hand_written);
+    const std::string before          = text_of(where);
+
+    const std::vector<edit> changes{edit{"stations/station", "alpha", edit_kind::taken_out}, edit{"stations/station[0]/panel/scale", "9.5"}};
+    const expected<void, error> saved = save(described(), resolve(where, scratch()), changes);
+    REQUIRE_FALSE(saved.has_value());
+
+    CHECK(saved.error().message.find("stations/station[0]/panel/scale") != std::string::npos);
+    CHECK(text_of(where) == before);
+}
+
+// A segment with no bracket names the collection's first instance, for a removal as for any key.
+TEST_CASE("a save writing into the first instance with no bracket while taking that instance out is refused by name", "[config]")
+{
+    const std::filesystem::path where = authored("taken-out-and-written-unbracketed.xml", hand_written);
+    const std::string before          = text_of(where);
+
+    const std::vector<edit> changes{edit{"stations/station", "alpha", edit_kind::taken_out}, edit{"stations/station/panel/scale", "9.5"}};
+    const expected<void, error> saved = save(described(), resolve(where, scratch()), changes);
+    REQUIRE_FALSE(saved.has_value());
+
+    CHECK(saved.error().message.find("stations/station/panel/scale") != std::string::npos);
+    CHECK(text_of(where) == before);
+}
+
+TEST_CASE("a removal naming an identity two instances carry takes both and every byte around them stays", "[config]")
+{
+    const std::filesystem::path where = authored("taken-out-twice.xml", a_name_carried_twice);
+    const std::string before          = text_of(where);
+
+    const std::vector<edit> changes{edit{"stations/station", "alpha", edit_kind::taken_out}, edit{"stations/station[1]/panel/scale", "4.5"}};
+    const expected<void, error> saved = save(described(), resolve(where, scratch()), changes);
+    INFO(why(saved));
+    REQUIRE(saved.has_value());
+
+    const expected<document, error> reloaded = load(described(), resolve(where, scratch()));
+    REQUIRE(reloaded.has_value());
+    CHECK(reloaded.value().identities("stations/station") == std::vector<std::string>{"beta"});
+    CHECK(reloaded.value().real("stations/station[0]/panel/scale").value() == 4.5);
+    CHECK(occurrences(text_of(where), "\n") == occurrences(before, "\n") - 2u);
+}
+
+TEST_CASE("a save that only takes an instance out says so in its one message", "[config]")
+{
+    const std::filesystem::path where = alone_in("announced-removal", hand_written);
+    const location at                 = resolve(where, where.parent_path());
+
+    const std::vector<edit> one{edit{"stations/station", "alpha", edit_kind::taken_out}};
+    std::optional<expected<void, error>> saved;
+    const std::string reported = praxis::tests::reported_by([&] { saved = save(described(), at, one); });
+    INFO(reported);
+    REQUIRE(saved->has_value());
+
+    REQUIRE(occurrences(reported, "[info]") == 1);
+    REQUIRE(occurrences(reported, at.resolved.string()) == 1);
+    CHECK(reported.find("1 instance(s) taken out") != std::string::npos);
+}
+
+// Renumbering reaches only the collection an instance was taken out of, so a collection addressed
+// through any instance of it is refused whichever of those instances goes.
+TEST_CASE("a save taking instances out of a collection and of one standing under it is refused by name", "[config]")
+{
+    const std::filesystem::path where = authored("taken-out-nested.xml", slots_in_stations);
+    const std::string before          = text_of(where);
+
+    const std::vector<edit> changes{edit{"stations/station", "alpha", edit_kind::taken_out}, edit{"stations/station[1]/slot", "y", edit_kind::taken_out}};
+    const expected<void, error> saved = save(nested(), resolve(where, scratch()), changes);
+    REQUIRE_FALSE(saved.has_value());
+
+    CHECK(saved.error().message.find("'stations/station[1]/slot'") != std::string::npos);
+    CHECK(saved.error().message.find("'stations/station'") != std::string::npos);
+    CHECK(text_of(where) == before);
+}
+
+// A removal stays a removal through every stage that routes edits: it is never compared as a leaf's
+// value, even where its key spells one the document carries at that very text.
+TEST_CASE("a removal handed through every stage that receives edits reaches the save as a removal", "[config]")
+{
+    const std::filesystem::path where       = authored("taken-out-routed.xml", hand_written);
+    const expected<document, error> carried = load(described(), resolve(where, scratch()));
+    REQUIRE(carried.has_value());
+
+    const std::array<edit, 2> removals{edit{"stations/station", "alpha", edit_kind::taken_out}, edit{"window/title", "Overview", edit_kind::taken_out}};
+    const std::vector<edit> outstanding = unsaved_edits(carried.value(), removals);
+    REQUIRE(outstanding.size() == 2u);
+    for(const edit &one : outstanding)
+        CHECK(one.kind == edit_kind::taken_out);
+
+    const offering standing({removals.front()});
+    const std::array<const configurable *, 1> shown{&standing};
+    const std::vector<edit> gathered = shown_edits(shown, carried.value());
+    REQUIRE(gathered.size() == 1u);
+    CHECK(gathered.front().kind == edit_kind::taken_out);
+    CHECK(gathered.front().key == "stations/station");
+    CHECK(gathered.front().value == "alpha");
+
+    const expected<void, error> saved = save(described(), resolve(where, scratch()), gathered, write_policy::file_backed_only);
+    INFO(why(saved));
+    REQUIRE(saved.has_value());
+
+    const expected<document, error> reloaded = load(described(), resolve(where, scratch()));
+    REQUIRE(reloaded.has_value());
+    CHECK(reloaded.value().identities("stations/station") == std::vector<std::string>{"beta"});
 }

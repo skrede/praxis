@@ -10,6 +10,7 @@
 #include <vector>
 #include <cstddef>
 #include <optional>
+#include <algorithm>
 #include <filesystem>
 #include <string_view>
 
@@ -73,6 +74,36 @@ std::optional<std::string> carried_identity(const declaration &shape, const docu
     return std::nullopt;
 }
 
+// The first of `keys` the document does not read as the matching entry of `values`, reported by
+// naming the key together with what was written and what came back.
+std::optional<error> disagreeing(const declaration &shape, const document &reloaded, std::span<const std::string> keys, std::span<const std::string> values)
+{
+    for(std::size_t which = 0; which < keys.size(); ++which)
+    {
+        const field_kind kind                    = declared_kind(shape, keys[which]);
+        const std::optional<std::string> matched = carried_identity(shape, reloaded, keys[which]);
+        const std::optional<std::string> read    = matched ? matched : reading(reloaded, kind, keys[which]);
+        const std::optional<std::string> meant   = canonical(kind, values[which]);
+        if(read && meant && *read == *meant)
+            continue;
+
+        return error{error_code::rejected_content, "'" + keys[which] + "' was written as '" + values[which] + "' and reads back as '" + read.value_or("nothing of its kind") + "'"};
+    }
+    return std::nullopt;
+}
+
+// The first of `gone` the collection it was taken out of still carries.
+std::optional<error> still_carried(const document &reloaded, std::span<const edit> gone)
+{
+    for(const edit &one : gone)
+    {
+        const std::vector<std::string> present = reloaded.identities(one.key);
+        if(std::find(present.begin(), present.end(), one.value) != present.end())
+            return error{error_code::rejected_content, "'" + one.value + "' was taken out of '" + one.key + "' and is still carried there"};
+    }
+    return std::nullopt;
+}
+
 }
 
 field_kind declared_kind(const declaration &shape, const std::string &key)
@@ -106,23 +137,18 @@ std::optional<std::string> canonical(field_kind kind, const std::string &value)
     return value;
 }
 
-expected<void, error> reads_as_written(const declaration &shape, const std::filesystem::path &candidate, std::span<const std::string> keys, std::span<const std::string> values)
+expected<void, error> reads_as_written(const declaration &shape, const std::filesystem::path &candidate, std::span<const std::string> keys, std::span<const std::string> values,
+                                       std::span<const edit> gone)
 {
     const expected<document, error> reloaded = load(shape, resolve(candidate, candidate.parent_path()));
     if(!reloaded)
         return unexpected(reloaded.error());
 
-    for(std::size_t which = 0; which < keys.size(); ++which)
-    {
-        const field_kind kind                    = declared_kind(shape, keys[which]);
-        const std::optional<std::string> matched = carried_identity(shape, reloaded.value(), keys[which]);
-        const std::optional<std::string> read    = matched ? matched : reading(reloaded.value(), kind, keys[which]);
-        const std::optional<std::string> meant   = canonical(kind, values[which]);
-        if(read && meant && *read == *meant)
-            continue;
-        return unexpected(
-                error{error_code::rejected_content, "'" + keys[which] + "' was written as '" + values[which] + "' and reads back as '" + read.value_or("nothing of its kind") + "'"});
-    }
+    if(const std::optional<error> refused = disagreeing(shape, reloaded.value(), keys, values); refused)
+        return unexpected(*refused);
+    if(const std::optional<error> refused = still_carried(reloaded.value(), gone); refused)
+        return unexpected(*refused);
+
     return {};
 }
 

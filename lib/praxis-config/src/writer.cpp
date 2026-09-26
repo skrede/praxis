@@ -1,4 +1,5 @@
 #include "locator.h"
+#include "removal.h"
 #include "insertion.h"
 #include "read_back.h"
 
@@ -9,13 +10,11 @@
 #include <spdlog/spdlog.h>
 
 #include <span>
-#include <array>
 #include <string>
 #include <vector>
 #include <cstddef>
 #include <fstream>
 #include <sstream>
-#include <charconv>
 #include <optional>
 #include <filesystem>
 #include <string_view>
@@ -92,7 +91,7 @@ std::vector<edit> admitted(const declaration &shape, const location &at, std::sp
     std::vector<edit> kept;
     for(const edit &one : changes)
     {
-        if(present && present.value().origin_of(one.key).kind == origin_kind::source)
+        if(one.kind == edit_kind::taken_out || (present && present.value().origin_of(one.key).kind == origin_kind::source))
             kept.push_back(one);
         else
             spdlog::warn("praxis: '{}' did not come from {}, so it is left unwritten", one.key, at.resolved.string());
@@ -100,39 +99,39 @@ std::vector<edit> admitted(const declaration &shape, const location &at, std::sp
     return kept;
 }
 
-expected<pending_write, error> pending_for(const declaration &shape, std::string_view authored, const location &at, std::span<const edit> wanted)
+expected<pending_write, error> pending_for(const declaration &shape, const remainder &left, const location &at)
 {
     std::vector<std::string> keys;
-    keys.reserve(wanted.size());
-    for(const edit &one : wanted)
+    keys.reserve(left.bound.size());
+    for(const edit &one : left.bound)
         keys.push_back(one.key);
 
     pending_write pending;
-    const std::vector<std::string> absent = absent_elements(shape, authored, wanted);
-    pending.base                          = absent.empty() ? std::string(authored) : with_elements(std::string(authored), absent);
+    const std::vector<std::string> absent = absent_elements(shape, left.source, left.bound);
+    pending.base                          = absent.empty() ? left.source : with_elements(left.source, absent);
 
     const std::vector<std::optional<placement>> found = locate(pending.base, keys);
     if(const std::optional<error> refused = unplaced(at, keys, found); refused)
         return unexpected(*refused);
 
-    for(std::size_t which = 0; which < wanted.size(); ++which)
+    for(std::size_t which = 0; which < left.bound.size(); ++which)
     {
-        if(found[which]->current == wanted[which].value)
+        if(found[which]->current == left.bound[which].value)
             continue;
-        pending.keys.push_back(wanted[which].key);
-        pending.values.push_back(wanted[which].value);
+        pending.keys.push_back(left.bound[which].key);
+        pending.values.push_back(left.bound[which].value);
         pending.places.push_back(*found[which]);
     }
     return pending;
 }
 
-expected<void, error> landed(const declaration &shape, const location &at, const std::string &candidate, const pending_write &pending)
+expected<void, error> landed(const declaration &shape, const location &at, const std::string &candidate, const pending_write &pending, std::span<const edit> gone)
 {
     const std::filesystem::path staged = staging_beside(at.resolved);
     if(!spilled(staged, candidate))
         return unexpected(abandoned(staged, error{error_code::unwritable_target, "nothing could be written beside the configuration at " + at.resolved.string()}));
 
-    if(const expected<void, error> checked = reads_as_written(shape, staged, pending.keys, pending.values); !checked)
+    if(const expected<void, error> checked = reads_as_written(shape, staged, pending.keys, pending.values, gone); !checked)
     {
         spdlog::error("praxis: the configuration at {} was left as it was, because {}", at.resolved.string(), checked.error().message);
         return unexpected(abandoned(staged, checked.error()));
@@ -161,32 +160,30 @@ expected<std::string, error> authored_or_created(const declaration &shape, const
 
 }
 
-std::string exact_text(double value)
-{
-    std::array<char, 40> digits{};
-    const std::to_chars_result printed = std::to_chars(digits.data(), digits.data() + digits.size(), value);
-    return printed.ec == std::errc() ? std::string(digits.data(), printed.ptr) : std::string();
-}
-
 expected<void, error> save(const declaration &shape, const location &at, std::span<const edit> changes, write_policy policy)
 {
     const expected<std::string, error> authored = authored_or_created(shape, at);
     if(!authored)
         return unexpected(authored.error());
 
-    const std::vector<edit> wanted               = admitted(shape, at, changes, policy);
-    const expected<pending_write, error> pending = pending_for(shape, authored.value(), at, wanted);
+    const std::vector<edit> wanted        = admitted(shape, at, changes, policy);
+    const expected<remainder, error> left = taken_out_of(shape, at, authored.value(), wanted);
+    if(!left)
+        return unexpected(left.error());
+
+    const expected<pending_write, error> pending = pending_for(shape, left.value(), at);
     if(!pending)
         return unexpected(pending.error());
 
     if(!pending.value().places.empty() || pending.value().base != authored.value())
     {
         const std::string candidate = spliced(pending.value().base, pending.value().places, pending.value().values);
-        if(const expected<void, error> put = landed(shape, at, candidate, pending.value()); !put)
+        if(const expected<void, error> put = landed(shape, at, candidate, pending.value(), left.value().gone); !put)
             return unexpected(put.error());
     }
 
-    spdlog::info("praxis: {} value(s) written into the configuration at {}", pending.value().places.size(), at.resolved.string());
+    spdlog::info("praxis: {} value(s) written into the configuration at {} and {} instance(s) taken out of it", pending.value().places.size(), at.resolved.string(),
+                 left.value().taken_out);
     return {};
 }
 

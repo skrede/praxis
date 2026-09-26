@@ -4,6 +4,7 @@
 #include "praxis/presets/screw_table.h"
 #include "praxis/presets/arm_registration.h"
 
+#include "praxis/manipulator/screw_chain.h"
 #include "praxis/manipulator/screw_modeling_window.h"
 
 #include "praxis/rigid_motion/types.h"
@@ -71,6 +72,15 @@ std::optional<config::binding> kept_chain(const config::document &values, const 
         return std::nullopt;
 
     return config::binding{presets::screw_table_keyspace(), mine.composing(named.value()), config::expectation::partial};
+}
+
+// The one-joint chain a route is built over, turning about z at the origin.
+manipulator::screw_chain one_joint()
+{
+    manipulator::screw_chain chain;
+    chain.space_screws.push_back(rigid_motion::baseline().screw.screw_axis_from_angular_linear(Eigen::Vector3d::UnitZ(), Eigen::Vector3d::Zero()));
+
+    return chain;
 }
 
 // One joint turning about z at the origin, which is enough for a save to carry a row.
@@ -163,7 +173,7 @@ TEST_CASE("keeping a chain never writes the directory the documents ship from", 
     const std::optional<config::binding> kept = kept_chain(machine_at(where, keeping_a_chain), mine);
     REQUIRE(kept.has_value());
 
-    const manipulator::screw_modeling_window::save_route keep = presets::screw_table_route(kept, rigid_motion::baseline().frame);
+    const manipulator::screw_modeling_window::save_route keep = presets::screw_table_route(kept, one_joint(), rigid_motion::baseline().frame);
     REQUIRE(keep);
     keep(presets::screw_table_path, a_chain());
 

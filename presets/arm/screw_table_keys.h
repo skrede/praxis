@@ -1,14 +1,18 @@
 #ifndef HPP_GUARD_PRAXIS_PRESETS_ARM_SCREW_TABLE_KEYS_H
 #define HPP_GUARD_PRAXIS_PRESETS_ARM_SCREW_TABLE_KEYS_H
 
+#include "praxis/config/error.h"
 #include "praxis/config/writer.h"
 #include "praxis/config/document.h"
 #include "praxis/config/declaration.h"
+
+#include "praxis/compat/expected.h"
 
 #include <Eigen/Core>
 
 #include <string>
 #include <vector>
+#include <cstddef>
 #include <optional>
 #include <string_view>
 
@@ -28,6 +32,15 @@ struct screw_table_names
 };
 
 std::string under(std::string_view at, std::string_view leaf);
+
+// A row is addressed by the place its joint takes in the chain, counted from one, in the one
+// spelling that place reads back as -- which is the text every lookup of the row compares against.
+std::optional<std::size_t> ordinal_of(const std::string &identity);
+
+// How far a chain of `joints` is read out to: the furthest joint any of `present` names, and no
+// further out than the surplus a document may name past the chain's end. An identity naming no
+// joint's place, and one naming a joint further out than that, is refused by name.
+expected<std::size_t, config::error> reach_of(const std::vector<std::string> &present, std::size_t joints);
 
 void declare_triple(config::declaration &shape, const std::string &at);
 

@@ -10,11 +10,13 @@ praxis_add_module(config
     include/praxis/config/configurable.h
     src/engine.h
     src/locator.h
+    src/removal.h
     src/announce.h
     src/key_path.h
     src/insertion.h
     src/read_back.h
     src/source_text.h
+    src/readdressing.h
     src/error.cpp
     src/scalar.cpp
     src/space.cpp
@@ -28,6 +30,8 @@ praxis_add_module(config
     src/source_text.cpp
     src/locator.cpp
     src/insertion.cpp
+    src/readdressing.cpp
+    src/removal.cpp
     src/read_back.cpp
     src/writer.cpp
     src/binding.cpp
