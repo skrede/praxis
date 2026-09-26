@@ -363,6 +363,19 @@ TEST_CASE("a table whose row identity is not an ordinal is refused, naming that 
     CHECK(read.error().message.find("wrist") != std::string::npos);
 }
 
+// A row is looked up by the text it carries, so an identity that reads as a joint's place without
+// being spelled the way that place reads back is an identity no lookup can answer. It is turned
+// away by the identity itself rather than admitted and then found by nothing.
+TEST_CASE("a table whose row identity carries a leading zero is refused, naming that identity", "[presets][configuration]")
+{
+    const expected<supplied, config::error> read =
+            presets::read_screw_table(authored(row("07", six_vector(1.0)), "a-padded-ordinal.xml"), at, derived_six(), motions().screw, motions().frame);
+    REQUIRE_FALSE(read.has_value());
+
+    INFO(read.error().message);
+    CHECK(read.error().message.find("07") != std::string::npos);
+}
+
 TEST_CASE("a chain written twice with nothing moved between offers no second edit", "[presets][configuration]")
 {
     const config::binding bound = binding_at("nothing-moved.xml");

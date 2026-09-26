@@ -38,7 +38,8 @@ config::binding screw_table_binding(const std::filesystem::path &named, const st
 // The chain `values` carries under `at`: one entry per joint of `derived`, and one more for each
 // joint a row names past its end. An entry for a row the document carries no instance of holds
 // nothing, because nobody supplied that joint. A row addressed by anything other than its joint's
-// place in the chain, counted from one, is refused, naming what could not be read.
+// place in the chain, counted from one and spelled the way that place reads back, is refused,
+// naming what could not be read.
 expected<manipulator::screw_modeling_window::settings, config::error> read_screw_table(const config::document &values, std::string_view at, const manipulator::screw_chain &derived,
                                                                                        const rigid_motion::screw_ops &turning, const rigid_motion::frame_ops &framing);
 

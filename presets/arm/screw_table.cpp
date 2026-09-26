@@ -32,14 +32,16 @@ config::error unreadable(const std::string &identity)
     return config::error{config::error_code::rejected_content, "the chain kept here addresses a row by '" + identity + "', which names no joint's place in a chain"};
 }
 
-// A row is addressed by the place its joint takes in the chain, counted from one.
+// A row is addressed by the place its joint takes in the chain, counted from one, in the one
+// spelling that place reads back as -- which is the text every lookup of the row compares against.
 std::optional<std::size_t> ordinal_of(const std::string &identity)
 {
     std::size_t named                 = 0u;
     const char *const last            = identity.data() + identity.size();
     const std::from_chars_result read = std::from_chars(identity.data(), last, named);
+    const bool canonical              = read.ec == std::errc() && read.ptr == last && named >= 1u && std::to_string(named) == identity;
 
-    return read.ec == std::errc() && read.ptr == last && named >= 1u ? std::optional<std::size_t>(named) : std::optional<std::size_t>();
+    return canonical ? std::optional<std::size_t>(named) : std::optional<std::size_t>();
 }
 
 transform read_home(const config::document &values, const std::string &at, const rigid_motion::frame_ops &framing)
