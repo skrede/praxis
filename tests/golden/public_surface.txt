@@ -128,6 +128,7 @@ lib/praxis-config/include/praxis/config/writer.h	edit	struct	-	-
 lib/praxis-config/include/praxis/config/writer.h	key	member	-	typename:std::string
 lib/praxis-config/include/praxis/config/writer.h	value	member	-	typename:std::string
 lib/praxis-config/include/praxis/config/writer.h	kind	member	-	typename:edit_kind
+lib/praxis-config/include/praxis/config/writer.h	edit	prototype	(std::string addressed,std::string carried,edit_kind meaning=edit_kind::bound)	-
 lib/praxis-config/include/praxis/config/writer.h	write_policy	enum	-	typename:std::uint8_t
 lib/praxis-config/include/praxis/config/writer.h	every_edit	enumerator	-	-
 lib/praxis-config/include/praxis/config/writer.h	file_backed_only	enumerator	-	-

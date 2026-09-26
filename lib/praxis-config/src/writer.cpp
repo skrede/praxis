@@ -15,6 +15,7 @@
 #include <cstddef>
 #include <fstream>
 #include <sstream>
+#include <utility>
 #include <optional>
 #include <filesystem>
 #include <string_view>
@@ -125,10 +126,13 @@ expected<pending_write, error> pending_for(const declaration &shape, const remai
     return pending;
 }
 
-expected<void, error> landed(const declaration &shape, const location &at, const std::string &candidate, const pending_write &pending, std::span<const edit> gone)
+expected<void, error> landed(const declaration &shape, const location &at, const std::string &authored, const pending_write &pending, std::span<const edit> gone)
 {
+    if(pending.places.empty() && pending.base == authored)
+        return {};
+
     const std::filesystem::path staged = staging_beside(at.resolved);
-    if(!spilled(staged, candidate))
+    if(!spilled(staged, spliced(pending.base, pending.places, pending.values)))
         return unexpected(abandoned(staged, error{error_code::unwritable_target, "nothing could be written beside the configuration at " + at.resolved.string()}));
 
     if(const expected<void, error> checked = reads_as_written(shape, staged, pending.keys, pending.values, gone); !checked)
@@ -160,6 +164,13 @@ expected<std::string, error> authored_or_created(const declaration &shape, const
 
 }
 
+edit::edit(std::string addressed, std::string carried, edit_kind meaning)
+        : key(std::move(addressed))
+        , value(std::move(carried))
+        , kind(meaning)
+{
+}
+
 expected<void, error> save(const declaration &shape, const location &at, std::span<const edit> changes, write_policy policy)
 {
     const expected<std::string, error> authored = authored_or_created(shape, at);
@@ -175,12 +186,8 @@ expected<void, error> save(const declaration &shape, const location &at, std::sp
     if(!pending)
         return unexpected(pending.error());
 
-    if(!pending.value().places.empty() || pending.value().base != authored.value())
-    {
-        const std::string candidate = spliced(pending.value().base, pending.value().places, pending.value().values);
-        if(const expected<void, error> put = landed(shape, at, candidate, pending.value(), left.value().gone); !put)
-            return unexpected(put.error());
-    }
+    if(const expected<void, error> put = landed(shape, at, authored.value(), pending.value(), left.value().gone); !put)
+        return unexpected(put.error());
 
     spdlog::info("praxis: {} value(s) written into the configuration at {} and {} instance(s) taken out of it", pending.value().places.size(), at.resolved.string(),
                  left.value().taken_out);

@@ -41,12 +41,35 @@ std::size_t element_ends(std::string_view source, std::size_t from)
     return closes == std::string_view::npos ? source.size() : closes + 1;
 }
 
-// Where the element opening at `opens` is taken from: the blanks in front of it where nothing else
-// shares its line, so the line goes with it rather than being left behind empty.
-std::size_t taken_from(std::string_view source, std::size_t opens)
+// Where the line break standing in front of `opens` with nothing but blanks between begins, at its
+// carriage return where one stands before the line feed; nothing where anything else stands there.
+std::size_t break_in_front(std::string_view source, std::size_t opens)
 {
-    const std::size_t line = opens == 0 ? std::string_view::npos : source.rfind('\n', opens - 1);
-    return line != std::string_view::npos && source.find_first_not_of(" \t", line + 1) == opens ? line : opens;
+    const std::size_t last = opens == 0 ? std::string_view::npos : source.find_last_not_of(" \t", opens - 1);
+    if(last == std::string_view::npos || source[last] != '\n')
+        return std::string_view::npos;
+    return last > 0 && source[last - 1] == '\r' ? last - 1 : last;
+}
+
+// Where the line break or the end of `source` following `ends` with nothing but blanks between
+// begins; nothing where anything else stands there.
+std::size_t break_after(std::string_view source, std::size_t ends)
+{
+    const std::size_t next = source.find_first_not_of(" \t", ends);
+    if(next == std::string_view::npos)
+        return source.size();
+    return source[next] == '\r' || source[next] == '\n' ? next : std::string_view::npos;
+}
+
+// The bytes the element from `opens` to `ends` takes out: from the line break in front of it to the
+// one ending its line where only blanks share that line with it, and only its own bytes otherwise.
+std::pair<std::size_t, std::size_t> taken_bytes(std::string_view source, std::size_t opens, std::size_t ends)
+{
+    const std::size_t front = break_in_front(source, opens);
+    const std::size_t after = break_after(source, ends);
+    if(front == std::string_view::npos || after == std::string_view::npos)
+        return {opens, ends};
+    return {front, after};
 }
 
 // Every instance of the collection `gone` names that carries the identity it names.
@@ -63,16 +86,16 @@ std::vector<taken> instances_carrying(pugi::xml_node root, std::string_view sour
         if(identity_carried(child, identity) != gone.value)
             continue;
 
-        const std::size_t named = offset_of(child);
-        const std::size_t from  = taken_from(source, source.rfind('<', named));
-        found.push_back(taken{gone.key, ordinal, from, element_ends(source, named) - from});
+        const std::size_t named     = offset_of(child);
+        const auto [begins, finish] = taken_bytes(source, source.rfind('<', named), element_ends(source, named));
+        found.push_back(taken{gone.key, ordinal, begins, finish - begins});
     }
     return found;
 }
 
 bool already_taken(std::span<const taken> gone, const taken &one)
 {
-    return std::any_of(gone.begin(), gone.end(), [&one](const taken &before) { return before.stem == one.stem && before.ordinal == one.ordinal; });
+    return std::any_of(gone.begin(), gone.end(), [&one](const taken &before) { return before.begin == one.begin; });
 }
 
 std::string without_instances(std::string source, std::vector<taken> gone)
@@ -89,20 +112,27 @@ error nothing_taken(const location &at, const std::string &complaint)
     return error{error_code::unlocatable_key, "the configuration at " + at.resolved.string() + " " + complaint + ", so nothing at all was written into it or taken out of it"};
 }
 
-// The removals among `changes` naming something `shape` declares no collection at, named together
-// the way a save names every key it can write nothing at.
+// Whether the last segment of `key` names one instance rather than a collection.
+bool names_an_instance(const std::string &key)
+{
+    const std::size_t slash = key.rfind('/');
+    return key.find('[', slash == std::string::npos ? 0u : slash + 1u) != std::string::npos;
+}
+
+// The removals among `changes` naming something `shape` declares no collection at, or one instance
+// rather than a collection, named together the way a save names every key it can write nothing at.
 std::string undeclared_collections(const declaration &shape, std::span<const edit> changes)
 {
     std::string named;
     for(const edit &one : changes)
-        if(one.kind == edit_kind::taken_out && !keyed_by(shape, declared_path(one.key)))
+        if(one.kind == edit_kind::taken_out && (names_an_instance(one.key) || !keyed_by(shape, declared_path(one.key))))
             named += named.empty() ? one.key : ", " + one.key;
 
     return named;
 }
 
 // The instances the removals among `changes` name that `source` carries, in the order they were
-// named. An instance named twice is one instance.
+// named. An instance named more than once, however its removal was spelled, is one instance.
 std::vector<taken> instances_taken(const declaration &shape, std::string_view source, std::span<const edit> changes)
 {
     pugi::xml_document held;
@@ -126,6 +156,15 @@ std::vector<taken> instances_taken(const declaration &shape, std::string_view so
 
 }
 
+std::string still_carried(const declaration &shape, std::string_view source, std::span<const edit> changes)
+{
+    for(const edit &one : changes)
+        if(one.kind == edit_kind::taken_out && !instances_taken(shape, source, std::span<const edit>(&one, 1u)).empty())
+            return "'" + one.value + "' was taken out of '" + one.key + "' and is still carried there";
+
+    return std::string();
+}
+
 expected<remainder, error> taken_out_of(const declaration &shape, const location &at, std::string source, std::span<const edit> changes)
 {
     if(const std::string undeclared = undeclared_collections(shape, changes); !undeclared.empty())
@@ -136,9 +175,7 @@ expected<remainder, error> taken_out_of(const declaration &shape, const location
         if(!refused.empty())
             return unexpected(nothing_taken(at, refused));
 
-    remainder left;
-    left.source    = without_instances(std::move(source), gone);
-    left.taken_out = gone.size();
+    remainder left{without_instances(std::move(source), gone), {}, {}, gone.size()};
     for(const edit &one : changes)
     {
         if(one.kind == edit_kind::taken_out)

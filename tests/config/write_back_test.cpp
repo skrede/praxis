@@ -105,6 +105,48 @@ constexpr std::string_view slots_in_stations = "<probe>\n"
                                                "    </stations>\n"
                                                "</probe>\n";
 
+// Two instances each holding a collection of their own, the first holding four instances on lines of
+// one length.
+constexpr std::string_view slots_under_two_stations = "<probe>\n"
+                                                      "    <stations>\n"
+                                                      "        <station name=\"alpha\">\n"
+                                                      "            <slot id=\"a\" v=\"1\"/>\n"
+                                                      "            <slot id=\"b\" v=\"2\"/>\n"
+                                                      "            <slot id=\"c\" v=\"3\"/>\n"
+                                                      "            <slot id=\"d\" v=\"4\"/>\n"
+                                                      "        </station>\n"
+                                                      "        <station name=\"beta\"><slot id=\"e\" v=\"5\"/></station>\n"
+                                                      "    </stations>\n"
+                                                      "</probe>\n";
+
+// Two instances whose own collections both carry one identity.
+constexpr std::string_view one_identity_under_two_stations = "<probe>\n"
+                                                             "    <stations>\n"
+                                                             "        <station name=\"alpha\">\n"
+                                                             "            <slot id=\"x\" v=\"1\"/>\n"
+                                                             "            <slot id=\"y\" v=\"2\"/>\n"
+                                                             "        </station>\n"
+                                                             "        <station name=\"beta\">\n"
+                                                             "            <slot id=\"x\" v=\"3\"/>\n"
+                                                             "        </station>\n"
+                                                             "    </stations>\n"
+                                                             "</probe>\n";
+
+// Two instances standing on one line.
+constexpr std::string_view stations_on_one_line = "<probe>\n"
+                                                  "    <stations>\n"
+                                                  "        <station name=\"alpha\"><panel scale=\"1.5\"/></station><station name=\"beta\"><panel scale=\"2.5\"/></station>\n"
+                                                  "    </stations>\n"
+                                                  "</probe>\n";
+
+// An instance alone on its line followed by two blanks.
+constexpr std::string_view a_trailing_blank = "<probe>\n"
+                                              "    <stations>\n"
+                                              "        <station name=\"alpha\"><panel scale=\"1.5\"/></station>  \n"
+                                              "        <station name=\"beta\"><panel scale=\"2.5\"/></station>\n"
+                                              "    </stations>\n"
+                                              "</probe>\n";
+
 // The groups are declared in an order the document does not follow, so the document's own ordering
 // is nobody's default and survives only by not being touched.
 declaration described()
@@ -125,7 +167,7 @@ declaration described()
 declaration nested()
 {
     declaration shape("probe");
-    shape.group("stations").collection("stations/station", "name").collection("stations/station/slot", "id");
+    shape.group("stations").collection("stations/station", "name").collection("stations/station/slot", "id").field("stations/station/slot/v", field_kind::integer, "0");
     return shape;
 }
 
@@ -210,6 +252,33 @@ std::string text_of(const std::filesystem::path &where)
     std::ostringstream all;
     all << in.rdbuf();
     return all.str();
+}
+
+std::string with_carriage_returns(std::string_view text)
+{
+    std::string ended;
+    for(const char letter : text)
+    {
+        if(letter == '\n')
+            ended.push_back('\r');
+        ended.push_back(letter);
+    }
+    return ended;
+}
+
+// `text` with the first `before` it carries replaced by `after`.
+std::string with_replaced(std::string text, std::string_view before, std::string_view after)
+{
+    const std::size_t at = text.find(before);
+    REQUIRE(at != std::string::npos);
+    return text.replace(at, before.size(), after);
+}
+
+// `slots_under_two_stations` without slot `a`, and slot `c` carrying 9.
+std::string without_a_and_c_at_nine()
+{
+    const std::string without_a = with_replaced(std::string(slots_under_two_stations), "\n            <slot id=\"a\" v=\"1\"/>", "");
+    return with_replaced(without_a, "<slot id=\"c\" v=\"3\"/>", "<slot id=\"c\" v=\"9\"/>");
 }
 
 std::string why(const expected<void, error> &outcome)
@@ -962,4 +1031,176 @@ TEST_CASE("a removal handed through every stage that receives edits reaches the 
     const expected<document, error> reloaded = load(described(), resolve(where, scratch()));
     REQUIRE(reloaded.has_value());
     CHECK(reloaded.value().identities("stations/station") == std::vector<std::string>{"beta"});
+}
+
+// A segment with no bracket names the first instance at every level of a key, so the collection a
+// removal names and the key a value is written at are one place however either spells it.
+TEST_CASE("a value written after a removal spelled without its ancestor's ordinal lands in the instance it named", "[config]")
+{
+    const std::filesystem::path where = authored("taken-out-bare-ancestor.xml", slots_under_two_stations);
+
+    const std::vector<edit> changes{edit{"stations/station/slot", "a", edit_kind::taken_out}, edit{"stations/station[0]/slot[2]/v", "9"}};
+    const expected<void, error> saved = save(nested(), resolve(where, scratch()), changes);
+    INFO(why(saved));
+    REQUIRE(saved.has_value());
+    CHECK(text_of(where) == without_a_and_c_at_nine());
+}
+
+TEST_CASE("two instances taken out under two spellings of one collection both stand in front of a value written after them", "[config]")
+{
+    const std::filesystem::path where = authored("taken-out-two-spellings.xml", slots_under_two_stations);
+
+    const std::vector<edit> changes{edit{"stations/station/slot", "a", edit_kind::taken_out}, edit{"stations/station[0]/slot", "b", edit_kind::taken_out},
+                                    edit{"stations/station[0]/slot[3]/v", "9"}};
+    const expected<void, error> saved = save(nested(), resolve(where, scratch()), changes);
+    INFO(why(saved));
+    REQUIRE(saved.has_value());
+
+    std::string expected_text = with_replaced(std::string(slots_under_two_stations), "\n            <slot id=\"a\" v=\"1\"/>", "");
+    expected_text             = with_replaced(expected_text, "\n            <slot id=\"b\" v=\"2\"/>", "");
+    CHECK(text_of(where) == with_replaced(expected_text, "<slot id=\"d\" v=\"4\"/>", "<slot id=\"d\" v=\"9\"/>"));
+}
+
+// The value written is the declared fallback, so a misplaced write reads back as agreeing.
+TEST_CASE("a value addressed to the nested instance a save takes out is refused by name under every spelling of either", "[config]")
+{
+    const std::array<std::string, 3> removals{"stations/station/slot", "stations/station[0]/slot", "stations[0]/station[0]/slot"};
+    const std::array<std::string, 3> keys{"stations/station[0]/slot[0]/v", "stations/station/slot[0]/v", "stations/station[0]/slot/v"};
+    for(std::size_t removal = 0; removal < removals.size(); ++removal)
+        for(std::size_t key = 0; key < keys.size(); ++key)
+        {
+            INFO(removals[removal] << " beside " << keys[key]);
+            const std::filesystem::path where = authored("taken-out-refused-" + std::to_string(removal) + "-" + std::to_string(key) + ".xml", slots_under_two_stations);
+            const std::string before          = text_of(where);
+
+            const std::vector<edit> changes{edit{removals[removal], "a", edit_kind::taken_out}, edit{keys[key], "0"}};
+            const std::string refused = why(save(nested(), resolve(where, scratch()), changes));
+            CHECK(refused.find(keys[key]) != std::string::npos);
+            CHECK(refused.find("it takes out") != std::string::npos);
+            CHECK(text_of(where) == before);
+        }
+}
+
+TEST_CASE("every spelling of one nested removal saves the same bytes", "[config]")
+{
+    const std::vector<std::vector<std::string>> spellings{
+            {"stations/station/slot"},
+            {"stations/station[0]/slot"},
+            {"stations[0]/station[0]/slot"},
+            {"stations/station/slot", "stations/station[0]/slot"},
+            {"stations/station/slot", "stations/station[0]/slot", "stations[0]/station[0]/slot"},
+    };
+    for(std::size_t set = 0; set < spellings.size(); ++set)
+    {
+        std::vector<edit> changes;
+        std::string named;
+        for(const std::string &removal : spellings[set])
+        {
+            changes.push_back(edit{removal, "a", edit_kind::taken_out});
+            named += named.empty() ? removal : ", " + removal;
+        }
+        changes.push_back(edit{"stations/station[0]/slot[2]/v", "9"});
+
+        INFO(named);
+        const std::filesystem::path where = authored("taken-out-spelled-" + std::to_string(set) + ".xml", slots_under_two_stations);
+        const expected<void, error> saved = save(nested(), resolve(where, scratch()), changes);
+        INFO(why(saved));
+        CHECK(saved.has_value());
+        CHECK(text_of(where) == without_a_and_c_at_nine());
+    }
+}
+
+TEST_CASE("one nested instance named for removal under two spellings goes once and its sibling stays", "[config]")
+{
+    const std::filesystem::path where = alone_in("removal-named-twice", slots_under_two_stations);
+    const location at                 = resolve(where, where.parent_path());
+
+    const std::vector<edit> changes{edit{"stations/station/slot", "a", edit_kind::taken_out}, edit{"stations/station[0]/slot", "a", edit_kind::taken_out}};
+    std::optional<expected<void, error>> saved;
+    const std::string reported = praxis::tests::reported_by([&] { saved = save(nested(), at, changes); });
+    INFO(reported);
+    REQUIRE(saved->has_value());
+
+    CHECK(text_of(where) == with_replaced(std::string(slots_under_two_stations), "\n            <slot id=\"a\" v=\"1\"/>", ""));
+    REQUIRE(occurrences(reported, "[info]") == 1);
+    CHECK(reported.find("1 instance(s) taken out") != std::string::npos);
+}
+
+TEST_CASE("a removal whose key names one instance rather than a collection is refused by name", "[config]")
+{
+    const std::filesystem::path where = authored("taken-out-instance-key.xml", hand_written);
+    const std::string before          = text_of(where);
+
+    const std::vector<edit> one{edit{"stations/station[0]", "alpha", edit_kind::taken_out}};
+    const expected<void, error> saved = save(described(), resolve(where, scratch()), one);
+    INFO(why(saved));
+    REQUIRE_FALSE(saved.has_value());
+
+    CHECK(saved.error().code == error_code::unlocatable_key);
+    CHECK(saved.error().message.find("stations/station[0]") != std::string::npos);
+    CHECK(text_of(where) == before);
+}
+
+TEST_CASE("an instance taken out of a document whose lines end in a carriage return and a line feed leaves every line ending that way", "[config]")
+{
+    const std::string before          = with_carriage_returns(hand_written);
+    const std::filesystem::path where = authored("taken-out-crlf.xml", before);
+
+    const std::vector<edit> one{edit{"stations/station", "alpha", edit_kind::taken_out}};
+    const expected<void, error> saved = save(described(), resolve(where, scratch()), one);
+    INFO(why(saved));
+    REQUIRE(saved.has_value());
+
+    const std::string after = text_of(where);
+    CHECK(after == with_replaced(before, "\r\n        <station name=\"alpha\"><panel scale=\"1.5\"/></station>", ""));
+    CHECK(occurrences(after, "\r\r") == 0u);
+    CHECK(occurrences(after, "\r\n") == occurrences(after, "\n"));
+}
+
+TEST_CASE("an instance sharing its line with a sibling goes alone and the sibling keeps its place", "[config]")
+{
+    const std::filesystem::path where = authored("taken-out-shared-line.xml", stations_on_one_line);
+
+    const std::vector<edit> one{edit{"stations/station", "alpha", edit_kind::taken_out}};
+    const expected<void, error> saved = save(described(), resolve(where, scratch()), one);
+    INFO(why(saved));
+    REQUIRE(saved.has_value());
+    CHECK(text_of(where) == with_replaced(std::string(stations_on_one_line), "<station name=\"alpha\"><panel scale=\"1.5\"/></station>", ""));
+}
+
+TEST_CASE("an instance alone on its line takes the blanks after it with the line", "[config]")
+{
+    const std::filesystem::path where = authored("taken-out-trailing-blank.xml", a_trailing_blank);
+
+    const std::vector<edit> one{edit{"stations/station", "alpha", edit_kind::taken_out}};
+    const expected<void, error> saved = save(described(), resolve(where, scratch()), one);
+    INFO(why(saved));
+    REQUIRE(saved.has_value());
+    CHECK(text_of(where) == with_replaced(std::string(a_trailing_blank), "\n        <station name=\"alpha\"><panel scale=\"1.5\"/></station>  ", ""));
+}
+
+TEST_CASE("a removal from one instance's collection leaves the same identity under another instance carried and its ordinals alone", "[config]")
+{
+    const std::filesystem::path where = authored("taken-out-other-parent.xml", one_identity_under_two_stations);
+
+    const std::vector<edit> changes{edit{"stations/station/slot", "x", edit_kind::taken_out}, edit{"stations/station[1]/slot[0]/v", "7"}};
+    const expected<void, error> saved = save(nested(), resolve(where, scratch()), changes);
+    INFO(why(saved));
+    REQUIRE(saved.has_value());
+
+    const std::string without_x = with_replaced(std::string(one_identity_under_two_stations), "\n            <slot id=\"x\" v=\"1\"/>", "");
+    CHECK(text_of(where) == with_replaced(without_x, "<slot id=\"x\" v=\"3\"/>", "<slot id=\"x\" v=\"7\"/>"));
+}
+
+TEST_CASE("a removal spelled with its ancestor's ordinal is read back under that ancestor", "[config]")
+{
+    const std::filesystem::path where = authored("taken-out-bracketed-ancestor.xml", one_identity_under_two_stations);
+
+    const std::vector<edit> changes{edit{"stations/station[1]/slot", "x", edit_kind::taken_out}, edit{"stations/station[0]/slot[1]/v", "8"}};
+    const expected<void, error> saved = save(nested(), resolve(where, scratch()), changes);
+    INFO(why(saved));
+    REQUIRE(saved.has_value());
+
+    const std::string without_x = with_replaced(std::string(one_identity_under_two_stations), "\n            <slot id=\"x\" v=\"3\"/>", "");
+    CHECK(text_of(where) == with_replaced(without_x, "<slot id=\"y\" v=\"2\"/>", "<slot id=\"y\" v=\"8\"/>"));
 }

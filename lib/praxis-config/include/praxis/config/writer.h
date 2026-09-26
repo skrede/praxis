@@ -14,7 +14,8 @@
 namespace praxis::config {
 
 // What a save does where an edit addresses. A bound edit writes its value; one taken out names a
-// collection and an identity, and every instance of that collection carrying the identity goes.
+// collection and an identity, and every instance carrying the identity goes from under the one
+// parent the key addresses, a segment with no bracket addressing the first instance.
 enum class edit_kind : std::uint8_t
 {
     bound,
@@ -27,7 +28,9 @@ struct edit
 {
     std::string key;
     std::string value;
-    edit_kind kind = edit_kind::bound;
+    edit_kind kind;
+
+    edit(std::string addressed, std::string carried, edit_kind meaning = edit_kind::bound);
 };
 
 // Which of the edits a save is willing to write. The file is the only source a value can reach a
@@ -55,16 +58,20 @@ std::string exact_text(double value);
 // that is not empty, the instance is created at the end of the collection and the rest of its values
 // are written into it. Where there is no document at `at`, one is written from the declaration
 // first, each declared field carrying the fallback the declaration named, and the values are written
-// into that. Every instance carrying the identity an edit takes out goes whole, with the blanks
-// standing in front of it and everything hanging under it, and an identity the document does not
-// carry takes nothing out; a collection the declaration does not name is reported by name like any
-// other key nothing can be written at. Every key addresses the document as it stands, so an instance
-// taken out moves nothing the same save names. A save writing into an instance it also takes out,
-// or taking instances out of a collection and out of one standing under it, is reported by name and
-// nothing at all is written. What would replace the document is staged beside it, loaded back
-// through this module's own load and required to read what was written and to carry no identity
-// that was taken out, and renamed onto the document only then. One message reports the resolved
-// path, how many values were written and how many instances were taken out.
+// into that. Every instance carrying the identity an edit takes out goes whole from under the
+// parent its key addresses, with everything hanging under it and, where only blanks share its line,
+// with that line and the line break in front of it, whether lines end LF or CRLF; an instance
+// sharing its line with anything else takes only its own bytes, and an identity the document does
+// not carry takes nothing out. A collection the declaration does not name, and a key naming one
+// instance rather than a collection, are reported by name like any other key nothing can be written
+// at. A key names a place however it spells an ancestor's first instance, and every key addresses
+// the document as it stands, so an instance taken out moves nothing the same save names. A save
+// writing into an instance it also takes out, or taking instances out of a collection and out of
+// one standing under it, is reported by name and nothing at all is written. What would replace the
+// document is staged beside it, loaded back through this module's own load and required to read
+// what was written and to carry no instance a removal named under the parent its key addresses, and
+// renamed onto the document only then. One message reports the resolved path, how many values were
+// written and how many instances were taken out.
 expected<void, error> save(const declaration &shape, const location &at, std::span<const edit> changes, write_policy policy = write_policy::every_edit);
 
 }

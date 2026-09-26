@@ -191,6 +191,30 @@ std::string bytes_at(const char *name)
     return std::string(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
 }
 
+// The document at `name` rewritten with every line ending in a carriage return and a line feed.
+void ended_with_carriage_returns(const char *name)
+{
+    std::string ended;
+    for(const char letter : bytes_at(name))
+    {
+        if(letter == '\n')
+            ended.push_back('\r');
+        ended.push_back(letter);
+    }
+
+    std::ofstream out(scratch() / name, std::ios::binary | std::ios::trunc);
+    out << ended;
+}
+
+std::size_t occurrences(const std::string &text, std::string_view needle)
+{
+    std::size_t counted = 0u;
+    for(std::size_t found = text.find(needle); found != std::string::npos; found = text.find(needle, found + needle.size()))
+        ++counted;
+
+    return counted;
+}
+
 void require_same_screws(const supplied &read, const supplied &chosen)
 {
     REQUIRE(read.screws.size() == chosen.screws.size());
@@ -593,6 +617,32 @@ TEST_CASE("a joint discarded beside two still supplied leaves those two carrying
     chosen.screws.front().reset();
     REQUIRE(config::save(bound, written(carried(bound), derived_three(), chosen)).has_value());
 
+    CHECK(carried(bound).identities(keys_of_rows()) == std::vector<std::string>{"2", "3"});
+
+    const supplied reopened = opened(carried(bound), derived_three());
+    REQUIRE(reopened.screws.size() == 3u);
+    CHECK_FALSE(reopened.screws.front().has_value());
+    for(std::size_t joint = 1u; joint < reopened.screws.size(); ++joint)
+    {
+        INFO("joint " << joint);
+        REQUIRE(reopened.screws[joint].has_value());
+        CHECK((*reopened.screws[joint] - *chosen.screws[joint]).norm() == 0.0);
+    }
+}
+
+TEST_CASE("a chain saved into a document whose lines end in a carriage return and a line feed takes a row out and leaves every line ending that way", "[presets][configuration]")
+{
+    const config::binding bound = binding_at("discarded-crlf.xml");
+    REQUIRE(config::save(bound, written(carried(bound), derived_three(), a_chain(3))).has_value());
+    ended_with_carriage_returns("discarded-crlf.xml");
+
+    supplied chosen = a_chain(3);
+    chosen.screws.front().reset();
+    REQUIRE(config::save(bound, written(carried(bound), derived_three(), chosen)).has_value());
+
+    const std::string after = bytes_at("discarded-crlf.xml");
+    CHECK(occurrences(after, "\r\r") == 0u);
+    CHECK(occurrences(after, "\r\n") == occurrences(after, "\n"));
     CHECK(carried(bound).identities(keys_of_rows()) == std::vector<std::string>{"2", "3"});
 
     const supplied reopened = opened(carried(bound), derived_three());

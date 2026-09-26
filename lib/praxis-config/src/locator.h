@@ -23,9 +23,14 @@ struct step
 {
     std::string name;
     std::size_t ordinal;
+
+    bool operator==(const step &) const = default;
 };
 
 step parsed(std::string_view part);
+
+// One step per `/`-separated segment of `key`, a segment with no bracket reading as the first instance.
+std::vector<step> steps_of(std::string_view key);
 
 pugi::xml_node reached(pugi::xml_node from, const step &one);
 

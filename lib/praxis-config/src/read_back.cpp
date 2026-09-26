@@ -1,4 +1,5 @@
 #include "engine.h"
+#include "removal.h"
 #include "read_back.h"
 
 #include "praxis/config/store.h"
@@ -9,8 +10,9 @@
 #include <string>
 #include <vector>
 #include <cstddef>
+#include <fstream>
+#include <sstream>
 #include <optional>
-#include <algorithm>
 #include <filesystem>
 #include <string_view>
 
@@ -92,16 +94,15 @@ std::optional<error> disagreeing(const declaration &shape, const document &reloa
     return std::nullopt;
 }
 
-// The first of `gone` the collection it was taken out of still carries.
-std::optional<error> still_carried(const document &reloaded, std::span<const edit> gone)
+std::optional<std::string> bytes_of(const std::filesystem::path &from)
 {
-    for(const edit &one : gone)
-    {
-        const std::vector<std::string> present = reloaded.identities(one.key);
-        if(std::find(present.begin(), present.end(), one.value) != present.end())
-            return error{error_code::rejected_content, "'" + one.value + "' was taken out of '" + one.key + "' and is still carried there"};
-    }
-    return std::nullopt;
+    std::ifstream in(from, std::ios::binary);
+    if(!in)
+        return std::nullopt;
+
+    std::ostringstream all;
+    all << in.rdbuf();
+    return all.str();
 }
 
 }
@@ -146,8 +147,11 @@ expected<void, error> reads_as_written(const declaration &shape, const std::file
 
     if(const std::optional<error> refused = disagreeing(shape, reloaded.value(), keys, values); refused)
         return unexpected(*refused);
-    if(const std::optional<error> refused = still_carried(reloaded.value(), gone); refused)
-        return unexpected(*refused);
+    const std::optional<std::string> staged = bytes_of(candidate);
+    if(!staged)
+        return unexpected(error{error_code::unreadable_source, "the configuration staged at " + candidate.string() + " could not be read back"});
+    if(const std::string refused = still_carried(shape, *staged, gone); !refused.empty())
+        return unexpected(error{error_code::rejected_content, refused});
 
     return {};
 }

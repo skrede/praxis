@@ -20,12 +20,14 @@ struct taken
     std::size_t length;
 };
 
-// The ordinal `key` names among the instances of the collection at `stem`, read as any key segment
-// is, so a segment with no bracket names the first; nothing where `key` does not pass through `stem`.
+// The ordinal `key` names among the instances of the collection at `stem`, or nothing where `key`
+// does not pass through it. Both are compared by the place they name, a segment with no bracket
+// naming the first instance at every level.
 std::optional<std::size_t> ordinal_in(const std::string &key, const std::string &stem);
 
 // `key` addressing the document once the instances of `gone` are out of it: an ordinal it names in
-// a collection something was taken out of steps down by however many of those stood in front of it.
+// a collection something was taken out of steps down by however many of those stood in front of it,
+// collections compared by the place they name. Only that one segment is spelled anew.
 std::string renumbered(const std::string &key, std::span<const taken> gone);
 
 // What is wrong with taking out `gone`, or nothing: a collection addressed through any instance of

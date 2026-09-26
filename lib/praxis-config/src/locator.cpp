@@ -13,22 +13,6 @@
 namespace praxis::config {
 namespace {
 
-std::vector<step> steps_of(std::string_view key)
-{
-    std::vector<step> walked;
-    for(std::size_t from = 0;;)
-    {
-        const std::size_t cut = key.find('/', from);
-        if(cut == std::string_view::npos)
-        {
-            walked.push_back(parsed(key.substr(from)));
-            return walked;
-        }
-        walked.push_back(parsed(key.substr(from, cut - from)));
-        from = cut + 1;
-    }
-}
-
 // A leaf is either an attribute of the element the key's earlier segments reach, or a child element
 // of that name carrying the value as its text; a child element carrying anything else is a place
 // this module does not write, and an attribute that element does not carry is one it creates.
@@ -71,6 +55,22 @@ step parsed(std::string_view part)
         ordinal = ordinal * 10 + static_cast<std::size_t>(digit - '0');
     }
     return step{std::string(part.substr(0, bracket)), ordinal};
+}
+
+std::vector<step> steps_of(std::string_view key)
+{
+    std::vector<step> walked;
+    for(std::size_t from = 0;;)
+    {
+        const std::size_t cut = key.find('/', from);
+        if(cut == std::string_view::npos)
+        {
+            walked.push_back(parsed(key.substr(from)));
+            return walked;
+        }
+        walked.push_back(parsed(key.substr(from, cut - from)));
+        from = cut + 1;
+    }
 }
 
 pugi::xml_node reached(pugi::xml_node from, const step &one)
