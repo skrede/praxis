@@ -1051,7 +1051,9 @@ TEST_CASE("a refused row is put back to the screw it kept, so the next accepted 
 // The table is as long as the derived chain whatever it is supplied, and a composition handing it
 // more screws than the arm has loses the rest -- which the reader of a kept table refuses out loud,
 // so the window says it too rather than absorbing it.
-TEST_CASE("a chain supplied more screws than the arm has drops the rest and says both counts", "[manipulator][modeling]")
+// The reading says the surplus on a line a person is looking at, so nothing is left for a log to
+// say, and the screws the line counts are still there to be handed back and written down again.
+TEST_CASE("a chain supplied more screws than the arm has keeps them all and reports nothing", "[manipulator][modeling]")
 {
     stage headless(described_chain(), at_rest());
     const std::vector<screw_axis> too_many(axes + 2u, unit_z_axis());
@@ -1061,9 +1063,9 @@ TEST_CASE("a chain supplied more screws than the arm has drops the rest and says
 
     screw_modeling_window panel = opened_over(headless, only_the_rows(), supplied);
 
-    CHECK(panel.state().screws.size() == axes);
-    CHECK(said.find(std::to_string(axes + 2u)) != std::string::npos);
-    CHECK(said.find(std::to_string(axes)) != std::string::npos);
+    REQUIRE(panel.state().screws.size() == axes + 2u);
+    CHECK(panel.state().screws.back().has_value());
+    CHECK(said.empty());
 }
 
 TEST_CASE("every row of a freshly opened window shows the point the screw it holds carries", "[manipulator][modeling]")

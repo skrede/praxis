@@ -69,10 +69,6 @@ void screw_modeling_window::seed(const settings &opened)
 {
     const rotation held = m_home.block<3, 3>(0, 0);
 
-    if(opened.screws.size() > m_derived.joint_count())
-        spdlog::error("praxis: '{}' was supplied {} screws and the chain it opens against has {}, so the rest are dropped", display_name(), opened.screws.size(),
-                      m_derived.joint_count());
-
     m_home_position      = m_home.block<3, 1>(0, 3).cast<float>();
     m_home_euler_degrees = (m_frame.euler_from_rotation_matrix(held, home_axis_order) * degrees_per_radian).cast<float>();
 
@@ -90,14 +86,11 @@ void screw_modeling_window::seed(const settings &opened)
     }
 }
 
-// The chain a caller takes back out is one entry per joint of the derived chain: an entry past the
-// last joint stands against no joint and belongs in no document that names one.
+// The chain a caller takes back out is every entry this window holds, those past the derived
+// chain's last joint included, so what a document supplied survives being opened and saved again.
 screw_modeling_window::settings screw_modeling_window::state() const
 {
-    std::vector<supplied_screw> kept(m_supplied);
-    kept.resize(m_derived.joint_count());
-
-    return settings{m_home, kept};
+    return settings{m_home, m_supplied};
 }
 
 void screw_modeling_window::initialize()

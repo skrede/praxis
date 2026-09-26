@@ -48,8 +48,9 @@ public:
 
     // The chain a composition opens the window at: the home pose and one entry per joint, in the
     // frame of the model's root link. An entry holds the screw somebody supplied for that joint or
-    // holds nothing. Which construction a row was typed in is not carried -- a screw holds no such
-    // fact, and each row's is inferred from its own angular part.
+    // holds nothing, and one past the chain's last joint stands against no joint and is carried
+    // only to be counted. Which construction a row was typed in is not carried -- a screw holds no
+    // such fact, and each row's is inferred from its own angular part.
     struct settings
     {
         transform home;

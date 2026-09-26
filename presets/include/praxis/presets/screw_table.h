@@ -35,9 +35,10 @@ config::declaration screw_table_keyspace();
 // beside: nothing is searched for, and a document that is not there is not an error.
 config::binding screw_table_binding(const std::filesystem::path &named, const std::filesystem::path &beside);
 
-// The chain `values` carries under `at`, one entry per joint of `derived`. An entry for a row the
-// document carries no instance of holds nothing, because nobody supplied that joint, and a table
-// naming a joint the chain does not have is refused with both counts rather than remapped onto it.
+// The chain `values` carries under `at`: one entry per joint of `derived`, and one more for each
+// joint a row names past its end. An entry for a row the document carries no instance of holds
+// nothing, because nobody supplied that joint. A row addressed by anything other than its joint's
+// place in the chain, counted from one, is refused, naming what could not be read.
 expected<manipulator::screw_modeling_window::settings, config::error> read_screw_table(const config::document &values, std::string_view at, const manipulator::screw_chain &derived,
                                                                                        const rigid_motion::screw_ops &turning, const rigid_motion::frame_ops &framing);
 

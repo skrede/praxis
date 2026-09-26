@@ -293,24 +293,38 @@ TEST_CASE("a document naming no joint at all leaves every joint unsupplied", "[p
     }
 }
 
-// A row somebody kept for a longer machine names a joint this one does not have, and no reading of
-// it is a reading of this chain: the whole table is turned away rather than the surplus dropped.
-TEST_CASE("a table naming a joint the machine's chain does not have is refused with both counts", "[presets][configuration]")
+// A chain kept for a longer machine is read against this one row by row, and every row lands at the
+// joint its own identity names: a surplus is carried at the far end rather than shifted into the
+// joints this chain does have.
+TEST_CASE("a table naming two joints more than the chain has lands every row at the joint it names", "[presets][configuration]")
 {
-    const expected<supplied, config::error> read = presets::read_screw_table(authored(rows_through(8u), "wrong-length.xml"), at, derived_six(), motions().screw, motions().frame);
-    REQUIRE_FALSE(read.has_value());
+    const supplied read = opened(authored(rows_through(8u), "wrong-length.xml"), derived_six());
 
-    INFO(read.error().message);
-    REQUIRE(read.error().message.find("names 8 joints") != std::string::npos);
-    REQUIRE(read.error().message.find("has 6") != std::string::npos);
+    REQUIRE(read.screws.size() == 8u);
+    for(std::size_t joint = 0u; joint < 8u; ++joint)
+    {
+        INFO("joint " << joint);
+        REQUIRE(read.screws[joint].has_value());
+        CHECK((*read.screws[joint] - six_vector(1.0 + static_cast<double>(joint))).norm() < 1.0e-5);
+    }
 }
 
-TEST_CASE("a table naming a joint out of the chain's order is refused although it carries no more rows than the chain", "[presets][configuration]")
+// The length a surplus stretches the reading to is the highest joint any row names, and the joints
+// between the chain's end and that row are joints nobody supplied rather than rows moved up.
+TEST_CASE("a table naming a joint past the chain's end and nothing between leaves the joints between unsupplied", "[presets][configuration]")
 {
-    const expected<supplied, config::error> read =
-            presets::read_screw_table(authored(row(1u, six_vector(1.0)) + row(7u, six_vector(2.0)), "out-of-order.xml"), at, derived_six(), motions().screw, motions().frame);
+    const supplied read = opened(authored(row(1u, six_vector(1.0)) + row(7u, six_vector(2.0)), "out-of-order.xml"), derived_six());
 
-    REQUIRE_FALSE(read.has_value());
+    REQUIRE(read.screws.size() == 7u);
+    REQUIRE(read.screws.front().has_value());
+    CHECK((*read.screws.front() - six_vector(1.0)).norm() < 1.0e-5);
+    REQUIRE(read.screws.back().has_value());
+    CHECK((*read.screws.back() - six_vector(2.0)).norm() < 1.0e-5);
+    for(std::size_t joint = 1u; joint < 6u; ++joint)
+    {
+        INFO("joint " << joint);
+        CHECK_FALSE(read.screws[joint].has_value());
+    }
 }
 
 // Somebody who derives one screw more than the arm has joints has written down a chain this machine

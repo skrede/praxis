@@ -14,7 +14,9 @@
 #include <string>
 #include <vector>
 #include <cstddef>
+#include <charconv>
 #include <optional>
+#include <algorithm>
 #include <filesystem>
 #include <string_view>
 
@@ -25,19 +27,19 @@ namespace {
 using names    = keys::screw_table_names;
 using supplied = manipulator::screw_modeling_window::settings;
 
-config::error mismatched(std::size_t rows, std::size_t joints)
+config::error unreadable(const std::string &identity)
 {
-    return config::error{config::error_code::rejected_content,
-                         "the chain kept here names " + std::to_string(rows) + " joints and the machine it was opened against has " + std::to_string(joints)};
+    return config::error{config::error_code::rejected_content, "the chain kept here addresses a row by '" + identity + "', which names no joint's place in a chain"};
 }
 
-bool within(const std::string &identity, std::size_t joints)
+// A row is addressed by the place its joint takes in the chain, counted from one.
+std::optional<std::size_t> ordinal_of(const std::string &identity)
 {
-    for(std::size_t joint = 0u; joint < joints; ++joint)
-        if(identity == std::to_string(joint + 1u))
-            return true;
+    std::size_t named                 = 0u;
+    const char *const last            = identity.data() + identity.size();
+    const std::from_chars_result read = std::from_chars(identity.data(), last, named);
 
-    return false;
+    return read.ec == std::errc() && read.ptr == last && named >= 1u ? std::optional<std::size_t>(named) : std::optional<std::size_t>();
 }
 
 transform read_home(const config::document &values, const std::string &at, const rigid_motion::frame_ops &framing)
@@ -116,13 +118,20 @@ expected<supplied, config::error> read_screw_table(const config::document &value
 {
     const std::string rows                 = keys::under(at, names::joint);
     const std::vector<std::string> present = values.identities(rows);
+
+    std::size_t reach = derived.joint_count();
     for(const std::string &identity : present)
-        if(!within(identity, derived.joint_count()))
-            return unexpected(mismatched(present.size(), derived.joint_count()));
+    {
+        const std::optional<std::size_t> named = ordinal_of(identity);
+        if(!named)
+            return unexpected(unreadable(identity));
+
+        reach = std::max(reach, *named);
+    }
 
     supplied opened;
     opened.home = read_home(values, keys::under(at, names::home), framing);
-    for(std::size_t joint = 0u; joint < derived.joint_count(); ++joint)
+    for(std::size_t joint = 0u; joint < reach; ++joint)
         opened.screws.push_back(read_row(values, rows, joint));
 
     return opened;
