@@ -1048,9 +1048,6 @@ TEST_CASE("a refused row is put back to the screw it kept, so the next accepted 
     CHECK(panel.state().screws.front()->head<3>().isApprox(opened.head<3>()));
 }
 
-// The table is as long as the derived chain whatever it is supplied, and a composition handing it
-// more screws than the arm has loses the rest -- which the reader of a kept table refuses out loud,
-// so the window says it too rather than absorbing it.
 // The reading says the surplus on a line a person is looking at, so nothing is left for a log to
 // say, and the screws the line counts are still there to be handed back and written down again.
 TEST_CASE("a chain supplied more screws than the arm has keeps them all and reports nothing", "[manipulator][modeling]")
