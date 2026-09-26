@@ -692,6 +692,26 @@ TEST_CASE("a supplied chain equal to the derived one reads zero on every joint l
     }
 }
 
+// A home block naming no frame leaves the turn nothing to be read from, and the cell that draws it
+// says so. The other two cells are unaffected: an origin is an origin whatever the block beside it
+// is, and how far the block stands from a rotation is the very thing being reported.
+TEST_CASE("the home line states its rotation term where the supplied block names no frame", "[manipulator][modeling]")
+{
+    stage headless(described_chain(), folded());
+
+    transform nothing         = headless.chain.home;
+    nothing.block<3, 3>(0, 0) = rotation::Zero();
+
+    screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{nothing, headless.chain.space_screws});
+    const scene::readout shown  = panel.reading();
+
+    REQUIRE(shown.message.empty());
+    REQUIRE(shown.rows.size() == whole_chain_rows + 1u + axes);
+    CHECK(home_line(shown)[rotation_cell].stated == "unbounded");
+    CHECK(std::isfinite(number_in(home_line(shown), distance_cell)));
+    CHECK(std::isfinite(number_in(home_line(shown), defect_cell)));
+}
+
 // A joint standing at zero turns the arm nowhere, so a chain whose screw for that joint points the
 // other way poses exactly where the described one does and the whole-chain difference reads nothing.
 // The joint's own line is what finds it, and a flipped direction is a half turn rather than an

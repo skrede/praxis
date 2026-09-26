@@ -21,6 +21,10 @@ inline constexpr double nearly  = 1.0e-9;
 inline constexpr double a_quarter_turn = std::numbers::pi_v<double> / 2.0;
 inline constexpr double a_half_turn    = std::numbers::pi_v<double>;
 
+// The angle the home pose below stands at, which is the derived side's own number and therefore the
+// one no reading of a supplied block may report.
+inline constexpr double a_home_turn = 0.4;
+
 inline constexpr std::size_t chain_joints      = 4u;
 inline constexpr std::size_t turning_joint     = 1u;
 inline constexpr std::size_t translating_joint = 3u;
@@ -45,7 +49,7 @@ inline transform a_home_pose()
 {
     transform placed = transform::Identity();
 
-    placed.block<3, 3>(0, 0) = Eigen::AngleAxisd(0.4, Eigen::Vector3d(1.0, 2.0, 3.0).normalized()).toRotationMatrix();
+    placed.block<3, 3>(0, 0) = Eigen::AngleAxisd(a_home_turn, Eigen::Vector3d(1.0, 2.0, 3.0).normalized()).toRotationMatrix();
     placed.block<3, 1>(0, 3) = Eigen::Vector3d(0.1, -0.2, 0.7);
 
     return placed;
@@ -61,6 +65,29 @@ inline screw_chain a_chain()
 inline std::vector<supplied_screw> all_supplied(std::vector<screw_axis> screws)
 {
     return std::vector<supplied_screw>(screws.begin(), screws.end());
+}
+
+inline transform home_pose_whose_rotation_is(const rotation &block)
+{
+    transform placed         = a_home_pose();
+    placed.block<3, 3>(0, 0) = block;
+
+    return placed;
+}
+
+// Neither block stands near a rotation: every direction of the first has been lost and all but one
+// of the second's.
+inline rotation no_frame_at_all()
+{
+    return rotation::Zero();
+}
+
+inline rotation one_direction_only()
+{
+    rotation single = rotation::Zero();
+    single.col(0)   = Eigen::Vector3d(1.0, 2.0, 3.0).normalized();
+
+    return single;
 }
 
 inline std::vector<screw_axis> with_one_changed(std::vector<screw_axis> screws, std::size_t joint, const screw_axis &instead)

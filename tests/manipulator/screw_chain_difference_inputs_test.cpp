@@ -117,6 +117,32 @@ TEST_CASE("a home pose typed to four decimals reads a finite turn beside a rigid
     CHECK(apart.home.rigidity > 1.0e-5);
 }
 
+// The nearest rotation to a block naming no frame is the decomposition's own choice, so the turn read
+// against it measures nothing that was supplied -- least of all when it lands on the derived chain's
+// own angle.
+TEST_CASE("a home pose whose rotation block names no frame at all is refused a turn", "[manipulator][modeling]")
+{
+    const screw_chain derived          = a_chain();
+    const screw_chain_difference apart = supplied_chain_difference(derived, home_pose_whose_rotation_is(no_frame_at_all()), all_supplied(derived.space_screws));
+
+    REQUIRE(std::isfinite(apart.home.moved_metres));
+    REQUIRE(std::isfinite(apart.home.rigidity));
+    REQUIRE(apart.home.rigidity > 0.5);
+    CHECK_FALSE(std::isfinite(apart.home.turned_radians));
+    CHECK(std::fabs(apart.home.turned_radians - a_home_turn) > nearly);
+}
+
+TEST_CASE("a home pose whose rotation block keeps one direction of three is refused a turn", "[manipulator][modeling]")
+{
+    const screw_chain derived          = a_chain();
+    const screw_chain_difference apart = supplied_chain_difference(derived, home_pose_whose_rotation_is(one_direction_only()), all_supplied(derived.space_screws));
+
+    REQUIRE(std::isfinite(apart.home.moved_metres));
+    REQUIRE(std::isfinite(apart.home.rigidity));
+    REQUIRE(apart.home.rigidity > 0.5);
+    CHECK_FALSE(std::isfinite(apart.home.turned_radians));
+}
+
 // The turn is read against the nearest rotation to the supplied block, so a block that is no rotation
 // at all is answered rather than left to run away.
 TEST_CASE("a home pose whose rotation block is a reflection reads a finite turn and a rigidity of order one", "[manipulator][modeling]")
