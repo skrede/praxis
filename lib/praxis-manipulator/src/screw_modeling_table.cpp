@@ -71,9 +71,9 @@ value_row joint_row(const chain_joint_difference &line, std::size_t joint)
 
 // The columns measure a transform and a surplus fills none of them, so the two counts are said in
 // words on a line that carries no term at all.
-value_row surplus_row(std::size_t supplied, std::size_t joints)
+value_row surplus_row(std::size_t named, std::size_t joints)
 {
-    return value_row{stating(stated_surplus), stating(std::to_string(supplied) + " screws supplied against a chain of " + std::to_string(joints))};
+    return value_row{stating(stated_surplus), stating(std::to_string(named) + " joints named against a chain of " + std::to_string(joints))};
 }
 
 // A statement stands in place of the cell's number, which is how a line carrying no number for a

@@ -849,6 +849,32 @@ TEST_CASE("screws supplied beyond the chain's length are said on a line of their
     CHECK(none.rows.back()[named_cell].stated == "Joint " + std::to_string(axes));
 }
 
+// The line counts the joints the chain names, which is what puts it past the end; how many of them
+// anybody supplied is a different number and is said joint by joint above it.
+TEST_CASE("a surplus reaching past the chain states the joints named and not a count of supplied screws", "[manipulator][modeling]")
+{
+    stage headless(described_chain(), at_rest());
+    std::vector<supplied_screw> sparse(axes + 1u);
+    sparse.front() = headless.chain.space_screws.front();
+    sparse.back()  = unit_z_axis();
+
+    screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{headless.chain.home, sparse});
+    const scene::readout shown  = panel.reading();
+
+    const std::vector<scene::labeled_value> &surplus = shown.rows.back();
+
+    CHECK(surplus.back().stated.find(std::to_string(axes + 1u)) != std::string::npos);
+    CHECK(surplus.back().stated.find(std::to_string(axes)) != std::string::npos);
+    CHECK(surplus.back().stated.find("supplied") == std::string::npos);
+
+    std::size_t said_unsupplied = 0u;
+    for(std::size_t joint = 1u; joint < axes; ++joint)
+        if(joint_line(shown, joint).back().stated == "not supplied")
+            ++said_unsupplied;
+
+    CHECK(said_unsupplied == axes - 1u);
+}
+
 TEST_CASE("a reset leaves every joint line saying it was not supplied", "[manipulator][modeling]")
 {
     stage headless(described_chain(), at_rest());
