@@ -537,6 +537,37 @@ TEST_CASE("a joint the document is silent about says so in the window the scenar
     }
 }
 
+// A chain written down for a longer machine than the one it is opened against still says everything
+// it can about this one: every joint line reads, and how many screws stand against how many joints
+// is said on a line of its own, on screen, rather than in a log.
+TEST_CASE("a document naming more joints than the arm has opens a window that says both counts", "[presets][windows]")
+{
+    const described_arm described(6, "six");
+    const presets::arm_scenario chosen = described_by(described.where);
+
+    const config::document written = kept_chain(a_supplied_chain(7), "one-screw-too-many.xml");
+
+    opened_arm built;
+    const std::shared_ptr<scene::preset> composed = built.open(chosen, presets::arm_windows_modeling(chosen, supplied_from(written, chain_binding("one-screw-too-many-into.xml"))));
+    const scene::readout shown                    = chain_window_of(composed)->reading();
+
+    INFO(shown.message);
+    REQUIRE(shown.rows.size() == whole_chain_rows + 1u + 6u + 1u);
+    for(std::size_t joint = 0u; joint < 6u; ++joint)
+    {
+        INFO("joint " << joint);
+        CHECK(joint_line(shown, joint)[rotation_cell].stated.empty());
+    }
+
+    const std::vector<scene::labeled_value> &surplus = shown.rows.back();
+
+    REQUIRE(surplus.size() > 1u);
+    for(const scene::labeled_value &cell : surplus)
+        CHECK_FALSE(cell.stated.empty());
+    CHECK(surplus.back().stated.find("7") != std::string::npos);
+    CHECK(surplus.back().stated.find("6") != std::string::npos);
+}
+
 TEST_CASE("both deployed machines open the supplied-chain scenario", "[presets][windows]")
 {
     for(const auto &named : {std::pair<const char *, bool>{"ur_description/urdf/ur.urdf.xacro", true}, std::pair<const char *, bool>{"kuka_kr6_support/urdf/kr6r900sixx.xacro", false}})

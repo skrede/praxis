@@ -139,13 +139,27 @@ std::string triple(std::string_view named, const Eigen::Vector3d &value)
     return "<" + std::string(named) + " x=\"" + std::to_string(value.x()) + "\" y=\"" + std::to_string(value.y()) + "\" z=\"" + std::to_string(value.z()) + "\"/>";
 }
 
-std::string row(std::size_t index, const std::optional<screw_axis> &screw)
+std::string row(std::string_view index, const std::optional<screw_axis> &screw)
 {
-    std::string element = "<joint index=\"" + std::to_string(index) + "\">";
+    std::string element = "<joint index=\"" + std::string(index) + "\">";
     if(screw)
         element += triple("angular", screw->head<3>()) + triple("linear", screw->tail<3>());
 
     return element + "</joint>";
+}
+
+std::string row(std::size_t index, const std::optional<screw_axis> &screw)
+{
+    return row(std::to_string(index), screw);
+}
+
+std::string rows_through(std::size_t joints)
+{
+    std::string body;
+    for(std::size_t joint = 0u; joint < joints; ++joint)
+        body += row(joint + 1u, six_vector(1.0 + static_cast<double>(joint)));
+
+    return body;
 }
 
 supplied opened(const config::document &values, const manipulator::screw_chain &derived)
@@ -202,11 +216,7 @@ TEST_CASE("a chain no document names leaves every joint unsupplied and its home 
 
 TEST_CASE("a document carrying only some of the chain's rows leaves the rest unsupplied", "[presets][configuration]")
 {
-    std::string body;
-    for(std::size_t joint = 0u; joint < 3u; ++joint)
-        body += row(joint + 1u, six_vector(1.0 + static_cast<double>(joint)));
-
-    const supplied read = opened(authored(body, "some-rows.xml"), derived_six());
+    const supplied read = opened(authored(rows_through(3u), "some-rows.xml"), derived_six());
     REQUIRE(read.screws.size() == 6u);
     for(std::size_t joint = 0u; joint < 3u; ++joint)
     {
@@ -287,11 +297,7 @@ TEST_CASE("a document naming no joint at all leaves every joint unsupplied", "[p
 // it is a reading of this chain: the whole table is turned away rather than the surplus dropped.
 TEST_CASE("a table naming a joint the machine's chain does not have is refused with both counts", "[presets][configuration]")
 {
-    std::string body;
-    for(std::size_t joint = 0u; joint < 8u; ++joint)
-        body += row(joint + 1u, six_vector(1.0 + static_cast<double>(joint)));
-
-    const expected<supplied, config::error> read = presets::read_screw_table(authored(body, "wrong-length.xml"), at, derived_six(), motions().screw, motions().frame);
+    const expected<supplied, config::error> read = presets::read_screw_table(authored(rows_through(8u), "wrong-length.xml"), at, derived_six(), motions().screw, motions().frame);
     REQUIRE_FALSE(read.has_value());
 
     INFO(read.error().message);
@@ -305,6 +311,42 @@ TEST_CASE("a table naming a joint out of the chain's order is refused although i
             presets::read_screw_table(authored(row(1u, six_vector(1.0)) + row(7u, six_vector(2.0)), "out-of-order.xml"), at, derived_six(), motions().screw, motions().frame);
 
     REQUIRE_FALSE(read.has_value());
+}
+
+// Somebody who derives one screw more than the arm has joints has written down a chain this machine
+// cannot be, and the row past the last joint is the whole of what says so. It is read like any other
+// row and carried, so the count the reading states is the count the document named.
+TEST_CASE("a table naming one joint more than the chain has is read, and the surplus row is carried", "[presets][configuration]")
+{
+    const supplied read = opened(authored(rows_through(7u), "one-row-too-many.xml"), derived_six());
+
+    REQUIRE(read.screws.size() == 7u);
+    REQUIRE(read.screws.back().has_value());
+    CHECK((*read.screws.back() - six_vector(7.0)).norm() < 1.0e-5);
+}
+
+// The boundary the surplus is measured against: a document naming every joint and no more is a
+// complete chain, and one entry past it would make the reading say a surplus nobody wrote.
+TEST_CASE("a table naming exactly as many joints as the chain has reads that many entries and no more", "[presets][configuration]")
+{
+    const supplied read = opened(authored(rows_through(6u), "exactly-the-chain.xml"), derived_six());
+
+    REQUIRE(read.screws.size() == 6u);
+    REQUIRE(read.screws.back().has_value());
+    CHECK((*read.screws.back() - six_vector(6.0)).norm() < 1.0e-5);
+}
+
+// An identity no reading makes a joint of is not one to guess at: dropping the row would put
+// something somebody wrote out of reach with nothing said anywhere, so the document is turned away
+// by the identity itself.
+TEST_CASE("a table whose row identity is not an ordinal is refused, naming that identity", "[presets][configuration]")
+{
+    const expected<supplied, config::error> read =
+            presets::read_screw_table(authored(row("wrist", six_vector(1.0)), "not-an-ordinal.xml"), at, derived_six(), motions().screw, motions().frame);
+    REQUIRE_FALSE(read.has_value());
+
+    INFO(read.error().message);
+    CHECK(read.error().message.find("wrist") != std::string::npos);
 }
 
 TEST_CASE("a chain written twice with nothing moved between offers no second edit", "[presets][configuration]")
