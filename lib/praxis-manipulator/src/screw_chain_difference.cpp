@@ -9,6 +9,7 @@
 #include <Eigen/Geometry>
 
 #include <cmath>
+#include <limits>
 #include <vector>
 #include <cstddef>
 #include <utility>
@@ -18,6 +19,10 @@
 namespace praxis::manipulator {
 
 namespace {
+
+// How far a supplied home block may stand from being a rotation and still have a turn read off the
+// rotation nearest it.
+constexpr double home_rigidity_bound = 1.0e-1;
 
 // The boundary the drawing reads the same screw at, so a row drawn as translating is a row compared
 // as translating.
@@ -96,10 +101,13 @@ chain_home_difference home_compared(const screw_chain &derived, const transform 
 {
     const Eigen::Matrix3d held(supplied_home.block<3, 3>(0, 0));
     const Eigen::Matrix3d described(derived.home.block<3, 3>(0, 0));
-    const evaluation::residual turned = evaluation::geodesic_residual(nearest_rotation(held), described);
+    const double rigidity = std::max(rigidity_defect(held), rigidity_defect(described));
+    const double moved    = (supplied_home.block<3, 1>(0, 3) - derived.home.block<3, 1>(0, 3)).norm();
 
-    return chain_home_difference{turned.magnitude, (supplied_home.block<3, 1>(0, 3) - derived.home.block<3, 1>(0, 3)).norm(),
-                                 std::max(rigidity_defect(held), rigidity_defect(described))};
+    if(rigidity > home_rigidity_bound)
+        return chain_home_difference{std::numeric_limits<double>::infinity(), moved, rigidity};
+
+    return chain_home_difference{evaluation::geodesic_residual(nearest_rotation(held), described).magnitude, moved, rigidity};
 }
 
 }

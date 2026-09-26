@@ -52,6 +52,10 @@ struct chain_joint_difference
 // pose written out to a few decimals is answered rather than refused; the distance between their
 // origins in metres; and how far either block stands from being a rotation at all, as the greatest
 // defect against orthonormality and unit determinant either of them carries.
+//
+// The turn is answered only while that defect stands within a bound: beyond it the nearest rotation
+// is the decomposition's own choice rather than anything the supplied block says, so the turn is not
+// a finite number. The distance and the defect are answered whatever the two blocks are.
 struct chain_home_difference
 {
     double turned_radians;
