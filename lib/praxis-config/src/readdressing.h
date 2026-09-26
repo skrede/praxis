@@ -31,7 +31,7 @@ std::optional<std::size_t> ordinal_in(const std::string &key, const std::string 
 std::string renumbered(const std::string &key, std::span<const taken> gone);
 
 // What is wrong with the removals among `changes` beside taking out `gone`, or nothing: a removal
-// naming a collection under one losing an instance addresses its parent at an ordinal that moves.
+// naming a collection under one losing an instance addresses its parent at an ordinal the removal may move.
 std::string moved_collection(std::span<const edit> changes, std::span<const taken> gone);
 
 // What is wrong with writing the bound edits among `changes` beside taking out `gone`, or nothing: a
