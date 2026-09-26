@@ -143,9 +143,11 @@ TEST_CASE("a home pose whose rotation block keeps one direction of three is refu
     CHECK_FALSE(std::isfinite(apart.home.turned_radians));
 }
 
-// The turn is read against the nearest rotation to the supplied block, so a block that is no rotation
-// at all is answered rather than left to run away.
-TEST_CASE("a home pose whose rotation block is a reflection reads a finite turn and a rigidity of order one", "[manipulator][modeling]")
+// The turn is read against the nearest rotation to the supplied block only while the block stands
+// near enough to one for that rotation to be a fact about it. A reflection is exactly orthonormal
+// with the determinant of the wrong sign, so which direction gets flipped to reach a rotation is the
+// decomposition's choice and nothing the block says.
+TEST_CASE("a home pose whose rotation block is a reflection is refused a turn beside a rigidity of order one", "[manipulator][modeling]")
 {
     const screw_chain derived = a_chain();
 
@@ -154,9 +156,9 @@ TEST_CASE("a home pose whose rotation block is a reflection reads a finite turn 
 
     const screw_chain_difference apart = supplied_chain_difference(derived, mirrored, all_supplied(derived.space_screws));
 
-    REQUIRE(std::isfinite(apart.home.turned_radians));
     REQUIRE(std::isfinite(apart.home.moved_metres));
     REQUIRE(std::isfinite(apart.home.rigidity));
+    CHECK_FALSE(std::isfinite(apart.home.turned_radians));
     CHECK(apart.home.rigidity > 1.0);
     CHECK(apart.home.rigidity < 10.0);
 }

@@ -7,6 +7,8 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
+#include <span>
+#include <cmath>
 #include <vector>
 #include <cstddef>
 #include <numbers>
@@ -88,6 +90,40 @@ inline rotation one_direction_only()
     single.col(0)   = Eigen::Vector3d(1.0, 2.0, 3.0).normalized();
 
     return single;
+}
+
+// A unit shear leaves the determinant where it was and stands exactly its own off-diagonal entry
+// from orthonormality, so the block below carries the rigidity defect it was asked for rather than a
+// rounded neighbour of it.
+inline rotation block_whose_rigidity_defect_is(double defect)
+{
+    rotation sheared = rotation::Identity();
+    sheared(0, 1)    = defect;
+
+    return sheared;
+}
+
+// The greatest rigidity defect a supplied home block may carry and still be answered a turn, found
+// by halving rather than written down, so a case built on it measures whatever the comparison admits
+// rather than a number copied beside it.
+inline double greatest_admitted_rigidity_defect()
+{
+    const screw_chain derived = a_chain();
+
+    double answered = 0.0;
+    double refused  = 1.0;
+    while(std::nextafter(answered, refused) != refused)
+    {
+        const double between  = answered + (refused - answered) / 2.0;
+        const transform tried = home_pose_whose_rotation_is(block_whose_rigidity_defect_is(between));
+
+        if(std::isfinite(supplied_chain_difference(derived, tried, std::span<const supplied_screw>()).home.turned_radians))
+            answered = between;
+        else
+            refused = between;
+    }
+
+    return answered;
 }
 
 inline std::vector<screw_axis> with_one_changed(std::vector<screw_axis> screws, std::size_t joint, const screw_axis &instead)

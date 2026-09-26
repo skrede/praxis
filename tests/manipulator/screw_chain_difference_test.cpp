@@ -122,6 +122,37 @@ TEST_CASE("a translating screw whose linear half has no length names no directio
     CHECK(std::fabs(*nowhere.length - 1.0) < exactly);
 }
 
+// The two cases below stand one representable step apart in the very quantity the comparison reads,
+// because the block each is built from carries exactly the defect it was asked for. Every bound this
+// library carries is a power of ten, which is what makes the greatest defect answered the bound
+// itself rather than the step below it.
+TEST_CASE("a supplied home block standing exactly at the greatest admitted defect is answered a turn", "[manipulator][modeling]")
+{
+    const screw_chain derived = a_chain();
+    const double admitted     = greatest_admitted_rigidity_defect();
+    const transform edged     = home_pose_whose_rotation_is(block_whose_rigidity_defect_is(admitted));
+
+    const screw_chain_difference apart = supplied_chain_difference(derived, edged, all_supplied(derived.space_screws));
+
+    REQUIRE(apart.home.rigidity == admitted);
+    CHECK(std::isfinite(apart.home.turned_radians));
+    CHECK(std::isfinite(apart.home.moved_metres));
+    CHECK(admitted == std::pow(10.0, std::floor(std::log10(admitted))));
+}
+
+TEST_CASE("a supplied home block one representable step past that defect is refused its turn", "[manipulator][modeling]")
+{
+    const screw_chain derived = a_chain();
+    const double beyond       = std::nextafter(greatest_admitted_rigidity_defect(), 1.0);
+    const transform past      = home_pose_whose_rotation_is(block_whose_rigidity_defect_is(beyond));
+
+    const screw_chain_difference apart = supplied_chain_difference(derived, past, all_supplied(derived.space_screws));
+
+    REQUIRE(apart.home.rigidity == beyond);
+    CHECK_FALSE(std::isfinite(apart.home.turned_radians));
+    CHECK(std::isfinite(apart.home.moved_metres));
+}
+
 TEST_CASE("the length term is symmetric in which of the two chains is called the derived one", "[manipulator][modeling]")
 {
     const screw_chain derived              = a_chain();
