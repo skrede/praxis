@@ -3253,6 +3253,7 @@ presets/include/praxis/presets/screw_table.h	presets	namespace	-	-
 presets/include/praxis/presets/screw_table.h	screw_table_path	variable	-	typename:const char *
 presets/include/praxis/presets/screw_table.h	screw_table_keyspace	prototype	()	typename:config::declaration
 presets/include/praxis/presets/screw_table.h	screw_table_binding	prototype	(const std::filesystem::path & named,const std::filesystem::path & beside)	typename:config::binding
+presets/include/praxis/presets/screw_table.h	screw_table_greatest_surplus	variable	-	typename:std::size_t
 presets/include/praxis/presets/screw_table.h	read_screw_table	prototype	(const config::document & values,std::string_view at,const manipulator::screw_chain & derived,const rigid_motion::screw_ops & turning,const rigid_motion::frame_ops & framing)	typename:expected<manipulator::screw_modeling_window::settings,config::error>
 presets/include/praxis/presets/screw_table.h	write_screw_table	prototype	(const config::document & values,std::string_view at,const manipulator::screw_modeling_window::settings & state,const rigid_motion::frame_ops & framing)	typename:std::vector<config::edit>
 presets/include/praxis/presets/screw_table.h	screw_table_edits	prototype	(const rigid_motion::frame_ops & framing)	typename:manipulator::screw_modeling_window::edit_route

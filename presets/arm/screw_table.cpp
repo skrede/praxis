@@ -27,9 +27,9 @@ namespace {
 using names    = keys::screw_table_names;
 using supplied = manipulator::screw_modeling_window::settings;
 
-config::error unreadable(const std::string &identity)
+config::error unreadable(const std::string &identity, const std::string &fault)
 {
-    return config::error{config::error_code::rejected_content, "the chain kept here addresses a row by '" + identity + "', which names no joint's place in a chain"};
+    return config::error{config::error_code::rejected_content, "the chain kept here addresses a row by '" + identity + "', which " + fault};
 }
 
 // A row is addressed by the place its joint takes in the chain, counted from one, in the one
@@ -42,6 +42,25 @@ std::optional<std::size_t> ordinal_of(const std::string &identity)
     const bool canonical              = read.ec == std::errc() && read.ptr == last && named >= 1u && std::to_string(named) == identity;
 
     return canonical ? std::optional<std::size_t>(named) : std::optional<std::size_t>();
+}
+
+// How far the reading stretches: to the furthest joint any row names, and no further out than the
+// surplus a document may name past the chain's end.
+expected<std::size_t, config::error> reach_of(const std::vector<std::string> &present, std::size_t joints)
+{
+    std::size_t reach = joints;
+    for(const std::string &identity : present)
+    {
+        const std::optional<std::size_t> named = ordinal_of(identity);
+        if(!named)
+            return unexpected(unreadable(identity, "names no joint's place in a chain"));
+        if(*named > joints + screw_table_greatest_surplus)
+            return unexpected(unreadable(identity, "names a joint further past the end of this chain than a chain is read out to"));
+
+        reach = std::max(reach, *named);
+    }
+
+    return reach;
 }
 
 transform read_home(const config::document &values, const std::string &at, const rigid_motion::frame_ops &framing)
@@ -118,22 +137,14 @@ config::binding screw_table_binding(const std::filesystem::path &named, const st
 expected<supplied, config::error> read_screw_table(const config::document &values, std::string_view at, const manipulator::screw_chain &derived, const rigid_motion::screw_ops &,
                                                    const rigid_motion::frame_ops &framing)
 {
-    const std::string rows                 = keys::under(at, names::joint);
-    const std::vector<std::string> present = values.identities(rows);
-
-    std::size_t reach = derived.joint_count();
-    for(const std::string &identity : present)
-    {
-        const std::optional<std::size_t> named = ordinal_of(identity);
-        if(!named)
-            return unexpected(unreadable(identity));
-
-        reach = std::max(reach, *named);
-    }
+    const std::string rows                           = keys::under(at, names::joint);
+    const expected<std::size_t, config::error> reach = reach_of(values.identities(rows), derived.joint_count());
+    if(!reach)
+        return unexpected(reach.error());
 
     supplied opened;
     opened.home = read_home(values, keys::under(at, names::home), framing);
-    for(std::size_t joint = 0u; joint < reach; ++joint)
+    for(std::size_t joint = 0u; joint < *reach; ++joint)
         opened.screws.push_back(read_row(values, rows, joint));
 
     return opened;

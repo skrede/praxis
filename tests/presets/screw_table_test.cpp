@@ -376,6 +376,39 @@ TEST_CASE("a table whose row identity carries a leading zero is refused, naming 
     CHECK(read.error().message.find("07") != std::string::npos);
 }
 
+// A document may name joints past the end of the chain it is read against -- that surplus is how a
+// chain kept for a longer machine says so -- but only so far, and the far side of that is a row the
+// reading refuses by name rather than one it stretches to hold.
+TEST_CASE("a table naming the furthest joint a surplus reaches is read to it and one past it is refused", "[presets][configuration]")
+{
+    const std::size_t furthest = 6u + presets::screw_table_greatest_surplus;
+    const supplied read        = opened(authored(row(furthest, six_vector(2.0)), "the-furthest-surplus.xml"), derived_six());
+    REQUIRE(read.screws.size() == furthest);
+    REQUIRE(read.screws.back().has_value());
+    CHECK((*read.screws.back() - six_vector(2.0)).norm() < 1.0e-5);
+
+    const std::string beyond = std::to_string(furthest + 1u);
+    const expected<supplied, config::error> past =
+            presets::read_screw_table(authored(row(beyond, six_vector(2.0)), "past-the-surplus.xml"), at, derived_six(), motions().screw, motions().frame);
+    REQUIRE_FALSE(past.has_value());
+
+    INFO(past.error().message);
+    CHECK(past.error().message.find(beyond) != std::string::npos);
+}
+
+// An ordinal no chain reaches is a typo rather than a longer machine, and the reading it asks for is
+// one no process holds. It is refused before anything is allocated for it, so the document meets an
+// answer rather than the reader running out of memory inside a call that promises one.
+TEST_CASE("a table naming an ordinal no chain could reach is refused rather than allocated for", "[presets][configuration]")
+{
+    const expected<supplied, config::error> read =
+            presets::read_screw_table(authored(row("18446744073709551615", six_vector(1.0)), "an-unreachable-ordinal.xml"), at, derived_six(), motions().screw, motions().frame);
+    REQUIRE_FALSE(read.has_value());
+
+    INFO(read.error().message);
+    CHECK(read.error().message.find("18446744073709551615") != std::string::npos);
+}
+
 TEST_CASE("a chain written twice with nothing moved between offers no second edit", "[presets][configuration]")
 {
     const config::binding bound = binding_at("nothing-moved.xml");
