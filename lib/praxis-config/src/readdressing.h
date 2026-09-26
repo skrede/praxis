@@ -30,9 +30,9 @@ std::optional<std::size_t> ordinal_in(const std::string &key, const std::string 
 // collections compared by the place they name. Only that one segment is spelled anew.
 std::string renumbered(const std::string &key, std::span<const taken> gone);
 
-// What is wrong with taking out `gone`, or nothing: a collection addressed through any instance of
-// a collection that loses an instance stands at an ordinal the removal may move.
-std::string moved_collection(std::span<const taken> gone);
+// What is wrong with the removals among `changes` beside taking out `gone`, or nothing: a removal
+// naming a collection under one losing an instance addresses its parent at an ordinal that moves.
+std::string moved_collection(std::span<const edit> changes, std::span<const taken> gone);
 
 // What is wrong with writing the bound edits among `changes` beside taking out `gone`, or nothing: a
 // value addressed to an instance that goes has nowhere left to land.

@@ -119,6 +119,15 @@ constexpr std::string_view slots_under_two_stations = "<probe>\n"
                                                       "    </stations>\n"
                                                       "</probe>\n";
 
+// Every spelling of the collection of slots under alpha, alone and together.
+const std::vector<std::vector<std::string>> alpha_slot_spellings{
+        {"stations/station/slot"},
+        {"stations/station[0]/slot"},
+        {"stations[0]/station[0]/slot"},
+        {"stations/station/slot", "stations/station[0]/slot"},
+        {"stations/station/slot", "stations/station[0]/slot", "stations[0]/station[0]/slot"},
+};
+
 // Two instances whose own collections both carry one identity.
 constexpr std::string_view one_identity_under_two_stations = "<probe>\n"
                                                              "    <stations>\n"
@@ -131,6 +140,21 @@ constexpr std::string_view one_identity_under_two_stations = "<probe>\n"
                                                              "        </station>\n"
                                                              "    </stations>\n"
                                                              "</probe>\n";
+
+// Three instances each holding one instance of a collection of its own under its own identity.
+constexpr std::string_view slots_under_three_stations = "<probe>\n"
+                                                        "    <stations>\n"
+                                                        "        <station name=\"alpha\">\n"
+                                                        "            <slot id=\"y\" v=\"1\"/>\n"
+                                                        "        </station>\n"
+                                                        "        <station name=\"beta\">\n"
+                                                        "            <slot id=\"x\" v=\"2\"/>\n"
+                                                        "        </station>\n"
+                                                        "        <station name=\"gamma\">\n"
+                                                        "            <slot id=\"z\" v=\"3\"/>\n"
+                                                        "        </station>\n"
+                                                        "    </stations>\n"
+                                                        "</probe>\n";
 
 // Two instances standing on one line.
 constexpr std::string_view stations_on_one_line = "<probe>\n"
@@ -1083,18 +1107,11 @@ TEST_CASE("a value addressed to the nested instance a save takes out is refused 
 
 TEST_CASE("every spelling of one nested removal saves the same bytes", "[config]")
 {
-    const std::vector<std::vector<std::string>> spellings{
-            {"stations/station/slot"},
-            {"stations/station[0]/slot"},
-            {"stations[0]/station[0]/slot"},
-            {"stations/station/slot", "stations/station[0]/slot"},
-            {"stations/station/slot", "stations/station[0]/slot", "stations[0]/station[0]/slot"},
-    };
-    for(std::size_t set = 0; set < spellings.size(); ++set)
+    for(std::size_t set = 0; set < alpha_slot_spellings.size(); ++set)
     {
         std::vector<edit> changes;
         std::string named;
-        for(const std::string &removal : spellings[set])
+        for(const std::string &removal : alpha_slot_spellings[set])
         {
             changes.push_back(edit{removal, "a", edit_kind::taken_out});
             named += named.empty() ? removal : ", " + removal;
@@ -1203,4 +1220,39 @@ TEST_CASE("a removal spelled with its ancestor's ordinal is read back under that
 
     const std::string without_x = with_replaced(std::string(one_identity_under_two_stations), "\n            <slot id=\"x\" v=\"3\"/>", "");
     CHECK(text_of(where) == with_replaced(without_x, "<slot id=\"y\" v=\"2\"/>", "<slot id=\"y\" v=\"8\"/>"));
+}
+
+// Alpha carries none of the identities removed, and the stations after it carry x and z.
+TEST_CASE("a removal that finds nothing under a collection another removal takes an instance out of is refused by name", "[config]")
+{
+    const std::array<std::pair<std::string, std::string>, 3> rows{{{"stations/station/slot", "x"}, {"stations/station[1]/slot", "z"}, {"stations/station/slot", "q"}}};
+    for(std::size_t row = 0; row < rows.size(); ++row)
+    {
+        const auto &[removal, identity]   = rows[row];
+        const std::filesystem::path where = authored("taken-out-under-a-moved-parent-" + std::to_string(row) + ".xml", slots_under_three_stations);
+        const std::string before          = text_of(where);
+        INFO(removal << " taking out " << identity);
+
+        const std::vector<edit> changes{edit{"stations/station", "alpha", edit_kind::taken_out}, edit{removal, identity, edit_kind::taken_out}};
+        const expected<void, error> saved = save(nested(), resolve(where, scratch()), changes);
+        INFO(why(saved));
+        CHECK((!saved.has_value() && saved.error().code == error_code::unlocatable_key));
+        CHECK(why(saved).find("'" + removal + "'") != std::string::npos);
+        CHECK(why(saved).find("'stations/station'") != std::string::npos);
+        CHECK(text_of(where) == before);
+    }
+}
+
+TEST_CASE("a changed value addressed through an ancestor with no ordinal is refused and the document is left as it was", "[config]")
+{
+    const std::filesystem::path where = authored("bound-bare-ancestor.xml", slots_under_two_stations);
+    const std::string before          = text_of(where);
+
+    const std::vector<edit> one{edit{"stations/station/slot[2]/v", "9"}};
+    const expected<void, error> saved = save(nested(), resolve(where, scratch()), one);
+    INFO(why(saved));
+    REQUIRE_FALSE(saved.has_value());
+
+    CHECK(saved.error().message.find("stations/station/slot[2]/v") != std::string::npos);
+    CHECK(text_of(where) == before);
 }

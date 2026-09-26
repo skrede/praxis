@@ -63,12 +63,12 @@ std::string renumbered(const std::string &key, std::span<const taken> gone)
     return key;
 }
 
-std::string moved_collection(std::span<const taken> gone)
+std::string moved_collection(std::span<const edit> changes, std::span<const taken> gone)
 {
-    for(const taken &one : gone)
-        for(const taken &other : gone)
-            if(ordinal_in(one.stem, other.stem))
-                return "is asked to take an instance out of '" + one.stem + "' and one out of '" + other.stem + "', which it stands under";
+    for(const edit &one : changes)
+        for(const taken &instance : gone)
+            if(one.kind == edit_kind::taken_out && ordinal_in(one.key, instance.stem))
+                return "is asked to take an instance out of '" + one.key + "' and one out of '" + instance.stem + "', which it stands under";
 
     return std::string();
 }

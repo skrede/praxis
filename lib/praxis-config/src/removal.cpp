@@ -171,7 +171,7 @@ expected<remainder, error> taken_out_of(const declaration &shape, const location
         return unexpected(nothing_taken(at, "declares no collection at " + undeclared));
 
     const std::vector<taken> gone = instances_taken(shape, source, changes);
-    for(const std::string &refused : {moved_collection(gone), written_into_taken(changes, gone)})
+    for(const std::string &refused : {moved_collection(changes, gone), written_into_taken(changes, gone)})
         if(!refused.empty())
             return unexpected(nothing_taken(at, refused));
 

@@ -64,14 +64,15 @@ std::string exact_text(double value);
 // sharing its line with anything else takes only its own bytes, and an identity the document does
 // not carry takes nothing out. A collection the declaration does not name, and a key naming one
 // instance rather than a collection, are reported by name like any other key nothing can be written
-// at. A key names a place however it spells an ancestor's first instance, and every key addresses
+// at. A key a value is written at spells the ordinal of every instance it passes through; a
+// removal's key may leave an ancestor's ordinal out to name its first instance. Every key addresses
 // the document as it stands, so an instance taken out moves nothing the same save names. A save
-// writing into an instance it also takes out, or taking instances out of a collection and out of
-// one standing under it, is reported by name and nothing at all is written. What would replace the
-// document is staged beside it, loaded back through this module's own load and required to read
-// what was written and to carry no instance a removal named under the parent its key addresses, and
-// renamed onto the document only then. One message reports the resolved path, how many values were
-// written and how many instances were taken out.
+// writing into an instance it also takes out, or taking an instance out of a collection and
+// naming a removal from a collection standing under that one, is reported by name and nothing at
+// all is written. What would replace the document is staged beside it, loaded back through this
+// module's own load and required to read what was written and to carry no instance a removal named
+// under the parent its key addresses, and renamed onto the document only then. One message reports
+// the resolved path, how many values were written and how many instances were taken out.
 expected<void, error> save(const declaration &shape, const location &at, std::span<const edit> changes, write_policy policy = write_policy::every_edit);
 
 }
