@@ -28,7 +28,7 @@ bool is_a_rotation(const Eigen::Matrix3d &m)
 
 residual element_wise_residual(const Eigen::Ref<const Eigen::MatrixXd> &first, const Eigen::Ref<const Eigen::MatrixXd> &second)
 {
-    return residual{residual_kind::element_wise, (first - second).cwiseAbs().maxCoeff(), 0.0};
+    return residual{residual_kind::element_wise, (first - second).cwiseAbs().maxCoeff<Eigen::PropagateNaN>(), 0.0};
 }
 
 // The angle is read back through Eigen's axis-angle conversion rather than from the trace, which
@@ -58,9 +58,9 @@ residual axis_up_to_sign_residual(const Eigen::Vector<double, 6> &first, const E
 
 agreement verdict_of(const residual &seen, const tolerance_pair &allowed)
 {
-    if(seen.magnitude > allowed.magnitude)
+    if(!(seen.magnitude <= allowed.magnitude))
         return agreement::differed;
-    if(carries_a_linear_half(seen.kind) && seen.linear_error_metres > allowed.linear_metres)
+    if(carries_a_linear_half(seen.kind) && !(seen.linear_error_metres <= allowed.linear_metres))
         return agreement::differed;
 
     return agreement::agreed;

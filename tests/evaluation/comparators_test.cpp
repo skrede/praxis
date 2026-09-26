@@ -6,6 +6,7 @@
 #include <Eigen/Geometry>
 
 #include <cmath>
+#include <limits>
 #include <random>
 #include <numbers>
 #include <algorithm>
@@ -15,7 +16,8 @@ using namespace praxis::evaluation;
 
 namespace {
 
-constexpr double half_a_turn = std::numbers::pi_v<double>;
+constexpr double half_a_turn  = std::numbers::pi_v<double>;
+constexpr double not_a_number = std::numeric_limits<double>::quiet_NaN();
 
 Eigen::Vector3d drawn_direction(std::mt19937_64 &rng, std::normal_distribution<double> &gauss)
 {
@@ -160,4 +162,54 @@ TEST_CASE("a_pose_verdict_holds_each_half_to_its_own_tolerance_and_agrees_only_w
     REQUIRE(verdict_of(residual{residual_kind::pose, allowed.magnitude, allowed.linear_metres}, allowed) == agreement::agreed);
     REQUIRE(verdict_of(residual{residual_kind::pose, turned_further, 0.0}, allowed) == agreement::differed);
     REQUIRE(verdict_of(residual{residual_kind::pose, 0.0, moved_further}, allowed) == agreement::differed);
+}
+
+TEST_CASE("a_not_a_number_in_the_first_element_reads_as_an_element_wise_difference")
+{
+    const Eigen::MatrixXd held(Eigen::MatrixXd::Ones(6, 4));
+    Eigen::MatrixXd broken(held);
+    broken(0, 0) = not_a_number;
+
+    REQUIRE(std::isnan(element_wise_residual(held, broken).magnitude));
+    REQUIRE(verdict_of(element_wise_residual(held, broken), tolerance_of(residual_kind::element_wise)) == agreement::differed);
+    REQUIRE(verdict_of(element_wise_residual(broken, held), tolerance_of(residual_kind::element_wise)) == agreement::differed);
+}
+
+TEST_CASE("a_not_a_number_anywhere_past_the_first_element_reads_as_an_element_wise_difference")
+{
+    const Eigen::MatrixXd held(Eigen::MatrixXd::Ones(6, 4));
+
+    for(Eigen::Index row = 0; row < held.rows(); ++row)
+    {
+        for(Eigen::Index column = 0; column < held.cols(); ++column)
+        {
+            if(row == 0 && column == 0)
+                continue;
+
+            Eigen::MatrixXd broken(held);
+            broken(row, column) = not_a_number;
+
+            REQUIRE(std::isnan(element_wise_residual(held, broken).magnitude));
+            REQUIRE(verdict_of(element_wise_residual(held, broken), tolerance_of(residual_kind::element_wise)) == agreement::differed);
+            REQUIRE(verdict_of(element_wise_residual(broken, held), tolerance_of(residual_kind::element_wise)) == agreement::differed);
+        }
+    }
+}
+
+TEST_CASE("a_pose_whose_translation_is_not_a_number_differs_though_its_rotation_agrees")
+{
+    Eigen::Matrix4d broken(Eigen::Matrix4d::Identity());
+    broken(0, 3) = not_a_number;
+
+    const residual apart = pose_residual(Eigen::Matrix4d::Identity(), broken);
+
+    REQUIRE(apart.magnitude == 0.0);
+    REQUIRE(std::isnan(apart.linear_error_metres));
+    REQUIRE(verdict_of(apart, tolerance_of(residual_kind::pose)) == agreement::differed);
+}
+
+TEST_CASE("a_rotational_magnitude_that_is_not_a_number_differs")
+{
+    REQUIRE(verdict_of(residual{residual_kind::geodesic, not_a_number, 0.0}, tolerance_of(residual_kind::geodesic)) == agreement::differed);
+    REQUIRE(verdict_of(residual{residual_kind::pose, not_a_number, 0.0}, tolerance_of(residual_kind::pose)) == agreement::differed);
 }

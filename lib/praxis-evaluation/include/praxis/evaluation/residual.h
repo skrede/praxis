@@ -86,7 +86,8 @@ constexpr tolerance_pair tolerance_of(residual_kind kind)
 
 // The comparison is inclusive at the tolerance: a residual exactly equal to what is allowed agrees,
 // and one a single representable step above it differs. A `pose` residual and a `log_up_to_branch`
-// residual must satisfy both halves; every other kind is judged on `magnitude` alone.
+// residual must satisfy both halves; every other kind is judged on `magnitude` alone. A half that is
+// not a number differs.
 agreement verdict_of(const residual &seen, const tolerance_pair &allowed);
 
 }

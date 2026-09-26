@@ -104,7 +104,7 @@ chain_home_difference home_compared(const screw_chain &derived, const transform 
     const double rigidity = std::max(rigidity_defect(held), rigidity_defect(described));
     const double moved    = (supplied_home.block<3, 1>(0, 3) - derived.home.block<3, 1>(0, 3)).norm();
 
-    if(rigidity > home_rigidity_bound)
+    if(!(rigidity <= home_rigidity_bound))
         return chain_home_difference{std::numeric_limits<double>::infinity(), moved, rigidity};
 
     return chain_home_difference{evaluation::geodesic_residual(nearest_rotation(held), described).magnitude, moved, rigidity};
