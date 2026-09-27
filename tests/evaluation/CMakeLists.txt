@@ -20,5 +20,6 @@ praxis_add_test(generation_member_test.cpp LIBS praxis::evaluation praxis::traje
 praxis_add_test(evaluation_contract_test.cpp LIBS praxis::rigid_motion)
 praxis_add_test(rigid_motion_ledger_test.cpp LIBS praxis::evaluation praxis::rigid_motion)
 praxis_add_test(tolerance_selection_test.cpp HEADERS bent_rigid_motion.h LIBS praxis::evaluation praxis::rigid_motion)
+praxis_add_test(logarithm_conditioning_test.cpp HEADERS book_logarithm.h LIBS praxis::evaluation praxis::rigid_motion)
 praxis_add_test(bend_control_test.cpp HEADERS bent_answer.h bent_frame.h bent_screw.h bend_visibility.h bent_rigid_motion.h LIBS praxis::evaluation praxis::rigid_motion)
 praxis_add_test(honesty_test.cpp LIBS praxis::evaluation praxis::rigid_motion)

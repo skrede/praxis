@@ -2,6 +2,10 @@
 
 #include "praxis/evaluation/comparators.h"
 
+#include <Eigen/Geometry>
+
+#include <cmath>
+#include <limits>
 #include <utility>
 
 namespace praxis::rigid_motion {
@@ -10,6 +14,11 @@ namespace {
 
 using rotation_logarithm = std::pair<Eigen::Vector3d, double>;
 using pose_logarithm     = std::pair<screw_axis, double>;
+
+constexpr double turn_widening_cap        = 5.0e-2; // radians
+constexpr double offset_widening_cap      = 2.0;    // metres per metre of position
+constexpr double turn_roundoff_multiple   = 50.0;   // radians
+constexpr double offset_roundoff_multiple = 50.0;   // metres per metre of position
 
 const screw_ops &screw_of(const void *value)
 {
@@ -26,6 +35,19 @@ evaluation::residual rotation_logarithm_residual(const rotation_logarithm &held,
 evaluation::residual pose_logarithm_residual(const pose_logarithm &held, const pose_logarithm &against)
 {
     return evaluation::log_up_to_branch_pose_residual(held.first, held.second, against.first, against.second);
+}
+
+// A logarithm read from the trace answers less precisely as the turn nears none or a half turn (Lynch &
+// Park, section 3.2.3.3). The allowance is read from the drawn input, so neither answer can move it.
+evaluation::tolerance_pair widened(const evaluation::tolerance_pair &allowed, const rotation &turned, double position_metres)
+{
+    const double unit_roundoff = std::numeric_limits<double>::epsilon();
+    const double theta_radians = Eigen::AngleAxisd(turned).angle();
+    const double sine          = std::sin(theta_radians);
+    const double turn          = std::fmin(turn_roundoff_multiple * unit_roundoff / sine, turn_widening_cap);
+    const double lever         = std::fmin(offset_roundoff_multiple * unit_roundoff * (1.0 / sine + 1.0 / (1.0 + std::cos(theta_radians))), offset_widening_cap);
+
+    return evaluation::tolerance_pair{allowed.magnitude + turn, allowed.linear_metres + position_metres * lever};
 }
 
 }
@@ -66,7 +88,7 @@ evaluation::case_result compare_matrix_logarithm_so3(const void *first, const vo
     const expected<rotation_logarithm, refusal> held    = screw_of(first).matrix_logarithm_so3(turned);
     const expected<rotation_logarithm, refusal> against = screw_of(second).matrix_logarithm_so3(turned);
 
-    return evaluation::agreed_or_refused(held, against, rotation_logarithm_residual, allowed);
+    return evaluation::agreed_or_refused(held, against, rotation_logarithm_residual, widened(allowed, turned, 0.0));
 }
 
 evaluation::case_result compare_matrix_logarithm_se3_rp(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed)
@@ -76,7 +98,7 @@ evaluation::case_result compare_matrix_logarithm_se3_rp(const void *first, const
     const expected<pose_logarithm, refusal> held    = screw_of(first).matrix_logarithm_se3_rp(turned, origin_metres);
     const expected<pose_logarithm, refusal> against = screw_of(second).matrix_logarithm_se3_rp(turned, origin_metres);
 
-    return evaluation::agreed_or_refused(held, against, pose_logarithm_residual, allowed);
+    return evaluation::agreed_or_refused(held, against, pose_logarithm_residual, widened(allowed, turned, origin_metres.norm()));
 }
 
 evaluation::case_result compare_matrix_logarithm_se3(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed)
@@ -85,7 +107,7 @@ evaluation::case_result compare_matrix_logarithm_se3(const void *first, const vo
     const expected<pose_logarithm, refusal> held    = screw_of(first).matrix_logarithm_se3(pose);
     const expected<pose_logarithm, refusal> against = screw_of(second).matrix_logarithm_se3(pose);
 
-    return evaluation::agreed_or_refused(held, against, pose_logarithm_residual, allowed);
+    return evaluation::agreed_or_refused(held, against, pose_logarithm_residual, widened(allowed, pose.topLeftCorner<3, 3>(), pose.topRightCorner<3, 1>().norm()));
 }
 
 }
