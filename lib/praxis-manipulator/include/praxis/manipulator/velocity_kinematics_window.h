@@ -39,7 +39,7 @@ public:
     // Which matrix the window reads, which of the two readings its blocks are taken under, and which
     // of the drawings taken from it stand. A part's switch governs both of that part's drawings, the
     // ellipsoid and the arrows of that part of every column; the columns switch governs whether the
-    // columns stand at all.
+    // columns stand at all, and the ellipsoids switch whether the two ellipsoids do.
     struct settings
     {
         jacobian_frame frame   = jacobian_frame::space;
@@ -48,6 +48,7 @@ public:
         bool linear            = true;
         bool columns           = true;
         bool capped            = true;
+        bool ellipsoids        = true;
     };
 
     velocity_kinematics_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, loadable_robot_stencil &drawn);
@@ -85,6 +86,7 @@ public:
 private:
     bool m_capped;
     bool m_columns;
+    bool m_ellipsoids;
     std::array<bool, jacobian_block_count> m_shown;
 
     // Whether a drawn length that is not a finite number has already been named. It is a reading's
@@ -104,7 +106,8 @@ private:
     void render_switches();
 
     // Both drawings of one part, told together, which is what leaves a part shown or hidden across
-    // the ellipsoid and the columns rather than on one of them.
+    // the ellipsoid and the columns rather than on one of them. The ellipsoid stands only while the
+    // ellipsoids switch is on as well.
     void apply_part(jacobian_block which) const;
 
     // Named through the arm's own strand, which is the only one that can name a refusal.

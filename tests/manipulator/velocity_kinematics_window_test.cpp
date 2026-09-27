@@ -47,8 +47,8 @@ constexpr int jacobian_row = 0;
 constexpr int reading_row  = 1;
 constexpr int angular_row  = 2;
 constexpr int linear_row   = 3;
-constexpr int columns_row  = 4;
-constexpr int capped_row   = 5;
+constexpr int columns_row  = 5;
+constexpr int capped_row   = 6;
 
 controls no_control()
 {

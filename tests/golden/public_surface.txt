@@ -1875,6 +1875,7 @@ lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	a
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	linear	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	columns	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	capped	member	-	typename:bool
+lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	ellipsoids	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	velocity_kinematics_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,loadable_robot_stencil & drawn)	-
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	velocity_kinematics_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,loadable_robot_stencil & drawn,const controls & offered,const settings & state,std::string at=std::string ())	-
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	state	prototype	() const	typename:settings
@@ -1886,6 +1887,7 @@ lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	r
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	unbounded_ellipsoid	member	-	typename:const char *
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	m_capped	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	m_columns	member	-	typename:bool
+lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	m_ellipsoids	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	m_shown	member	-	typename:std::array<bool,jacobian_block_count>
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	m_refused	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	m_controls	member	-	typename:controls

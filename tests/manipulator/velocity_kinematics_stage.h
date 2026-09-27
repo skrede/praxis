@@ -114,6 +114,11 @@ struct velocity_stage
         return scene->getObjectByName<threepp::Object3D>(loadable_robot_stencil::jacobian_column_name(column, part));
     }
 
+    threepp::Object3D *line(jacobian_block which, std::size_t axis, bool forward)
+    {
+        return scene->getObjectByName<threepp::Object3D>(loadable_robot_stencil::ellipsoid_continuation_name(which, axis, forward));
+    }
+
     scheduler::scheduler loop;
     std::shared_ptr<threepp::Scene> scene;
     std::shared_ptr<arm_publisher> source;

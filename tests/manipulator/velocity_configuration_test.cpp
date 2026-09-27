@@ -172,3 +172,37 @@ TEST_CASE("a window's own settings reach a document through the edits it offers,
     REQUIRE(standing.as_configurable() != nullptr);
     CHECK(standing.as_configurable()->settings_edits(written).empty());
 }
+
+TEST_CASE("a document naming nothing shows both ellipsoids, and one naming them hidden hides them", "[manipulator][configuration]")
+{
+    CHECK(read_velocity_kinematics(carrying("ellipsoids-absent.xml", ""), velocity_at).ellipsoids);
+    CHECK_FALSE(read_velocity_kinematics(carrying("ellipsoids-hidden.xml", "<velocity_kinematics ellipsoids=\"false\"/>"), velocity_at).ellipsoids);
+}
+
+TEST_CASE("both ellipsoids hidden, written through the declared keys, read back hidden", "[manipulator][configuration]")
+{
+    opening written{};
+    written.ellipsoids = false;
+
+    CHECK_FALSE(read_velocity_kinematics(saved_and_reloaded(cleared("ellipsoids-written.xml"), write_velocity_kinematics(written, velocity_at)), velocity_at).ellipsoids);
+}
+
+TEST_CASE("a window opened with both ellipsoids hidden offers what saves them hidden, and one standing at that document offers none", "[manipulator][configuration]")
+{
+    velocity_stage headless;
+    const config::location at = cleared("ellipsoids-window.xml");
+    opening hidden{};
+    hidden.ellipsoids = false;
+    const velocity_kinematics_window panel("Velocity kinematics", headless.source->reader(), headless.arm(), headless.shown, velocity_kinematics_window::controls{}, hidden,
+                                           std::string(velocity_at));
+
+    REQUIRE(panel.as_configurable() != nullptr);
+    const config::document written = saved_and_reloaded(at, panel.as_configurable()->settings_edits(loaded(at)));
+    CHECK_FALSE(read_velocity_kinematics(written, velocity_at).ellipsoids);
+
+    const velocity_kinematics_window standing("Velocity kinematics", headless.source->reader(), headless.arm(), headless.shown, velocity_kinematics_window::controls{},
+                                              read_velocity_kinematics(written, velocity_at), std::string(velocity_at));
+
+    REQUIRE(standing.as_configurable() != nullptr);
+    CHECK(standing.as_configurable()->settings_edits(written).empty());
+}

@@ -58,6 +58,7 @@ velocity_kinematics_window::velocity_kinematics_window(std::string name, arm_rea
                   std::move(name), [this] { render_controls(); }, [this] { return reading(); })
         , m_capped(state.capped)
         , m_columns(state.columns)
+        , m_ellipsoids(state.ellipsoids)
         , m_shown{state.angular, state.linear}
         , m_refused(false)
         , m_controls(offered)
@@ -72,7 +73,13 @@ velocity_kinematics_window::velocity_kinematics_window(std::string name, arm_rea
 
 velocity_kinematics_window::settings velocity_kinematics_window::state() const
 {
-    return settings{.frame = m_frame.value(), .reading = m_reading.value(), .angular = m_shown[angular], .linear = m_shown[linear], .columns = m_columns, .capped = m_capped};
+    return settings{.frame      = m_frame.value(),
+                    .reading    = m_reading.value(),
+                    .angular    = m_shown[angular],
+                    .linear     = m_shown[linear],
+                    .columns    = m_columns,
+                    .capped     = m_capped,
+                    .ellipsoids = m_ellipsoids};
 }
 
 void velocity_kinematics_window::initialize()
@@ -90,9 +97,9 @@ void velocity_kinematics_window::apply_part(jacobian_block which) const
     const bool shown = m_shown[static_cast<std::size_t>(which)];
 
     if(which == jacobian_block::angular)
-        m_drawn.set_angular_ellipsoid_shown(shown);
+        m_drawn.set_angular_ellipsoid_shown(m_ellipsoids && shown);
     else
-        m_drawn.set_linear_ellipsoid_shown(shown);
+        m_drawn.set_linear_ellipsoid_shown(m_ellipsoids && shown);
 
     m_drawn.set_column_part_shown(which, shown);
 }
@@ -121,15 +128,20 @@ void velocity_kinematics_window::render_reading()
         m_drawn.set_manipulability_ellipsoids(m_reading.value());
 }
 
-// A part's switch reaches both of that part's drawings and the columns switch reaches the columns at
-// all, so a part withheld leaves the other part's arrows standing and a columns switch turned off
-// leaves both parts' ellipsoids where their own switches put them.
+// A part's switch reaches both of that part's drawings, and the ellipsoids and columns switches reach
+// those drawings at all: either turned off leaves the other kind where the part switches put it, and
+// the ellipsoids switch turned on puts each ellipsoid back where its part's switch says.
 void velocity_kinematics_window::render_switches()
 {
     if(switch_over("Angular", jacobian_block::angular, m_shown[angular]))
         apply_part(jacobian_block::angular);
     if(switch_over("Linear", jacobian_block::linear, m_shown[linear]))
         apply_part(jacobian_block::linear);
+    if(ImGui::Checkbox("Ellipsoids", &m_ellipsoids))
+    {
+        apply_part(jacobian_block::angular);
+        apply_part(jacobian_block::linear);
+    }
     if(ImGui::Checkbox("Jacobian columns", &m_columns))
         m_drawn.set_jacobian_columns_shown(m_columns);
     if(ImGui::Checkbox("Cap the force ellipsoid", &m_capped))
