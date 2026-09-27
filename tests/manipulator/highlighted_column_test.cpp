@@ -38,7 +38,7 @@ using opening   = velocity_kinematics_window::settings;
 using tone_grid = std::vector<std::vector<std::optional<ImU32>>>;
 
 constexpr const char *panel_title = "Velocity kinematics";
-constexpr const char *pick_list   = "Highlighted column";
+constexpr const char *pick_list   = "Show joint";
 
 constexpr std::size_t matrix_rows = 6u;
 

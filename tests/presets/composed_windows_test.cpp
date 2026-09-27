@@ -324,7 +324,7 @@ TEST_CASE("the velocity-kinematics scenario's list over a seven-joint arm reache
 
     tests::imgui_frame frames;
     const drawing draw = [&panel] { panel->render(); };
-    take_entry_on(frames, draw, "Velocity kinematics", "Highlighted column", 7u);
+    take_entry_on(frames, draw, "Velocity kinematics", "Show joint", 7u);
 
     CHECK(static_cast<manipulator::loadable_robot_stencil &>(*composed->stencil).selected_joint() == std::optional<std::size_t>(6u));
 }

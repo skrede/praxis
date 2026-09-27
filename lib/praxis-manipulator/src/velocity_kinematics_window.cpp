@@ -166,7 +166,7 @@ void velocity_kinematics_window::render_switches()
 void velocity_kinematics_window::render_highlighted()
 {
     std::size_t entry = m_highlighted ? *m_highlighted + 1u : 0u;
-    if(!scene::render_dropdown_selection("Highlighted column", entry, m_highlight_entries))
+    if(!scene::render_dropdown_selection("Show joint", entry, m_highlight_entries))
         return;
 
     m_highlighted = entry == 0u ? std::nullopt : std::optional<std::size_t>(entry - 1u);
