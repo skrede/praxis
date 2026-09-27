@@ -164,7 +164,7 @@ TEST_CASE("a home pose whose rotation block is a reflection is refused a turn be
     CHECK(apart.home.rigidity < 10.0);
 }
 
-TEST_CASE("a home pose with a rotation entry that is not a number is refused a turn wherever the entry stands", "[manipulator][modeling]")
+TEST_CASE("a home pose with a rotation entry that is not a number is refused a turn and reads a rigidity that is not one wherever the entry stands", "[manipulator][modeling]")
 {
     const screw_chain derived = a_chain();
 
@@ -179,6 +179,7 @@ TEST_CASE("a home pose with a rotation entry that is not a number is refused a t
 
             CHECK(std::isinf(apart.home.turned_radians));
             CHECK(apart.home.moved_metres < exactly);
+            CHECK(std::isnan(apart.home.rigidity));
         }
     }
 }

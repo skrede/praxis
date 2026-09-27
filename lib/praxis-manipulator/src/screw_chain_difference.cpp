@@ -46,13 +46,22 @@ double length_defect(const Eigen::Vector3d &first, const Eigen::Vector3d &second
     return std::max(std::fabs(first.norm() - 1.0), std::fabs(second.norm() - 1.0));
 }
 
+// std::max answers its first argument when the second is not a number.
+double greater_defect(double first, double second)
+{
+    if(std::isnan(first) || std::isnan(second))
+        return std::numeric_limits<double>::quiet_NaN();
+
+    return std::max(first, second);
+}
+
 // A reflection is exactly orthonormal and a shear leaves the determinant where it was, so each term
 // catches a class the other misses.
 double rigidity_defect(const Eigen::Matrix3d &block)
 {
     const Eigen::Matrix3d gram(block.transpose() * block);
 
-    return std::max((gram - Eigen::Matrix3d::Identity()).cwiseAbs().maxCoeff(), std::fabs(block.determinant() - 1.0));
+    return greater_defect((gram - Eigen::Matrix3d::Identity()).cwiseAbs().maxCoeff<Eigen::PropagateNaN>(), std::fabs(block.determinant() - 1.0));
 }
 
 // The rotation nearest a block in the Frobenius sense, with the last singular direction flipped
@@ -101,7 +110,7 @@ chain_home_difference home_compared(const screw_chain &derived, const transform 
 {
     const Eigen::Matrix3d held(supplied_home.block<3, 3>(0, 0));
     const Eigen::Matrix3d described(derived.home.block<3, 3>(0, 0));
-    const double rigidity = std::max(rigidity_defect(held), rigidity_defect(described));
+    const double rigidity = greater_defect(rigidity_defect(held), rigidity_defect(described));
     const double moved    = (supplied_home.block<3, 1>(0, 3) - derived.home.block<3, 1>(0, 3)).norm();
 
     if(!(rigidity <= home_rigidity_bound))

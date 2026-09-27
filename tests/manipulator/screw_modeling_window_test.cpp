@@ -43,6 +43,7 @@
 
 #include <span>
 #include <cmath>
+#include <limits>
 #include <string>
 #include <memory>
 #include <vector>
@@ -710,6 +711,21 @@ TEST_CASE("the home line states its rotation term where the supplied block names
     CHECK(home_line(shown)[rotation_cell].stated == "unbounded");
     CHECK(std::isfinite(number_in(home_line(shown), distance_cell)));
     CHECK(std::isfinite(number_in(home_line(shown), defect_cell)));
+}
+
+TEST_CASE("the home line states its defect as unbounded where the supplied block holds an entry that is not a number", "[manipulator][modeling]")
+{
+    stage headless(described_chain(), at_rest());
+
+    transform broken = headless.chain.home;
+    broken(0, 1)     = std::numeric_limits<double>::quiet_NaN();
+
+    screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{broken, headless.chain.space_screws});
+    const scene::readout shown  = panel.reading();
+
+    REQUIRE(shown.rows.size() == whole_chain_rows + 1u + axes);
+    CHECK(home_line(shown)[rotation_cell].stated == "unbounded");
+    CHECK(home_line(shown)[defect_cell].stated == "unbounded");
 }
 
 // A joint standing at zero turns the arm nowhere, so a chain whose screw for that joint points the
