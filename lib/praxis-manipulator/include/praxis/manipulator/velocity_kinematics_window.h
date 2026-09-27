@@ -15,6 +15,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <cstddef>
+#include <optional>
 #include <string_view>
 
 namespace praxis::manipulator {
@@ -39,16 +41,19 @@ public:
     // Which matrix the window reads, which of the two readings its blocks are taken under, and which
     // of the drawings taken from it stand. A part's switch governs both of that part's drawings, the
     // ellipsoid and the arrows of that part of every column; the columns switch governs whether the
-    // columns stand at all, and the ellipsoids switch whether the two ellipsoids do.
+    // columns stand at all, and the ellipsoids switch whether the two ellipsoids do. The highlighted
+    // joint, counted from zero, is the one whose column is drawn apart from the others and marked in
+    // the matrix, and none names no joint.
     struct settings
     {
-        jacobian_frame frame   = jacobian_frame::space;
-        ellipsoid_view reading = ellipsoid_view::velocity;
-        bool angular           = true;
-        bool linear            = true;
-        bool columns           = true;
-        bool capped            = true;
-        bool ellipsoids        = true;
+        jacobian_frame frame                   = jacobian_frame::space;
+        ellipsoid_view reading                 = ellipsoid_view::velocity;
+        bool angular                           = true;
+        bool linear                            = true;
+        bool columns                           = true;
+        bool capped                            = true;
+        bool ellipsoids                        = true;
+        std::optional<std::size_t> highlighted = std::nullopt;
     };
 
     velocity_kinematics_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, loadable_robot_stencil &drawn);
@@ -76,8 +81,10 @@ public:
 
     // The matrix the window is set to and the numbers its blocks give, as the panel draws them. Each
     // block's drawn extent is taken from the stencil, so the number read and the body drawn cannot
-    // stand at different scales. A reading is also where a drawn length that is not a finite number
-    // is named, once, so nothing else has to ask whether one is.
+    // stand at different scales. The column marked is the one the stencil singles out, so the marked
+    // numbers and the arrows singled out cannot name different columns. A reading is also where a
+    // drawn length that is not a finite number is named, once, so nothing else has to ask whether one
+    // is.
     scene::readout reading() const;
 
     // The name a drawn length that is not a finite number is refused under.
@@ -98,12 +105,16 @@ private:
     std::weak_ptr<owned_arm> m_arm;
     loadable_robot_stencil &m_drawn;
     option_cycle<jacobian_frame, 2> m_frame;
+    std::optional<std::size_t> m_highlighted;
     option_cycle<ellipsoid_view, 2> m_reading;
+    std::vector<std::string> m_highlight_entries;
 
     void render_controls();
     void render_frame();
     void render_reading();
     void render_switches();
+    void render_highlighted();
+    void tell_highlighted();
 
     // Both drawings of one part, told together, which is what leaves a part shown or hidden across
     // the ellipsoid and the columns rather than on one of them. The ellipsoid stands only while the

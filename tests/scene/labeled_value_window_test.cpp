@@ -221,6 +221,60 @@ std::vector<std::string> panels_of(const drawing &draw)
     return named;
 }
 
+constexpr ImU32 marked_tone = IM_COL32(200, 40, 120, 255);
+
+scene::labeled_value toned(scene::labeled_value cell)
+{
+    cell.tone = marked_tone;
+
+    return cell;
+}
+
+drawing in_tone(drawing call)
+{
+    return [call = std::move(call)]
+    {
+        ImGui::PushStyleColor(ImGuiCol_Text, marked_tone);
+        call();
+        ImGui::PopStyleColor();
+    };
+}
+
+drawing panel_in_order(drawing before, drawing cell, drawing after)
+{
+    return panel_around(
+            [before = std::move(before), cell = std::move(cell), after = std::move(after)]
+            {
+                before();
+                cell();
+                after();
+            });
+}
+
+// A reading against the panel written out with the toned cell's own call pushed in the tone, and
+// against the same panel unpushed, which it must not match.
+void draws_in_tone(const rows &shown, const drawing &before, const drawing &cell, const drawing &after)
+{
+    scene::labeled_value_window panel(title, nullptr, answering(scene::readout{"", shown}));
+
+    CHECK(geometry_of([&panel] { panel.render(); }) == geometry_of(panel_in_order(before, in_tone(cell), after)));
+    CHECK(geometry_of([&panel] { panel.render(); }) != geometry_of(panel_in_order(before, cell, after)));
+}
+
+const drawing nothing   = [] {};
+const drawing into_cell = []
+{
+    REQUIRE(ImGui::BeginTable(std::string(title).append("##aligned0").c_str(), 1, ImGuiTableFlags_SizingFixedFit));
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+};
+const drawing out_of_cell = [] { ImGui::EndTable(); };
+const drawing beside_one  = []
+{
+    ImGui::Value("M", 1.f);
+    ImGui::SameLine();
+};
+
 }
 
 TEST_CASE("a readout whose source carries a message draws the message and none of the values beside it", "[scene]")
@@ -488,4 +542,48 @@ TEST_CASE("a value that prints as zero at three decimals draws unsigned on every
         INFO("the value " << value << " expected to print as " << text);
         prints_as(value, text);
     }
+}
+
+TEST_CASE("a cell carrying a tone draws its text in that tone on every drawing path", "[scene]")
+{
+    const scene::labeled_value first{1.f, "M"};
+
+    draws_in_tone(rows{{toned({2.f, std::string()})}}, into_cell, [] { ImGui::Text("%.3f", 2.f); }, out_of_cell);
+    draws_in_tone(rows{{toned({0.f, std::string(), "absent"})}}, into_cell, [] { ImGui::TextUnformatted("absent"); }, out_of_cell);
+    draws_in_tone(rows{{first, toned({2.f, std::string()})}}, beside_one, [] { ImGui::Text("%.3f", 2.f); }, nothing);
+    draws_in_tone(rows{{first, toned({0.f, std::string(), "absent"})}}, beside_one, [] { ImGui::TextUnformatted("absent"); }, nothing);
+    draws_in_tone(rows{{toned({2.f, "A"})}}, nothing, [] { ImGui::Value("A", 2.f); }, nothing);
+    draws_in_tone(rows{{toned({0.f, "A", "absent"})}}, nothing, [] { ImGui::Text("%s: %s", "A", "absent"); }, nothing);
+}
+
+TEST_CASE("a tone stops at its own cell, leaving the labeled cell drawn after it in the panel's text color", "[scene]")
+{
+    scene::labeled_value_window panel(title, nullptr, answering(scene::readout{"", rows{{toned({1.f, "M"}), scene::labeled_value{2.f, "A"}}}}));
+    const drawing expected = panel_around(
+            []
+            {
+                in_tone([] { ImGui::Value("M", 1.f); })();
+                ImGui::SameLine();
+                ImGui::Value("A", 2.f);
+            });
+
+    CHECK(geometry_of([&panel] { panel.render(); }) == geometry_of(expected));
+}
+
+TEST_CASE("a tone stops at its own cell, leaving the aligned cell drawn after it in the panel's text color", "[scene]")
+{
+    scene::labeled_value_window panel(title, nullptr, answering(scene::readout{"", rows{{toned({1.f, std::string()}), scene::labeled_value{2.f, std::string()}}}}));
+    const drawing expected = panel_around(
+            []
+            {
+                REQUIRE(ImGui::BeginTable(std::string(title).append("##aligned0").c_str(), 2, ImGuiTableFlags_SizingFixedFit));
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                in_tone([] { ImGui::Text("%.3f", 1.f); })();
+                ImGui::TableNextColumn();
+                ImGui::Text("%.3f", 2.f);
+                ImGui::EndTable();
+            });
+
+    CHECK(geometry_of([&panel] { panel.render(); }) == geometry_of(expected));
 }

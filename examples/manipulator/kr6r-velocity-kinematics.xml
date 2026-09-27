@@ -22,7 +22,7 @@
 
     <joint_control mode="simulation"/>
 
-    <velocity_kinematics frame="space" reading="velocity" angular="true" linear="true" columns="true" capped="true" ellipsoids="true"/>
+    <velocity_kinematics frame="space" reading="velocity" angular="true" linear="true" columns="true" capped="true" ellipsoids="true" highlighted="0"/>
 
     <!-- No render_controls element is carried, so every drawn length and the force cut are left
          unnamed and each keeps the extent the stencil opened it at, which is proportioned to the

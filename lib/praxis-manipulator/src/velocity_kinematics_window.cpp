@@ -1,19 +1,19 @@
+#include "joint_naming.h"
 #include "velocity_kinematics_rows.h"
-
-#include "robot/column_arrow.h"
 
 #include "praxis/manipulator/option_widgets.h"
 #include "praxis/manipulator/velocity_kinematics_window.h"
 
-#include <imgui.h>
+#include "praxis/scene/widgets.h"
 
-#include <threepp/math/Color.hpp>
+#include <imgui.h>
 
 #include <memory>
 #include <string>
 #include <vector>
 #include <utility>
 #include <cstddef>
+#include <optional>
 
 namespace praxis::manipulator {
 
@@ -21,15 +21,6 @@ namespace {
 
 constexpr std::size_t angular = static_cast<std::size_t>(jacobian_block::angular);
 constexpr std::size_t linear  = static_cast<std::size_t>(jacobian_block::linear);
-
-// A part's tone in the colour space the renderer encodes to on output, which is the space this panel
-// writes its own colours in.
-ImU32 as_written(jacobian_block part)
-{
-    const unsigned int worn = column_tone(part, false).getHex(threepp::SRGBColorSpace);
-
-    return IM_COL32((worn >> 16) & 0xffu, (worn >> 8) & 0xffu, worn & 0xffu, 0xff);
-}
 
 // The switch over one part, standing beside the tone that part's arrows wear: the two tones are
 // neighbours by construction, so which part is which is not answerable from the drawing alone.
@@ -43,6 +34,15 @@ bool switch_over(const char *called, jacobian_block part, bool &shown)
     ImGui::SameLine();
 
     return ImGui::Checkbox(called, &shown);
+}
+
+std::vector<std::string> highlight_entries(const loadable_robot_stencil &drawn)
+{
+    std::vector<std::string> entries{"None"};
+    for(std::string &named : named_joints(drawn.robot().numDOF()))
+        entries.push_back(std::move(named));
+
+    return entries;
 }
 
 }
@@ -67,19 +67,22 @@ velocity_kinematics_window::velocity_kinematics_window(std::string name, arm_rea
         , m_arm(std::move(arm))
         , m_drawn(drawn)
         , m_frame(state.frame, {jacobian_frame::space, jacobian_frame::body}, {"Space", "Body"})
+        , m_highlighted(state.highlighted)
         , m_reading(state.reading, {ellipsoid_view::velocity, ellipsoid_view::force}, {"Velocity", "Force"})
+        , m_highlight_entries(highlight_entries(drawn))
 {
 }
 
 velocity_kinematics_window::settings velocity_kinematics_window::state() const
 {
-    return settings{.frame      = m_frame.value(),
-                    .reading    = m_reading.value(),
-                    .angular    = m_shown[angular],
-                    .linear     = m_shown[linear],
-                    .columns    = m_columns,
-                    .capped     = m_capped,
-                    .ellipsoids = m_ellipsoids};
+    return settings{.frame       = m_frame.value(),
+                    .reading     = m_reading.value(),
+                    .angular     = m_shown[angular],
+                    .linear      = m_shown[linear],
+                    .columns     = m_columns,
+                    .capped      = m_capped,
+                    .ellipsoids  = m_ellipsoids,
+                    .highlighted = m_highlighted};
 }
 
 void velocity_kinematics_window::initialize()
@@ -90,6 +93,17 @@ void velocity_kinematics_window::initialize()
     apply_part(jacobian_block::linear);
     m_drawn.set_jacobian_columns_shown(m_columns);
     m_drawn.set_force_capped(m_capped);
+    tell_highlighted();
+}
+
+// The drawing names a joint it declines, and the window then stands at none with it.
+void velocity_kinematics_window::tell_highlighted()
+{
+    if(m_highlighted && m_drawn.set_selected_joint(*m_highlighted))
+        return;
+
+    m_highlighted.reset();
+    m_drawn.clear_selected_joint();
 }
 
 void velocity_kinematics_window::apply_part(jacobian_block which) const
@@ -144,8 +158,19 @@ void velocity_kinematics_window::render_switches()
     }
     if(ImGui::Checkbox("Jacobian columns", &m_columns))
         m_drawn.set_jacobian_columns_shown(m_columns);
+    render_highlighted();
     if(ImGui::Checkbox("Cap the force ellipsoid", &m_capped))
         m_drawn.set_force_capped(m_capped);
+}
+
+void velocity_kinematics_window::render_highlighted()
+{
+    std::size_t entry = m_highlighted ? *m_highlighted + 1u : 0u;
+    if(!scene::render_dropdown_selection("Highlighted column", entry, m_highlight_entries))
+        return;
+
+    m_highlighted = entry == 0u ? std::nullopt : std::optional<std::size_t>(entry - 1u);
+    tell_highlighted();
 }
 
 scene::readout velocity_kinematics_window::reading() const
@@ -153,7 +178,7 @@ scene::readout velocity_kinematics_window::reading() const
     const std::shared_ptr<const arm_snapshot> published = m_seen.read();
     const ellipsoid_view read                           = m_reading.value();
     const double lengths[jacobian_block_count]{m_drawn.ellipsoid_scale(jacobian_block::angular), m_drawn.ellipsoid_scale(jacobian_block::linear)};
-    scene::readout answered = velocity_kinematics_reading(published.get(), m_frame.value(), read, lengths[angular], lengths[linear]);
+    scene::readout answered = velocity_kinematics_reading(published.get(), m_frame.value(), read, lengths[angular], lengths[linear], m_drawn.selected_joint());
 
     const bool runaway = published != nullptr &&
             either_ellipsoid_unbounded(m_frame == jacobian_frame::space ? published->space_manipulability : published->body_manipulability, read, lengths[angular], lengths[linear]);

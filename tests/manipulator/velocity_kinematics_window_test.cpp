@@ -48,7 +48,7 @@ constexpr int reading_row  = 1;
 constexpr int angular_row  = 2;
 constexpr int linear_row   = 3;
 constexpr int columns_row  = 5;
-constexpr int capped_row   = 6;
+constexpr int capped_row   = 7;
 
 controls no_control()
 {

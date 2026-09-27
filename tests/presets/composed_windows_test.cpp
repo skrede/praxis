@@ -1,3 +1,4 @@
+#include "panel_labels.h"
 #include "described_arm.h"
 #include "composed_panels.h"
 
@@ -8,6 +9,7 @@
 
 #include "praxis/manipulator/capabilities.h"
 #include "praxis/manipulator/loadable_robot_stencil.h"
+#include "praxis/manipulator/velocity_kinematics_window.h"
 
 #include "praxis/trajectory/capabilities.h"
 
@@ -54,6 +56,32 @@ std::size_t composed_objects(const std::shared_ptr<scene::preset> &composed)
 std::shared_ptr<scene::preset> composed_arm(const scene::preset_site &site, const presets::arm_scenario &chosen, const manipulator::arm_composition &opened)
 {
     return presets::arm_preset(site, manipulator::baseline(), trajectory::baseline(), rigid_motion::baseline(), chosen, opened);
+}
+
+// The velocity window a composition opened, found among its windows by what it is.
+std::shared_ptr<manipulator::velocity_kinematics_window> velocity_window_of(const std::shared_ptr<scene::preset> &composed)
+{
+    REQUIRE(composed != nullptr);
+    for(const std::shared_ptr<scene::imgui_window> &window : composed->windows)
+        if(auto found = std::dynamic_pointer_cast<manipulator::velocity_kinematics_window>(window))
+            return found;
+
+    FAIL("the composition opened no velocity kinematics window");
+    return nullptr;
+}
+
+// The velocity scenario over a described arm, its stencil and then its velocity window initialized as
+// the running site would.
+std::shared_ptr<manipulator::velocity_kinematics_window> velocity_opened(threepp::Scene &target, std::shared_ptr<scene::preset> &composed, const presets::arm_scenario &chosen)
+{
+    composed = composed_arm(unwired(target), chosen, presets::arm_windows_velocity_kinematics(chosen));
+    REQUIRE(composed != nullptr);
+    REQUIRE(static_cast<manipulator::loadable_robot_stencil &>(*composed->stencil).initialize().has_value());
+
+    std::shared_ptr<manipulator::velocity_kinematics_window> panel = velocity_window_of(composed);
+    panel->initialize();
+
+    return panel;
 }
 
 }
@@ -263,6 +291,42 @@ TEST_CASE("the velocity-kinematics scenario composes over a two-joint arm, stand
         CHECK(named_in(target, manipulator::loadable_robot_stencil::jacobian_column_name(1u, part)) != nullptr);
         CHECK(named_in(target, manipulator::loadable_robot_stencil::jacobian_column_name(2u, part)) == nullptr);
     }
+}
+
+// The list follows the arm the composition builds, so a pick a narrow arm lacks opens at none.
+TEST_CASE("the velocity-kinematics scenario opens a picked joint over a seven-joint arm and the same pick at none over a two-joint arm", "[presets][windows]")
+{
+    const described_arm seven(7, "seven");
+    const described_arm two(2, "two");
+    presets::arm_scenario wide             = described_by(seven.where);
+    wide.velocity_kinematics.highlighted   = 6u;
+    presets::arm_scenario narrow           = described_by(two.where);
+    narrow.velocity_kinematics.highlighted = 6u;
+
+    threepp::Scene wide_target;
+    std::shared_ptr<scene::preset> wide_composed;
+    const std::shared_ptr<manipulator::velocity_kinematics_window> wide_panel = velocity_opened(wide_target, wide_composed, wide);
+    CHECK(static_cast<manipulator::loadable_robot_stencil &>(*wide_composed->stencil).selected_joint() == std::optional<std::size_t>(6u));
+
+    threepp::Scene narrow_target;
+    std::shared_ptr<scene::preset> narrow_composed;
+    const std::shared_ptr<manipulator::velocity_kinematics_window> narrow_panel = velocity_opened(narrow_target, narrow_composed, narrow);
+    CHECK_FALSE(static_cast<manipulator::loadable_robot_stencil &>(*narrow_composed->stencil).selected_joint().has_value());
+    CHECK_FALSE(narrow_panel->state().highlighted.has_value());
+}
+
+TEST_CASE("the velocity-kinematics scenario's list over a seven-joint arm reaches its seventh joint", "[presets][windows]")
+{
+    const described_arm seven(7, "seven");
+    threepp::Scene target;
+    std::shared_ptr<scene::preset> composed;
+    const std::shared_ptr<manipulator::velocity_kinematics_window> panel = velocity_opened(target, composed, described_by(seven.where));
+
+    tests::imgui_frame frames;
+    const drawing draw = [&panel] { panel->render(); };
+    take_entry_on(frames, draw, "Velocity kinematics", "Highlighted column", 7u);
+
+    CHECK(static_cast<manipulator::loadable_robot_stencil &>(*composed->stencil).selected_joint() == std::optional<std::size_t>(6u));
 }
 
 TEST_CASE("no arm is composed from a description that does not load", "[presets][windows]")

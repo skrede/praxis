@@ -15,7 +15,9 @@
 
 #include <string>
 #include <vector>
+#include <cstddef>
 #include <fstream>
+#include <optional>
 #include <filesystem>
 #include <string_view>
 
@@ -205,4 +207,56 @@ TEST_CASE("a window opened with both ellipsoids hidden offers what saves them hi
 
     REQUIRE(standing.as_configurable() != nullptr);
     CHECK(standing.as_configurable()->settings_edits(written).empty());
+}
+
+TEST_CASE("a document naming no highlighted joint opens at none, one counted from one reads it counted from zero, and one below one names none", "[manipulator][configuration]")
+{
+    CHECK_FALSE(read_velocity_kinematics(carrying("highlighted-absent.xml", ""), velocity_at).highlighted.has_value());
+    CHECK(read_velocity_kinematics(carrying("highlighted-two.xml", "<velocity_kinematics highlighted=\"2\"/>"), velocity_at).highlighted == std::optional<std::size_t>(1u));
+    CHECK_FALSE(read_velocity_kinematics(carrying("highlighted-zero.xml", "<velocity_kinematics highlighted=\"0\"/>"), velocity_at).highlighted.has_value());
+    CHECK_FALSE(read_velocity_kinematics(carrying("highlighted-negative.xml", "<velocity_kinematics highlighted=\"-1\"/>"), velocity_at).highlighted.has_value());
+}
+
+TEST_CASE("a highlighted joint and none, written through the declared keys, read back as they were set", "[manipulator][configuration]")
+{
+    opening picked{};
+    picked.highlighted = 1u;
+
+    CHECK(read_velocity_kinematics(saved_and_reloaded(cleared("highlighted-written.xml"), write_velocity_kinematics(picked, velocity_at)), velocity_at).highlighted ==
+          picked.highlighted);
+    CHECK_FALSE(read_velocity_kinematics(saved_and_reloaded(cleared("highlighted-none.xml"), write_velocity_kinematics(opening{}, velocity_at)), velocity_at).highlighted.has_value());
+}
+
+TEST_CASE("a window opened at a highlighted joint offers what saves it, and one standing at that document offers none", "[manipulator][configuration]")
+{
+    velocity_stage headless;
+    const config::location at = cleared("highlighted-window.xml");
+    opening picked{};
+    picked.highlighted = 1u;
+    const velocity_kinematics_window panel("Velocity kinematics", headless.source->reader(), headless.arm(), headless.shown, velocity_kinematics_window::controls{}, picked,
+                                           std::string(velocity_at));
+
+    REQUIRE(panel.as_configurable() != nullptr);
+    const config::document written = saved_and_reloaded(at, panel.as_configurable()->settings_edits(loaded(at)));
+    CHECK(read_velocity_kinematics(written, velocity_at).highlighted == picked.highlighted);
+
+    const velocity_kinematics_window standing("Velocity kinematics", headless.source->reader(), headless.arm(), headless.shown, velocity_kinematics_window::controls{},
+                                              read_velocity_kinematics(written, velocity_at), std::string(velocity_at));
+
+    REQUIRE(standing.as_configurable() != nullptr);
+    CHECK(standing.as_configurable()->settings_edits(written).empty());
+}
+
+TEST_CASE("a window opened from a document naming a joint the arm lacks offers exactly one edit, writing none back", "[manipulator][configuration]")
+{
+    velocity_stage headless;
+    const config::document carried = carrying("highlighted-past.xml", "<velocity_kinematics highlighted=\"9\"/>");
+    velocity_kinematics_window panel("Velocity kinematics", headless.source->reader(), headless.arm(), headless.shown, velocity_kinematics_window::controls{},
+                                     read_velocity_kinematics(carried, velocity_at), std::string(velocity_at));
+    panel.initialize();
+
+    const std::vector<config::edit> offered = panel.settings_edits(carried);
+    REQUIRE(offered.size() == 1u);
+    CHECK(offered[0].key.ends_with("highlighted"));
+    CHECK(offered[0].value == "0");
 }

@@ -1,6 +1,9 @@
 #include "velocity_kinematics_rows.h"
 
+#include "robot/column_arrow.h"
 #include "robot/ellipsoid_placement.h"
+
+#include <threepp/math/Color.hpp>
 
 #include <Eigen/Core>
 
@@ -9,6 +12,7 @@
 #include <vector>
 #include <cstddef>
 #include <utility>
+#include <optional>
 
 namespace praxis::manipulator {
 
@@ -56,16 +60,21 @@ scene::labeled_value cell(std::string label, double value)
     return scene::labeled_value{static_cast<float>(value), std::move(label), std::string()};
 }
 
-std::vector<value_row> rows_of(const jacobian &taken)
+std::vector<value_row> rows_of(const jacobian &taken, std::optional<std::size_t> marked)
 {
     std::vector<value_row> rows;
     rows.reserve(static_cast<std::size_t>(taken.rows()));
     for(Eigen::Index row = 0; row < taken.rows(); ++row)
     {
+        const ImU32 tone = as_written(row < 3 ? jacobian_block::angular : jacobian_block::linear);
         value_row cells;
         cells.reserve(static_cast<std::size_t>(taken.cols()));
         for(Eigen::Index column = 0; column < taken.cols(); ++column)
+        {
             cells.push_back(cell(std::string(), taken(row, column)));
+            if(marked == static_cast<std::size_t>(column))
+                cells.back().tone = tone;
+        }
 
         rows.push_back(std::move(cells));
     }
@@ -125,6 +134,13 @@ void append_blocks(scene::readout &into, const jacobian_manipulability &both, el
 
 }
 
+ImU32 as_written(jacobian_block part)
+{
+    const unsigned int worn = column_tone(part, false).getHex(threepp::SRGBColorSpace);
+
+    return IM_COL32((worn >> 16) & 0xffu, (worn >> 8) & 0xffu, worn & 0xffu, 0xff);
+}
+
 bool ellipsoid_unbounded(const expected<manipulability_ellipsoid, refusal> &block, ellipsoid_view read, double scale)
 {
     return block.has_value() && !drawn_semi_axes(*block, read, scale).allFinite();
@@ -135,7 +151,8 @@ bool either_ellipsoid_unbounded(const jacobian_manipulability &both, ellipsoid_v
     return ellipsoid_unbounded(both.angular, read, angular_scale) || ellipsoid_unbounded(both.linear, read, linear_scale);
 }
 
-scene::readout velocity_kinematics_reading(const arm_snapshot *seen, jacobian_frame frame, ellipsoid_view read, double angular_scale, double linear_scale)
+scene::readout velocity_kinematics_reading(const arm_snapshot *seen, jacobian_frame frame, ellipsoid_view read, double angular_scale, double linear_scale,
+                                           std::optional<std::size_t> marked)
 {
     if(seen == nullptr)
         return scene::readout{unpublished, {}};
@@ -148,7 +165,7 @@ scene::readout velocity_kinematics_reading(const arm_snapshot *seen, jacobian_fr
     if(!both.angular && !both.linear)
         return scene::readout{std::string("Neither block of the ") + frame_word(frame) + " Jacobian was decomposed.", {}};
 
-    scene::readout answered{std::string(), rows_of(*taken)};
+    scene::readout answered{std::string(), rows_of(*taken, marked)};
     append_blocks(answered, both, read, angular_scale, linear_scale);
 
     return answered;

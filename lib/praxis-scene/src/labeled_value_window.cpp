@@ -32,6 +32,29 @@ float as_printed(float value)
     return std::abs(value) < 0.0005f ? 0.0f : value;
 }
 
+// The tone a cell carries reaches that cell's text and nothing drawn after it.
+void render_toned(const labeled_value &cell, void (*draw)(const labeled_value &))
+{
+    if(cell.tone)
+        ImGui::PushStyleColor(ImGuiCol_Text, *cell.tone);
+    draw(cell);
+    if(cell.tone)
+        ImGui::PopStyleColor();
+}
+
+void render_entry(const labeled_value &cell)
+{
+    if(cell.label.empty() && cell.stated.empty())
+        // The digits a labeled cell prints, so one value reads the same drawn either way.
+        ImGui::Text("%.3f", as_printed(cell.value));
+    else if(cell.label.empty())
+        ImGui::TextUnformatted(cell.stated.c_str());
+    else if(cell.stated.empty())
+        ImGui::Value(cell.label.c_str(), as_printed(cell.value));
+    else
+        ImGui::Text("%s: %s", cell.label.c_str(), cell.stated.c_str());
+}
+
 void render_entries(const value_row &row)
 {
     for(std::size_t entry = 0; entry < row.size(); ++entry)
@@ -39,17 +62,17 @@ void render_entries(const value_row &row)
         if(entry > 0)
             ImGui::SameLine();
 
-        const labeled_value &cell = row[entry];
-        if(cell.label.empty() && cell.stated.empty())
-            // The digits a labeled cell prints, so one value reads the same drawn either way.
-            ImGui::Text("%.3f", as_printed(cell.value));
-        else if(cell.label.empty())
-            ImGui::TextUnformatted(cell.stated.c_str());
-        else if(cell.stated.empty())
-            ImGui::Value(cell.label.c_str(), as_printed(cell.value));
-        else
-            ImGui::Text("%s: %s", cell.label.c_str(), cell.stated.c_str());
+        render_toned(row[entry], render_entry);
     }
+}
+
+void render_column(const labeled_value &cell)
+{
+    if(!cell.stated.empty())
+        ImGui::TextUnformatted(cell.stated.c_str());
+    else
+        // The digits a labeled cell prints, so one value reads the same drawn either way.
+        ImGui::Text("%.3f", as_printed(cell.value));
 }
 
 bool unlabeled(const value_row &row)
@@ -82,11 +105,7 @@ void render_aligned(const std::string &identity, const value_rows &rows, const a
         for(const labeled_value &cell : rows[index])
         {
             ImGui::TableNextColumn();
-            if(!cell.stated.empty())
-                ImGui::TextUnformatted(cell.stated.c_str());
-            else
-                // The digits a labeled cell prints, so one value reads the same drawn either way.
-                ImGui::Text("%.3f", as_printed(cell.value));
+            render_toned(cell, render_column);
         }
     }
 
