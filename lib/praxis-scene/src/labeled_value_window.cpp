@@ -2,6 +2,7 @@
 
 #include <imgui.h>
 
+#include <cmath>
 #include <string>
 #include <vector>
 #include <cstddef>
@@ -25,6 +26,12 @@ struct aligned_run
     int columns;
 };
 
+// A value that prints as zero at three decimals prints unsigned.
+float as_printed(float value)
+{
+    return std::abs(value) < 0.0005f ? 0.0f : value;
+}
+
 void render_entries(const value_row &row)
 {
     for(std::size_t entry = 0; entry < row.size(); ++entry)
@@ -35,11 +42,11 @@ void render_entries(const value_row &row)
         const labeled_value &cell = row[entry];
         if(cell.label.empty() && cell.stated.empty())
             // The digits a labeled cell prints, so one value reads the same drawn either way.
-            ImGui::Text("%.3f", cell.value);
+            ImGui::Text("%.3f", as_printed(cell.value));
         else if(cell.label.empty())
             ImGui::TextUnformatted(cell.stated.c_str());
         else if(cell.stated.empty())
-            ImGui::Value(cell.label.c_str(), cell.value);
+            ImGui::Value(cell.label.c_str(), as_printed(cell.value));
         else
             ImGui::Text("%s: %s", cell.label.c_str(), cell.stated.c_str());
     }
@@ -79,7 +86,7 @@ void render_aligned(const std::string &identity, const value_rows &rows, const a
                 ImGui::TextUnformatted(cell.stated.c_str());
             else
                 // The digits a labeled cell prints, so one value reads the same drawn either way.
-                ImGui::Text("%.3f", cell.value);
+                ImGui::Text("%.3f", as_printed(cell.value));
         }
     }
 

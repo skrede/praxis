@@ -7,6 +7,7 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
+#include <cmath>
 #include <string>
 #include <vector>
 #include <cstddef>
@@ -168,6 +169,41 @@ std::vector<int> alignments_of(const drawing &draw)
 scene::readout_source answering(scene::readout given)
 {
     return [given = std::move(given)] { return given; };
+}
+
+// The aligned drawing of one cell, written out with the text it is expected to print.
+drawing grid_stating(const std::string &printed)
+{
+    return panel_around(
+            [printed]
+            {
+                if(!ImGui::BeginTable(std::string(title).append("##aligned0").c_str(), 1, ImGuiTableFlags_SizingFixedFit))
+                    return;
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                ImGui::TextUnformatted(printed.c_str());
+                ImGui::EndTable();
+            });
+}
+
+// One value drawn as an aligned cell, as a bare cell beside a label, and as a labeled cell, each
+// against a panel written out with the text it is expected to print.
+void prints_as(float value, const std::string &printed)
+{
+    scene::labeled_value_window aligned(title, nullptr, answering(scene::readout{"", rows{bare({value})}}));
+    scene::labeled_value_window beside(title, nullptr, answering(scene::readout{"", rows{{scene::labeled_value{1.f, "M"}, scene::labeled_value{value, std::string()}}}}));
+    scene::labeled_value_window labeled(title, nullptr, answering(scene::readout{"", rows{{scene::labeled_value{value, "M"}}}}));
+    const drawing bare_beside = panel_around(
+            [printed]
+            {
+                ImGui::TextUnformatted("M: 1.000");
+                ImGui::SameLine();
+                ImGui::TextUnformatted(printed.c_str());
+            });
+
+    CHECK(geometry_of([&aligned] { aligned.render(); }) == geometry_of(grid_stating(printed)));
+    CHECK(geometry_of([&beside] { beside.render(); }) == geometry_of(bare_beside));
+    CHECK(geometry_of([&labeled] { labeled.render(); }) == geometry_of(panel_stating("M: " + printed)));
 }
 
 // The interface library identifies a panel by its title, so what a frame opened is the set of titles
@@ -441,4 +477,15 @@ TEST_CASE("an unlabeled run below a row carrying one label is drawn as aligned c
 
     CHECK(alignments_of([&panel] { panel.render(); }) == std::vector<int>{3});
     REQUIRE(geometry_of([&panel] { panel.render(); }) == geometry_of(grid_panel_of(unlabeled, 3, above)));
+}
+
+TEST_CASE("a value that prints as zero at three decimals draws unsigned on every drawing path, and every other value draws as it did", "[scene]")
+{
+    const std::vector<std::pair<float, std::string>> printed{{-0.0f, "0.000"},     {-1e-17f, "0.000"}, {-1e-6f, "0.000"}, {std::nextafter(-0.0005f, 0.0f), "0.000"},
+                                                             {-0.0005f, "-0.001"}, {0.0004f, "0.000"}, {-0.25f, "-0.250"}};
+    for(const auto &[value, text] : printed)
+    {
+        INFO("the value " << value << " expected to print as " << text);
+        prints_as(value, text);
+    }
 }
