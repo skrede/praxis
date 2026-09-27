@@ -82,6 +82,46 @@ constexpr std::string_view a_compact_close = "<probe>\n"
                                              "        <station name=\"alpha\"><panel scale=\"1.5\"/></station>\n"
                                              "    </stations></probe>\n";
 
+// What a window created in a root carrying nothing but its own tags reads as.
+constexpr std::string_view a_window_in_a_bare_root = "<probe>\n"
+                                                     "<window width=\"2464\"/>\n"
+                                                     "</probe>\n";
+
+// Two documents ending their lines one way outside the collection and the other way inside it, and
+// each grown under the root, the collection and a new instance, every created line ending the way
+// the parent it is created under breaks its content.
+constexpr std::string_view crlf_outside_the_stations = "<probe>\r\n"
+                                                       "    <stations>\n"
+                                                       "        <station name=\"alpha\"><panel scale=\"1.5\"/></station>\n"
+                                                       "    </stations>\r\n"
+                                                       "</probe>\r\n";
+
+constexpr std::string_view crlf_outside_the_stations_grown = "<probe>\r\n"
+                                                             "    <stations>\n"
+                                                             "        <station name=\"alpha\"><panel scale=\"1.5\"/></station>\n"
+                                                             "        <station name=\"gamma\">\n"
+                                                             "            <panel scale=\"9.5\"/>\n"
+                                                             "        </station>\n"
+                                                             "    </stations>\r\n"
+                                                             "    <window width=\"2464\"/>\r\n"
+                                                             "</probe>\r\n";
+
+constexpr std::string_view crlf_inside_the_stations = "<probe>\n"
+                                                      "    <stations>\r\n"
+                                                      "        <station name=\"alpha\"><panel scale=\"1.5\"/></station>\r\n"
+                                                      "    </stations>\n"
+                                                      "</probe>\n";
+
+constexpr std::string_view crlf_inside_the_stations_grown = "<probe>\n"
+                                                            "    <stations>\r\n"
+                                                            "        <station name=\"alpha\"><panel scale=\"1.5\"/></station>\r\n"
+                                                            "        <station name=\"gamma\">\r\n"
+                                                            "            <panel scale=\"9.5\"/>\r\n"
+                                                            "        </station>\r\n"
+                                                            "    </stations>\n"
+                                                            "    <window width=\"2464\"/>\n"
+                                                            "</probe>\n";
+
 // The leaf standing open at nothing, which is a document saying the value is empty rather than a
 // document saying nothing about that value at all.
 constexpr std::string_view an_empty_title = "<probe>\n"
@@ -313,27 +353,14 @@ std::vector<pinned_insertion> pinned_insertions()
                              "    </stations>\n"
                              "    <window width=\"2464\" mode=\"floating\"/>\n"
                              "</probe>\n"},
-            pinned_insertion{"empty-crlf.xml", an_empty_document, width,
-                             "<probe>\n"
-                             "<window width=\"2464\"/>\n"
-                             "</probe>\n"},
-            pinned_insertion{"blank-parent-crlf.xml", a_blank_root, width,
-                             "<probe>\n"
-                             "<window width=\"2464\"/>\n"
-                             "</probe>\n"},
+            pinned_insertion{"empty-crlf.xml", an_empty_document, width, a_window_in_a_bare_root},
+            pinned_insertion{"blank-parent-crlf.xml", a_blank_root, width, a_window_in_a_bare_root},
             pinned_insertion{"compact-close-crlf.xml", a_compact_close, width,
                              "<probe>\n"
                              "    <stations>\n"
                              "        <station name=\"alpha\"><panel scale=\"1.5\"/></station>\n"
                              "    </stations>\n"
                              "    <window width=\"2464\"/></probe>\n"}};
-}
-
-// The edits that create an instance under a collection, an element opened around a child of that
-// instance, and an element under the root, so a save lays down lines under three parents.
-std::vector<edit> growing_three_parents()
-{
-    return {edit{"stations/station[1]/name", "gamma"}, edit{"stations/station[1]/panel/scale", "9.5"}, edit{"window/width", "2464"}};
 }
 
 // `text` with the first `before` it carries replaced by `after`.
@@ -354,6 +381,21 @@ std::string without_a_and_c_at_nine()
 std::string why(const expected<void, error> &outcome)
 {
     return outcome.has_value() ? std::string() : outcome.error().message;
+}
+
+// `text` saved with the edits that create an instance under a collection, an element opened around a
+// child of that instance and an element under the root, so the save lays down lines under three
+// parents.
+std::string grown_under_three_parents(const std::string &name, std::string_view text)
+{
+    const std::filesystem::path where = authored(name, text);
+    const std::vector<edit> growing{edit{"stations/station[1]/name", "gamma"}, edit{"stations/station[1]/panel/scale", "9.5"}, edit{"window/width", "2464"}};
+
+    const expected<void, error> saved = save(described(), resolve(where, scratch()), growing);
+    INFO(why(saved));
+    REQUIRE(saved.has_value());
+
+    return text_of(where);
 }
 
 // The one stretch two texts disagree over, taken from both ends, so what is left between the common
@@ -1236,46 +1278,8 @@ TEST_CASE("an element created in a document whose lines end in a carriage return
 
 TEST_CASE("a line created in a document ending its lines two ways ends the way the parent it is created under breaks its content", "[config]")
 {
-    const std::filesystem::path outer_crlf = authored("mixed-outer-crlf.xml",
-                                                      "<probe>\r\n"
-                                                      "    <stations>\n"
-                                                      "        <station name=\"alpha\"><panel scale=\"1.5\"/></station>\n"
-                                                      "    </stations>\r\n"
-                                                      "</probe>\r\n");
-    const std::filesystem::path inner_crlf = authored("mixed-inner-crlf.xml",
-                                                      "<probe>\n"
-                                                      "    <stations>\r\n"
-                                                      "        <station name=\"alpha\"><panel scale=\"1.5\"/></station>\r\n"
-                                                      "    </stations>\n"
-                                                      "</probe>\n");
-
-    for(const std::filesystem::path &where : {outer_crlf, inner_crlf})
-    {
-        const expected<void, error> saved = save(described(), resolve(where, scratch()), growing_three_parents());
-        INFO(why(saved));
-        REQUIRE(saved.has_value());
-    }
-
-    CHECK(text_of(outer_crlf) ==
-          "<probe>\r\n"
-          "    <stations>\n"
-          "        <station name=\"alpha\"><panel scale=\"1.5\"/></station>\n"
-          "        <station name=\"gamma\">\n"
-          "            <panel scale=\"9.5\"/>\n"
-          "        </station>\n"
-          "    </stations>\r\n"
-          "    <window width=\"2464\"/>\r\n"
-          "</probe>\r\n");
-    CHECK(text_of(inner_crlf) ==
-          "<probe>\n"
-          "    <stations>\r\n"
-          "        <station name=\"alpha\"><panel scale=\"1.5\"/></station>\r\n"
-          "        <station name=\"gamma\">\r\n"
-          "            <panel scale=\"9.5\"/>\r\n"
-          "        </station>\r\n"
-          "    </stations>\n"
-          "    <window width=\"2464\"/>\n"
-          "</probe>\n");
+    CHECK(grown_under_three_parents("mixed-outer-crlf.xml", crlf_outside_the_stations) == crlf_outside_the_stations_grown);
+    CHECK(grown_under_three_parents("mixed-inner-crlf.xml", crlf_inside_the_stations) == crlf_inside_the_stations_grown);
 }
 
 TEST_CASE("an element created in a document carrying no line break at all is written beside or around what stands there", "[config]")
