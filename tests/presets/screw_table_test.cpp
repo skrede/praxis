@@ -215,6 +215,16 @@ std::size_t occurrences(const std::string &text, std::string_view needle)
     return counted;
 }
 
+std::string with_line_feeds_only(const std::string &text)
+{
+    std::string fed;
+    for(std::size_t letter = 0u; letter < text.size(); ++letter)
+        if(text[letter] != '\r' || letter + 1u >= text.size() || text[letter + 1u] != '\n')
+            fed.push_back(text[letter]);
+
+    return fed;
+}
+
 void require_same_screws(const supplied &read, const supplied &chosen)
 {
     REQUIRE(read.screws.size() == chosen.screws.size());
@@ -654,6 +664,27 @@ TEST_CASE("a chain saved into a document whose lines end in a carriage return an
         REQUIRE(reopened.screws[joint].has_value());
         CHECK((*reopened.screws[joint] - *chosen.screws[joint]).norm() == 0.0);
     }
+}
+
+TEST_CASE("a row appended to a document whose lines end in a carriage return and a line feed ends its lines that way too", "[presets][configuration]")
+{
+    supplied first = a_chain(3);
+    first.screws.front().reset();
+
+    const config::binding bound = binding_at("appended-crlf.xml");
+    const config::binding twin  = binding_at("appended-lf.xml");
+    REQUIRE(config::save(bound, written(carried(bound), derived_three(), first)).has_value());
+    REQUIRE(config::save(twin, written(carried(twin), derived_three(), first)).has_value());
+    ended_with_carriage_returns("appended-crlf.xml");
+
+    REQUIRE(config::save(bound, written(carried(bound), derived_three(), a_chain(3))).has_value());
+    REQUIRE(config::save(twin, written(carried(twin), derived_three(), a_chain(3))).has_value());
+
+    const std::string after = bytes_at("appended-crlf.xml");
+    CHECK(occurrences(after, "\r\r") == 0u);
+    CHECK(occurrences(after, "\r\n") == occurrences(after, "\n"));
+    CHECK(with_line_feeds_only(after) == bytes_at("appended-lf.xml"));
+    require_same_screws(opened(carried(bound), derived_three()), a_chain(3));
 }
 
 // A row the document carries is a row somebody wrote and a row it does not carry is a joint nobody

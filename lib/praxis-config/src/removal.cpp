@@ -48,7 +48,7 @@ std::size_t break_in_front(std::string_view source, std::size_t opens)
     const std::size_t last = opens == 0 ? std::string_view::npos : source.find_last_not_of(" \t", opens - 1);
     if(last == std::string_view::npos || source[last] != '\n')
         return std::string_view::npos;
-    return last > 0 && source[last - 1] == '\r' ? last - 1 : last;
+    return break_begins(source, last);
 }
 
 // Where the line break or the end of `source` following `ends` with nothing but blanks between

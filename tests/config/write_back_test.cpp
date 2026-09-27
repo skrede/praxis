@@ -290,6 +290,52 @@ std::string with_carriage_returns(std::string_view text)
     return ended;
 }
 
+// A document the suite pins a created element's bytes in, the edits its own case saves into it and
+// the text that case expects back.
+struct pinned_insertion
+{
+    const char *named;
+    std::string_view authored;
+    std::vector<edit> saved;
+    std::string_view expected;
+};
+
+std::vector<pinned_insertion> pinned_insertions()
+{
+    const std::vector<edit> width{edit{"window/width", "2464"}};
+
+    return {pinned_insertion{"created-crlf.xml",
+                             without_a_window,
+                             {edit{"window/mode", "floating"}, edit{"window/width", "2464"}},
+                             "<probe>\n"
+                             "    <stations>\n"
+                             "        <station name=\"alpha\"><panel scale=\"1.5\"/></station>\n"
+                             "    </stations>\n"
+                             "    <window width=\"2464\" mode=\"floating\"/>\n"
+                             "</probe>\n"},
+            pinned_insertion{"empty-crlf.xml", an_empty_document, width,
+                             "<probe>\n"
+                             "<window width=\"2464\"/>\n"
+                             "</probe>\n"},
+            pinned_insertion{"blank-parent-crlf.xml", a_blank_root, width,
+                             "<probe>\n"
+                             "<window width=\"2464\"/>\n"
+                             "</probe>\n"},
+            pinned_insertion{"compact-close-crlf.xml", a_compact_close, width,
+                             "<probe>\n"
+                             "    <stations>\n"
+                             "        <station name=\"alpha\"><panel scale=\"1.5\"/></station>\n"
+                             "    </stations>\n"
+                             "    <window width=\"2464\"/></probe>\n"}};
+}
+
+// The edits that create an instance under a collection, an element opened around a child of that
+// instance, and an element under the root, so a save lays down lines under three parents.
+std::vector<edit> growing_three_parents()
+{
+    return {edit{"stations/station[1]/name", "gamma"}, edit{"stations/station[1]/panel/scale", "9.5"}, edit{"window/width", "2464"}};
+}
+
 // `text` with the first `before` it carries replaced by `after`.
 std::string with_replaced(std::string text, std::string_view before, std::string_view after)
 {
@@ -1172,6 +1218,83 @@ TEST_CASE("an instance taken out of a document whose lines end in a carriage ret
     CHECK(after == with_replaced(before, "\r\n        <station name=\"alpha\"><panel scale=\"1.5\"/></station>", ""));
     CHECK(occurrences(after, "\r\r") == 0u);
     CHECK(occurrences(after, "\r\n") == occurrences(after, "\n"));
+}
+
+TEST_CASE("an element created in a document whose lines end in a carriage return and a line feed ends its lines that way too", "[config]")
+{
+    for(const pinned_insertion &pinned : pinned_insertions())
+    {
+        INFO(pinned.named);
+        const std::filesystem::path where = authored(pinned.named, with_carriage_returns(pinned.authored));
+
+        const expected<void, error> saved = save(described(), resolve(where, scratch()), pinned.saved);
+        INFO(why(saved));
+        REQUIRE(saved.has_value());
+        CHECK(text_of(where) == with_carriage_returns(pinned.expected));
+    }
+}
+
+TEST_CASE("a line created in a document ending its lines two ways ends the way the parent it is created under breaks its content", "[config]")
+{
+    const std::filesystem::path outer_crlf = authored("mixed-outer-crlf.xml",
+                                                      "<probe>\r\n"
+                                                      "    <stations>\n"
+                                                      "        <station name=\"alpha\"><panel scale=\"1.5\"/></station>\n"
+                                                      "    </stations>\r\n"
+                                                      "</probe>\r\n");
+    const std::filesystem::path inner_crlf = authored("mixed-inner-crlf.xml",
+                                                      "<probe>\n"
+                                                      "    <stations>\r\n"
+                                                      "        <station name=\"alpha\"><panel scale=\"1.5\"/></station>\r\n"
+                                                      "    </stations>\n"
+                                                      "</probe>\n");
+
+    for(const std::filesystem::path &where : {outer_crlf, inner_crlf})
+    {
+        const expected<void, error> saved = save(described(), resolve(where, scratch()), growing_three_parents());
+        INFO(why(saved));
+        REQUIRE(saved.has_value());
+    }
+
+    CHECK(text_of(outer_crlf) ==
+          "<probe>\r\n"
+          "    <stations>\n"
+          "        <station name=\"alpha\"><panel scale=\"1.5\"/></station>\n"
+          "        <station name=\"gamma\">\n"
+          "            <panel scale=\"9.5\"/>\n"
+          "        </station>\n"
+          "    </stations>\r\n"
+          "    <window width=\"2464\"/>\r\n"
+          "</probe>\r\n");
+    CHECK(text_of(inner_crlf) ==
+          "<probe>\n"
+          "    <stations>\r\n"
+          "        <station name=\"alpha\"><panel scale=\"1.5\"/></station>\r\n"
+          "        <station name=\"gamma\">\r\n"
+          "            <panel scale=\"9.5\"/>\r\n"
+          "        </station>\r\n"
+          "    </stations>\n"
+          "    <window width=\"2464\"/>\n"
+          "</probe>\n");
+}
+
+TEST_CASE("an element created in a document carrying no line break at all is written beside or around what stands there", "[config]")
+{
+    const std::filesystem::path closed = authored("unbroken-closed.xml", "<probe/>");
+    const std::filesystem::path open   = authored("unbroken-open.xml", "<probe></probe>");
+
+    for(const std::filesystem::path &where : {closed, open})
+    {
+        const expected<void, error> saved = save(described(), resolve(where, scratch()), std::vector<edit>{edit{"window/width", "2464"}});
+        INFO(why(saved));
+        REQUIRE(saved.has_value());
+    }
+
+    CHECK(text_of(closed) ==
+          "<probe>\n"
+          "<window width=\"2464\"/>\n"
+          "</probe>");
+    CHECK(text_of(open) == "<probe><window width=\"2464\"/></probe>");
 }
 
 TEST_CASE("an instance sharing its line with a sibling goes alone and the sibling keeps its place", "[config]")

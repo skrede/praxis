@@ -124,6 +124,11 @@ std::size_t content_ends(std::string_view source, std::size_t from)
     return source.size();
 }
 
+std::size_t break_begins(std::string_view source, std::size_t feed)
+{
+    return feed > 0 && source[feed - 1] == '\r' ? feed - 1 : feed;
+}
+
 std::optional<placement> attribute_bytes(std::string_view source, std::size_t from, std::string_view named, std::string current)
 {
     for(std::size_t at = past_blanks(source, past_name(source, from)); at < source.size(); at = past_blanks(source, at))

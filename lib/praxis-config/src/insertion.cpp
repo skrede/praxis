@@ -55,6 +55,19 @@ std::size_t past_the_siblings(std::string_view source, std::size_t content, std:
     return last == std::string_view::npos || last < content ? content : last + 1;
 }
 
+// The line break a line created near `near` ends with: the document's next one, the last one before
+// it where none follows, and a line feed where the document breaks no line at all.
+std::string line_break_near(std::string_view source, std::size_t near)
+{
+    const std::size_t next = source.find('\n', near);
+    const std::size_t feed = next == std::string_view::npos ? source.rfind('\n', near) : next;
+    if(feed == std::string_view::npos)
+        return "\n";
+
+    const std::size_t begins = break_begins(source, feed);
+    return std::string(source.substr(begins, feed + 1 - begins));
+}
+
 // The bytes an empty element `named` adds as the last child of a parent whose content runs from
 // `content` to `until`: opening a line of its own at the column the siblings it joins stand at where
 // that parent spans lines, and directly beside them where the parent is written on one.
@@ -66,15 +79,16 @@ std::string as_last_child(std::string_view source, std::size_t content, std::siz
 
     const std::size_t begins = source.find_first_not_of(" \t\n\r", content);
     const std::string beside = begins < until ? indent_at(source, begins) : indent_at(source, until) + one_level(source);
-    return "\n" + beside + child;
+    return line_break_near(source, content) + beside + child;
 }
 
 // A self-closing element opened around one empty child, replacing the byte its `/` sits on. The `>`
 // that closed it is left to close the end tag this ends with, so nothing is written past it.
 std::string opened_around(std::string_view source, pugi::xml_node holding, const std::string &named)
 {
-    const std::string outer = indent_at(source, offset_of(holding));
-    return ">\n" + outer + one_level(source) + "<" + named + "/>\n" + outer + "</" + holding.name();
+    const std::string outer  = indent_at(source, offset_of(holding));
+    const std::string breaks = line_break_near(source, offset_of(holding));
+    return ">" + breaks + outer + one_level(source) + "<" + named + "/>" + breaks + outer + "</" + holding.name();
 }
 
 std::size_t children_named(pugi::xml_node holding, const char *named)
