@@ -38,10 +38,11 @@ double real_at(const config::document &values, const std::string &key, double fa
     return read ? read.value() : fallback;
 }
 
+// A zero of either sign is written as the unsigned zero the declaration falls back to.
 std::string shortest_text(float value)
 {
     std::array<char, 32> printed{};
-    const std::to_chars_result written = std::to_chars(printed.data(), printed.data() + printed.size(), value);
+    const std::to_chars_result written = std::to_chars(printed.data(), printed.data() + printed.size(), value == 0.0f ? 0.0f : value);
 
     return std::string(printed.data(), written.ptr);
 }

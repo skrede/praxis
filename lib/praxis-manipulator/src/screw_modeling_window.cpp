@@ -15,6 +15,15 @@
 
 namespace praxis::manipulator {
 
+namespace {
+
+Eigen::Vector3f unsigned_zeros(const Eigen::Vector3f &value)
+{
+    return value.unaryExpr([](float component) { return component == 0.0f ? 0.0f : component; });
+}
+
+}
+
 screw_modeling_window::settings::settings(transform chosen_home, std::vector<supplied_screw> chosen_screws)
         : home(std::move(chosen_home))
         , screws(std::move(chosen_screws))
@@ -70,7 +79,7 @@ void screw_modeling_window::seed(const settings &opened)
     const rotation held = m_home.block<3, 3>(0, 0);
 
     m_home_position      = m_home.block<3, 1>(0, 3).cast<float>();
-    m_home_euler_degrees = (m_frame.euler_from_rotation_matrix(held, home_axis_order) * degrees_per_radian).cast<float>();
+    m_home_euler_degrees = unsigned_zeros((m_frame.euler_from_rotation_matrix(held, home_axis_order) * degrees_per_radian).cast<float>());
 
     m_selected = 0u;
     m_entries.clear();

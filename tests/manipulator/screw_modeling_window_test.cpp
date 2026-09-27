@@ -376,6 +376,36 @@ drawing over(scene::imgui_window &panel)
     return [&panel] { panel.render(); };
 }
 
+Eigen::Vector3d no_turn(const rotation &, axis_order)
+{
+    return Eigen::Vector3d(0.0, 0.0, 0.0);
+}
+
+Eigen::Vector3d no_turn_signed(const rotation &, axis_order)
+{
+    return Eigen::Vector3d(0.0, -0.0, 0.0);
+}
+
+// The frame operations the suite binds, turning every rotation into the angles `answered` names.
+rigid_motion::frame_ops framing_answering(Eigen::Vector3d (*answered)(const rotation &, axis_order))
+{
+    rigid_motion::frame_ops bound    = framing();
+    bound.euler_from_rotation_matrix = answered;
+
+    return bound;
+}
+
+// What one frame of a window opened at the identity home, home fields drawn, puts on screen.
+std::size_t drawn_at_no_turn(stage &headless, const rigid_motion::frame_ops &seeding)
+{
+    screw_modeling_window panel(panel_title, headless.shown, headless.published->reader(), turning(), seeding, solving(), headless.chain, screw_modeling_window::controls(), opening{},
+                                writer(), route(), std::string());
+    imgui_frame frames;
+    frames.draw(over(panel));
+
+    return frames.signature();
+}
+
 // Each typed value takes a context of its own: the cursor a committed box leaves behind does not
 // always return to its row's first field, so a typing sharing a context with the one before it
 // would be addressed from wherever that one ended.
@@ -807,6 +837,15 @@ TEST_CASE("a home pose typed to four decimals reads a turn and a rigidity of its
     CHECK(apart.home.moved_metres < exactly);
     CHECK(std::isfinite(apart.home.rigidity));
     CHECK(apart.home.rigidity > 1.0e-5);
+}
+
+TEST_CASE("a home at no turn opens its orientation fields at an unsigned zero whatever sign the bound conversion gives it", "[manipulator][modeling]")
+{
+    stage headless(described_chain(), at_rest());
+
+    const std::size_t unsigned_twin = drawn_at_no_turn(headless, framing_answering(&no_turn));
+    CHECK(drawn_at_no_turn(headless, framing()) == unsigned_twin);
+    CHECK(drawn_at_no_turn(headless, framing_answering(&no_turn_signed)) == unsigned_twin);
 }
 
 // The screw a row nobody supplied opens at is a screw a person could plausibly type, so the numbers

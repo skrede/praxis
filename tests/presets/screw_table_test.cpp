@@ -600,6 +600,32 @@ TEST_CASE("a chain written into a document leaves that document reporting nothin
     CHECK(spelling(carried(bound), at, chosen).empty());
 }
 
+TEST_CASE("a home turned back to no turn over a document carrying a turn is written and read back unsigned", "[presets][configuration]")
+{
+    const config::binding bound = binding_over("<home>" + triple("orientation", Eigen::Vector3d(0.0, 5.0, 0.0)) + "</home>" + rows_through(6u), "home-unturned.xml");
+    supplied chosen             = opened(carried(bound), derived_six());
+    chosen.home                 = transform::Identity();
+
+    const std::vector<config::edit> changes = written(carried(bound), derived_six(), chosen);
+    const auto turned = std::find_if(changes.begin(), changes.end(), [](const config::edit &change) { return change.key == std::string(at) + "/home/orientation/y"; });
+    REQUIRE(turned != changes.end());
+    CHECK(turned->value == "0");
+
+    REQUIRE(config::save(bound, changes).has_value());
+    CHECK(bytes_at("home-unturned.xml").find("\"-0") == std::string::npos);
+    CHECK((opened(carried(bound), derived_six()).home - transform::Identity()).norm() == 0.0);
+}
+
+TEST_CASE("a home at no turn whose position carries a signed zero offers nothing over a document naming no home", "[presets][configuration]")
+{
+    const config::document values = authored(rows_through(6u), "home-signed-zero.xml");
+    supplied chosen               = opened(values, derived_six());
+    chosen.home                   = transform::Identity();
+    chosen.home(0, 3)             = -0.0;
+
+    CHECK(written(values, derived_six(), chosen).empty());
+}
+
 // A document somebody wrote by hand names its joints in whatever order it likes, and the reader
 // resolves a row by the identity it carries; saving over it must not renumber those rows.
 TEST_CASE("a table whose rows stand out of order keeps that order across a save", "[presets][configuration]")

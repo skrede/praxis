@@ -167,6 +167,48 @@ config::document kept_chain_beside(const std::vector<screw_axis> &screws, const 
     return read.value();
 }
 
+// The table `kept_chain` writes, with no home element at all.
+config::document kept_chain_without_home(const std::vector<screw_axis> &screws, const char *name)
+{
+    const std::filesystem::path where = chain_scratch() / name;
+    std::ofstream out(where, std::ios::binary | std::ios::trunc);
+    out << "<screw_table><screws>";
+    for(std::size_t joint = 0u; joint < screws.size(); ++joint)
+        out << "<joint index=\"" << joint + 1u << "\">" << chain_triple("angular", screws[joint].head<3>()) << chain_triple("linear", screws[joint].tail<3>()) << "</joint>";
+    out << "</screws></screw_table>\n";
+    out.close();
+
+    const expected<config::document, config::error> read = config::load(presets::screw_table_keyspace(), config::resolve(where, chain_scratch()));
+    REQUIRE(read.has_value());
+
+    return read.value();
+}
+
+struct leaving
+{
+    bool asks;
+    std::vector<config::edit> offer;
+};
+
+// What leaving the chain window a six-joint modeling scenario composes over `values` would ask,
+// after `typed` is typed into its first field when one is named.
+leaving left_over(const config::document &values, const std::string &named, const char *typed)
+{
+    const described_arm described(6, named);
+    const presets::arm_scenario chosen = described_by(described.where);
+
+    opened_arm built;
+    const std::shared_ptr<scene::preset> composed = built.open(chosen, presets::arm_windows_modeling(chosen, supplied_from(values, chain_binding((named + ".xml").c_str()))));
+    const std::shared_ptr<manipulator::screw_modeling_window> window = chain_window_of(composed);
+    if(typed != nullptr)
+        type_at(*window, 0u, typed);
+
+    const std::array<const config::configurable *, 1> shown{window->as_configurable()};
+    REQUIRE(shown.front() != nullptr);
+
+    return leaving{config::anything_unsaved(shown, values), shown.front()->settings_edits(values)};
+}
+
 // Where the chain window's own controls stand in the walk down its panel in a modeling scenario: the
 // home position and its turn are three fields each above the reset, and the save is the last control.
 constexpr std::size_t reset_chain_control = 6u;
@@ -779,6 +821,26 @@ TEST_CASE("a chain window saved into its own document reports nothing left to de
     REQUIRE(config::save(into, routed->settings_edits(config::load_or_defaults(into).values)).has_value());
 
     CHECK(routed->settings_edits(config::load_or_defaults(into).values).empty());
+}
+
+TEST_CASE("a chain opened over a home at no turn reports nothing left to decide", "[presets][configuration]")
+{
+    const leaving homeless = left_over(kept_chain_without_home(a_supplied_chain(6), "homeless-source.xml"), "six_homeless", nullptr);
+    CHECK_FALSE(homeless.asks);
+    CHECK(homeless.offer.empty());
+
+    const leaving zeros = left_over(kept_chain(a_supplied_chain(6), "home-of-zeros-source.xml"), "six_home_of_zeros", nullptr);
+    CHECK_FALSE(zeros.asks);
+    CHECK(zeros.offer.empty());
+}
+
+TEST_CASE("a home position typed over a chain opened at no turn is the one thing left to decide", "[presets][configuration]")
+{
+    const leaving typed = left_over(kept_chain_without_home(a_supplied_chain(6), "homeless-typed-source.xml"), "six_homeless_typed", "0.5");
+    CHECK(typed.asks);
+    REQUIRE(typed.offer.size() == 1u);
+    CHECK(typed.offer.front().key == "screws/home/position/x");
+    CHECK(typed.offer.front().value == "0.5");
 }
 
 // A chain typed over a document the writer refuses cannot be kept, so leaving it asks rather than
