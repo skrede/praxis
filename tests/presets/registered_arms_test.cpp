@@ -445,8 +445,8 @@ TEST_CASE("the model paths a document names resolve against the roots its descri
     const std::vector<std::filesystem::path> one{root};
 
     const presets::arm_scenario held = read_back(named, one);
-    REQUIRE(held.tool.model_path == (root / "meshes" / "gripper.stl").string());
-    REQUIRE(held.world_object.model_path == (root / "meshes" / "table.stl").string());
+    REQUIRE(std::filesystem::path(held.tool.model_path) == root / "meshes" / "gripper.stl");
+    REQUIRE(std::filesystem::path(held.world_object.model_path) == root / "meshes" / "table.stl");
 
     const presets::arm_scenario unheld = read_back(named, {});
     REQUIRE(unheld.tool.model_path == "meshes/gripper.stl");
