@@ -137,7 +137,7 @@ expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> recorded_wa
 {
     handed_to_the_factory().assign(waypoints.begin(), waypoints.end());
 
-    return unexpected(refusal::not_implemented);
+    return praxis::unexpected(refusal::not_implemented);
 }
 
 transform recorded_conversion(const rigid_motion::frame_ops &frames, const transform &tool_pose, const transform &tool_offset)

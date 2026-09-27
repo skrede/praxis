@@ -311,7 +311,7 @@ TEST_CASE("the angular part of a column stands the same way whichever Jacobian o
 TEST_CASE("a body Jacobian's columns are not stood at all while the tool's own orientation is a refusal", "[manipulator][drawing]")
 {
     arm_snapshot seen     = published_columns(two_columns(1.0), two_columns(1.0), elsewhere);
-    seen.tool_orientation = unexpected(refusal::not_implemented);
+    seen.tool_orientation = praxis::unexpected(refusal::not_implemented);
 
     column_stage headless;
     headless.shown.set_jacobian_frame(jacobian_frame::body);
