@@ -13,6 +13,7 @@
 #include <vector>
 #include <cstddef>
 #include <utility>
+#include <optional>
 
 namespace praxis::demo {
 
@@ -38,15 +39,33 @@ config::edit leaving_edit(leaving_choice chosen)
     return config::edit{leaving_key, leaving_choices[static_cast<std::size_t>(chosen)]};
 }
 
+expected<void, std::string> unwritten(const std::string &why)
+{
+    spdlog::error(std::format("The values were not written: {}", why));
+
+    return unexpected(why);
+}
+
 // The module's own save names the resolved path it wrote to, verifies the write by reading it back
 // and refuses without touching the file when that fails, so nothing here names a path or checks one.
-bool written_into(const config::binding &into, std::span<const config::edit> changes)
+expected<void, std::string> written_into(const config::binding &into, std::span<const config::edit> changes)
 {
     const expected<void, config::error> written = config::save(into, changes);
     if(!written)
-        spdlog::error(std::format("The values were not written: {}", written.error().message));
+        return unwritten(written.error().message);
 
-    return written.has_value();
+    return {};
+}
+
+// A copy is reproduced from its seed before a save reaches it, so an offer that cannot be written is
+// refused before one is made.
+std::optional<std::string> refusal_in(std::span<const config::edit> changes)
+{
+    for(const config::edit &one : changes)
+        if(one.kind == config::edit_kind::refused)
+            return one.value;
+
+    return std::nullopt;
 }
 
 }
@@ -79,49 +98,60 @@ bool write_back::anything_to_decide(std::span<const config::configurable *const>
         return moved;
 
     if(moved && m_remembered == leaving_choice::keep)
-        save(shown);
+        return !write(shown_now(shown)).has_value();
 
     return false;
 }
 
-void write_back::resolve(scene::leaving_answer chosen, std::span<const config::configurable *const> shown)
+expected<void, std::string> write_back::resolve(scene::leaving_answer chosen, std::span<const config::configurable *const> shown)
 {
     if(chosen.keep)
-        write(shown_now(shown));
+    {
+        expected<void, std::string> kept = write(shown_now(shown));
+        if(!kept)
+            return kept;
+    }
 
     if(chosen.remember)
         remember(chosen.keep ? leaving_choice::keep : leaving_choice::discard);
+
+    return {};
 }
 
 void write_back::save(std::span<const config::configurable *const> shown)
 {
-    write(shown_now(shown));
+    static_cast<void>(write(shown_now(shown)));
 }
 
-void write_back::write(std::vector<config::edit> changes)
+expected<void, std::string> write_back::write(std::vector<config::edit> changes)
 {
     if(changes.empty())
     {
         spdlog::info(std::format("Nothing the composition shows is unsaved, so the configuration at {} was left as it is", m_bound.at.resolved.string()));
-        return;
+        return {};
     }
+
+    if(const std::optional<std::string> refused = refusal_in(changes); refused)
+        return unwritten(*refused);
 
     // A document that ships with the repository is read and never written, so a save lands in this
     // application's own copy of it under the same name, made from that document where it was absent.
     const config::binding into{m_bound.shape, m_mine.writing(m_bound.at.given), m_bound.carries};
-    if(!written_into(into, changes))
-        return;
+    if(expected<void, std::string> saved = written_into(into, changes); !saved)
+        return saved;
 
     // Every comparison after this one is against what the copy now carries.
     expected<config::document, config::error> reread = config::load(into.shape, into.at);
     if(reread)
         m_carried = std::move(reread).value();
+
+    return {};
 }
 
 void write_back::remember(leaving_choice chosen)
 {
     const std::array<config::edit, 1> changes{leaving_edit(chosen)};
-    if(written_into(m_preferences, changes))
+    if(written_into(m_preferences, changes).has_value())
         m_remembered = chosen;
 }
 
@@ -134,7 +164,7 @@ void install_write_back(scene::visualizer &view, const std::shared_ptr<write_bac
 {
     view.saving_through([&view, through] { through->save(view.configured()); });
     view.asking_before_release([&view, through] { return through->anything_to_decide(view.configured()); },
-                               [&view, through](scene::leaving_answer chosen) { through->resolve(chosen, view.configured()); });
+                               [&view, through](scene::leaving_answer chosen) { return through->resolve(chosen, view.configured()); });
 }
 
 }

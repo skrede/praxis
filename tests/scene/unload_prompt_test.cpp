@@ -100,3 +100,29 @@ TEST_CASE("an answer to a composition awaiting none does nothing at all", "[scen
     REQUIRE(over.held.loaded());
     REQUIRE(over.counted() == composed);
 }
+
+TEST_CASE("a keep the holder cannot carry out leaves the question standing and says why until a discard releases", "[scene][preset]")
+{
+    held_scene over(true);
+    over.watched.refusal = "the values cannot be written";
+    over.asks();
+
+    const std::size_t before = over.counted();
+    REQUIRE(over.held.load(composing()).has_value());
+    const std::size_t composed = over.counted();
+    over.held.unload();
+    REQUIRE(over.held.answer_refusal().empty());
+
+    over.held.answer(leaving_answer{true, true});
+    REQUIRE(over.held.awaiting_answer());
+    REQUIRE(over.held.loaded());
+    REQUIRE(over.counted() == composed);
+    REQUIRE(over.held.answer_refusal() == "the values cannot be written");
+
+    over.held.answer(leaving_answer{false, false});
+    REQUIRE(over.watched.resolved == 2);
+    REQUIRE_FALSE(over.held.awaiting_answer());
+    REQUIRE_FALSE(over.held.loaded());
+    REQUIRE(over.held.answer_refusal().empty());
+    REQUIRE(over.counted() == before);
+}

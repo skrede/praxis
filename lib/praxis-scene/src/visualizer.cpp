@@ -164,6 +164,11 @@ bool visualizer::awaiting_answer() const
     return m_composition.awaiting_answer();
 }
 
+std::string_view visualizer::answer_refusal() const
+{
+    return m_composition.answer_refusal();
+}
+
 // The answer arrives from inside a rendered frame and releases what is held, so it gets a handler of
 // its own on the strand the frames are drawn on, as a load and an unload do.
 void visualizer::answer(leaving_answer chosen)
@@ -172,7 +177,8 @@ void visualizer::answer(leaving_answer chosen)
             [this, chosen]
             {
                 m_composition.answer(chosen);
-                m_release_cause.clear();
+                if(!m_composition.awaiting_answer())
+                    m_release_cause.clear();
             }));
 }
 

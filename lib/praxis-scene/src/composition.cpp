@@ -5,6 +5,7 @@
 #include <spdlog/spdlog.h>
 
 #include <memory>
+#include <string>
 #include <vector>
 #include <utility>
 #include <exception>
@@ -103,6 +104,7 @@ composition::composition(threepp::Scene &target, scheduler::scheduler &loop, std
         , m_remove_window()
         , m_loop(loop)
         , m_root(std::move(root))
+        , m_answer_refusal()
         , m_preset()
         , m_configured()
         , m_asking_cb()
@@ -176,14 +178,27 @@ bool composition::awaiting_answer() const
     return m_awaiting;
 }
 
+std::string_view composition::answer_refusal() const
+{
+    return m_answer_refusal;
+}
+
 void composition::answer(leaving_answer chosen)
 {
     if(!m_awaiting)
         return;
 
     if(m_answered_cb != nullptr)
-        m_answered_cb(chosen);
+    {
+        expected<void, std::string> carried = m_answered_cb(chosen);
+        if(!carried)
+        {
+            m_answer_refusal = std::move(carried).error();
+            return;
+        }
+    }
 
+    m_answer_refusal.clear();
     m_awaiting = false;
     if(m_preset != nullptr)
         release();
@@ -301,6 +316,7 @@ void composition::retire_held(detail::move_only_function<void()> concluded)
 {
     // An answer is only ever awaited about what is held, so releasing what is held ends the wait.
     m_awaiting = false;
+    m_answer_refusal.clear();
     // The callables are taken off the preset only once this has returned, so a tear-down that throws
     // leaves a preset that can still be released rather than one whose callables are gone.
     m_preset->tear_down();

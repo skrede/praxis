@@ -9,6 +9,10 @@ praxis_add_test(demo_write_back_test.cpp HEADERS scratch_documents.h LIBS praxis
 target_sources(demo_write_back_test PRIVATE ../../examples/demo_documents.cpp ../../examples/demo_write_back.cpp)
 target_include_directories(demo_write_back_test PRIVATE ${PROJECT_SOURCE_DIR}/examples)
 
+praxis_add_test(demo_leaving_test.cpp HEADERS scratch_documents.h LIBS praxis::scene praxis::config spdlog::spdlog)
+target_sources(demo_leaving_test PRIVATE ../../examples/demo_documents.cpp ../../examples/demo_write_back.cpp)
+target_include_directories(demo_leaving_test PRIVATE ${PROJECT_SOURCE_DIR}/examples)
+
 praxis_add_test(shipped_presets_test.cpp LIBS praxis::scene praxis::manipulator_presets praxis::manipulator praxis::rigid_motion praxis::trajectory praxis::config spdlog::spdlog)
 target_sources(shipped_presets_test PRIVATE ../../examples/demo_documents.cpp ../../examples/demo_write_back.cpp ../../examples/demo_configuration.cpp)
 target_include_directories(shipped_presets_test PRIVATE ${PROJECT_SOURCE_DIR}/examples)

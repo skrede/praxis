@@ -12,6 +12,7 @@
 #include "praxis/config/writer.h"
 #include "praxis/config/binding.h"
 #include "praxis/config/document.h"
+#include "praxis/config/configurable.h"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -223,6 +224,28 @@ std::string with_line_feeds_only(const std::string &text)
             fed.push_back(text[letter]);
 
     return fed;
+}
+
+// The offer the window's route answers for a state the writer refuses, and what a save of it does.
+void require_offered_refusal(const config::binding &bound, const char *name, const supplied &state)
+{
+    const std::string before      = bytes_at(name);
+    const config::document values = carried(bound);
+
+    const expected<std::vector<config::edit>, config::error> refused = presets::write_screw_table(values, at, derived_six(), state, motions().frame);
+    REQUIRE_FALSE(refused.has_value());
+
+    const std::vector<config::edit> offer = presets::screw_table_edits(derived_six(), motions().frame)(values, at, state);
+    REQUIRE(offer.size() == 1u);
+    CHECK(offer.front().kind == config::edit_kind::refused);
+    CHECK(offer.front().value == refused.error().message);
+    CHECK(config::unsaved_edits(values, offer).size() == 1u);
+
+    const expected<void, config::error> kept = config::save(bound, offer);
+    REQUIRE_FALSE(kept.has_value());
+    CHECK(kept.error().code == config::error_code::rejected_content);
+    CHECK(kept.error().message == refused.error().message);
+    CHECK(bytes_at(name) == before);
 }
 
 void require_same_screws(const supplied &read, const supplied &chosen)
@@ -791,4 +814,23 @@ TEST_CASE("a document carrying a row the reader refuses is refused in the reader
 
     presets::screw_table_route(bound, derived_six(), motions().frame)(at, a_chain(6u));
     CHECK(bytes_at("writer-unreadable.xml") == before);
+}
+
+// A chain the writer refuses is offered as that refusal rather than as nothing, so leaving it asks and
+// keeping it refuses in the writer's words with the document left as it was.
+TEST_CASE("a chain the writer refuses offers one refused edit, and a save of it refuses in the writer's words", "[presets][configuration]")
+{
+    SECTION("over a document carrying a row the reader refuses")
+    {
+        require_offered_refusal(binding_over(row("07", six_vector(1.0)), "offer-unreadable.xml"), "offer-unreadable.xml", a_chain(6u));
+    }
+
+    SECTION("for a chain holding a screw a joint past the furthest a document may name")
+    {
+        supplied chosen = a_chain(6u);
+        chosen.screws.resize(6u + presets::screw_table_greatest_surplus + 1u);
+        chosen.screws.back() = six_vector(2.0);
+
+        require_offered_refusal(binding_over(rows_through(6u), "offer-beyond.xml"), "offer-beyond.xml", chosen);
+    }
 }

@@ -65,7 +65,8 @@ expected<std::vector<config::edit>, config::error> write_screw_table(const confi
 
 // How a chain a window holds is spelled in the document it is judged against, so the window's own
 // offer on leaving goes through the one writer that resolves a row by its identity. A chain the
-// writer refuses offers nothing, and the refusal is logged.
+// writer refuses offers that refusal as one refused edit, so leaving asks and a save of the offer
+// refuses in the writer's words.
 manipulator::screw_modeling_window::edit_route screw_table_edits(const manipulator::screw_chain &derived, const rigid_motion::frame_ops &framing);
 
 // Where a window's chain goes, closed over the binding it belongs in so nothing that draws holds

@@ -29,11 +29,13 @@
 #include <threepp/math/Vector3.hpp>
 #include <threepp/math/Quaternion.hpp>
 
+#include <array>
 #include <cmath>
 #include <memory>
 #include <string>
 #include <vector>
 #include <cstddef>
+#include <fstream>
 #include <utility>
 #include <optional>
 #include <algorithm>
@@ -146,6 +148,23 @@ std::shared_ptr<manipulator::screw_modeling_window> chain_window_of(const std::s
     REQUIRE(held != nullptr);
 
     return held;
+}
+
+// The table `kept_chain` writes, with one more row whose identity is no joint's place.
+config::document kept_chain_beside(const std::vector<screw_axis> &screws, const char *stray, const char *name)
+{
+    const std::filesystem::path where = chain_scratch() / name;
+    std::ofstream out(where, std::ios::binary | std::ios::trunc);
+    out << "<screw_table><screws><home>" << chain_triple("position", Eigen::Vector3d::Zero()) << chain_triple("orientation", Eigen::Vector3d::Zero()) << "</home>";
+    for(std::size_t joint = 0u; joint < screws.size(); ++joint)
+        out << "<joint index=\"" << joint + 1u << "\">" << chain_triple("angular", screws[joint].head<3>()) << chain_triple("linear", screws[joint].tail<3>()) << "</joint>";
+    out << "<joint index=\"" << stray << "\"></joint></screws></screw_table>\n";
+    out.close();
+
+    const expected<config::document, config::error> read = config::load(presets::screw_table_keyspace(), config::resolve(where, chain_scratch()));
+    REQUIRE(read.has_value());
+
+    return read.value();
 }
 
 // Where the chain window's own controls stand in the walk down its panel in a modeling scenario: the
@@ -760,6 +779,34 @@ TEST_CASE("a chain window saved into its own document reports nothing left to de
     REQUIRE(config::save(into, routed->settings_edits(config::load_or_defaults(into).values)).has_value());
 
     CHECK(routed->settings_edits(config::load_or_defaults(into).values).empty());
+}
+
+// A chain typed over a document the writer refuses cannot be kept, so leaving it asks rather than
+// releasing it behind a log line, and keeping it refuses in the writer's words.
+TEST_CASE("a chain typed over a document the writer refuses leaves something to decide that cannot be kept", "[presets][configuration]")
+{
+    const described_arm described(6, "six_refused");
+    const presets::arm_scenario chosen = described_by(described.where);
+    const config::document values      = kept_chain_beside(a_supplied_chain(6), "wrist", "window-refused-source.xml");
+    const config::binding into         = chain_binding("window-refused.xml");
+
+    opened_arm built;
+    const std::shared_ptr<scene::preset> composed                    = built.open(chosen, presets::arm_windows_modeling(chosen, supplied_from(values, into)));
+    const std::shared_ptr<manipulator::screw_modeling_window> window = chain_window_of(composed);
+    type_at(*window, 0u, "0.5");
+
+    const std::array<const config::configurable *, 1> shown{window->as_configurable()};
+    REQUIRE(shown.front() != nullptr);
+    CHECK(config::anything_unsaved(shown, values));
+
+    const std::vector<config::edit> offer = shown.front()->settings_edits(values);
+    REQUIRE(offer.size() == 1u);
+    CHECK(offer.front().kind == config::edit_kind::refused);
+
+    const expected<void, config::error> kept = config::save(into, offer);
+    REQUIRE_FALSE(kept.has_value());
+    CHECK(kept.error().message.find("wrist") != std::string::npos);
+    CHECK_FALSE(std::filesystem::exists(into.at.resolved));
 }
 
 // Every leaf of a zero screw reads as the fallback a document carrying no row for that joint already

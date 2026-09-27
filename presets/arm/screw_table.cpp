@@ -193,8 +193,7 @@ manipulator::screw_modeling_window::edit_route screw_table_edits(const manipulat
         if(changes)
             return changes.value();
 
-        spdlog::error("praxis: the chain offers nothing on leaving: {}", changes.error().message);
-        return std::vector<config::edit>();
+        return std::vector<config::edit>{config::edit{std::string(at), changes.error().message, config::edit_kind::refused}};
     };
 }
 

@@ -130,6 +130,7 @@ public:
     void asking_before_release(leaving_question pending, leaving_resolution answered);
 
     bool awaiting_answer() const;
+    std::string_view answer_refusal() const;
     void answer(leaving_answer chosen);
 
     // What refused, where the release standing was asked for by the held composition rather than by

@@ -15,15 +15,18 @@ namespace praxis::config {
 
 // What a save does where an edit addresses. A bound edit writes its value; one taken out names a
 // collection and an identity, and every instance carrying the identity goes from under the one
-// parent the key addresses, a segment with no bracket addressing the first instance.
+// parent the key addresses, a segment with no bracket addressing the first instance. A refused edit
+// writes nothing: it stands for an offer that cannot be written.
 enum class edit_kind : std::uint8_t
 {
     bound,
     taken_out,
+    refused,
 };
 
 // One value bound for one key, in the text form the document carries it in, or, taken out, the
-// collection's path in `key` and in `value` the identity every instance that goes carries.
+// collection's path in `key` and in `value` the identity every instance that goes carries, or,
+// refused, the path an offer was made for in `key` and in `value` why that offer cannot be written.
 struct edit
 {
     std::string key;
@@ -72,7 +75,9 @@ std::string exact_text(double value);
 // all is written. What would replace the document is staged beside it, loaded back through this
 // module's own load and required to read what was written and to carry no instance a removal named
 // under the parent its key addresses, and renamed onto the document only then. One message reports
-// the resolved path, how many values were written and how many instances were taken out.
+// the resolved path, how many values were written and how many instances were taken out. A save
+// handed a refused edit reads nothing, writes nothing and creates no document, and refuses as
+// rejected content with that edit's value as the message.
 expected<void, error> save(const declaration &shape, const location &at, std::span<const edit> changes, write_policy policy = write_policy::every_edit);
 
 }

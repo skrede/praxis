@@ -1383,3 +1383,23 @@ TEST_CASE("a changed value addressed through an ancestor with no ordinal is refu
     CHECK(saved.error().message.find("stations/station/slot[2]/v") != std::string::npos);
     CHECK(text_of(where) == before);
 }
+
+TEST_CASE("a save handed a refused edit refuses in its words and writes nothing anywhere", "[config]")
+{
+    const std::vector<edit> offered{edit{"window/width", "2464"}, edit{"stations", "the offer cannot be written", edit_kind::refused}};
+
+    const std::filesystem::path where = alone_in("refused-into-a-document", hand_written);
+    const expected<void, error> into  = save(described(), resolve(where, scratch()), offered);
+    REQUIRE_FALSE(into.has_value());
+    CHECK(into.error().code == error_code::rejected_content);
+    CHECK(into.error().message == "the offer cannot be written");
+    CHECK(text_of(where) == hand_written);
+    CHECK(entries_in(where.parent_path()) == 1);
+
+    const std::filesystem::path nowhere = nothing_at("refused-into-nothing");
+    const expected<void, error> created = save(described(), resolve(nowhere, scratch()), offered);
+    REQUIRE_FALSE(created.has_value());
+    CHECK(created.error().code == error_code::rejected_content);
+    CHECK(created.error().message == "the offer cannot be written");
+    CHECK(entries_in(nowhere.parent_path()) == 0);
+}

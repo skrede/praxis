@@ -148,6 +148,15 @@ expected<void, error> landed(const declaration &shape, const location &at, const
     return {};
 }
 
+std::optional<error> refusal_among(std::span<const edit> changes)
+{
+    for(const edit &one : changes)
+        if(one.kind == edit_kind::refused)
+            return error{error_code::rejected_content, one.value};
+
+    return std::nullopt;
+}
+
 expected<std::string, error> authored_or_created(const declaration &shape, const location &at)
 {
     if(const std::optional<std::string> authored = slurped(at.resolved); authored)
@@ -173,6 +182,9 @@ edit::edit(std::string addressed, std::string carried, edit_kind meaning)
 
 expected<void, error> save(const declaration &shape, const location &at, std::span<const edit> changes, write_policy policy)
 {
+    if(const std::optional<error> refused = refusal_among(changes); refused)
+        return unexpected(*refused);
+
     const expected<std::string, error> authored = authored_or_created(shape, at);
     if(!authored)
         return unexpected(authored.error());

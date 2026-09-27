@@ -21,6 +21,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <functional>
+#include <string_view>
 
 namespace praxis::scene {
 
@@ -43,9 +44,9 @@ struct leaving_answer
 
 // Whether anything is left to decide before what is held is released, and what carries the decision
 // out. Both belong to the holder, because what a value is and where it would go is the holder's
-// business and no composition's.
+// business and no composition's. The resolution answers why where it could not carry an answer out.
 using leaving_question   = detail::move_only_function<bool()>;
-using leaving_resolution = detail::move_only_function<void(leaving_answer)>;
+using leaving_resolution = detail::move_only_function<expected<void, std::string>(leaving_answer)>;
 
 // One composition over one scene: what it is built from, what it currently holds, and the moves
 // between them. A load makes the strand the composition's own state belongs to and hands it to the
@@ -84,8 +85,12 @@ public:
     // happen at all.
     void asking_before_release(leaving_question pending, leaving_resolution answered);
 
-    // Neither answer is a default: a composition awaiting one stays held until an answer arrives.
+    // Neither answer is a default: a composition awaiting one stays held until an answer arrives
+    // that the holder carries out.
     bool awaiting_answer() const;
+
+    // Why the answer last given could not be carried out while its question stands; empty otherwise.
+    std::string_view answer_refusal() const;
 
     void answer(leaving_answer chosen);
 
@@ -113,6 +118,7 @@ private:
     window_route m_remove_window;
     scheduler::scheduler &m_loop;
     std::filesystem::path m_root;
+    std::string m_answer_refusal;
     std::shared_ptr<preset> m_preset;
     std::vector<std::weak_ptr<imgui_window>> m_configured;
     leaving_question m_asking_cb;

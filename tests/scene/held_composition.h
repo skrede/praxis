@@ -18,6 +18,7 @@
 #include <threepp/core/Object3D.hpp>
 
 #include <memory>
+#include <string>
 #include <vector>
 #include <cstddef>
 
@@ -72,13 +73,15 @@ inline preset_registry::factory composing()
 }
 
 // What a case watches an installed question and its resolution through. `outstanding` is what the
-// question answers, so a case decides whether there is anything left to decide.
+// question answers, so a case decides whether there is anything left to decide, and a keep fails
+// with `refusal` wherever a case sets one.
 struct decision_record
 {
     bool outstanding;
     int asked;
     int resolved;
     leaving_answer given;
+    std::string refusal;
 };
 
 // One composition over a scene of its own, with the window routes every preset requires already
@@ -92,7 +95,7 @@ struct held_scene
 
     explicit held_scene(bool outstanding)
             : loop(scheduler::inline_workers)
-            , watched{outstanding, 0, 0, leaving_answer{}}
+            , watched{outstanding, 0, 0, leaving_answer{}, std::string()}
             , target(threepp::Scene::create())
             , held(*target, loop, {})
     {
@@ -108,10 +111,14 @@ struct held_scene
 
                     return watched.outstanding;
                 },
-                [this](leaving_answer chosen)
+                [this](leaving_answer chosen) -> expected<void, std::string>
                 {
                     ++watched.resolved;
                     watched.given = chosen;
+                    if(chosen.keep && !watched.refusal.empty())
+                        return unexpected(watched.refusal);
+
+                    return {};
                 });
     }
 

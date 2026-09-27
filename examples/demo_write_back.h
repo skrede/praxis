@@ -13,6 +13,7 @@
 
 #include <span>
 #include <memory>
+#include <string>
 #include <vector>
 #include <cstdint>
 
@@ -46,10 +47,12 @@ public:
     void composing(config::binding bound, config::document carried);
 
     // Whether anything is left for a person to decide. A remembered answer is carried out here and
-    // then answers no, so a later leaving neither asks nor loses anything.
+    // then answers no, so a later leaving neither asks nor loses anything, except a remembered keep
+    // that cannot be written, which puts the question instead.
     bool anything_to_decide(std::span<const config::configurable *const> shown);
 
-    void resolve(scene::leaving_answer chosen, std::span<const config::configurable *const> shown);
+    // A keep that cannot be written answers why before anything is remembered, so the question stands.
+    expected<void, std::string> resolve(scene::leaving_answer chosen, std::span<const config::configurable *const> shown);
 
     void save(std::span<const config::configurable *const> shown);
 
@@ -60,7 +63,7 @@ private:
     leaving_choice m_remembered;
     documents m_mine;
 
-    void write(std::vector<config::edit> changes);
+    expected<void, std::string> write(std::vector<config::edit> changes);
 
     void remember(leaving_choice chosen);
 

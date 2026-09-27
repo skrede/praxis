@@ -51,12 +51,15 @@ void preset_window::render_body()
 // Drawn in place of the ordinary body, so nothing can be composed, released or written while a
 // question stands. Neither answer is preselected, no key reaches either, and closing the window
 // answers nothing. A release the held composition asked for names what refused, so the question says
-// what is going away and why before it asks what to do with the values.
+// what is going away and why before it asks what to do with the values, and a keep that could not be
+// carried out says why beneath it, each reason drawn as an argument rather than as a format string.
 void preset_window::render_question()
 {
     if(const std::string_view cause = m_visualizer.release_cause(); !cause.empty())
         ImGui::TextWrapped("'%.*s' refused, so what is composed cannot continue and is being unloaded.", static_cast<int>(cause.size()), cause.data());
     ImGui::TextUnformatted("What is composed differs from what the file carries.");
+    if(const std::string_view refused = m_visualizer.answer_refusal(); !refused.empty())
+        ImGui::TextWrapped("Keeping it failed: %.*s", static_cast<int>(refused.size()), refused.data());
     ImGui::Checkbox("Remember this answer", &m_remember);
     if(ImGui::Button("Keep"))
         answer(true);
