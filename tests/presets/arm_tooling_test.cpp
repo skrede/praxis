@@ -21,6 +21,7 @@
 
 #include <Eigen/Core>
 
+#include <cmath>
 #include <array>
 #include <memory>
 #include <string>
@@ -118,6 +119,21 @@ presets::arm_scenario carrying(const std::filesystem::path &description, const s
     return chosen;
 }
 
+Eigen::Vector3d world_position(threepp::Object3D &node)
+{
+    threepp::Vector3 at;
+    node.getWorldPosition(at);
+
+    return Eigen::Vector3d{at.x, at.y, at.z};
+}
+
+std::size_t offered_controls(scene::imgui_window &panel)
+{
+    tests::imgui_frame counting;
+
+    return navigable_items(counting, [&panel] { panel.render(); });
+}
+
 }
 
 // A fixture owns the directory it writes into rather than a name under the shared temporary root,
@@ -210,6 +226,53 @@ TEST_CASE("the tooling scenario offers the flange marker control in its view win
     built.draw(*composed);
 
     CHECK_FALSE(drawn(marker));
+}
+
+// The two markers the scenario installs stand at the flange and at the tool frame the arm published,
+// so the stick is read against what the scene already draws at both of its ends.
+TEST_CASE("choosing the stick in the tooling scenario's view window draws the tool as one segment from the flange to its frame", "[presets][windows]")
+{
+    const described_arm described(6, "six");
+    const written_model tool("praxis_tooling_stick.stl", 0.1f);
+    const written_model world("praxis_tooling_stick_world.stl", 0.2f);
+
+    opened_arm built;
+    const std::shared_ptr<scene::preset> composed = open_with(built, carrying(described.where, tool.where, world.where), manipulator::baseline());
+    const auto stencil                            = std::dynamic_pointer_cast<manipulator::loadable_robot_stencil>(composed->stencil);
+    REQUIRE(stencil != nullptr);
+    REQUIRE(built.loop.drain().has_value());
+    built.draw(*composed);
+
+    take_entry_at(*panel_named(composed, "View"), 4, 1);
+    built.draw(*composed);
+
+    const Eigen::Vector3d flange = world_position(*stencil->attached_at(manipulator::flange_attachment::frame_marker));
+    const Eigen::Vector3d frame  = world_position(*stencil->attached_at(manipulator::flange_attachment::tool_frame_marker));
+    threepp::Object3D *stick     = built.scene->getObjectByName<threepp::Object3D>(manipulator::loadable_robot_stencil::tool_stick_name());
+    REQUIRE(drawn(stick));
+    CHECK((world_position(*stick) - 0.5 * (flange + frame)).norm() < read_back);
+    CHECK(std::abs(static_cast<double>(stick->scale.y) - (frame - flange).norm()) < read_back);
+    REQUIRE(stencil->attached_at(manipulator::flange_attachment::tool) != nullptr);
+    CHECK_FALSE(drawn(stencil->attached_at(manipulator::flange_attachment::tool).get()));
+}
+
+// Of the two scenarios with a view window over one description, only the one carrying a tool offers a
+// control over how the tool is drawn.
+TEST_CASE("the tooling scenario offers the tool control in its view window and the forward scenario does not", "[presets][windows]")
+{
+    const described_arm described(6, "six");
+    const written_model tool("praxis_tooling_tool_control.stl", 0.1f);
+    const written_model world("praxis_tooling_tool_control_world.stl", 0.2f);
+    const presets::arm_scenario chosen = carrying(described.where, tool.where, world.where);
+
+    opened_arm tooling;
+    opened_arm forward;
+    const std::shared_ptr<scene::preset> with_tool = open_with(tooling, chosen, manipulator::baseline());
+    const std::shared_ptr<scene::preset> without   = forward.open(chosen, presets::arm_windows_forward(chosen));
+    REQUIRE(panel_named(with_tool, "View") != nullptr);
+    REQUIRE(panel_named(without, "View") != nullptr);
+
+    CHECK(offered_controls(*panel_named(with_tool, "View")) == offered_controls(*panel_named(without, "View")) + 1u);
 }
 
 // The scenario states the standing policy, so an edit to what it states fails here rather than

@@ -87,6 +87,8 @@ loadable_robot_stencil::loadable_robot_stencil(std::shared_ptr<threepp::Robot> r
         , m_robot(std::move(robot_object))
         , m_axes(threepp::Group::create())
         , m_figure(threepp::Group::create())
+        , m_tool_stick(threepp::Group::create())
+        , m_tool_segment(chain_segment_object(tool_stick_name(), m_chain_tone))
         , m_paths(threepp::Group::create())
         , m_solutions(threepp::Group::create())
         , m_ellipsoid_groups{threepp::Group::create(), threepp::Group::create()}
@@ -100,6 +102,7 @@ loadable_robot_stencil::loadable_robot_stencil(std::shared_ptr<threepp::Robot> r
         , m_marker_scale(1.0)
         , m_marker_shown(true)
         , m_tool_marker_shown(true)
+        , m_tool_mesh_shown(true)
         , m_force_capped(true)
         , m_frame(jacobian_frame::space)
         , m_view(ellipsoid_view::velocity)
@@ -128,6 +131,8 @@ loadable_robot_stencil::loadable_robot_stencil(std::shared_ptr<threepp::Robot> r
     m_decoration->add(m_columns);
     m_columns->add(m_column_parts[block_of(jacobian_block::angular)]);
     m_columns->add(m_column_parts[block_of(jacobian_block::linear)]);
+    m_tool_stick->add(m_tool_segment);
+    m_tool_stick->visible = false;
 
     if(attached.tool != nullptr)
         set_flange_attachment(flange_attachment::tool, std::move(attached.tool));
@@ -140,6 +145,7 @@ expected<void, refusal> loadable_robot_stencil::initialize()
     m_scene.add(m_robot);
     m_scene.add(m_decoration);
     m_scene.add(m_world_frame);
+    m_scene.add(m_tool_stick);
 
     return {};
 }
@@ -149,6 +155,7 @@ void loadable_robot_stencil::tear_down()
     if(m_world_object)
         m_world_frame->remove(*m_world_object);
     detach_flange_attachments();
+    m_scene.remove(*m_tool_stick);
     m_scene.remove(*m_world_frame);
     m_scene.remove(*m_decoration);
     m_scene.remove(*m_robot);
@@ -203,6 +210,7 @@ void loadable_robot_stencil::render() const
     apply_published();
     place_joint_decoration();
     place_flange_attachments();
+    place_tool_drawing();
     place_ellipsoids();
     place_jacobian_columns();
 }

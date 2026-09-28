@@ -28,6 +28,10 @@ std::shared_ptr<threepp::Object3D> chain_segment_object(std::string name, std::s
 // The mark standing at one joint origin.
 std::shared_ptr<threepp::Object3D> joint_mark_object(std::string name, std::shared_ptr<threepp::Material> tone);
 
+// Spans the two points: turned from the renderer's +Y onto the direction between them, and not drawn
+// where they coincide.
+void place_segment(threepp::Object3D &drawn, const Eigen::Vector3d &from, const Eigen::Vector3d &to);
+
 // Segment i spans points i and i+1: it sits at their midpoint, is turned from the renderer's +Y onto
 // the direction from the first to the second, and is scaled along its own y by the distance between
 // them. Two points that coincide give a segment of no length, placed at that point and not drawn.

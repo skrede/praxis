@@ -27,21 +27,6 @@ constexpr double segment_girth                 = 0.008; // the diameter of a seg
 constexpr double mark_radius_multiple          = 1.75;  // of the segment's radius
 constexpr threepp::Color::ColorName chain_tone = threepp::Color::black;
 
-void place_segment(threepp::Object3D &drawn, const Eigen::Vector3d &from, const Eigen::Vector3d &to)
-{
-    const Eigen::Vector3d along = to - from;
-    const double length         = along.norm();
-
-    transform placed         = transform::Identity();
-    placed.block<3, 1>(0, 3) = 0.5 * (from + to);
-    if(length > 0.0)
-        placed.topLeftCorner<3, 3>() = Eigen::Quaterniond::FromTwoVectors(Eigen::Vector3d::UnitY(), along / length).toRotationMatrix();
-
-    write_placement(drawn, placed);
-    drawn.scale.y = static_cast<float>(length);
-    drawn.visible = length > 0.0;
-}
-
 void place_mark(threepp::Object3D &drawn, const Eigen::Vector3d &at)
 {
     transform placed         = transform::Identity();
@@ -77,6 +62,21 @@ std::shared_ptr<threepp::Object3D> joint_mark_object(std::string name, std::shar
     drawn->name = std::move(name);
 
     return drawn;
+}
+
+void place_segment(threepp::Object3D &drawn, const Eigen::Vector3d &from, const Eigen::Vector3d &to)
+{
+    const Eigen::Vector3d along = to - from;
+    const double length         = along.norm();
+
+    transform placed         = transform::Identity();
+    placed.block<3, 1>(0, 3) = 0.5 * (from + to);
+    if(length > 0.0)
+        placed.topLeftCorner<3, 3>() = Eigen::Quaterniond::FromTwoVectors(Eigen::Vector3d::UnitY(), along / length).toRotationMatrix();
+
+    write_placement(drawn, placed);
+    drawn.scale.y = static_cast<float>(length);
+    drawn.visible = length > 0.0;
 }
 
 void place_chain_figure(std::span<const std::shared_ptr<threepp::Object3D>> segments, std::span<const std::shared_ptr<threepp::Object3D>> marks, std::span<const Eigen::Vector3d> points)

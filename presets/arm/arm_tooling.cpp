@@ -54,6 +54,8 @@ manipulator::robot_view_window::controls every_view_control()
     manipulator::robot_view_window::controls offered;
     offered.reach = true;
 
+    offered.tool = true;
+
     return every_marker_control(offered);
 }
 

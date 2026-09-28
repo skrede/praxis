@@ -25,6 +25,7 @@ constexpr float smallest_reach = 0.001f;
 constexpr float smallest_marker_scale = 0.01f;
 
 constexpr std::array<const char *, 4> model_labels{"Meshes", "Joint chain", "Meshes and chain", "None"};
+constexpr std::array<const char *, 4> tool_labels{"Mesh", "Stick", "Mesh and stick", "None"};
 
 }
 
@@ -43,9 +44,25 @@ bool model_render_draws_chain(model_render which)
     return which == model_render::chain || which == model_render::meshes_and_chain;
 }
 
+std::span<const char *const> tool_render_labels()
+{
+    return std::span<const char *const>(tool_labels);
+}
+
+bool tool_render_draws_mesh(tool_render which)
+{
+    return which == tool_render::mesh || which == tool_render::mesh_and_stick;
+}
+
+bool tool_render_draws_stick(tool_render which)
+{
+    return which == tool_render::stick || which == tool_render::mesh_and_stick;
+}
+
 robot_view_window::settings::settings(model_render chosen_model, bool chosen_decoration, std::optional<double> chosen_reach, bool chosen_marker, bool chosen_tool_marker,
-                                      double chosen_marker_scale)
-        : model(chosen_model)
+                                      double chosen_marker_scale, tool_render chosen_tool)
+        : tool(chosen_tool)
+        , model(chosen_model)
         , decoration(chosen_decoration)
         , axis_reach(chosen_reach)
         , flange_marker(chosen_marker)
@@ -66,6 +83,7 @@ robot_view_window::robot_view_window(std::string name, loadable_robot_stencil &t
         , m_marker(state.flange_marker)
         , m_tool_marker(state.tool_frame_marker)
         , m_decoration(state.decoration)
+        , m_tool(state.tool)
         , m_model(state.model)
         , m_reach_named(state.axis_reach.has_value())
         , m_controls(offered)
@@ -76,7 +94,7 @@ robot_view_window::robot_view_window(std::string name, loadable_robot_stencil &t
 
 robot_view_window::settings robot_view_window::state() const
 {
-    return settings{m_model, m_decoration, m_reach_named ? std::optional<double>(m_reach) : std::nullopt, m_marker, m_tool_marker, static_cast<double>(m_marker_scale)};
+    return settings{m_model, m_decoration, m_reach_named ? std::optional<double>(m_reach) : std::nullopt, m_marker, m_tool_marker, static_cast<double>(m_marker_scale), m_tool};
 }
 
 std::vector<config::edit> robot_view_window::settings_edits(const config::document &carried) const
@@ -90,11 +108,18 @@ void robot_view_window::show_model()
     m_stencil.set_chain_shown(model_render_draws_chain(m_model));
 }
 
+void robot_view_window::show_tool()
+{
+    m_stencil.set_tool_mesh_shown(tool_render_draws_mesh(m_tool));
+    m_stencil.set_tool_stick_shown(tool_render_draws_stick(m_tool));
+}
+
 // Every one of them reaches the stencil whether or not a control was drawn for it, which is what
 // leaves a feature nobody offered a control for standing where the composition put it.
 void robot_view_window::initialize()
 {
     show_model();
+    show_tool();
     m_stencil.set_decoration_shown(m_decoration);
     m_stencil.set_flange_marker_shown(m_marker);
     m_stencil.set_tool_marker_shown(m_tool_marker);
@@ -113,8 +138,10 @@ void robot_view_window::render()
         render_flange_marker();
     if(m_controls.tool_frame_marker)
         render_tool_frame_marker();
+    if(m_controls.tool)
+        render_tool();
 
-    const bool switched = m_controls.model || m_controls.decoration || m_controls.flange_marker || m_controls.tool_frame_marker;
+    const bool switched = m_controls.model || m_controls.decoration || m_controls.flange_marker || m_controls.tool_frame_marker || m_controls.tool;
     if(switched && (m_controls.reach || m_controls.marker_scale))
         ImGui::Separator();
     if(m_controls.reach)
@@ -133,6 +160,12 @@ void robot_view_window::render_model()
 
     if(scene::render_enum_selection("Model render", m_model, model_render_labels(), drawable))
         show_model();
+}
+
+void robot_view_window::render_tool()
+{
+    if(scene::render_enum_selection("Tool render", m_tool, tool_render_labels()))
+        show_tool();
 }
 
 void robot_view_window::render_decoration()

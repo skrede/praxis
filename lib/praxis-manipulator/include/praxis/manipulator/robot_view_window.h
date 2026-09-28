@@ -36,6 +36,22 @@ std::span<const char *const> model_render_labels();
 bool model_render_draws_meshes(model_render which);
 bool model_render_draws_chain(model_render which);
 
+// Which drawings of the tool are shown: its mesh, one segment from the flange to the tool frame, both
+// at once, or neither. Contiguous from zero as the model's entries are, and no entry reaches the
+// arm's own drawings.
+enum class tool_render : std::uint8_t
+{
+    mesh,
+    stick,
+    mesh_and_stick,
+    none
+};
+
+std::span<const char *const> tool_render_labels();
+
+bool tool_render_draws_mesh(tool_render which);
+bool tool_render_draws_stick(tool_render which);
+
 // The drawings of one arm, how far a drawn screw axis reaches and how large the markers it carries
 // are drawn, each reachable only where the composition asked for a control over it.
 class robot_view_window : public scene::imgui_window, public config::configurable
@@ -47,7 +63,8 @@ public:
     struct controls
     {
         controls()
-                : model(true)
+                : tool(false)
+                , model(true)
                 , reach(false)
                 , decoration(true)
                 , flange_marker(false)
@@ -56,6 +73,7 @@ public:
         {
         }
 
+        bool tool;
         bool model;
         bool reach;
         bool decoration;
@@ -69,6 +87,7 @@ public:
     // a drawn axis runs either way of its anchor, in metres.
     struct settings
     {
+        tool_render tool;
         model_render model;
         bool decoration;
         std::optional<double> axis_reach;
@@ -81,7 +100,7 @@ public:
         double marker_scale;
 
         explicit settings(model_render chosen_model = model_render::meshes, bool chosen_decoration = true, std::optional<double> chosen_reach = std::nullopt, bool chosen_marker = true,
-                          bool chosen_tool_marker = false, double chosen_marker_scale = 1.0);
+                          bool chosen_tool_marker = false, double chosen_marker_scale = 1.0, tool_render chosen_tool = tool_render::mesh);
     };
 
     robot_view_window(std::string name, loadable_robot_stencil &target);
@@ -112,6 +131,7 @@ private:
     bool m_marker;
     bool m_tool_marker;
     bool m_decoration;
+    tool_render m_tool;
     model_render m_model;
 
     // Whether the reach the window carries is one somebody named, rather than the size-proportional
@@ -122,10 +142,12 @@ private:
     std::string m_settings_at;
     loadable_robot_stencil &m_stencil;
 
-    // Both drawings are written on every change, so no combination can be reached by one of them
-    // being left where an earlier entry put it.
+    // Each writes both of its drawings on every change, so no combination can be reached by one of
+    // them being left where an earlier entry put it.
     void show_model();
+    void show_tool();
 
+    void render_tool();
     void render_model();
     void render_reach();
     void render_decoration();

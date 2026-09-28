@@ -199,6 +199,7 @@ praxis_add_module(manipulator
     src/task_space_window.cpp
     src/tool_attachment.cpp
     src/tool_configuration.cpp
+    src/tool_drawing.cpp
     src/tool_jog_window.cpp
     src/tool_window.cpp
     src/trajectory_executor.h

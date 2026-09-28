@@ -186,6 +186,12 @@ public:
     void set_flange_marker_shown(bool shown);
     void set_tool_marker_shown(bool shown);
 
+    // The tool is drawn as the mesh carried under the tool key, as one segment from the flange to the
+    // tool frame the arm publishes, as both or as neither. Neither switch reaches the arm's own
+    // drawings, and a segment of no length is not drawn.
+    void set_tool_mesh_shown(bool shown);
+    void set_tool_stick_shown(bool shown);
+
     // How large every marker the flange carries is drawn, as a multiple of the size it was built at,
     // so one number serves a marker built for a small machine and one built for a large one. A
     // multiple at or below zero draws nothing measurable and is declined.
@@ -326,6 +332,7 @@ public:
     static std::string solution_figure_name(std::size_t figure);
     static std::string solution_segment_name(std::size_t figure, std::size_t segment);
     static std::string solution_mark_name(std::size_t figure, std::size_t joint);
+    static std::string tool_stick_name();
 
     // The name one manipulability ellipsoid's body stands under, and the name one of its continuation
     // lines stands under. The axis is counted from one and the direction is the axis's own way where
@@ -365,6 +372,8 @@ private:
     std::shared_ptr<threepp::Object3D> m_axes;
     std::shared_ptr<threepp::Object3D> m_chain;
     std::shared_ptr<threepp::Object3D> m_figure;
+    std::shared_ptr<threepp::Object3D> m_tool_stick;
+    std::shared_ptr<threepp::Object3D> m_tool_segment;
     std::shared_ptr<threepp::Object3D> m_paths;
     std::shared_ptr<threepp::Object3D> m_solutions;
     std::array<std::shared_ptr<threepp::Object3D>, jacobian_block_count> m_ellipsoid_groups;
@@ -396,6 +405,7 @@ private:
     double m_marker_scale;
     bool m_marker_shown;
     bool m_tool_marker_shown;
+    bool m_tool_mesh_shown;
     bool m_force_capped;
     jacobian_frame m_frame;
     ellipsoid_view m_view;
@@ -414,6 +424,7 @@ private:
     void detach_flange_attachments();
     void place_flange_attachments() const;
     void show_flange_markers() const;
+    void place_tool_drawing() const;
     void rebuild_decoration();
     void rebuild_chain();
     void clear_chain();
