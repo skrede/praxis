@@ -127,7 +127,6 @@ public:
 
     // A pose parameter named tool_pose or tool_poses is where the tool centre point is commanded to
     // stand; the flange pose that reaches it is derived on the way to the solver.
-    void preview_tool_frame_jog(const transform &tool_pose, const Eigen::Vector3d &offset, const rotation &orientation);
     void preview_task_space_pose(const transform &tool_pose);
     void preview_task_space_screw(const transform &tool_pose, const Eigen::Vector3d &w, const Eigen::Vector3d &q, double theta_radians, double pitch);
     void preview_joint_configuration(const joint_vector &positions);

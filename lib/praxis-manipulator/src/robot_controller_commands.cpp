@@ -74,22 +74,6 @@ void robot_controller::report_refusal(std::string_view named, refusal reason, re
     tear_down_if_fatal(named, reason, standing, formed_from, m_unload_cb);
 }
 
-void robot_controller::preview_tool_frame_jog(const transform &tool_pose, const Eigen::Vector3d &offset, const rotation &orientation)
-{
-    if(executing())
-        return;
-
-    // The displacement is read in the tool pose's own frame, so it postmultiplies.
-    const transform target = m_robot.flange_pose_from_tool_pose(tool_pose * m_frames.transformation_matrix_from_rotation_position(orientation, offset));
-
-    const std::uint64_t before                    = m_robot.solver().solve_count();
-    const expected<joint_vector, refusal> reached = kept(before, m_motion.task_space_pose(m_robot.solver(), target, m_robot.joint_positions()));
-    if(reached)
-        m_robot.set_joint_positions(*reached);
-    else
-        report_refusal("motion.task_space_pose", reached.error(), refusal_standing::per_request, request_origin::edited);
-}
-
 void robot_controller::preview_task_space_pose(const transform &tool_pose)
 {
     if(executing())

@@ -1303,7 +1303,6 @@ lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	set_time_sc
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	time_scaling	prototype	() const	typename:time_scaling_choice
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	set_trapezoid_bounds	prototype	(std::optional<path_parameter_bounds> held_to)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	trapezoid_bounds	prototype	() const	typename:std::optional<path_parameter_bounds>
-lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_tool_frame_jog	prototype	(const transform & tool_pose,const Eigen::Vector3d & offset,const rotation & orientation)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_task_space_pose	prototype	(const transform & tool_pose)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_task_space_screw	prototype	(const transform & tool_pose,const Eigen::Vector3d & w,const Eigen::Vector3d & q,double theta_radians,double pitch)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/robot_controller.h	preview_joint_configuration	prototype	(const joint_vector & positions)	typename:void
@@ -1743,8 +1742,11 @@ lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	m_frame	memb
 lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	m_jog_euler_degrees	member	-	typename:Eigen::Vector3f
 lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	m_edited	member	-	typename:std::shared_ptr<edited_pose>
 lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	m_control_mode	member	-	typename:option_cycle<control_mode,2>
+lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	preview	prototype	(const transform & tool_pose)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	render_jog_start_pose	prototype	(const arm_snapshot & seen)	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	render_tool_frame_jog	prototype	(const arm_snapshot & seen)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	fold_orientation	prototype	(const transform & reached)	typename:bool
+lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	release_step	prototype	(const transform & reached,bool turned)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	tool_window	class	-	-
@@ -2813,7 +2815,7 @@ lib/praxis-scene/include/praxis/scene/widgets.h	__anone270ae8f0102	function	() 	
 lib/praxis-scene/include/praxis/scene/widgets.h	__anone270ae8f0202	function	() 	-
 lib/praxis-scene/include/praxis/scene/widgets.h	__anone270ae8f0302	function	() 	-
 lib/praxis-scene/include/praxis/scene/widgets.h	render_float_slider_with_reset	function	(float & f,const char * label,float min,float max,const std::function<void ()> & on_change=nullptr)	typename:void
-lib/praxis-scene/include/praxis/scene/widgets.h	render_float3_slider	function	(Eigen::Vector3f & vector,const char * const labels[3],float min,float max,const std::function<void (int idx)> & on_change=nullptr)	typename:void
+lib/praxis-scene/include/praxis/scene/widgets.h	render_float3_slider	function	(Eigen::Vector3f & vector,const char * const labels[3],float min,float max,const std::function<void (int idx)> & on_change=nullptr,const std::function<void (int idx)> & on_release=nullptr)	typename:void
 lib/praxis-scene/include/praxis/scene/widgets.h	render_float3_slider_with_reset	function	(Eigen::Vector3f & vector,const char * const labels[3],float min,float max,const std::function<void (int idx)> & on_change=nullptr)	typename:void
 lib/praxis-scene/include/praxis/scene/widgets.h	__anone270ae8f0402	function	() 	-
 lib/praxis-scene/include/praxis/scene/widgets.h	__anone270ae8f0502	function	() 	-

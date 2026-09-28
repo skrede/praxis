@@ -18,6 +18,7 @@
 
 #include <imgui.h>
 
+#include <limits>
 #include <memory>
 #include <vector>
 #include <cstddef>
@@ -120,6 +121,40 @@ std::shared_ptr<edited_pose> held_elsewhere()
     return held;
 }
 
+std::shared_ptr<edited_pose> held_at_chosen()
+{
+    auto held      = holding(chosen_position, chosen_euler_degrees);
+    held->standing = pose_standing::held;
+
+    return held;
+}
+
+void holds(const edited_pose &held, const rotation &orientation, const Eigen::Vector3d &position)
+{
+    CHECK(pose_matrix(held, reference).topLeftCorner<3, 3>().isApprox(orientation, float_step));
+    CHECK(pose_matrix(held, reference).topRightCorner<3, 1>().isApprox(position, float_step));
+}
+
+void stands_at_chosen(const edited_pose &held)
+{
+    CHECK(held.position == chosen_position.cast<float>());
+    CHECK(held.euler_degrees == chosen_euler_degrees.cast<float>());
+    CHECK(held.standing == pose_standing::held);
+}
+
+Eigen::Vector3d not_finite_angles(const rotation &, axis_order)
+{
+    return Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN());
+}
+
+rigid_motion::frame_ops extracting_with(Eigen::Vector3d (*extraction)(const rotation &, axis_order))
+{
+    rigid_motion::frame_ops refusing    = reference;
+    refusing.euler_from_rotation_matrix = extraction;
+
+    return refusing;
+}
+
 drawing over_both(tool_jog_window &first, tool_jog_window &second, const char *focused)
 {
     return [&first, &second, focused]
@@ -152,10 +187,17 @@ void draw_reference(const edited_pose &edited)
 
 // The angle sliders are the pane's last three rows and the offset sliders the three above them, so
 // the last row is the third jog angle and three steps up from it is the third jog offset.
-void enter_last_angle(imgui_frame &frames, const drawing &draw)
+void enter_angle(imgui_frame &frames, const drawing &draw, int rows_above_last)
 {
     reach(frames, draw, ImGuiKey_End);
+    for(int step = 0; step < rows_above_last; ++step)
+        tap(frames, draw, ImGuiKey_UpArrow);
     type_at_cursor(frames, draw, typed_angle);
+}
+
+void enter_last_angle(imgui_frame &frames, const drawing &draw)
+{
+    enter_angle(frames, draw, 0);
 }
 
 void enter_last_offset(imgui_frame &frames, const drawing &draw)
@@ -197,6 +239,16 @@ void take_first_euler_order(imgui_frame &frames, const drawing &draw)
     tap(frames, draw, ImGuiKey_Space);
 }
 
+// A context created while another stands does not become current, so the stage is gone before any
+// comparison draws.
+void driven(tool_jog_window &panel, void (*sequence)(imgui_frame &, const drawing &))
+{
+    imgui_frame frames;
+    const drawing draw = over(panel);
+    start_navigating(frames, draw);
+    sequence(frames, draw);
+}
+
 // A focus request naming the panel closes any popup standing over it, so the frames that drive the
 // order selector's list draw the panel and ask for nothing.
 drawing over_alone(tool_jog_window &panel)
@@ -235,9 +287,9 @@ std::size_t reset_over(const arm_snapshot &seen, bool entering)
     return frames.signature();
 }
 
-rotation turned_by(double third_angle_degrees, axis_order order)
+rotation turned_by(int axis, double degrees, axis_order order)
 {
-    return reference.rotation_matrix_from_euler(Eigen::Vector3d{0.0, 0.0, third_angle_degrees * radians_per_degree}, order);
+    return reference.rotation_matrix_from_euler(Eigen::Vector3d::Unit(axis) * degrees * radians_per_degree, order);
 }
 
 }
@@ -292,7 +344,7 @@ TEST_CASE("an angle entered at a tool jog slider is previewed as a jog about the
     static_cast<void>(loop.drain());
 
     REQUIRE(!jogged.empty());
-    lands_at(jogged.back(), jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(jog_angle_degrees, held->order)));
+    lands_at(jogged.back(), jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(2, jog_angle_degrees, held->order)));
 }
 
 TEST_CASE("an offset entered at a tool jog slider is previewed as the offset the jog carries", "[manipulator][controls]")
@@ -315,14 +367,40 @@ TEST_CASE("an offset entered at a tool jog slider is previewed as the offset the
     CHECK(!jogged.back().topRightCorner<3, 1>().isApprox(chosen_position, float_step));
 }
 
+TEST_CASE("a Z offset taken after a turn runs along the turned z", "[manipulator][controls]")
+{
+    jogged.clear();
+
+    praxis::scheduler::scheduler loop(inline_workers, clock_source{&reading});
+    const composed_arm placed               = jogging(loop);
+    const std::shared_ptr<edited_pose> held = holding(chosen_position, chosen_euler_degrees);
+    placed.publishing->publish(std::make_shared<const arm_snapshot>(chosen_snapshot()));
+    tool_jog_window panel("Tool frame jog", placed.seen, placed.owned, reference, held, {mode::preview});
+
+    imgui_frame frames;
+    const drawing draw = over(panel);
+    start_navigating(frames, draw);
+    enter_angle(frames, draw, 1);
+    enter_last_offset(frames, draw);
+    static_cast<void>(loop.drain());
+
+    REQUIRE(!jogged.empty());
+    const rotation turned = chosen_orientation * turned_by(1, jog_angle_degrees, held->order);
+    lands_at(jogged.back(), jogged_to(chosen_position, turned, Eigen::Vector3d{0.0, 0.0, jog_offset}, rotation::Identity()));
+    CHECK(!jogged.back().topRightCorner<3, 1>().isApprox(
+            jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d{0.0, 0.0, jog_offset}, rotation::Identity()).topRightCorner<3, 1>(), float_step));
+    holds(*held, turned, jogged.back().topRightCorner<3, 1>());
+}
+
 TEST_CASE("a tool jog window in simulation issues nothing at all, because the group is preview only", "[manipulator][controls]")
 {
     jogged.clear();
 
     praxis::scheduler::scheduler loop(inline_workers, clock_source{&reading});
-    const composed_arm placed = jogging(loop);
+    const composed_arm placed               = jogging(loop);
+    const std::shared_ptr<edited_pose> held = holding(chosen_position, chosen_euler_degrees);
     placed.publishing->publish(std::make_shared<const arm_snapshot>(chosen_snapshot()));
-    tool_jog_window panel("Tool frame jog", placed.seen, placed.owned, reference, holding(chosen_position, chosen_euler_degrees), {mode::simulation});
+    tool_jog_window panel("Tool frame jog", placed.seen, placed.owned, reference, held, {mode::simulation});
 
     imgui_frame frames;
     const drawing draw = over(panel);
@@ -332,6 +410,7 @@ TEST_CASE("a tool jog window in simulation issues nothing at all, because the gr
     static_cast<void>(loop.drain());
 
     CHECK(jogged.empty());
+    CHECK(held->position.cast<double>().isApprox(chosen_position, float_step));
 }
 
 TEST_CASE("a tool jog window's seeding control reaches the shared pose, and only over a published tool pose", "[manipulator][controls]")
@@ -367,7 +446,7 @@ TEST_CASE("a tool jog window's seeding control reaches the shared pose even wher
     CHECK(held->euler_degrees.cast<double>().isApprox(chosen_euler_degrees, float_step));
 }
 
-TEST_CASE("a tool jog window's seeding control clears its own jog, and only over a published tool pose", "[manipulator][controls]")
+TEST_CASE("a tool jog window's seeding control takes back a released step, and only over a published tool pose", "[manipulator][controls]")
 {
     CHECK(reset_over(chosen_snapshot(), true) == reset_over(chosen_snapshot(), false));
     CHECK(reset_over(poseless_snapshot(), true) != reset_over(poseless_snapshot(), false));
@@ -471,7 +550,7 @@ TEST_CASE("a start pose entered before the tool offset was known is not overwrit
     CHECK(held->position[2] == Catch::Approx(flange_position[2]).margin(float_step));
 }
 
-TEST_CASE("two tool jog windows over one shared pose read one pose and jog independently", "[manipulator][controls]")
+TEST_CASE("two tool jog windows over one shared pose chain their steps, each starting where the other let go", "[manipulator][controls]")
 {
     jogged.clear();
 
@@ -490,29 +569,28 @@ TEST_CASE("two tool jog windows over one shared pose read one pose and jog indep
     static_cast<void>(loop.drain());
 
     REQUIRE(!jogged.empty());
-    lands_at(jogged.back(), jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(jog_angle_degrees, held->order)));
+    const Eigen::Vector3d stepped = chosen_position + chosen_orientation * Eigen::Vector3d{0.0, 0.0, jog_offset};
+    lands_at(jogged.back(), jogged_to(stepped, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(2, jog_angle_degrees, held->order)));
 }
 
-TEST_CASE("a tool jog's own rotation is read in the order the shared start pose names, whichever panel set it", "[manipulator][controls]")
+TEST_CASE("a tool jog window in preview jogs from the start pose its position row was moved to", "[manipulator][controls]")
 {
     jogged.clear();
 
     praxis::scheduler::scheduler loop(inline_workers, clock_source{&reading});
-    const composed_arm placed                 = jogging(loop);
-    const std::shared_ptr<edited_pose> shared = holding(chosen_position, Eigen::Vector3d::Zero());
-    shared->order                             = axis_order::xyz;
+    const composed_arm placed               = jogging(loop);
+    const std::shared_ptr<edited_pose> held = holding(chosen_position, chosen_euler_degrees);
     placed.publishing->publish(std::make_shared<const arm_snapshot>(chosen_snapshot()));
-    tool_jog_window panel("Tool frame jog", placed.seen, placed.owned, reference, shared, {mode::preview});
+    tool_jog_window panel("Tool frame jog", placed.seen, placed.owned, reference, held, {mode::preview});
 
     imgui_frame frames;
     const drawing draw = over(panel);
     start_navigating(frames, draw);
-    enter_last_angle(frames, draw);
+    enter_start_position(frames, draw);
     static_cast<void>(loop.drain());
 
     REQUIRE(!jogged.empty());
-    lands_at(jogged.back(), jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(jog_angle_degrees, axis_order::xyz)));
-    CHECK(!jogged.back().isApprox(jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(jog_angle_degrees, axis_order::zyx)), float_step));
+    lands_at(jogged.back(), jogged_to(Eigen::Vector3d{jog_offset, chosen_position[1], chosen_position[2]}, chosen_orientation, Eigen::Vector3d::Zero(), rotation::Identity()));
 }
 
 TEST_CASE("a tool jog window in preview jogs from the start pose the orientation order it was moved to composes", "[manipulator][controls]")
@@ -537,7 +615,69 @@ TEST_CASE("a tool jog window in preview jogs from the start pose the orientation
     CHECK(!jogged.back().topLeftCorner<3, 3>().isApprox(chosen_orientation, float_step));
 }
 
-TEST_CASE("a tool jog window moved to another order re-issues its jog with its own rotation read in that order", "[manipulator][controls]")
+TEST_CASE("a released tool jog step becomes the shared pose and its slider returns to zero", "[manipulator][controls]")
+{
+    jogged.clear();
+
+    praxis::scheduler::scheduler loop(inline_workers, clock_source{&reading});
+    const composed_arm placed               = jogging(loop);
+    const std::shared_ptr<edited_pose> held = holding(chosen_position, chosen_euler_degrees);
+    placed.publishing->publish(std::make_shared<const arm_snapshot>(chosen_snapshot()));
+    tool_jog_window panel("Tool frame jog", placed.seen, placed.owned, reference, held, {mode::preview});
+
+    driven(panel, &enter_last_offset);
+    static_cast<void>(loop.drain());
+
+    CHECK(held->position.cast<double>().isApprox(chosen_position + chosen_orientation * Eigen::Vector3d{0.0, 0.0, jog_offset}, float_step));
+    CHECK(held->euler_degrees.cast<double>().isApprox(chosen_euler_degrees, float_step));
+    CHECK(held->standing == pose_standing::held);
+    CHECK(geometry_of([&panel] { panel.render(); }) == geometry_of([&held] { draw_reference(*held); }));
+}
+
+TEST_CASE("a turn the orientation conversion refuses leaves the shared pose as it stood and returns the tool to it", "[manipulator][controls]")
+{
+    jogged.clear();
+
+    praxis::scheduler::scheduler loop(inline_workers, clock_source{&reading});
+    const composed_arm placed               = jogging(loop);
+    const std::shared_ptr<edited_pose> held = held_at_chosen();
+    placed.publishing->publish(std::make_shared<const arm_snapshot>(chosen_snapshot()));
+    const rigid_motion::frame_ops refusing = GENERATE(extracting_with(&rigid_motion::inert::euler_from_rotation_matrix), extracting_with(&not_finite_angles));
+    tool_jog_window panel("Tool frame jog", placed.seen, placed.owned, refusing, held, {mode::preview});
+
+    driven(panel, &enter_last_angle);
+    static_cast<void>(loop.drain());
+
+    stands_at_chosen(*held);
+    REQUIRE(jogged.size() >= 2u);
+    lands_at(jogged.back(), jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), rotation::Identity()));
+    lands_at(jogged[jogged.size() - 2u], jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(2, jog_angle_degrees, held->order)));
+    CHECK(geometry_of([&panel] { panel.render(); }) == geometry_of([&held] { draw_reference(*held); }));
+}
+
+TEST_CASE("a tool jog's own rotation is read in the order the shared start pose names, whichever panel set it", "[manipulator][controls]")
+{
+    jogged.clear();
+
+    praxis::scheduler::scheduler loop(inline_workers, clock_source{&reading});
+    const composed_arm placed                 = jogging(loop);
+    const std::shared_ptr<edited_pose> shared = holding(chosen_position, Eigen::Vector3d::Zero());
+    shared->order                             = axis_order::xyz;
+    placed.publishing->publish(std::make_shared<const arm_snapshot>(chosen_snapshot()));
+    tool_jog_window panel("Tool frame jog", placed.seen, placed.owned, reference, shared, {mode::preview});
+
+    imgui_frame frames;
+    const drawing draw = over(panel);
+    start_navigating(frames, draw);
+    enter_last_angle(frames, draw);
+    static_cast<void>(loop.drain());
+
+    REQUIRE(!jogged.empty());
+    lands_at(jogged.back(), jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(2, jog_angle_degrees, axis_order::xyz)));
+    CHECK(!jogged.back().isApprox(jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(2, jog_angle_degrees, axis_order::zyx)), float_step));
+}
+
+TEST_CASE("a tool jog window moved to another order re-issues the shared pose in that order and takes its next turn about the axis that order assigns", "[manipulator][controls]")
 {
     jogged.clear();
 
@@ -552,29 +692,12 @@ TEST_CASE("a tool jog window moved to another order re-issues its jog with its o
     enter_last_angle(frames, over(panel));
     take_first_euler_order(frames, over_alone(panel));
     static_cast<void>(loop.drain());
-
-    REQUIRE(!jogged.empty());
-    const rotation reread = reference.rotation_matrix_from_euler(chosen_euler_degrees * radians_per_degree, first_offered);
-    lands_at(jogged.back(), jogged_to(chosen_position, reread, Eigen::Vector3d::Zero(), turned_by(jog_angle_degrees, first_offered)));
-    CHECK(!jogged.back().isApprox(jogged_to(chosen_position, reread, Eigen::Vector3d::Zero(), turned_by(jog_angle_degrees, axis_order::zyx)), float_step));
-}
-
-TEST_CASE("a tool jog window in preview jogs from the start pose its position row was moved to", "[manipulator][controls]")
-{
-    jogged.clear();
-
-    praxis::scheduler::scheduler loop(inline_workers, clock_source{&reading});
-    const composed_arm placed               = jogging(loop);
-    const std::shared_ptr<edited_pose> held = holding(chosen_position, chosen_euler_degrees);
-    placed.publishing->publish(std::make_shared<const arm_snapshot>(chosen_snapshot()));
-    tool_jog_window panel("Tool frame jog", placed.seen, placed.owned, reference, held, {mode::preview});
-
-    imgui_frame frames;
-    const drawing draw = over(panel);
-    start_navigating(frames, draw);
-    enter_start_position(frames, draw);
+    const std::size_t mark = jogged.size();
+    const rotation reread  = reference.rotation_matrix_from_euler(held->euler_degrees.cast<double>() * radians_per_degree, first_offered);
+    enter_last_angle(frames, over(panel));
     static_cast<void>(loop.drain());
 
-    REQUIRE(!jogged.empty());
-    lands_at(jogged.back(), jogged_to(Eigen::Vector3d{jog_offset, chosen_position[1], chosen_position[2]}, chosen_orientation, Eigen::Vector3d::Zero(), rotation::Identity()));
+    lands_at(jogged.at(mark - 1), jogged_to(chosen_position, reread, Eigen::Vector3d::Zero(), rotation::Identity()));
+    lands_at(jogged.back(), jogged_to(chosen_position, reread, Eigen::Vector3d::Zero(), turned_by(2, jog_angle_degrees, first_offered)));
+    CHECK(!jogged.back().isApprox(jogged_to(chosen_position, reread, Eigen::Vector3d::Zero(), turned_by(2, jog_angle_degrees, axis_order::zyx)), float_step));
 }

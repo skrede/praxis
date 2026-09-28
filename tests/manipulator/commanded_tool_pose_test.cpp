@@ -49,7 +49,7 @@ rotation thirty_degrees_about_z()
 
 void jog(commanded_arm &placed, const Eigen::Vector3d &offset, const rotation &turned)
 {
-    placed.control().preview_tool_frame_jog(placed.tool_pose(), offset, turned);
+    placed.control().preview_task_space_pose(placed.tool_pose() * rigid_motion::transformation_matrix_from_rotation_position(turned, offset));
 }
 
 double travel_of(commanded_arm &placed, const Eigen::Vector3d &offset, const rotation &turned)

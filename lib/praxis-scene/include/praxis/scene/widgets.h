@@ -71,14 +71,17 @@ inline void render_float_slider_with_reset(float &f, const char *label, float mi
     }
 }
 
-inline void render_float3_slider(Eigen::Vector3f &vector, const char *const labels[3], float min, float max, const std::function<void(int idx)> &on_change = nullptr)
+// on_release answers for a component let go after an edit, whether dragged or typed.
+inline void render_float3_slider(Eigen::Vector3f &vector, const char *const labels[3], float min, float max, const std::function<void(int idx)> &on_change = nullptr,
+                                 const std::function<void(int idx)> &on_release = nullptr)
 {
-    if(ImGui::SliderFloat(labels[0], &vector[0], min, max) && on_change != nullptr)
-        on_change(0);
-    if(ImGui::SliderFloat(labels[1], &vector[1], min, max) && on_change != nullptr)
-        on_change(1);
-    if(ImGui::SliderFloat(labels[2], &vector[2], min, max) && on_change != nullptr)
-        on_change(2);
+    for(int idx = 0; idx < 3; ++idx)
+    {
+        if(ImGui::SliderFloat(labels[idx], &vector[idx], min, max) && on_change != nullptr)
+            on_change(idx);
+        if(ImGui::IsItemDeactivatedAfterEdit() && on_release != nullptr)
+            on_release(idx);
+    }
 }
 
 inline void render_float3_slider_with_reset(Eigen::Vector3f &vector, const char *const labels[3], float min, float max, const std::function<void(int idx)> &on_change = nullptr)

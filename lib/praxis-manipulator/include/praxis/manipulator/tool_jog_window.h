@@ -23,8 +23,8 @@
 
 namespace praxis::manipulator {
 
-// An offset and a rotation applied in the tool frame of a start pose. The start pose is the share the
-// composer hands in; the offset and the rotation are the window's own and are in metres and degrees.
+// Each slider steps the shared pose within its own frame by the one component it carries, previewed
+// while held; letting go makes the stepped pose the shared pose. Steps are metres and degrees.
 class tool_jog_window : public scene::imgui_window, public config::configurable
 {
 public:
@@ -66,8 +66,11 @@ private:
     std::shared_ptr<edited_pose> m_edited;
     option_cycle<control_mode, 2> m_control_mode;
 
+    void preview(const transform &tool_pose);
     bool render_jog_start_pose(const arm_snapshot &seen);
     void render_tool_frame_jog(const arm_snapshot &seen);
+    bool fold_orientation(const transform &reached);
+    void release_step(const transform &reached, bool turned);
 };
 
 }

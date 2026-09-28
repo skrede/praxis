@@ -427,7 +427,6 @@ TEST_CASE("a_preview_a_slot_refuses_leaves_the_arm_at_exactly_the_configuration_
 
     controller.preview_task_space_pose(planar_pose(0.9, -0.7));
     controller.preview_task_space_screw(transform::Identity(), Eigen::Vector3d::UnitZ(), Eigen::Vector3d::Zero(), 0.3, 0.0);
-    controller.preview_tool_frame_jog(transform::Identity(), Eigen::Vector3d::UnitX(), rotation::Identity());
 
     CHECK_FALSE(controller.executing());
     CHECK((robot.joint_positions().array() == before.array()).all());
