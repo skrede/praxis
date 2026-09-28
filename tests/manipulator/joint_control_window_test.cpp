@@ -114,11 +114,8 @@ void draw_reference(std::span<const char *const> labels, const Eigen::VectorXf &
         ImGui::InputFloat(labels[static_cast<std::size_t>(field)], &held[field], 1.f, 10.f);
     static_cast<void>(ImGui::Button("Reset to zero"));
     static_cast<void>(ImGui::Button("Reset to current"));
-    if(drawn == control_mode::simulation)
-    {
-        ImGui::SameLine();
-        static_cast<void>(ImGui::Button("Move"));
-    }
+    ImGui::SameLine();
+    static_cast<void>(ImGui::Button(drawn == control_mode::simulation ? "Move" : "Set"));
     ImGui::End();
 }
 
@@ -131,15 +128,15 @@ void enter_first_joint(imgui_frame &frames, const drawing &draw)
     type_at_cursor(frames, draw, typed_joint);
 }
 
-// The pane's last row carries the seeding control and the move control side by side, and a row is
-// entered at its leftmost.
+// The pane's last row carries the seeding control and the mode's command control side by side, and a
+// row is entered at its leftmost.
 void press_seed(imgui_frame &frames, const drawing &draw)
 {
     reach(frames, draw, ImGuiKey_End);
     tap(frames, draw, ImGuiKey_Space);
 }
 
-void press_move(imgui_frame &frames, const drawing &draw)
+void press_command(imgui_frame &frames, const drawing &draw)
 {
     reach(frames, draw, ImGuiKey_End);
     tap(frames, draw, ImGuiKey_RightArrow);
@@ -310,11 +307,33 @@ TEST_CASE("a joint control window's move carries the configuration its fields ho
     const drawing draw = over(panel);
     start_navigating(frames, draw);
     enter_first_joint(frames, draw);
-    press_move(frames, draw);
+    press_command(frames, draw);
     static_cast<void>(loop.drain());
 
     REQUIRE(requested.size() == 1u);
     CHECK(is_approx_equal(requested.front(), configuration(to_radians(typed_joint_degrees), 0.0), round_trip));
+}
+
+TEST_CASE("a joint control window in preview returns an arm moved elsewhere to its fields through its set control", "[manipulator][controls]")
+{
+    requested.clear();
+
+    praxis::scheduler::scheduler loop(inline_workers, clock_source{&reading});
+    const composed_arm placed = composing(loop);
+    placed.publishing->publish(std::make_shared<const arm_snapshot>(upright(chosen_joints)));
+    joint_control_window panel("Joint control", placed.seen, placed.owned, joint_control_window::settings{control_mode::preview});
+
+    command(placed.owned, [](robot_controller &, scene_robot &driven) { driven.set_joint_positions(standing_configuration); });
+    static_cast<void>(loop.drain());
+
+    imgui_frame frames;
+    const drawing draw = over(panel);
+    start_navigating(frames, draw);
+    press_command(frames, draw);
+    static_cast<void>(loop.drain());
+
+    CHECK(is_approx_equal(held_by(placed, loop), chosen_joints, round_trip));
+    CHECK(requested.empty());
 }
 
 TEST_CASE("a joint control window's seeding control re-labels when the publication's joint count changed", "[manipulator][controls]")

@@ -119,15 +119,15 @@ void joint_control_window::render_joint_space(const arm_snapshot &seen)
 
 void joint_control_window::render_joint_commands(const joint_vector &commanded, bool edited)
 {
+    ImGui::SameLine();
     if(m_control_mode == control_mode::preview)
     {
-        if(edited)
+        if(ImGui::Button("Set") || edited)
             preview_configuration(commanded);
 
         return;
     }
 
-    ImGui::SameLine();
     if(ImGui::Button("Move"))
         move_to_configuration(commanded);
 }
