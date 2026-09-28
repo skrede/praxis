@@ -12,8 +12,8 @@
 
 namespace praxis::manipulator {
 
-// `at` is a key path the caller owns, and the four leaves are declared beneath it. A document
-// carrying some of them leaves the rest where the settings struct opens them.
+// `at` is a key path the caller owns, and every leaf is declared beneath it. A document carrying
+// some of them leaves the rest where the settings struct opens them.
 void declare_robot_view(config::declaration &shape, std::string_view at);
 robot_view_window::settings read_robot_view(const config::document &values, std::string_view at);
 std::vector<config::edit> write_robot_view(const robot_view_window::settings &state, std::string_view at);

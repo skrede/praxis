@@ -19,7 +19,11 @@
 
 #include <threepp/math/Box3.hpp>
 
+#include <threepp/objects/Mesh.hpp>
+
 #include <threepp/scenes/Scene.hpp>
+
+#include <threepp/geometries/BoxGeometry.hpp>
 
 #include <imgui.h>
 
@@ -137,6 +141,7 @@ double extent_of(threepp::Object3D &measured)
 
 void reads_as(const opening &read, const opening &written)
 {
+    CHECK(read.tool == written.tool);
     CHECK(read.model == written.model);
     CHECK(read.decoration == written.decoration);
     CHECK(read.axis_reach == written.axis_reach);
@@ -302,6 +307,16 @@ void choose_entry(scene::imgui_window &panel, int row, int entry)
     tap(frames, draw, ImGuiKey_Space);
 }
 
+// The published tool frame stands off the flange, so a stick the stencil was told to draw has a length
+// to be drawn at.
+void seat_tool(stage &headless)
+{
+    arm_snapshot seen                  = upright();
+    seen.tool_offset.block<3, 1>(0, 3) = Eigen::Vector3d(0.1, 0.05, 0.2);
+    headless.published->publish(std::make_shared<const arm_snapshot>(seen));
+    headless.shown.set_flange_attachment(flange_attachment::tool, threepp::Mesh::create(threepp::BoxGeometry::create(0.05f, 0.05f, 0.05f)));
+}
+
 }
 
 TEST_CASE("every view field written through the declared keys reads back as it was set", "[manipulator][configuration]")
@@ -359,6 +374,55 @@ TEST_CASE("a document carrying a model spelling the entry set does not name is r
     REQUIRE(answered.failure.has_value());
     CHECK(answered.failure->code == config::error_code::rejected_content);
     reads_as(read_robot_view(answered.values, view_at), opening{});
+}
+
+TEST_CASE("every tool entry written through the declared keys reads back as it was written", "[manipulator][configuration]")
+{
+    for(const tool_render chosen : {tool_render::mesh, tool_render::stick, tool_render::mesh_and_stick, tool_render::none})
+    {
+        const opening named{model_render::meshes, true, std::nullopt, true, false, 1.0, chosen};
+        reads_as(read_robot_view(saved_and_reloaded("view-tool-round-trip-" + std::to_string(static_cast<int>(chosen)) + ".xml", write_robot_view(named, view_at)), view_at), named);
+    }
+}
+
+TEST_CASE("a document naming no tool entry opens the tool as its mesh", "[manipulator][configuration]")
+{
+    const opening read = read_robot_view(carrying("view-no-tool.xml", "<view model=\"Meshes\"/>"), view_at);
+    REQUIRE(read.tool == tool_render::mesh);
+
+    stage headless;
+    seat_tool(headless);
+    controls offered;
+    offered.tool = true;
+    robot_view_window panel(panel_title, headless.shown, offered, read);
+    panel.initialize();
+    headless.draw();
+
+    threepp::Object3D *const stick = headless.scene->getObjectByName<threepp::Object3D>(loadable_robot_stencil::tool_stick_name());
+    REQUIRE(stick != nullptr);
+    CHECK(drawn(headless.shown.attached_at(flange_attachment::tool).get()));
+    CHECK_FALSE(drawn(stick));
+}
+
+TEST_CASE("a document carrying a tool spelling the entry set does not name is refused and reads as the opening entry", "[manipulator][configuration]")
+{
+    const config::outcome answered = answering("view-unnamed-tool-entry.xml", "<view tool=\"a spelling no entry carries\"/>");
+
+    REQUIRE(answered.failure.has_value());
+    CHECK(answered.failure->code == config::error_code::rejected_content);
+    reads_as(read_robot_view(answered.values, view_at), opening{});
+}
+
+TEST_CASE("a view window standing at its document's tool entry offers nothing", "[manipulator][configuration]")
+{
+    stage headless;
+    const config::document carried = carrying("view-stick-standing.xml", "<view tool=\"Stick\"/>");
+    robot_view_window panel(panel_title, headless.shown, controls(), read_robot_view(carried, view_at), std::string(view_at));
+    REQUIRE(panel.state().tool == tool_render::stick);
+
+    const config::configurable *answered = panel.as_configurable();
+    REQUIRE(answered != nullptr);
+    CHECK(answered->settings_edits(carried).empty());
 }
 
 TEST_CASE("a window draws the controls its composition asked for and no others", "[manipulator][controls]")

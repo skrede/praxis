@@ -1,19 +1,27 @@
 #include "opened_arm.h"
 #include "captured_log.h"
 #include "carried_models.h"
+#include "saved_document.h"
 #include "composed_panels.h"
+#include "scratch_directory.h"
 
 #include "praxis/presets/arm.h"
+#include "praxis/presets/arm_registration.h"
 
 #include "praxis/manipulator/robot.h"
 #include "praxis/manipulator/tool_window.h"
 #include "praxis/manipulator/capabilities.h"
 #include "praxis/manipulator/baseline/robot.h"
+#include "praxis/manipulator/view_configuration.h"
 #include "praxis/manipulator/world_object_window.h"
 #include "praxis/manipulator/loadable_robot_stencil.h"
 
 #include "praxis/scene/preset.h"
 #include "praxis/scene/imgui_window.h"
+
+#include "praxis/config/store.h"
+#include "praxis/config/writer.h"
+#include "praxis/config/document.h"
 
 #include "praxis/rigid_motion/axis_order.h"
 
@@ -132,6 +140,42 @@ std::size_t offered_controls(scene::imgui_window &panel)
     tests::imgui_frame counting;
 
     return navigable_items(counting, [&panel] { panel.render(); });
+}
+
+// The document spelling of `carrying`'s tool offset, with `view` written as the document's robot view.
+config::location tooling_document(const char *named, const std::filesystem::path &model, const std::string &view)
+{
+    const std::filesystem::path directory = shared_scratch_directory() / named;
+    std::filesystem::create_directories(directory);
+
+    const std::string offset = "<kinematics><offset x=\"0.1\" y=\"0.2\" z=\"0.3\"/></kinematics>";
+    const std::string tool   = "<tool active=\"true\" model=\"" + model.string() + "\" view=\"kinematics_transform\">" + offset + "</tool>";
+
+    return arm_document(directory, "tooled.xml", arm_body("tool and world object", tool + view));
+}
+
+std::shared_ptr<scene::preset> opened_from(opened_arm &stage, const config::document &carried, const std::vector<std::filesystem::path> &roots)
+{
+    const presets::arm_scenario chosen      = presets::read_arm(carried, roots);
+    std::shared_ptr<scene::preset> composed = stage.open(chosen, presets::arm_windows_tooling(chosen));
+    REQUIRE(composed != nullptr);
+    REQUIRE(stage.loop.drain().has_value());
+
+    return composed;
+}
+
+threepp::Object3D *tool_stick(opened_arm &stage)
+{
+    return stage.scene->getObjectByName<threepp::Object3D>(manipulator::loadable_robot_stencil::tool_stick_name());
+}
+
+threepp::Object3D *tool_mesh(const scene::preset &composed)
+{
+    const auto stencil = std::dynamic_pointer_cast<manipulator::loadable_robot_stencil>(composed.stencil);
+    REQUIRE(stencil != nullptr);
+    REQUIRE(stencil->attached_at(manipulator::flange_attachment::tool) != nullptr);
+
+    return stencil->attached_at(manipulator::flange_attachment::tool).get();
 }
 
 }
@@ -254,6 +298,31 @@ TEST_CASE("choosing the stick in the tooling scenario's view window draws the to
     CHECK(std::abs(static_cast<double>(stick->scale.y) - (frame - flange).norm()) < read_back);
     REQUIRE(stencil->attached_at(manipulator::flange_attachment::tool) != nullptr);
     CHECK_FALSE(drawn(stencil->attached_at(manipulator::flange_attachment::tool).get()));
+}
+
+TEST_CASE("a tooling document naming the stick opens drawing it and a tool choice made in its view window is saved", "[presets][documents]")
+{
+    const described_arm described(6, "six");
+    const written_model tool("praxis_tooling_saved_stick.stl", 0.1f);
+    const config::location at      = tooling_document("tooling_saved_stick", tool.where, "<robot_view tool=\"Stick\"/>");
+    const config::document carried = read_arm_document(at);
+
+    opened_arm built;
+    const std::shared_ptr<scene::preset> composed = opened_from(built, carried, {described.directory});
+    built.draw(*composed);
+    CHECK(drawn(tool_stick(built)));
+    CHECK_FALSE(drawn(tool_mesh(*composed)));
+
+    take_entry_at(*panel_named(composed, "View"), 4, 2);
+    built.draw(*composed);
+    CHECK(drawn(tool_stick(built)));
+    CHECK(drawn(tool_mesh(*composed)));
+
+    const std::vector<config::edit> offered = offered_by(*composed, carried);
+    REQUIRE(offered.size() == 1u);
+    CHECK(offered.front().key == "robot_view/tool");
+    CHECK(offered.front().value == "Mesh and stick");
+    CHECK(manipulator::read_robot_view(saved_into(at, offered), "robot_view").tool == manipulator::tool_render::mesh_and_stick);
 }
 
 // Of the two scenarios with a view window over one description, only the one carrying a tool offers a

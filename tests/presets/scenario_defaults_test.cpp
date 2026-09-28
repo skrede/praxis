@@ -55,6 +55,7 @@ TEST_CASE("each control window's settings defaults to the state the shipped mach
     REQUIRE(world.gfx_euler_zyx_degrees.isZero());
 
     const manipulator::robot_view_window::settings view;
+    REQUIRE(view.tool == manipulator::tool_render::mesh);
     REQUIRE(view.model == manipulator::model_render::meshes);
     REQUIRE(view.decoration);
     REQUIRE_FALSE(view.axis_reach.has_value());
@@ -130,6 +131,7 @@ TEST_CASE("an arm scenario written with no initializer holds a default in every 
     REQUIRE(chosen.world_object.gfx_offset.isZero());
     REQUIRE(chosen.world_object.gfx_euler_zyx_degrees.isZero());
 
+    REQUIRE(chosen.robot_view.tool == manipulator::tool_render::mesh);
     REQUIRE(chosen.robot_view.model == manipulator::model_render::meshes);
     REQUIRE(chosen.robot_view.decoration);
     REQUIRE_FALSE(chosen.robot_view.axis_reach.has_value());
