@@ -85,7 +85,7 @@ FetchContent_MakeAvailable(ctrlpp)
 FetchContent_Declare(
     meios
     GIT_REPOSITORY https://github.com/skrede/meios.git
-    GIT_TAG 2a62c3e8c97c54822b7828284b2b2c2c56ad3a24  # develop
+    GIT_TAG 03ceab1392566f0e3d298468d4d0c967651764a9  # develop
     SYSTEM
 )
 FetchContent_MakeAvailable(meios)
