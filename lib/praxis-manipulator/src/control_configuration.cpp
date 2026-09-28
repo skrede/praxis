@@ -118,26 +118,6 @@ std::vector<config::edit> write_tool_jog(const tool_jog_window::settings &state,
     return std::vector<config::edit>{keys::written_mode(state.mode, at)};
 }
 
-void declare_screw_jog(config::declaration &shape, std::string_view at)
-{
-    const screw_jog_window::settings was;
-
-    shape.group(std::string(at));
-    keys::declare_mode(shape, at, was.mode);
-}
-
-screw_jog_window::settings read_screw_jog(const config::document &values, std::string_view at)
-{
-    const screw_jog_window::settings was;
-
-    return screw_jog_window::settings{keys::read_mode(values, at, was.mode)};
-}
-
-std::vector<config::edit> write_screw_jog(const screw_jog_window::settings &state, std::string_view at)
-{
-    return std::vector<config::edit>{keys::written_mode(state.mode, at)};
-}
-
 void declare_control_parameters(config::declaration &shape, std::string_view at)
 {
     const control_parameters_window::settings was;

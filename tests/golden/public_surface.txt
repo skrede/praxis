@@ -1521,8 +1521,12 @@ lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	manipulator
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	screw_jog_window	class	-	-
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	settings	struct	-	-
+lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	pitch	member	-	typename:float
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	mode	member	-	typename:control_mode
-lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	settings	prototype	(control_mode chosen=control_mode::simulation)	-
+lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	q	member	-	typename:Eigen::Vector3f
+lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	w	member	-	typename:Eigen::Vector3f
+lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	theta_degrees	member	-	typename:float
+lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	settings	prototype	(control_mode chosen=control_mode::simulation,const Eigen::Vector3f & chosen_q=Eigen::Vector3f::Zero (),const Eigen::Vector3f & chosen_w=Eigen::Vector3f::UnitZ (),float chosen_pitch=0.f,float chosen_theta_degrees=0.f)	-
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	screw_jog_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,const rigid_motion::frame_ops & injected,std::shared_ptr<edited_pose> edited)	-
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	screw_jog_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,const rigid_motion::frame_ops & injected,std::shared_ptr<edited_pose> edited,const settings & state,std::string at=std::string (),std::string pose_at=std::string ())	-
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	state	prototype	() const	typename:settings

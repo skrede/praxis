@@ -188,6 +188,7 @@ praxis_add_module(manipulator
     src/screw_chain.cpp
     src/screw_chain_builder.cpp
     src/screw_chain_difference.cpp
+    src/screw_jog_configuration.cpp
     src/screw_jog_window.cpp
     src/screw_modeling_padding.h
     src/screw_modeling_padding.cpp

@@ -8,6 +8,8 @@
 #include "praxis/presets/arm_registration.h"
 
 #include "praxis/manipulator/edited_pose.h"
+#include "praxis/manipulator/control_mode.h"
+#include "praxis/manipulator/screw_jog_window.h"
 
 #include "praxis/scene/preset.h"
 #include "praxis/scene/imgui_window.h"
@@ -43,12 +45,12 @@ constexpr std::size_t reset_start_row    = 4;
 // A position saved as text and read back as floats, compared in metres.
 constexpr double saved_position_tolerance = 1.0e-4;
 
-config::location every_window_document(const char *named)
+config::location every_window_document(const char *named, const std::string &beside = std::string())
 {
     const std::filesystem::path directory = fixture::shared_scratch_directory() / named;
     std::filesystem::create_directories(directory);
 
-    return fixture::arm_document(directory, "motion.xml", fixture::arm_body(every_window, ""));
+    return fixture::arm_document(directory, "motion.xml", fixture::arm_body(every_window, beside));
 }
 
 std::shared_ptr<scene::preset> opened(fixture::opened_arm &stage, const config::document &carried, const std::vector<std::filesystem::path> &roots)
@@ -92,6 +94,14 @@ std::vector<const config::configurable *> shown_by(const scene::preset &composed
             shown.push_back(one);
 
     return shown;
+}
+
+constexpr const char *saved_screw = "<screw_jog mode=\"simulation\" pitch=\"0.25\" theta=\"30\"><q x=\"0.1\" y=\"0\" z=\"0\"/><w x=\"0\" y=\"1\" z=\"0\"/></screw_jog>";
+
+bool holds_saved_screw(const manipulator::screw_jog_window::settings &held)
+{
+    return held.mode == manipulator::control_mode::simulation && held.pitch == 0.25f && held.theta_degrees == 30.f && held.q == Eigen::Vector3f{0.1f, 0.f, 0.f} &&
+            held.w == Eigen::Vector3f::UnitY();
 }
 
 bool offers(const std::vector<config::edit> &offered, const std::string &key, const std::string &value)
@@ -159,4 +169,23 @@ TEST_CASE("a start pose reset in the screw jog window counts as set and is saved
     const Eigen::Vector3d home            = fixture::derived_chain(described.where).home.topRightCorner<3, 1>();
     CHECK(read_back.tool_pose.standing == manipulator::pose_standing::held);
     CHECK((read_back.tool_pose.position.cast<double>() - home).norm() < saved_position_tolerance);
+}
+
+TEST_CASE("an arm document carrying a screw opens the every window scenario's screw jog at it", "[presets][documents]")
+{
+    const fixture::described_arm described(6, "six");
+    const std::vector<std::filesystem::path> roots{described.directory};
+    const config::document carried = fixture::read_arm_document(every_window_document("saved_screw", saved_screw));
+    CHECK(holds_saved_screw(presets::read_arm(carried, roots).screw_jog));
+
+    fixture::opened_arm stage;
+    const std::shared_ptr<scene::preset> composed = opened(stage, carried, roots);
+    const auto *screw_jog                         = dynamic_cast<const manipulator::screw_jog_window *>(&window_named(composed, "Screw jog"));
+    REQUIRE(screw_jog != nullptr);
+    CHECK(holds_saved_screw(screw_jog->state()));
+
+    for(const std::shared_ptr<scene::imgui_window> &panel : composed->windows)
+        static_cast<void>(fixture::geometry_of(*panel));
+    CHECK(fixture::offered_by(*composed, carried).empty());
+    CHECK_FALSE(config::anything_unsaved(shown_by(*composed), carried));
 }

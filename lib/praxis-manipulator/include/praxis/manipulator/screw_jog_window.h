@@ -32,9 +32,14 @@ class screw_jog_window : public scene::imgui_window, public config::configurable
 public:
     struct settings
     {
+        float pitch;
         control_mode mode;
+        Eigen::Vector3f q;
+        Eigen::Vector3f w;
+        float theta_degrees;
 
-        settings(control_mode chosen = control_mode::simulation);
+        settings(control_mode chosen = control_mode::simulation, const Eigen::Vector3f &chosen_q = Eigen::Vector3f::Zero(), const Eigen::Vector3f &chosen_w = Eigen::Vector3f::UnitZ(),
+                 float chosen_pitch = 0.f, float chosen_theta_degrees = 0.f);
     };
 
     screw_jog_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, const rigid_motion::frame_ops &injected, std::shared_ptr<edited_pose> edited);

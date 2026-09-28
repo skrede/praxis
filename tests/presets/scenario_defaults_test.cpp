@@ -62,6 +62,19 @@ TEST_CASE("each control window's settings defaults to the state the shipped mach
     REQUIRE(manipulator::control_parameters_window::settings().velocity == Catch::Approx(0.3f));
 }
 
+TEST_CASE("the screw jog's settings and an arm scenario's screw jog open at the z axis through the origin", "[presets][configuration]")
+{
+    const presets::arm_scenario chosen;
+
+    for(const manipulator::screw_jog_window::settings &screw : {manipulator::screw_jog_window::settings(), chosen.screw_jog})
+    {
+        REQUIRE(screw.q.isZero());
+        REQUIRE(screw.w == Eigen::Vector3f::UnitZ());
+        REQUIRE(screw.pitch == 0.f);
+        REQUIRE(screw.theta_degrees == 0.f);
+    }
+}
+
 TEST_CASE("each inverse-kinematics window's settings defaults to the state the shipped machines open at", "[presets][configuration]")
 {
     // A shipped document names no start, so the list opens at the spread the joint count answers

@@ -46,8 +46,12 @@ std::optional<Eigen::Vector3d> named_axis(const Eigen::Vector3f &direction)
 
 }
 
-screw_jog_window::settings::settings(control_mode chosen)
-        : mode(chosen)
+screw_jog_window::settings::settings(control_mode chosen, const Eigen::Vector3f &chosen_q, const Eigen::Vector3f &chosen_w, float chosen_pitch, float chosen_theta_degrees)
+        : pitch(chosen_pitch)
+        , mode(chosen)
+        , q(chosen_q)
+        , w(chosen_w)
+        , theta_degrees(chosen_theta_degrees)
 {
 }
 
@@ -59,11 +63,11 @@ screw_jog_window::screw_jog_window(std::string name, arm_reader seen, std::weak_
 screw_jog_window::screw_jog_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, const rigid_motion::frame_ops &injected, std::shared_ptr<edited_pose> edited,
                                    const settings &state, std::string at, std::string pose_at)
         : imgui_window(std::move(name))
-        , m_pitch(0.f)
+        , m_pitch(state.pitch)
         , m_seen(seen)
-        , m_q(Eigen::Vector3f::Zero())
-        , m_w({0.f, 0.f, 1.f})
-        , m_theta_degrees(0.f)
+        , m_q(state.q)
+        , m_w(state.w)
+        , m_theta_degrees(state.theta_degrees)
         , m_pose_at(std::move(pose_at))
         , m_settings_at(std::move(at))
         , m_arm(std::move(arm))
@@ -77,7 +81,7 @@ screw_jog_window::screw_jog_window(std::string name, arm_reader seen, std::weak_
 
 screw_jog_window::settings screw_jog_window::state() const
 {
-    return settings{m_control_mode.value()};
+    return settings{m_control_mode.value(), m_q, m_w, m_pitch, m_theta_degrees};
 }
 
 std::vector<config::edit> screw_jog_window::settings_edits(const config::document &carried) const
@@ -105,10 +109,11 @@ void screw_jog_window::render()
 
 void screw_jog_window::clear_screw()
 {
-    m_q             = Eigen::Vector3f::Zero();
-    m_w             = Eigen::Vector3f{0.f, 0.f, 1.f};
-    m_theta_degrees = 0.f;
-    m_pitch         = 0.f;
+    const settings cleared;
+    m_q             = cleared.q;
+    m_w             = cleared.w;
+    m_theta_degrees = cleared.theta_degrees;
+    m_pitch         = cleared.pitch;
 }
 
 bool screw_jog_window::render_screw_axis()
