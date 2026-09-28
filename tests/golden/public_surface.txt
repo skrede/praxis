@@ -1050,6 +1050,11 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	raise
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	raise_ellipsoid	prototype	(jacobian_block which)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	standing_path	prototype	(const std::string & under)	typename:std::vector<drawn_path>::iterator
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	path_shown_or_opening	prototype	(const std::string & under)	typename:bool
+lib/praxis-manipulator/include/praxis/manipulator/model_file.h	manipulator	namespace	-	-
+lib/praxis-manipulator/include/praxis/manipulator/model_file.h	praxis	namespace	-	-
+lib/praxis-manipulator/include/praxis/manipulator/model_file.h	located_model	prototype	(const std::filesystem::path & named,std::span<const std::filesystem::path> roots)	typename:std::optional<std::filesystem::path>
+lib/praxis-manipulator/include/praxis/manipulator/model_file.h	loaded_model	prototype	(const std::filesystem::path & file)	typename:std::shared_ptr<threepp::Object3D>
+lib/praxis-manipulator/include/praxis/manipulator/model_file.h	loaded_model_line	prototype	(const std::string & named,std::span<const std::filesystem::path> roots,bool holding)	typename:std::string
 lib/praxis-manipulator/include/praxis/manipulator/modeling.h	inert	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/modeling.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/modeling.h	praxis	namespace	-	-
@@ -1763,7 +1768,7 @@ lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	kinematics_euler
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	kinematics_offset	member	-	typename:Eigen::Vector3f
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	settings	prototype	(bool chosen_active=false,std::string chosen_model_path=std::string (),tool_view chosen_view=tool_view::load_stl,const Eigen::Vector3f & chosen_gfx_euler_degrees=Eigen::Vector3f::Zero (),axis_order chosen_gfx_euler_order=axis_order::zyx,const Eigen::Vector3f & chosen_gfx_scale=Eigen::Vector3f::Ones (),const Eigen::Vector3f & chosen_gfx_offset=Eigen::Vector3f::Zero (),const Eigen::Vector3f & chosen_kinematics_euler_degrees=Eigen::Vector3f::Zero (),axis_order chosen_kinematics_euler_order=axis_order::zyx,const Eigen::Vector3f & chosen_kinematics_offset=Eigen::Vector3f::Zero ())	-
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	tool_window	prototype	(std::string name,loadable_robot_stencil & stencil,arm_reader seen,std::weak_ptr<owned_arm> arm,const rigid_motion::frame_ops & injected)	-
-lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	tool_window	prototype	(std::string name,loadable_robot_stencil & stencil,arm_reader seen,std::weak_ptr<owned_arm> arm,const rigid_motion::frame_ops & injected,const settings & state,std::string at=std::string ())	-
+lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	tool_window	prototype	(std::string name,loadable_robot_stencil & stencil,arm_reader seen,std::weak_ptr<owned_arm> arm,const rigid_motion::frame_ops & injected,const settings & state,std::string at=std::string (),std::vector<std::filesystem::path> roots=std::vector<std::filesystem::path> ())	-
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	state	prototype	() const	typename:settings
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	render	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	initialize	prototype	()	typename:void
@@ -1786,7 +1791,9 @@ lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	m_tool_view	memb
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	m_chosen_view	member	-	typename:tool_view
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	m_stencil	member	-	typename:loadable_robot_stencil &
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	m_tool	member	-	typename:std::shared_ptr<threepp::Object3D>
+lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	m_roots	member	-	typename:std::vector<std::filesystem::path>
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	m_frame	member	-	typename:rigid_motion::frame_ops
+lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	m_loaded	member	-	typename:std::string
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	render_activation	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	render_stl_loader	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	render_graphics_transform	prototype	()	typename:void
@@ -1939,7 +1946,7 @@ lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	gfx_offs
 lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	gfx_euler_zyx_degrees	member	-	typename:Eigen::Vector3f
 lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	settings	prototype	(bool chosen_active=false,std::string chosen_model_path=std::string (),world_view chosen_view=world_view::load_stl,const Eigen::Vector3f & chosen_gfx_scale=Eigen::Vector3f::Ones (),const Eigen::Vector3f & chosen_gfx_offset=Eigen::Vector3f::Zero (),const Eigen::Vector3f & chosen_gfx_euler_zyx_degrees=Eigen::Vector3f::Zero ())	-
 lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	world_object_window	prototype	(std::string name,loadable_robot_stencil & target,const rigid_motion::frame_ops & injected)	-
-lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	world_object_window	prototype	(std::string name,loadable_robot_stencil & target,const rigid_motion::frame_ops & injected,const settings & state,std::string at=std::string ())	-
+lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	world_object_window	prototype	(std::string name,loadable_robot_stencil & target,const rigid_motion::frame_ops & injected,const settings & state,std::string at=std::string (),std::vector<std::filesystem::path> roots=std::vector<std::filesystem::path> ())	-
 lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	state	prototype	() const	typename:settings
 lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	render	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	initialize	prototype	()	typename:void
@@ -1957,6 +1964,8 @@ lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	m_chosen
 lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	m_stencil	member	-	typename:loadable_robot_stencil &
 lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	m_frame	member	-	typename:rigid_motion::frame_ops
 lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	m_world_object	member	-	typename:std::shared_ptr<threepp::Object3D>
+lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	m_roots	member	-	typename:std::vector<std::filesystem::path>
+lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	m_loaded	member	-	typename:std::string
 lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	render_activation	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	render_stl_loader	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	render_graphics_transform	prototype	()	typename:void
@@ -3174,6 +3183,7 @@ presets/include/praxis/presets/arm.h	description	member	-	typename:std::filesyst
 presets/include/praxis/presets/arm.h	initial	member	-	typename:manipulator::joint_vector
 presets/include/praxis/presets/arm.h	tool	member	-	typename:manipulator::tool_window::settings
 presets/include/praxis/presets/arm.h	recording	member	-	typename:manipulator::recording_parameters
+presets/include/praxis/presets/arm.h	model_roots	member	-	typename:std::vector<std::filesystem::path>
 presets/include/praxis/presets/arm.h	tool_jog	member	-	typename:manipulator::tool_jog_window::settings
 presets/include/praxis/presets/arm.h	ik_seeds	member	-	typename:manipulator::ik_seed_window::settings
 presets/include/praxis/presets/arm.h	screw_jog	member	-	typename:manipulator::screw_jog_window::settings

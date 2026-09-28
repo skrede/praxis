@@ -3,6 +3,7 @@
 
 #include "praxis/presets/arm.h"
 
+#include "praxis/manipulator/model_file.h"
 #include "praxis/manipulator/edited_pose.h"
 #include "praxis/manipulator/pose_readout.h"
 #include "praxis/manipulator/world_object_window.h"
@@ -17,11 +18,14 @@
 
 #include <threepp/threepp.hpp>
 
+#include <span>
 #include <format>
 #include <memory>
 #include <string>
 #include <vector>
 #include <utility>
+#include <optional>
+#include <filesystem>
 #include <string_view>
 
 namespace praxis::presets {
@@ -44,21 +48,25 @@ composed_windows declined(manipulator::loadable_robot_stencil &on, const std::st
     return composed_windows{};
 }
 
-std::shared_ptr<threepp::Object3D> loaded_mesh(const std::string &path)
+// A model nobody named loads nothing and is not reported.
+std::shared_ptr<threepp::Object3D> loaded_mesh(const std::string &named, std::span<const std::filesystem::path> roots)
 {
-    if(path.empty())
+    if(named.empty())
         return nullptr;
 
-    threepp::STLLoader loader;
-    const auto geometry = loader.load(path);
-    if(geometry == nullptr)
+    const std::optional<std::filesystem::path> file = manipulator::located_model(named, roots);
+    if(!file)
     {
-        spdlog::error(std::format("Loading model {} failed", path));
+        spdlog::error(std::format("Loading model {} failed: no search root holds it", named));
 
         return nullptr;
     }
 
-    return threepp::Mesh::create(geometry, threepp::MeshPhongMaterial::create({{"flatShading", true}, {"color", threepp::Color::gray}}));
+    std::shared_ptr<threepp::Object3D> mesh = manipulator::loaded_model(*file);
+    if(mesh == nullptr)
+        spdlog::error(std::format("Loading model {} failed", file->string()));
+
+    return mesh;
 }
 
 // A node belongs to one scene at a time, so a composition is given meshes of its own rather than
@@ -67,8 +75,10 @@ std::shared_ptr<threepp::Object3D> loaded_mesh(const std::string &path)
 // it: what is drawn is decided where the windows are decided and nowhere here.
 manipulator::attachments scenario_attachments(const manipulator::arm_composition &composed, const arm_scenario &chosen)
 {
-    return manipulator::attachments{composed.draws_tool ? loaded_mesh(chosen.tool.model_path) : nullptr, composed.draws_world ? loaded_mesh(chosen.world_object.model_path) : nullptr,
-                                    composed.flange_marker};
+    const std::shared_ptr<threepp::Object3D> tool  = composed.draws_tool ? loaded_mesh(chosen.tool.model_path, chosen.model_roots) : nullptr;
+    const std::shared_ptr<threepp::Object3D> world = composed.draws_world ? loaded_mesh(chosen.world_object.model_path, chosen.model_roots) : nullptr;
+
+    return manipulator::attachments{tool, world, composed.flange_marker};
 }
 
 }
@@ -90,7 +100,8 @@ manipulator::arm_composition arm_windows(arm_scenario chosen)
         auto edited = std::make_shared<manipulator::edited_pose>();
 
         return composed_windows{
-                std::make_shared<manipulator::world_object_window>("World object settings", built.stencil, built.frames, state.world_object, window_paths::world_object),
+                std::make_shared<manipulator::world_object_window>("World object settings", built.stencil, built.frames, state.world_object, window_paths::world_object,
+                                                                   state.model_roots),
                 std::make_shared<manipulator::joint_control_window>("Joint control", built.seen, built.arm, state.joint_control, window_paths::joint_control),
                 std::make_shared<manipulator::task_space_window>("Task space", built.seen, built.arm, built.frames, edited, state.task_space, window_paths::task_space),
                 std::make_shared<manipulator::tool_jog_window>("Tool frame jog", built.seen, built.arm, built.frames, edited, state.tool_jog, window_paths::tool_jog),
@@ -98,7 +109,7 @@ manipulator::arm_composition arm_windows(arm_scenario chosen)
                 std::make_shared<manipulator::control_parameters_window>("Control parameters", built.seen, built.arm, state.parameters, window_paths::parameters),
                 manipulator::compose_pose_readout("Pose##1", built.seen, built.frames, built.inert),
                 manipulator::compose_pose_readout("Pose##2", built.seen, built.frames, built.inert),
-                std::make_shared<manipulator::tool_window>("Tool settings", built.stencil, built.seen, built.arm, built.frames, state.tool, window_paths::tool),
+                std::make_shared<manipulator::tool_window>("Tool settings", built.stencil, built.seen, built.arm, built.frames, state.tool, window_paths::tool, state.model_roots),
                 std::make_shared<manipulator::trajectory_recording_window>("Recording", built.seen, built.arm, state.recording, window_paths::recording),
         };
     };

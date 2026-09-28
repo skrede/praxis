@@ -1,3 +1,4 @@
+#include "praxis/manipulator/model_file.h"
 #include "praxis/manipulator/tool_window.h"
 #include "praxis/manipulator/option_widgets.h"
 #include "praxis/manipulator/tool_configuration.h"
@@ -10,6 +11,7 @@
 #include <vector>
 #include <cstring>
 #include <utility>
+#include <filesystem>
 
 namespace praxis::manipulator {
 
@@ -44,7 +46,7 @@ tool_window::tool_window(std::string name, loadable_robot_stencil &stencil, arm_
 }
 
 tool_window::tool_window(std::string name, loadable_robot_stencil &stencil, arm_reader seen, std::weak_ptr<owned_arm> arm, const rigid_motion::frame_ops &injected,
-                         const settings &state, std::string at)
+                         const settings &state, std::string at, std::vector<std::filesystem::path> roots)
         : imgui_window(std::move(name))
         , m_active(state.active)
         , m_seen(std::move(seen))
@@ -62,7 +64,9 @@ tool_window::tool_window(std::string name, loadable_robot_stencil &stencil, arm_
         , m_chosen_view(state.selected_view)
         , m_stencil(stencil)
         , m_tool(stencil.attached_at(flange_attachment::tool))
+        , m_roots(std::move(roots))
         , m_frame(injected)
+        , m_loaded(loaded_model_line(state.model_path, m_roots, m_tool != nullptr))
 {
     std::strncpy(m_model_path, state.model_path.c_str(), sizeof(m_model_path) - 1u);
 }
@@ -130,7 +134,7 @@ void tool_window::render_activation()
         else
             activate_default_tool();
     }
-    ImGui::Text("Loaded model: %s", m_model_path);
+    ImGui::Text("Loaded model: %s", m_loaded.c_str());
 }
 
 void tool_window::render_stl_loader()
@@ -139,6 +143,7 @@ void tool_window::render_stl_loader()
     if(ImGui::Button("Load"))
     {
         m_active = load_stl();
+        m_loaded = loaded_model_line(m_model_path, m_roots, m_active);
         if(m_active)
         {
             m_tool_view.set(tool_view::kinematics_transform);
@@ -146,6 +151,8 @@ void tool_window::render_stl_loader()
             activate_custom_tool();
         }
     }
+    if(m_tool == nullptr && !m_loaded.empty())
+        ImGui::Text("Loaded model: %s", m_loaded.c_str());
 }
 
 void tool_window::render_kinematics_transform()

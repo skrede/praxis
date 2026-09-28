@@ -1,3 +1,4 @@
+#include "praxis/manipulator/model_file.h"
 #include "praxis/manipulator/tool_configuration.h"
 #include "praxis/manipulator/world_object_window.h"
 
@@ -12,6 +13,8 @@
 #include <cstddef>
 #include <cstring>
 #include <utility>
+#include <optional>
+#include <filesystem>
 
 namespace praxis::manipulator {
 
@@ -47,7 +50,8 @@ world_object_window::world_object_window(std::string name, loadable_robot_stenci
 {
 }
 
-world_object_window::world_object_window(std::string name, loadable_robot_stencil &target, const rigid_motion::frame_ops &injected, const settings &state, std::string at)
+world_object_window::world_object_window(std::string name, loadable_robot_stencil &target, const rigid_motion::frame_ops &injected, const settings &state, std::string at,
+                                         std::vector<std::filesystem::path> roots)
         : imgui_window(std::move(name))
         , m_active(state.active)
         , m_model_path{}
@@ -60,6 +64,8 @@ world_object_window::world_object_window(std::string name, loadable_robot_stenci
         , m_stencil(target)
         , m_frame(injected)
         , m_world_object(target.world_object())
+        , m_roots(std::move(roots))
+        , m_loaded(loaded_model_line(state.model_path, m_roots, m_world_object != nullptr))
 {
     std::strncpy(m_model_path, state.model_path.c_str(), sizeof(m_model_path) - 1u);
 }
@@ -127,7 +133,7 @@ void world_object_window::render_activation()
         }
         m_chosen_view = m_world_view.value();
     }
-    ImGui::Text("Loaded model: %s", m_model_path);
+    ImGui::Text("Loaded model: %s", m_loaded.c_str());
 }
 
 void world_object_window::render_stl_loader()
@@ -136,6 +142,7 @@ void world_object_window::render_stl_loader()
     if(ImGui::Button("Load"))
     {
         m_active = load_stl();
+        m_loaded = loaded_model_line(m_model_path, m_roots, m_active);
         if(m_active)
         {
             m_world_view.set(world_view::transform);
@@ -143,6 +150,8 @@ void world_object_window::render_stl_loader()
             activate_loaded_object();
         }
     }
+    if(m_world_object == nullptr && !m_loaded.empty())
+        ImGui::Text("Loaded model: %s", m_loaded.c_str());
 }
 
 void world_object_window::render_graphics_transform()
@@ -192,18 +201,13 @@ void world_object_window::clear_loaded_object()
 bool world_object_window::load_stl()
 {
     clear_loaded_object();
-    threepp::STLLoader loader;
-    const std::string path(m_model_path);
-    if(path.empty())
+    const std::optional<std::filesystem::path> file = located_model(m_model_path, m_roots);
+    if(!file)
         return false;
 
-    const auto geometry = loader.load(path);
-    if(geometry == nullptr)
-        return false;
+    m_world_object = loaded_model(*file);
 
-    m_world_object = threepp::Mesh::create(geometry, threepp::MeshPhongMaterial::create({{"flatShading", true}, {"color", threepp::Color::gray}}));
-
-    return true;
+    return m_world_object != nullptr;
 }
 
 }

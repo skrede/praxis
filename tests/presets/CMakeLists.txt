@@ -7,6 +7,7 @@ praxis_add_test(arm_ik_scenarios_test.cpp HEADERS described_arm.h composed_panel
 praxis_add_test(arm_trajectory_scenarios_test.cpp HEADERS drawn_lines.h described_arm.h composed_panels.h scratch_directory.h LIBS praxis::manipulator_presets praxis::rigid_motion praxis::trajectory praxis::manipulator praxis::scene praxis_test_support)
 praxis_add_test(arm_comparison_scenario_test.cpp HEADERS drawn_lines.h described_arm.h composed_panels.h scratch_directory.h LIBS praxis::manipulator_presets praxis::rigid_motion praxis::trajectory praxis::manipulator praxis::scene praxis_test_support)
 praxis_add_test(arm_tooling_test.cpp HEADERS opened_arm.h drawn_lines.h described_arm.h carried_models.h composed_panels.h scratch_directory.h LIBS praxis::manipulator_presets praxis::rigid_motion praxis::trajectory praxis::manipulator praxis::scene spdlog::spdlog praxis_test_support)
+praxis_add_test(model_paths_test.cpp HEADERS opened_arm.h described_arm.h composed_panels.h saved_document.h scratch_directory.h LIBS praxis::manipulator_presets praxis::rigid_motion praxis::trajectory praxis::manipulator praxis::scene spdlog::spdlog praxis_test_support praxis::config)
 praxis_add_test(arm_velocity_decline_test.cpp HEADERS described_arm.h composed_panels.h scratch_directory.h LIBS praxis::manipulator_presets praxis::rigid_motion praxis::trajectory praxis::manipulator praxis::scene spdlog::spdlog praxis_test_support)
 praxis_add_test(arm_pose_command_decline_test.cpp HEADERS described_arm.h composed_panels.h scratch_directory.h LIBS praxis::manipulator_presets praxis::rigid_motion praxis::trajectory praxis::manipulator praxis::scene spdlog::spdlog praxis_test_support)
 praxis_add_test(euler_rung_controls_test.cpp HEADERS opened_rung.h composed_panels.h labeled_panels.h LIBS praxis::rigid_presets praxis::rigid_motion praxis::scene praxis_test_support)
@@ -34,4 +35,4 @@ if (TARGET manipulator_demo)
 endif ()
 
 # A case that drains a scheduler hangs rather than failing if a retirement stops being acknowledged.
-set_tests_properties(shipped_preset_lifetime_test arm_scenarios_test arm_tooling_test arm_comparison_scenario_test PROPERTIES TIMEOUT 120)
+set_tests_properties(shipped_preset_lifetime_test arm_scenarios_test arm_tooling_test model_paths_test arm_comparison_scenario_test PROPERTIES TIMEOUT 120)

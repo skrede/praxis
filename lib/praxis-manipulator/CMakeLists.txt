@@ -29,6 +29,7 @@ praxis_add_module(manipulator
     include/praxis/manipulator/kinematics.h
     include/praxis/manipulator/kinematics_configuration.h
     include/praxis/manipulator/loadable_robot_stencil.h
+    include/praxis/manipulator/model_file.h
     include/praxis/manipulator/modeling.h
     include/praxis/manipulator/motion.h
     include/praxis/manipulator/motion_commands.h
@@ -127,6 +128,7 @@ praxis_add_module(manipulator
     src/loadable_robot_stencil.cpp
     src/model_chain.h
     src/model_chain.cpp
+    src/model_file.cpp
     src/model_topology.h
     src/model_topology.cpp
     src/motion_commands.cpp

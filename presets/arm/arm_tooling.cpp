@@ -76,8 +76,8 @@ manipulator::arm_composition arm_windows_tooling(arm_scenario chosen)
         return composed_windows{
                 std::make_shared<manipulator::joint_control_window>("Joint control", built.seen, built.arm, state.joint_control, window_paths::joint_control),
                 manipulator::compose_pose_readout("Pose", built.seen, built.frames, built.inert),
-                std::make_shared<manipulator::tool_window>("Tool", built.stencil, built.seen, built.arm, built.frames, state.tool, window_paths::tool),
-                std::make_shared<manipulator::world_object_window>("World object", built.stencil, built.frames, state.world_object, window_paths::world_object),
+                std::make_shared<manipulator::tool_window>("Tool", built.stencil, built.seen, built.arm, built.frames, state.tool, window_paths::tool, state.model_roots),
+                std::make_shared<manipulator::world_object_window>("World object", built.stencil, built.frames, state.world_object, window_paths::world_object, state.model_roots),
                 std::make_shared<manipulator::robot_view_window>("View", built.stencil, every_view_control(), state.robot_view, window_paths::robot_view),
         };
     };

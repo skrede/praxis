@@ -38,6 +38,7 @@
 
 #include <array>
 #include <memory>
+#include <vector>
 #include <cstddef>
 #include <filesystem>
 
@@ -80,8 +81,9 @@ struct window_paths
 static_assert(window_paths::every.size() == window_paths::counted);
 
 // Everything one arm scenario composes from: what its description is loaded from, the joint values
-// it starts at, and the state every window composed beside it opens in. No member names a document,
-// a binding or a key, so a caller holding none of those composes the same scenario.
+// it starts at, where the models it names are looked for, and the state every window composed beside
+// it opens in. No member names a document, a binding or a key, so a caller holding none of those
+// composes the same scenario.
 struct arm_scenario
 {
     meios::load_options options;
@@ -89,6 +91,7 @@ struct arm_scenario
     manipulator::joint_vector initial;
     manipulator::tool_window::settings tool;
     manipulator::recording_parameters recording;
+    std::vector<std::filesystem::path> model_roots;
     manipulator::tool_jog_window::settings tool_jog;
     manipulator::ik_seed_window::settings ik_seeds;
     manipulator::screw_jog_window::settings screw_jog;

@@ -5,6 +5,8 @@
 #include "praxis/presets/arm_scenarios.h"
 #include "praxis/presets/arm_registration.h"
 
+#include "praxis/manipulator/model_file.h"
+
 #include "praxis/scene/preset.h"
 #include "praxis/scene/preset_site.h"
 #include "praxis/scene/imgui_window.h"
@@ -429,28 +431,29 @@ TEST_CASE("two arms register and compose against a description no root but the c
     REQUIRE(presets::read_arm(read.values, {}).description == std::filesystem::path("six.urdf"));
 }
 
-// The two models a document names are looked for where its description is looked for, so a scenario
-// read from somewhere other than the directory the binary was started in names files that are there.
-// A leaf written blank stays blank, because a root joined onto nothing is the root directory itself
-// and a directory is not a model.
-TEST_CASE("the model paths a document names resolve against the roots its description does", "[presets][registry]")
+// The two models a document names are kept as the document named them, and the scenario carries
+// the roots its description is looked for under, so a model is found where the description is while
+// a save writes back the name. A leaf written blank stays blank and locates nothing.
+TEST_CASE("the model paths a document names are read as named and located against the roots its description is", "[presets][registry]")
 {
     const std::filesystem::path directory = scratch("arm_model_paths");
     const std::filesystem::path root      = scratch("arm_model_root");
-    std::filesystem::create_directories(root / "meshes");
-    written(root / "meshes", "gripper.stl", "solid gripper endsolid gripper");
+    written(scratch("arm_model_root/meshes"), "gripper.stl", "solid gripper endsolid gripper");
     written(root / "meshes", "table.stl", "solid table endsolid table");
 
     const config::location named = modeled(directory, "tooled.xml", "meshes/gripper.stl", "meshes/table.stl");
     const std::vector<std::filesystem::path> one{root};
 
     const presets::arm_scenario held = read_back(named, one);
-    REQUIRE(std::filesystem::path(held.tool.model_path) == root / "meshes" / "gripper.stl");
-    REQUIRE(std::filesystem::path(held.world_object.model_path) == root / "meshes" / "table.stl");
+    REQUIRE(held.tool.model_path == "meshes/gripper.stl");
+    REQUIRE(held.world_object.model_path == "meshes/table.stl");
+    REQUIRE(held.model_roots == one);
+    REQUIRE(manipulator::located_model(held.tool.model_path, held.model_roots) == root / "meshes" / "gripper.stl");
 
     const presets::arm_scenario unheld = read_back(named, {});
     REQUIRE(unheld.tool.model_path == "meshes/gripper.stl");
     REQUIRE(unheld.world_object.model_path == "meshes/table.stl");
+    REQUIRE_FALSE(manipulator::located_model(unheld.tool.model_path, unheld.model_roots).has_value());
 
     const presets::arm_scenario blank = read_back(modeled(directory, "untooled.xml", "", ""), one);
     REQUIRE(blank.tool.model_path.empty());

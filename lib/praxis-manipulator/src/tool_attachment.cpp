@@ -1,11 +1,15 @@
 #include "robot/joint_decoration.h"
 
+#include "praxis/manipulator/model_file.h"
 #include "praxis/manipulator/tool_window.h"
 
 #include "praxis/rigid_motion/types.h"
 #include "praxis/rigid_motion/angles.h"
 
-#include <string>
+#include <memory>
+#include <utility>
+#include <optional>
+#include <filesystem>
 
 namespace praxis::manipulator {
 
@@ -46,16 +50,15 @@ void tool_window::activate_default_tool()
 
 bool tool_window::load_stl()
 {
-    threepp::STLLoader loader;
-    const std::string path(m_model_path);
-    if(path.empty())
+    const std::optional<std::filesystem::path> file = located_model(m_model_path, m_roots);
+    if(!file)
         return false;
 
-    const auto geometry = loader.load(path);
-    if(geometry == nullptr)
+    std::shared_ptr<threepp::Object3D> loaded = loaded_model(*file);
+    if(loaded == nullptr)
         return false;
 
-    m_tool = threepp::Mesh::create(geometry, threepp::MeshPhongMaterial::create({{"flatShading", true}, {"color", threepp::Color::gray}}));
+    m_tool = std::move(loaded);
 
     return true;
 }

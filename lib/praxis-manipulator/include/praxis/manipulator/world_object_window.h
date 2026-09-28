@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 #include <cstdint>
+#include <filesystem>
 #include <string_view>
 
 namespace praxis::manipulator {
@@ -46,7 +47,9 @@ public:
     };
 
     world_object_window(std::string name, loadable_robot_stencil &target, const rigid_motion::frame_ops &injected);
-    world_object_window(std::string name, loadable_robot_stencil &target, const rigid_motion::frame_ops &injected, const settings &state, std::string at = std::string());
+    // A model path is looked for under `roots` before it is tried as written.
+    world_object_window(std::string name, loadable_robot_stencil &target, const rigid_motion::frame_ops &injected, const settings &state, std::string at = std::string(),
+                        std::vector<std::filesystem::path> roots = std::vector<std::filesystem::path>());
 
     settings state() const;
 
@@ -81,6 +84,9 @@ private:
     loadable_robot_stencil &m_stencil;
     rigid_motion::frame_ops m_frame;
     std::shared_ptr<threepp::Object3D> m_world_object;
+    std::vector<std::filesystem::path> m_roots;
+    // What the loaded-model line reads: the file the held mesh was read from, or why none is held.
+    std::string m_loaded;
 
     void render_activation();
     void render_stl_loader();
