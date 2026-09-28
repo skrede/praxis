@@ -96,16 +96,16 @@ manipulator::arm_composition arm_windows(arm_scenario chosen)
         install_frame_markers(built.stencil);
 
         // The task-space window and the two jog windows drive one pose between them, so the three are
-        // handed the same one.
-        auto edited = std::make_shared<manipulator::edited_pose>();
+        // handed the same one, built from the pose the scenario read and written under one path.
+        auto edited = std::make_shared<manipulator::edited_pose>(state.tool_pose);
 
         return composed_windows{
                 std::make_shared<manipulator::world_object_window>("World object settings", built.stencil, built.frames, state.world_object, window_paths::world_object,
                                                                    state.model_roots),
                 std::make_shared<manipulator::joint_control_window>("Joint control", built.seen, built.arm, state.joint_control, window_paths::joint_control),
-                std::make_shared<manipulator::task_space_window>("Task space", built.seen, built.arm, built.frames, edited, state.task_space, window_paths::task_space),
-                std::make_shared<manipulator::tool_jog_window>("Tool frame jog", built.seen, built.arm, built.frames, edited, state.tool_jog, window_paths::tool_jog),
-                std::make_shared<manipulator::screw_jog_window>("Screw jog", built.seen, built.arm, built.frames, edited, state.screw_jog, window_paths::screw_jog),
+                std::make_shared<manipulator::task_space_window>("Task space", built.seen, built.arm, built.frames, edited, state.task_space, window_paths::task_space, tool_pose_path),
+                std::make_shared<manipulator::tool_jog_window>("Tool frame jog", built.seen, built.arm, built.frames, edited, state.tool_jog, window_paths::tool_jog, tool_pose_path),
+                std::make_shared<manipulator::screw_jog_window>("Screw jog", built.seen, built.arm, built.frames, edited, state.screw_jog, window_paths::screw_jog, tool_pose_path),
                 std::make_shared<manipulator::control_parameters_window>("Control parameters", built.seen, built.arm, state.parameters, window_paths::parameters),
                 manipulator::compose_pose_readout("Pose##1", built.seen, built.frames, built.inert),
                 manipulator::compose_pose_readout("Pose##2", built.seen, built.frames, built.inert),

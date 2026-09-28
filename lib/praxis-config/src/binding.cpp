@@ -14,8 +14,33 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include <algorithm>
 
 namespace praxis::config {
+
+namespace {
+
+// An edit already gathered alike is not gathered again. A value differing from the one already
+// gathered for its key takes that edit's place as one refusal naming both, and a key already refused
+// gathers no value.
+void gather(std::vector<edit> &gathered, const edit &offered)
+{
+    if(std::ranges::any_of(gathered, [&offered](const edit &one) { return one.key == offered.key && one.value == offered.value && one.kind == offered.kind; }))
+        return;
+
+    const auto valued = [&offered](const edit &one) { return one.key == offered.key && one.kind != edit_kind::taken_out; };
+    const auto held   = std::ranges::find_if(gathered, valued);
+    if(offered.kind != edit_kind::bound || held == gathered.end())
+    {
+        gathered.push_back(offered);
+        return;
+    }
+
+    if(held->kind == edit_kind::bound)
+        *held = edit{offered.key, "'" + offered.key + "' is offered as '" + held->value + "' and as '" + offered.value + "', so neither is written", edit_kind::refused};
+}
+
+}
 
 outcome load_or_defaults(const binding &bound)
 {
@@ -50,8 +75,8 @@ std::vector<edit> shown_edits(std::span<const configurable *const> shown, const 
         if(one == nullptr)
             continue;
 
-        const std::vector<edit> mine = one->settings_edits(carried);
-        gathered.insert(gathered.end(), mine.begin(), mine.end());
+        for(const edit &offered : one->settings_edits(carried))
+            gather(gathered, offered);
     }
     return gathered;
 }
