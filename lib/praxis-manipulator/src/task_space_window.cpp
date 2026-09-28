@@ -86,6 +86,7 @@ void task_space_window::render()
 // slaves the tool to the edited pose as it is edited and reaches nothing along anything.
 void task_space_window::render_task_space(const arm_snapshot &seen)
 {
+    seed_unless_held(*m_edited, seen, m_frame);
     render_option_cycle("Control mode", m_control_mode);
 
     if(m_control_mode == control_mode::preview)
@@ -111,6 +112,7 @@ void task_space_window::render_task_space_preview(const arm_snapshot &seen)
 {
     const auto preview = [this](int)
     {
+        m_edited->standing     = pose_standing::held;
         const transform target = pose_matrix(*m_edited, m_frame);
         command(m_arm, [target](robot_controller &control, scene_robot &) { control.preview_task_space_pose(target); });
     };
@@ -125,10 +127,11 @@ void task_space_window::render_task_space_preview(const arm_snapshot &seen)
 
 void task_space_window::render_task_space_lin_p2p(const arm_snapshot &seen)
 {
+    const auto hold = [this](auto) { m_edited->standing = pose_standing::held; };
     render_option_cycle("Trajectory", m_motion_shape);
-    scene::render_float3_inputs(m_edited->position, position_labels, 0.01f, 0.1f);
+    scene::render_float3_inputs(m_edited->position, position_labels, 0.01f, 0.1f, hold);
     ImGui::NewLine();
-    render_euler_inputs("Euler order", m_edited->euler_degrees, m_edited->order, 0.01f, 0.1f);
+    render_euler_inputs("Euler order", m_edited->euler_degrees, m_edited->order, 0.01f, 0.1f, hold, hold);
     static_cast<void>(render_reset_to_current(seen));
     ImGui::SameLine();
     if(!ImGui::Button("Move"))

@@ -46,6 +46,11 @@ const Eigen::Vector3d chosen_euler_degrees{37.0, 52.0, -19.0};
 const Eigen::Vector3d chosen_position{0.25, -0.4, 0.7};
 const rotation chosen_orientation = reference.rotation_matrix_from_euler(chosen_euler_degrees * radians_per_degree, axis_order::zyx);
 
+// A pose something other than a seed left held, apart from every published value, so only a seeding
+// control brings the published pose in.
+const Eigen::Vector3d elsewhere_position{-0.3, 0.45, 0.15};
+const Eigen::Vector3d elsewhere_euler_degrees{-61.0, 14.0, 83.0};
+
 // Inside the slider's own range and not one of the published components, so a row carrying it cannot
 // be mistaken for a row carrying the seeded pose.
 constexpr const char *typed_offset = "0.6";
@@ -103,6 +108,14 @@ std::shared_ptr<edited_pose> holding(const Eigen::Vector3d &position, const Eige
     auto held           = std::make_shared<edited_pose>();
     held->position      = position.cast<float>();
     held->euler_degrees = euler_degrees.cast<float>();
+
+    return held;
+}
+
+std::shared_ptr<edited_pose> held_elsewhere()
+{
+    auto held      = holding(elsewhere_position, elsewhere_euler_degrees);
+    held->standing = pose_standing::held;
 
     return held;
 }
@@ -264,7 +277,7 @@ TEST_CASE("an offset entered at a task space window's position slider is preview
 
     REQUIRE(!resolved.empty());
     CHECK(straight.empty());
-    reaches(resolved.back(), Eigen::Vector3d{slider_offset, 0.0, 0.0}, rotation::Identity());
+    reaches(resolved.back(), Eigen::Vector3d{slider_offset, chosen_position[1], chosen_position[2]}, chosen_orientation);
 }
 
 TEST_CASE("moving from a task space window carries the shape the trajectory cycle stands on", "[manipulator][controls]")
@@ -303,7 +316,7 @@ TEST_CASE("two task space windows over one shared pose read one pose", "[manipul
 
     praxis::scheduler::scheduler loop(inline_workers, clock_source{&reading});
     const composed_arm placed               = composing(loop);
-    const std::shared_ptr<edited_pose> held = std::make_shared<edited_pose>();
+    const std::shared_ptr<edited_pose> held = held_elsewhere();
     placed.publishing->publish(std::make_shared<const arm_snapshot>(chosen_snapshot()));
     task_space_window seeding("Task space##1", placed.seen, placed.owned, reference, held, {shape::ptp, mode::simulation});
     task_space_window moving("Task space##2", placed.seen, placed.owned, reference, held, {shape::ptp, mode::simulation});
@@ -327,7 +340,7 @@ TEST_CASE("a task space window in preview seeds the shared pose from the arm and
 
     praxis::scheduler::scheduler loop(inline_workers, clock_source{&reading});
     const composed_arm placed               = composing(loop);
-    const std::shared_ptr<edited_pose> held = std::make_shared<edited_pose>();
+    const std::shared_ptr<edited_pose> held = held_elsewhere();
     placed.publishing->publish(std::make_shared<const arm_snapshot>(chosen_snapshot()));
     task_space_window panel("Task space", placed.seen, placed.owned, reference, held, {shape::ptp, mode::preview});
 

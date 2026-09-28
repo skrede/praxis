@@ -9,7 +9,18 @@
 
 #include <Eigen/Core>
 
+#include <cstdint>
+
 namespace praxis::manipulator {
+
+// An automatic seed takes an unset pose, and a provisional one only from a publication whose tool
+// offset is known; a held pose it never takes.
+enum class pose_standing : std::uint8_t
+{
+    unset,
+    provisional,
+    held
+};
 
 // The angles are degrees and they are Euler angles about `order`; the position and the pose they
 // compose are expressed in the space frame, which is the frame a published tool pose arrives in, and
@@ -21,14 +32,17 @@ struct edited_pose
     edited_pose();
 
     axis_order order;
+    pose_standing standing;
     Eigen::Vector3f position;
     Eigen::Vector3f euler_degrees;
 };
 
 transform pose_matrix(const edited_pose &edited, const rigid_motion::frame_ops &frames);
 
-// False where the snapshot carries no tool pose, leaving `edited` as it stands.
+// False where the snapshot carries no tool pose, leaving `edited` as it stands; a seed leaves it held.
 bool seed_from(edited_pose &edited, const arm_snapshot &seen, const rigid_motion::frame_ops &frames);
+
+void seed_unless_held(edited_pose &edited, const arm_snapshot &seen, const rigid_motion::frame_ops &frames);
 
 }
 

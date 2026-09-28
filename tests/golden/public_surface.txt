@@ -601,13 +601,19 @@ lib/praxis-manipulator/include/praxis/manipulator/edited_list_window.h	joint_way
 lib/praxis-manipulator/include/praxis/manipulator/edited_list_window.h	pose_waypoint_list	typedef	-	typename:edited_list_window<edited_pose>
 lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	praxis	namespace	-	-
+lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	pose_standing	enum	-	typename:std::uint8_t
+lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	unset	enumerator	-	-
+lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	provisional	enumerator	-	-
+lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	held	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	edited_pose	struct	-	-
 lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	edited_pose	prototype	()	-
 lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	order	member	-	typename:axis_order
+lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	standing	member	-	typename:pose_standing
 lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	position	member	-	typename:Eigen::Vector3f
 lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	euler_degrees	member	-	typename:Eigen::Vector3f
 lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	pose_matrix	prototype	(const edited_pose & edited,const rigid_motion::frame_ops & frames)	typename:transform
 lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	seed_from	prototype	(edited_pose & edited,const arm_snapshot & seen,const rigid_motion::frame_ops & frames)	typename:bool
+lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	seed_unless_held	prototype	(edited_pose & edited,const arm_snapshot & seen,const rigid_motion::frame_ops & frames)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/evaluation.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/evaluation.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/evaluation.h	evaluation_views	prototype	(const capabilities & first,const capabilities & second)	typename:std::array<evaluation::evaluation_view,7>
@@ -1730,7 +1736,6 @@ lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	settings_pat
 lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	settings_edits	prototype	(const config::document &) const	typename:std::vector<config::edit>
 lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	as_configurable	function	() const	typename:const config::configurable *
 lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	m_seen	member	-	typename:arm_reader
-lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	m_start_pose_chosen	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	m_settings_at	member	-	typename:std::string
 lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	m_arm	member	-	typename:std::weak_ptr<owned_arm>
 lib/praxis-manipulator/include/praxis/manipulator/tool_jog_window.h	m_jog_position	member	-	typename:Eigen::Vector3f

@@ -111,9 +111,14 @@ bool screw_jog_window::render_screw_axis()
 
 bool screw_jog_window::render_screw_start_pose(const arm_snapshot &seen)
 {
+    seed_unless_held(*m_edited, seen, m_frame);
+
     bool moved = ImGui::InputFloat3("XYZ", m_edited->position.data());
     moved      = ImGui::InputFloat3("ABC", m_edited->euler_degrees.data()) || moved;
     moved      = scene::render_enum_selection("Euler order", m_edited->order, axis_order_labels()) || moved;
+    if(moved)
+        m_edited->standing = pose_standing::held;
+
     // The seeding re-derives the start pose from the arm and returns the screw to the identity, so
     // the motion it leaves composed puts the arm where it already stands.
     if(ImGui::Button("Reset start") && seed_from(*m_edited, seen, m_frame))

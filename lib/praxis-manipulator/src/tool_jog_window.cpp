@@ -50,7 +50,6 @@ tool_jog_window::tool_jog_window(std::string name, arm_reader seen, std::weak_pt
                                  const settings &state, std::string at)
         : imgui_window(std::move(name))
         , m_seen(seen)
-        , m_start_pose_chosen(false)
         , m_settings_at(std::move(at))
         , m_arm(std::move(arm))
         , m_jog_position(Eigen::Vector3f::Zero())
@@ -90,14 +89,14 @@ void tool_jog_window::render()
 
 bool tool_jog_window::render_jog_start_pose(const arm_snapshot &seen)
 {
-    if(!m_start_pose_chosen && seen.tool_offset_known)
-        m_start_pose_chosen = seed_from(*m_edited, seen, m_frame);
+    seed_unless_held(*m_edited, seen, m_frame);
 
     bool moved = ImGui::InputFloat3("XYZ", m_edited->position.data());
     moved      = ImGui::InputFloat3("ABC", m_edited->euler_degrees.data()) || moved;
     moved      = scene::render_enum_selection("Euler order", m_edited->order, axis_order_labels()) || moved;
 
-    m_start_pose_chosen = m_start_pose_chosen || moved;
+    if(moved)
+        m_edited->standing = pose_standing::held;
 
     if(!ImGui::Button("Reset") || !seed_from(*m_edited, seen, m_frame))
         return moved;

@@ -45,6 +45,15 @@ const Eigen::Vector3d chosen_euler_degrees{37.0, 52.0, -19.0};
 const Eigen::Vector3d chosen_position{0.25, -0.4, 0.7};
 const rotation chosen_orientation = reference.rotation_matrix_from_euler(chosen_euler_degrees * radians_per_degree, axis_order::zyx);
 
+// Where the tool pose stands before the arm is handed its tool offset, sharing no component with the
+// chosen position.
+const Eigen::Vector3d flange_position{0.1, -0.35, 0.55};
+
+// A pose something other than a seed left held, apart from every published value, so only a seeding
+// control brings the published pose in.
+const Eigen::Vector3d elsewhere_position{-0.3, 0.45, 0.15};
+const Eigen::Vector3d elsewhere_euler_degrees{-61.0, 14.0, 83.0};
+
 // Inside each slider's own range, neither a whole turn nor a component of the published pose, so a
 // value reaching the seam names the control it was entered at.
 constexpr const char *typed_angle  = "24";
@@ -88,7 +97,7 @@ arm_snapshot poseless_snapshot()
 // stands at the flange rather than at the tool centre point.
 arm_snapshot unknown_offset_snapshot()
 {
-    arm_snapshot seen      = chosen_snapshot();
+    arm_snapshot seen      = at_rest(configuration(0.0, 0.0), flange_position, chosen_orientation);
     seen.tool_offset_known = false;
 
     return seen;
@@ -99,6 +108,14 @@ std::shared_ptr<edited_pose> holding(const Eigen::Vector3d &position, const Eige
     auto held           = std::make_shared<edited_pose>();
     held->position      = position.cast<float>();
     held->euler_degrees = euler_degrees.cast<float>();
+
+    return held;
+}
+
+std::shared_ptr<edited_pose> held_elsewhere()
+{
+    auto held      = holding(elsewhere_position, elsewhere_euler_degrees);
+    held->standing = pose_standing::held;
 
     return held;
 }
@@ -338,7 +355,7 @@ TEST_CASE("a tool jog window's seeding control reaches the shared pose, and only
 TEST_CASE("a tool jog window's seeding control reaches the shared pose even where the tool offset is not known", "[manipulator][controls]")
 {
     const std::shared_ptr<arm_publisher> published = publishing(unknown_offset_snapshot());
-    const std::shared_ptr<edited_pose> held        = std::make_shared<edited_pose>();
+    const std::shared_ptr<edited_pose> held        = held_elsewhere();
     tool_jog_window panel("Tool frame jog", published->reader(), std::weak_ptr<owned_arm>(), reference, held, {mode::preview});
 
     imgui_frame frames;
@@ -346,7 +363,7 @@ TEST_CASE("a tool jog window's seeding control reaches the shared pose even wher
     start_navigating(frames, draw);
     press_reset(frames, draw);
 
-    CHECK(held->position.cast<double>().isApprox(chosen_position, float_step));
+    CHECK(held->position.cast<double>().isApprox(flange_position, float_step));
     CHECK(held->euler_degrees.cast<double>().isApprox(chosen_euler_degrees, float_step));
 }
 
@@ -403,7 +420,7 @@ TEST_CASE("a start pose entered before the arm published a tool pose is not over
     CHECK(held->position[2] == Catch::Approx(0.0).margin(float_step));
 }
 
-TEST_CASE("a tool jog window over a publication whose tool offset is not known leaves the start pose it holds", "[manipulator][controls]")
+TEST_CASE("a tool jog window over a publication whose tool offset is not known seeds its start pose from it provisionally", "[manipulator][controls]")
 {
     const std::shared_ptr<arm_publisher> published = publishing(unknown_offset_snapshot());
     const std::shared_ptr<edited_pose> held        = std::make_shared<edited_pose>();
@@ -413,8 +430,9 @@ TEST_CASE("a tool jog window over a publication whose tool offset is not known l
     frames.draw(over(panel));
     frames.draw(over(panel));
 
-    CHECK(held->position.cast<double>().isZero(float_step));
-    CHECK(held->euler_degrees.cast<double>().isZero(float_step));
+    CHECK(held->position.cast<double>().isApprox(flange_position, float_step));
+    CHECK(held->euler_degrees.cast<double>().isApprox(chosen_euler_degrees, float_step));
+    CHECK(held->standing == pose_standing::provisional);
 }
 
 TEST_CASE("a tool jog window waiting on the tool offset seeds from the publication that says it is known", "[manipulator][controls]")
@@ -425,13 +443,14 @@ TEST_CASE("a tool jog window waiting on the tool offset seeds from the publicati
 
     imgui_frame frames;
     frames.draw(over(panel));
-    REQUIRE(held->position.cast<double>().isZero(float_step));
+    REQUIRE(held->position.cast<double>().isApprox(flange_position, float_step));
 
     published->publish(std::make_shared<const arm_snapshot>(chosen_snapshot()));
     frames.draw(over(panel));
 
     CHECK(held->position.cast<double>().isApprox(chosen_position, float_step));
     CHECK(held->euler_degrees.cast<double>().isApprox(chosen_euler_degrees, float_step));
+    CHECK(held->standing == pose_standing::held);
 }
 
 TEST_CASE("a start pose entered before the tool offset was known is not overwritten by the seed", "[manipulator][controls]")
@@ -448,8 +467,8 @@ TEST_CASE("a start pose entered before the tool offset was known is not overwrit
     frames.draw(draw);
 
     CHECK(held->position[0] == Catch::Approx(jog_offset).margin(float_step));
-    CHECK(held->position[1] == Catch::Approx(0.0).margin(float_step));
-    CHECK(held->position[2] == Catch::Approx(0.0).margin(float_step));
+    CHECK(held->position[1] == Catch::Approx(flange_position[1]).margin(float_step));
+    CHECK(held->position[2] == Catch::Approx(flange_position[2]).margin(float_step));
 }
 
 TEST_CASE("two tool jog windows over one shared pose read one pose and jog independently", "[manipulator][controls]")

@@ -128,6 +128,7 @@ std::shared_ptr<edited_pose> holding(const Eigen::Vector3d &position)
 {
     auto held      = std::make_shared<edited_pose>();
     held->position = position.cast<float>();
+    held->standing = pose_standing::held;
 
     return held;
 }

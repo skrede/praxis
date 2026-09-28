@@ -104,12 +104,6 @@ void reaches(const Eigen::Vector3d &recorded_radians, const Eigen::Vector3d &deg
 
 // The point-to-point pane's last row carries the seeding control and the move control side by side,
 // and a row is entered at its leftmost, so a sideways step reaches the second of the two.
-void press_task_space_reset(imgui_frame &frames, const drawing &draw)
-{
-    reach(frames, draw, ImGuiKey_End);
-    tap(frames, draw, ImGuiKey_Space);
-}
-
 void press_task_space_move(imgui_frame &frames, const drawing &draw)
 {
     reach(frames, draw, ImGuiKey_End);
@@ -148,7 +142,6 @@ TEST_CASE("the orientation a task space window builds a target pose from reaches
     imgui_frame frames;
     const drawing draw = over(panel);
     start_navigating(frames, draw);
-    press_task_space_reset(frames, draw);
     press_task_space_move(frames, draw);
     static_cast<void>(loop.drain());
 

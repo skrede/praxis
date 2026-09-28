@@ -45,6 +45,11 @@ const Eigen::Vector3d chosen_euler_degrees{37.0, 52.0, -19.0};
 const Eigen::Vector3d chosen_position{0.25, -0.4, 0.7};
 const rotation chosen_orientation = reference.rotation_matrix_from_euler(chosen_euler_degrees * radians_per_degree, axis_order::zyx);
 
+// A pose something other than a seed left held, apart from every published value, so only a seeding
+// control brings the published pose in.
+const Eigen::Vector3d elsewhere_position{-0.3, 0.45, 0.15};
+const Eigen::Vector3d elsewhere_euler_degrees{-61.0, 14.0, 83.0};
+
 // Neither a right angle nor a straight one, so a conversion applied twice and a conversion applied
 // in the opposite direction each land somewhere the correct value is not.
 constexpr const char *typed_degrees  = "37";
@@ -134,6 +139,14 @@ std::shared_ptr<edited_pose> holding(const Eigen::Vector3d &position, const Eige
     auto held           = std::make_shared<edited_pose>();
     held->position      = position.cast<float>();
     held->euler_degrees = euler_degrees.cast<float>();
+
+    return held;
+}
+
+std::shared_ptr<edited_pose> held_elsewhere()
+{
+    auto held      = holding(elsewhere_position, elsewhere_euler_degrees);
+    held->standing = pose_standing::held;
 
     return held;
 }
@@ -517,7 +530,7 @@ TEST_CASE("a screw jog window's seeding control reaches the shared pose, and onl
 {
     const bool carried                             = GENERATE(true, false);
     const std::shared_ptr<arm_publisher> published = publishing(carried ? chosen_snapshot() : poseless_snapshot());
-    const std::shared_ptr<edited_pose> held        = std::make_shared<edited_pose>();
+    const std::shared_ptr<edited_pose> held        = held_elsewhere();
     screw_jog_window panel("Screw jog", published->reader(), std::weak_ptr<owned_arm>(), reference, held, {mode::preview});
 
     imgui_frame frames;
@@ -525,8 +538,8 @@ TEST_CASE("a screw jog window's seeding control reaches the shared pose, and onl
     start_navigating(frames, draw);
     press_reset_start(frames, draw);
 
-    const Eigen::Vector3d seeded = carried ? chosen_position : Eigen::Vector3d::Zero();
-    const Eigen::Vector3d angles = carried ? chosen_euler_degrees : Eigen::Vector3d::Zero();
+    const Eigen::Vector3d seeded = carried ? chosen_position : elsewhere_position;
+    const Eigen::Vector3d angles = carried ? chosen_euler_degrees : elsewhere_euler_degrees;
     CHECK(held->position.cast<double>().isApprox(seeded, float_step));
     CHECK(held->euler_degrees.cast<double>().isApprox(angles, float_step));
 }
@@ -545,7 +558,7 @@ TEST_CASE("a screw jog window reads the pose a task space window sharing it wrot
 
     praxis::scheduler::scheduler loop(inline_workers, clock_source{&reading});
     const composed_arm placed               = screwing(loop);
-    const std::shared_ptr<edited_pose> held = std::make_shared<edited_pose>();
+    const std::shared_ptr<edited_pose> held = held_elsewhere();
     placed.publishing->publish(std::make_shared<const arm_snapshot>(chosen_snapshot()));
     task_space_window seeding("Task space", placed.seen, placed.owned, reference, held, {task_space_window::motion_shape::ptp, mode::simulation});
     screw_jog_window turned("Screw jog", placed.seen, placed.owned, reference, held, {mode::preview});
