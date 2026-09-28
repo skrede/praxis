@@ -292,7 +292,7 @@ TEST_CASE("an angle entered at a tool jog slider is previewed as a jog about the
     static_cast<void>(loop.drain());
 
     REQUIRE(!jogged.empty());
-    lands_at(jogged.back(), jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(jog_angle_degrees, axis_order::zyx)));
+    lands_at(jogged.back(), jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(jog_angle_degrees, held->order)));
 }
 
 TEST_CASE("an offset entered at a tool jog slider is previewed as the offset the jog carries", "[manipulator][controls]")
@@ -490,10 +490,10 @@ TEST_CASE("two tool jog windows over one shared pose read one pose and jog indep
     static_cast<void>(loop.drain());
 
     REQUIRE(!jogged.empty());
-    lands_at(jogged.back(), jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(jog_angle_degrees, axis_order::zyx)));
+    lands_at(jogged.back(), jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(jog_angle_degrees, held->order)));
 }
 
-TEST_CASE("a tool jog's own rotation is not reinterpreted by the order another panel set", "[manipulator][controls]")
+TEST_CASE("a tool jog's own rotation is read in the order the shared start pose names, whichever panel set it", "[manipulator][controls]")
 {
     jogged.clear();
 
@@ -511,8 +511,8 @@ TEST_CASE("a tool jog's own rotation is not reinterpreted by the order another p
     static_cast<void>(loop.drain());
 
     REQUIRE(!jogged.empty());
-    lands_at(jogged.back(), jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(jog_angle_degrees, axis_order::zyx)));
-    CHECK(!jogged.back().isApprox(jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(jog_angle_degrees, axis_order::xyz)), float_step));
+    lands_at(jogged.back(), jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(jog_angle_degrees, axis_order::xyz)));
+    CHECK(!jogged.back().isApprox(jogged_to(chosen_position, chosen_orientation, Eigen::Vector3d::Zero(), turned_by(jog_angle_degrees, axis_order::zyx)), float_step));
 }
 
 TEST_CASE("a tool jog window in preview jogs from the start pose the orientation order it was moved to composes", "[manipulator][controls]")
@@ -535,6 +535,28 @@ TEST_CASE("a tool jog window in preview jogs from the start pose the orientation
     lands_at(jogged.back(),
              jogged_to(chosen_position, reference.rotation_matrix_from_euler(chosen_euler_degrees * radians_per_degree, first_offered), Eigen::Vector3d::Zero(), rotation::Identity()));
     CHECK(!jogged.back().topLeftCorner<3, 3>().isApprox(chosen_orientation, float_step));
+}
+
+TEST_CASE("a tool jog window moved to another order re-issues its jog with its own rotation read in that order", "[manipulator][controls]")
+{
+    jogged.clear();
+
+    praxis::scheduler::scheduler loop(inline_workers, clock_source{&reading});
+    const composed_arm placed               = jogging(loop);
+    const std::shared_ptr<edited_pose> held = holding(chosen_position, chosen_euler_degrees);
+    placed.publishing->publish(std::make_shared<const arm_snapshot>(chosen_snapshot()));
+    tool_jog_window panel("Tool frame jog", placed.seen, placed.owned, reference, held, {mode::preview});
+
+    imgui_frame frames;
+    start_navigating(frames, over(panel));
+    enter_last_angle(frames, over(panel));
+    take_first_euler_order(frames, over_alone(panel));
+    static_cast<void>(loop.drain());
+
+    REQUIRE(!jogged.empty());
+    const rotation reread = reference.rotation_matrix_from_euler(chosen_euler_degrees * radians_per_degree, first_offered);
+    lands_at(jogged.back(), jogged_to(chosen_position, reread, Eigen::Vector3d::Zero(), turned_by(jog_angle_degrees, first_offered)));
+    CHECK(!jogged.back().isApprox(jogged_to(chosen_position, reread, Eigen::Vector3d::Zero(), turned_by(jog_angle_degrees, axis_order::zyx)), float_step));
 }
 
 TEST_CASE("a tool jog window in preview jogs from the start pose its position row was moved to", "[manipulator][controls]")

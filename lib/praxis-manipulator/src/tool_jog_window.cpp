@@ -30,10 +30,6 @@ const char *const orientation_labels[3]{"A", "B", "C"};
 
 constexpr const char *unpublished_arm = "The arm has published nothing yet.";
 
-// The jog's own rotation is composed about the tool frame's axes in this order; the order selector on
-// screen names the order of the start pose the panel shares, not this one.
-constexpr axis_order jog_order = axis_order::zyx;
-
 }
 
 tool_jog_window::settings::settings(control_mode chosen)
@@ -117,7 +113,7 @@ void tool_jog_window::render_tool_frame_jog(const arm_snapshot &seen)
         const Eigen::Vector3d angles = m_jog_euler_degrees.cast<double>() * radians_per_degree;
         const transform start        = pose_matrix(*m_edited, m_frame);
         const Eigen::Vector3d offset = m_jog_position.cast<double>();
-        const rotation turned        = m_frame.rotation_matrix_from_euler(angles, jog_order);
+        const rotation turned        = m_frame.rotation_matrix_from_euler(angles, m_edited->order);
         command(m_arm, [start, offset, turned](robot_controller &control, scene_robot &) { control.preview_tool_frame_jog(start, offset, turned); });
     };
     if(render_jog_start_pose(seen))
