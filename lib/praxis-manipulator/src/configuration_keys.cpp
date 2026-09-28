@@ -54,6 +54,11 @@ std::vector<std::string> spelled(std::span<const char *const> labels)
     return std::vector<std::string>(labels.begin(), labels.end());
 }
 
+bool carried(const config::document &values, const std::string &key)
+{
+    return values.origin_of(key).kind == config::origin_kind::source;
+}
+
 bool flag_at(const config::document &values, const std::string &key, bool fallback)
 {
     const expected<bool, config::error> read = values.flag(key);

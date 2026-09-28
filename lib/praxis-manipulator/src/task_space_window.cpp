@@ -1,5 +1,6 @@
 #include "praxis/manipulator/option_widgets.h"
 #include "praxis/manipulator/task_space_window.h"
+#include "praxis/manipulator/pose_configuration.h"
 #include "praxis/manipulator/control_configuration.h"
 
 #include "praxis/extension/held_handle.h"
@@ -15,6 +16,8 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <iterator>
+#include <algorithm>
 
 namespace praxis::manipulator {
 
@@ -46,9 +49,10 @@ task_space_window::task_space_window(std::string name, arm_reader seen, std::wea
 }
 
 task_space_window::task_space_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, const rigid_motion::frame_ops &injected, std::shared_ptr<edited_pose> edited,
-                                     const settings &state, std::string at)
+                                     const settings &state, std::string at, std::string pose_at)
         : imgui_window(std::move(name))
         , m_seen(seen)
+        , m_pose_at(std::move(pose_at))
         , m_settings_at(std::move(at))
         , m_arm(std::move(arm))
         , m_frame(injected)
@@ -67,7 +71,10 @@ task_space_window::settings task_space_window::state() const
 
 std::vector<config::edit> task_space_window::settings_edits(const config::document &carried) const
 {
-    return config::unsaved_edits(carried, write_task_space(state(), m_settings_at));
+    std::vector<config::edit> changes = config::unsaved_edits(carried, write_task_space(state(), m_settings_at));
+    std::ranges::copy(unsaved_shared_pose(carried, *m_edited, m_pose_at), std::back_inserter(changes));
+
+    return changes;
 }
 
 void task_space_window::render()

@@ -5,6 +5,7 @@
 
 #include "praxis/manipulator/types.h"
 #include "praxis/manipulator/compose_arm.h"
+#include "praxis/manipulator/edited_pose.h"
 #include "praxis/manipulator/tool_window.h"
 #include "praxis/manipulator/capabilities.h"
 #include "praxis/manipulator/ik_seed_window.h"
@@ -80,6 +81,9 @@ struct window_paths
 
 static_assert(window_paths::every.size() == window_paths::counted);
 
+// Where the pose the motion windows of one composition share is kept, beside the start and under no window.
+inline constexpr const char *tool_pose_path = "tool_pose";
+
 // Everything one arm scenario composes from: what its description is loaded from, the joint values
 // it starts at, where the models it names are looked for, and the state every window composed beside
 // it opens in. No member names a document, a binding or a key, so a caller holding none of those
@@ -89,6 +93,7 @@ struct arm_scenario
     meios::load_options options;
     std::filesystem::path description;
     manipulator::joint_vector initial;
+    manipulator::edited_pose tool_pose;
     manipulator::tool_window::settings tool;
     manipulator::recording_parameters recording;
     std::vector<std::filesystem::path> model_roots;

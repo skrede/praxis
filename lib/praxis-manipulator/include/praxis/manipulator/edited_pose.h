@@ -14,11 +14,13 @@
 namespace praxis::manipulator {
 
 // An automatic seed takes an unset pose, and a provisional one only from a publication whose tool
-// offset is known; a held pose it never takes.
+// offset is known, and marks it seeded. A seeded or held pose it never takes; held is a pose
+// somebody set.
 enum class pose_standing : std::uint8_t
 {
     unset,
     provisional,
+    seeded,
     held
 };
 

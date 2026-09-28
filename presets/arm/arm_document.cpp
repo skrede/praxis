@@ -5,6 +5,7 @@
 #include "praxis/presets/arm_registration.h"
 
 #include "praxis/manipulator/types.h"
+#include "praxis/manipulator/pose_configuration.h"
 
 #include "praxis/rigid_motion/angles.h"
 
@@ -85,6 +86,7 @@ arm_scenario read_arm(const config::document &values, std::span<const std::files
     read.options     = read_options(values, "description", roots);
     read.description = described_at(keys::text_at(values, keys::description_path_key), roots);
     read.initial     = read_initial(values, "initial/joint");
+    read.tool_pose   = manipulator::read_shared_pose(values, tool_pose_path);
     read.model_roots.assign(roots.begin(), roots.end());
     read_arm_windows(read, values, static_cast<std::size_t>(read.initial.size()));
 

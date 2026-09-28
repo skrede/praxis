@@ -27,6 +27,7 @@ std::string text_of(float value);
 
 std::vector<std::string> spelled(std::span<const char *const> labels);
 
+bool carried(const config::document &values, const std::string &key);
 bool flag_at(const config::document &values, const std::string &key, bool fallback);
 float real_at(const config::document &values, const std::string &key, float fallback);
 std::string text_at(const config::document &values, const std::string &key, std::string_view fallback);

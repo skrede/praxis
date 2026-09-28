@@ -39,11 +39,12 @@ opened_target open_target(const manipulator::arm_window_inputs &built, const arm
     draw_derived_chain(built.stencil, built.chain, composer);
     install_frame_markers(built.stencil);
 
-    auto pose = std::make_shared<manipulator::edited_pose>();
+    auto pose = std::make_shared<manipulator::edited_pose>(state.tool_pose);
 
-    return opened_target{pose,
-                         {std::make_shared<manipulator::joint_control_window>("Joint control", built.seen, built.arm, state.joint_control, window_paths::joint_control),
-                          std::make_shared<manipulator::task_space_window>("Target pose", built.seen, built.arm, built.frames, pose, state.task_space, window_paths::task_space)}};
+    return opened_target{
+            pose,
+            {std::make_shared<manipulator::joint_control_window>("Joint control", built.seen, built.arm, state.joint_control, window_paths::joint_control),
+             std::make_shared<manipulator::task_space_window>("Target pose", built.seen, built.arm, built.frames, pose, state.task_space, window_paths::task_space, tool_pose_path)}};
 }
 
 std::shared_ptr<scene::imgui_window> open_branches(const manipulator::arm_window_inputs &built, const arm_scenario &state, std::shared_ptr<manipulator::edited_pose> pose,

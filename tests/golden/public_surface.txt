@@ -603,6 +603,7 @@ lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	praxis	namespace
 lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	pose_standing	enum	-	typename:std::uint8_t
 lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	unset	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	provisional	enumerator	-	-
+lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	seeded	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	held	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	edited_pose	struct	-	-
 lib/praxis-manipulator/include/praxis/manipulator/edited_pose.h	edited_pose	prototype	()	-
@@ -1188,6 +1189,12 @@ lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	draw_
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	draw_traversed	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	show_paths	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	play	prototype	()	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/pose_configuration.h	manipulator	namespace	-	-
+lib/praxis-manipulator/include/praxis/manipulator/pose_configuration.h	praxis	namespace	-	-
+lib/praxis-manipulator/include/praxis/manipulator/pose_configuration.h	declare_shared_pose	prototype	(config::declaration & shape,std::string_view at)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/pose_configuration.h	read_shared_pose	prototype	(const config::document & values,std::string_view at)	typename:edited_pose
+lib/praxis-manipulator/include/praxis/manipulator/pose_configuration.h	write_shared_pose	prototype	(const edited_pose & pose,std::string_view at)	typename:std::vector<config::edit>
+lib/praxis-manipulator/include/praxis/manipulator/pose_configuration.h	unsaved_shared_pose	prototype	(const config::document & carried,const edited_pose & pose,std::string_view at)	typename:std::vector<config::edit>
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	pose_readout	class	-	-
@@ -1689,13 +1696,14 @@ lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	shape	memb
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	mode	member	-	typename:control_mode
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	settings	prototype	(motion_shape chosen_shape=motion_shape::ptp,control_mode chosen_mode=control_mode::simulation)	-
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	task_space_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,const rigid_motion::frame_ops & injected,std::shared_ptr<edited_pose> edited)	-
-lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	task_space_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,const rigid_motion::frame_ops & injected,std::shared_ptr<edited_pose> edited,const settings & state,std::string at=std::string ())	-
+lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	task_space_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,const rigid_motion::frame_ops & injected,std::shared_ptr<edited_pose> edited,const settings & state,std::string at=std::string (),std::string pose_at=std::string ())	-
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	state	prototype	() const	typename:settings
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	render	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	settings_path	function	() const	typename:std::string_view
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	settings_edits	prototype	(const config::document &) const	typename:std::vector<config::edit>
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	as_configurable	function	() const	typename:const config::configurable *
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	m_seen	member	-	typename:arm_reader
+lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	m_pose_at	member	-	typename:std::string
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	m_settings_at	member	-	typename:std::string
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	m_arm	member	-	typename:std::weak_ptr<owned_arm>
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	m_frame	member	-	typename:rigid_motion::frame_ops
@@ -3177,10 +3185,12 @@ presets/include/praxis/presets/arm.h	trajectory_preview	member	-	typename:const 
 presets/include/praxis/presets/arm.h	velocity_kinematics	member	-	typename:const char *
 presets/include/praxis/presets/arm.h	counted	member	-	typename:std::size_t
 presets/include/praxis/presets/arm.h	every	member	-	typename:std::array
+presets/include/praxis/presets/arm.h	tool_pose_path	variable	-	typename:const char *
 presets/include/praxis/presets/arm.h	arm_scenario	struct	-	-
 presets/include/praxis/presets/arm.h	options	member	-	typename:meios::load_options
 presets/include/praxis/presets/arm.h	description	member	-	typename:std::filesystem::path
 presets/include/praxis/presets/arm.h	initial	member	-	typename:manipulator::joint_vector
+presets/include/praxis/presets/arm.h	tool_pose	member	-	typename:manipulator::edited_pose
 presets/include/praxis/presets/arm.h	tool	member	-	typename:manipulator::tool_window::settings
 presets/include/praxis/presets/arm.h	recording	member	-	typename:manipulator::recording_parameters
 presets/include/praxis/presets/arm.h	model_roots	member	-	typename:std::vector<std::filesystem::path>

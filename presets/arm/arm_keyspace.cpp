@@ -1,7 +1,10 @@
 #include "arm_keys.h"
 #include "arm_windows.h"
 
+#include "praxis/presets/arm.h"
 #include "praxis/presets/arm_registration.h"
+
+#include "praxis/manipulator/pose_configuration.h"
 
 #include "praxis/config/store.h"
 #include "praxis/config/binding.h"
@@ -50,6 +53,7 @@ config::declaration arm_keyspace()
     declare_preset(shape, "preset");
     declare_description(shape, "description");
     declare_initial(shape, "initial");
+    manipulator::declare_shared_pose(shape, tool_pose_path);
     declare_arm_windows(shape);
     shape.group("screw_table");
     shape.field(keys::screw_table_key, config::field_kind::text, "");

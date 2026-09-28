@@ -37,6 +37,7 @@ praxis_add_module(manipulator
     include/praxis/manipulator/option_cycle.h
     include/praxis/manipulator/option_widgets.h
     include/praxis/manipulator/path_comparison_window.h
+    include/praxis/manipulator/pose_configuration.h
     include/praxis/manipulator/pose_readout.h
     include/praxis/manipulator/render_configuration.h
     include/praxis/manipulator/render_controls_window.h
@@ -137,6 +138,7 @@ praxis_add_module(manipulator
     src/path_comparison_paths.h
     src/path_comparison_paths.cpp
     src/path_comparison_window.cpp
+    src/pose_configuration.cpp
     src/pose_readout.cpp
     src/pose_waypoints_configuration.cpp
     src/prepared_time_scaling.cpp

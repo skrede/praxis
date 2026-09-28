@@ -113,7 +113,7 @@ void stands_at(const edited_pose &edited, const Eigen::Vector3d &position, const
 
 }
 
-TEST_CASE("a window over a shared pose nothing has set shows the published tool pose from its first frame and holds it", "[manipulator][controls]")
+TEST_CASE("a window over a shared pose nothing has set shows the published tool pose from its first frame and marks it seeded", "[manipulator][controls]")
 {
     const panel kind                               = GENERATE(panel::task_space, panel::screw_jog, panel::tool_jog);
     const control_mode chosen                      = GENERATE(control_mode::preview, control_mode::simulation);
@@ -124,7 +124,7 @@ TEST_CASE("a window over a shared pose nothing has set shows the published tool 
     imgui_frame frames;
     frames.draw(over(*window));
 
-    stands_at(*shared, chosen_position, chosen_euler_degrees, pose_standing::held);
+    stands_at(*shared, chosen_position, chosen_euler_degrees, pose_standing::seeded);
 }
 
 TEST_CASE("a window over a publication carrying no tool pose seeds the shared pose from the one that follows", "[manipulator][controls]")
@@ -142,7 +142,7 @@ TEST_CASE("a window over a publication carrying no tool pose seeds the shared po
     published->publish(std::make_shared<const arm_snapshot>(chosen_snapshot()));
     frames.draw(over(*window));
 
-    stands_at(*shared, chosen_position, chosen_euler_degrees, pose_standing::held);
+    stands_at(*shared, chosen_position, chosen_euler_degrees, pose_standing::seeded);
 }
 
 TEST_CASE("a window seeds the shared pose provisionally before the tool offset is known and once more when it is", "[manipulator][controls]")
@@ -162,7 +162,7 @@ TEST_CASE("a window seeds the shared pose provisionally before the tool offset i
 
     published->publish(std::make_shared<const arm_snapshot>(chosen_snapshot()));
     frames.draw(over(*window));
-    stands_at(*shared, chosen_position, chosen_euler_degrees, pose_standing::held);
+    stands_at(*shared, chosen_position, chosen_euler_degrees, pose_standing::seeded);
 }
 
 TEST_CASE("a shared pose entered at a window before any tool pose was published is not overwritten by the seed", "[manipulator][controls]")
@@ -197,6 +197,23 @@ TEST_CASE("a window over a shared pose already held leaves it as it stands", "[m
     frames.draw(over(*window));
 
     stands_at(*shared, elsewhere_position, elsewhere_euler_degrees, pose_standing::held);
+}
+
+TEST_CASE("a window over a shared pose already seeded leaves it as it stands", "[manipulator][controls]")
+{
+    const panel kind                               = GENERATE(panel::task_space, panel::screw_jog, panel::tool_jog);
+    const std::shared_ptr<arm_publisher> published = publishing(chosen_snapshot());
+    const auto shared                              = std::make_shared<edited_pose>();
+    shared->position                               = elsewhere_position.cast<float>();
+    shared->euler_degrees                          = elsewhere_euler_degrees.cast<float>();
+    shared->standing                               = pose_standing::seeded;
+    const auto window                              = opened(kind, published->reader(), shared, "Shared pose");
+
+    imgui_frame frames;
+    frames.draw(over(*window));
+    frames.draw(over(*window));
+
+    stands_at(*shared, elsewhere_position, elsewhere_euler_degrees, pose_standing::seeded);
 }
 
 TEST_CASE("a shared pose entered at one window is left standing by every window drawn over it later", "[manipulator][controls]")

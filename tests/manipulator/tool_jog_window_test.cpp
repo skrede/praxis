@@ -529,7 +529,7 @@ TEST_CASE("a tool jog window waiting on the tool offset seeds from the publicati
 
     CHECK(held->position.cast<double>().isApprox(chosen_position, float_step));
     CHECK(held->euler_degrees.cast<double>().isApprox(chosen_euler_degrees, float_step));
-    CHECK(held->standing == pose_standing::held);
+    CHECK(held->standing == pose_standing::seeded);
 }
 
 TEST_CASE("a start pose entered before the tool offset was known is not overwritten by the seed", "[manipulator][controls]")

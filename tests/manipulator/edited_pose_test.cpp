@@ -126,25 +126,25 @@ TEST_CASE("a seed from a published tool pose leaves the pose held, and a refused
     CHECK(refused.standing == pose_standing::unset);
 }
 
-TEST_CASE("an automatic seed holds an unset pose where the tool offset is known and leaves it provisional where it is not", "[manipulator][controls]")
+TEST_CASE("an automatic seed marks an unset pose seeded where the tool offset is known and leaves it provisional where it is not", "[manipulator][controls]")
 {
     const rotation orientation = reference.rotation_matrix_from_euler(chosen_euler_degrees * radians_per_degree, axis_order::zyx);
     const arm_snapshot unknown = published_at(chosen_position, orientation);
     arm_snapshot known         = unknown;
     known.tool_offset_known    = true;
-    edited_pose held;
+    edited_pose seeded;
     edited_pose provisional;
 
-    seed_unless_held(held, known, reference);
+    seed_unless_held(seeded, known, reference);
     seed_unless_held(provisional, unknown, reference);
 
-    CHECK(held.standing == pose_standing::held);
+    CHECK(seeded.standing == pose_standing::seeded);
     CHECK(provisional.standing == pose_standing::provisional);
     CHECK(provisional.position.cast<double>().isApprox(chosen_position, float_step));
     CHECK(provisional.euler_degrees.cast<double>().isApprox(chosen_euler_degrees, float_step));
 }
 
-TEST_CASE("an automatic seed takes a provisional pose only from a known tool offset, and a held pose never", "[manipulator][controls]")
+TEST_CASE("an automatic seed takes a provisional pose only from a known tool offset, and a seeded pose never", "[manipulator][controls]")
 {
     const rotation orientation = reference.rotation_matrix_from_euler(chosen_euler_degrees * radians_per_degree, axis_order::zyx);
     const arm_snapshot unknown = published_at(elsewhere_position, orientation);
@@ -161,9 +161,25 @@ TEST_CASE("an automatic seed takes a provisional pose only from a known tool off
 
     seed_unless_held(edited, known, reference);
     CHECK(edited.position.cast<double>().isApprox(chosen_position, float_step));
-    CHECK(edited.standing == pose_standing::held);
+    CHECK(edited.standing == pose_standing::seeded);
 
     seed_unless_held(edited, moved, reference);
     CHECK(edited.position.cast<double>().isApprox(chosen_position, float_step));
-    CHECK(edited.standing == pose_standing::held);
+    CHECK(edited.standing == pose_standing::seeded);
+}
+
+TEST_CASE("an automatic seed never takes a seeded pose", "[manipulator][controls]")
+{
+    const rotation orientation = reference.rotation_matrix_from_euler(chosen_euler_degrees * radians_per_degree, axis_order::zyx);
+    arm_snapshot known         = published_at(chosen_position, orientation);
+    known.tool_offset_known    = true;
+    edited_pose edited;
+    edited.position = elsewhere_position.cast<float>();
+    edited.standing = pose_standing::seeded;
+
+    seed_unless_held(edited, known, reference);
+
+    CHECK(edited.position.cast<double>().isApprox(elsewhere_position, float_step));
+    CHECK(edited.euler_degrees.isZero());
+    CHECK(edited.standing == pose_standing::seeded);
 }

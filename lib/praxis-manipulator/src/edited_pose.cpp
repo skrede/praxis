@@ -36,11 +36,12 @@ bool seed_from(edited_pose &edited, const arm_snapshot &seen, const rigid_motion
 
 void seed_unless_held(edited_pose &edited, const arm_snapshot &seen, const rigid_motion::frame_ops &frames)
 {
-    if(edited.standing == pose_standing::held || (edited.standing == pose_standing::provisional && !seen.tool_offset_known))
+    const bool waiting = edited.standing == pose_standing::provisional && !seen.tool_offset_known;
+    if(edited.standing == pose_standing::seeded || edited.standing == pose_standing::held || waiting)
         return;
 
-    if(seed_from(edited, seen, frames) && !seen.tool_offset_known)
-        edited.standing = pose_standing::provisional;
+    if(seed_from(edited, seen, frames))
+        edited.standing = seen.tool_offset_known ? pose_standing::seeded : pose_standing::provisional;
 }
 
 }
