@@ -56,16 +56,9 @@ expected<joint_vector, refusal> screw_standing_off(const rigid_motion::screw_ops
     return task_space_pose(solver, standing_off(screw.matrix_exponential_screw(*axis, theta_radians) * start_pose), j0);
 }
 
-expected<joint_vector, refusal> displace_standing_off(const rigid_motion::frame_ops &frames, const kinematics &solver, const transform &start_pose, const Eigen::Vector3d &offset,
-                                                      const rotation &orientation, const joint_vector &j0)
-{
-    return task_space_pose(solver, standing_off(start_pose * frames.transformation_matrix_from_rotation_position(orientation, offset)), j0);
-}
-
 constexpr motion_ops standing_off_target{
-        .task_space_pose     = &pose_standing_off,
-        .task_space_screw    = &screw_standing_off,
-        .tool_frame_displace = &displace_standing_off,
+        .task_space_pose  = &pose_standing_off,
+        .task_space_screw = &screw_standing_off,
 };
 
 std::vector<agreement> over_the_run(const slot_evaluation &row, const motion_ops &first, const motion_ops &second)
@@ -142,7 +135,7 @@ TEST_CASE("each_motion_row_reports_a_pose_standing_above_the_bound_it_carries_an
 
 // The bound governs only the cases both sides answered. On the row asked for a pose from a drawn
 // seed the two sides disagree about reachability often enough that the share has to be read rather
-// than assumed, and on the two asked for a short displacement from a reached pose it is far smaller.
+// than assumed, and on the one asked for a short displacement from a reached pose it is far smaller.
 TEST_CASE("every_motion_row_answers_from_both_sides_over_the_run_the_bound_is_read_at")
 {
     const motion_ops reference = baseline().motion;

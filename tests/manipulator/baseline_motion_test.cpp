@@ -21,10 +21,8 @@ using namespace praxis::fixture;
 namespace {
 
 constexpr double turn = 0.3;
-constexpr double step = 0.05;
 
-const rigid_motion::screw_ops reference_screw  = rigid_motion::baseline().screw;
-const rigid_motion::frame_ops reference_frames = rigid_motion::baseline().frame;
+const rigid_motion::screw_ops reference_screw = rigid_motion::baseline().screw;
 
 // The turn reversed, which no correct exponential answers.
 transform turned_the_other_way(const screw_axis &s, double theta_radians)
@@ -86,27 +84,6 @@ TEST_CASE("a_zero_pitch_screw_through_the_tool_origin_reorients_the_tool_and_lea
     CHECK(orientation_from_pose(reached).isApprox(turned, solved_tolerance));
 }
 
-// The displacement is read in the tool frame, so the origin travels along the tool's own axis; the
-// same displacement applied on the left of the start pose would travel along the world's.
-TEST_CASE("displacing_the_tool_frame_along_its_own_axis_moves_the_origin_there_and_holds_the_orientation")
-{
-    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame).value();
-    const joint_vector at   = posed_arm();
-    const transform start   = solver.fk_solve(at).value();
-
-    const expected<joint_vector, refusal> moved = tool_frame_displace(reference_frames, solver, start, Eigen::Vector3d(step, 0.0, 0.0), rotation::Identity(), at);
-    REQUIRE(moved.has_value());
-
-    const transform reached = solver.fk_solve(*moved).value();
-
-    const Eigen::Vector3d along_tool = position_from_pose(start) + step * orientation_from_pose(start).col(0);
-    const Eigen::Vector3d along_world(position_from_pose(start) + Eigen::Vector3d(step, 0.0, 0.0));
-
-    CHECK((position_from_pose(reached) - along_tool).norm() < solved_tolerance);
-    CHECK((along_tool - along_world).norm() > solved_tolerance);
-    CHECK(orientation_from_pose(reached).isApprox(orientation_from_pose(start), solved_tolerance));
-}
-
 // A screw axis has a direction; the construction answers the zero axis for a zero one, which under
 // the exponential is the identity, so an unusable request would be indistinguishable from a turn of
 // no angle about a real axis.
@@ -130,14 +107,11 @@ TEST_CASE("a_seed_of_a_size_the_chain_does_not_have_is_refused_by_every_motion_r
 
     const expected<joint_vector, refusal> to_pose  = task_space_pose(solver, start, at);
     const expected<joint_vector, refusal> to_screw = task_space_screw(reference_screw, solver, start, Eigen::Vector3d::UnitZ(), position_from_pose(start), turn, 0.0, at);
-    const expected<joint_vector, refusal> jogged   = tool_frame_displace(reference_frames, solver, start, Eigen::Vector3d(step, 0.0, 0.0), rotation::Identity(), at);
 
     REQUIRE_FALSE(to_pose.has_value());
     REQUIRE_FALSE(to_screw.has_value());
-    REQUIRE_FALSE(jogged.has_value());
     CHECK(to_pose.error() == refusal::unsupported_input);
     CHECK(to_screw.error() == refusal::unsupported_input);
-    CHECK(jogged.error() == refusal::unsupported_input);
 }
 
 TEST_CASE("a_screw_motion_answers_through_the_exponential_it_is_handed_rather_than_the_reference_one")

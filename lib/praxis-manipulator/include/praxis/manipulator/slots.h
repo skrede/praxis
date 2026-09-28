@@ -56,7 +56,6 @@ enum class motion_slot : std::uint32_t
 {
     task_space_pose,
     task_space_screw,
-    tool_frame_displace,
     count,
 };
 

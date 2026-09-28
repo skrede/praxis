@@ -48,8 +48,6 @@ constexpr std::array robot_descriptors{
 constexpr std::array motion_descriptors{
         slot_descriptor{"motion.task_space_pose", [](const void *value) -> bool { return static_cast<const motion_ops *>(value)->task_space_pose == &inert::task_space_pose; }},
         slot_descriptor{"motion.task_space_screw", [](const void *value) -> bool { return static_cast<const motion_ops *>(value)->task_space_screw == &inert::task_space_screw; }},
-        slot_descriptor{"motion.tool_frame_displace",
-                        [](const void *value) -> bool { return static_cast<const motion_ops *>(value)->tool_frame_displace == &inert::tool_frame_displace; }},
 };
 
 constexpr std::array trajectory_descriptors{

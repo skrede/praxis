@@ -174,7 +174,6 @@ inline capabilities bent_everywhere()
     arm.robot.ik_solve_flange_pose       = &nudged_solve_flange_pose;
     arm.motion.task_space_pose           = &nudged_task_space_pose;
     arm.motion.task_space_screw          = &nudged_task_space_screw;
-    arm.motion.tool_frame_displace       = &nudged_tool_frame_displace;
     arm.trajectory.task_space_waypoints  = &displaced_task_space_waypoints;
 
     return arm;

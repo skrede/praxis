@@ -76,18 +76,6 @@ rigid_motion::frame_ops framing()
     return ops;
 }
 
-// A jog is answered with the configuration it started from: the case reads the angles arriving at
-// the seam, and an unbound slot would report a refusal on every frame the drive types into.
-expected<joint_vector, refusal> unmoved(const rigid_motion::frame_ops &, const kinematics &, const transform &, const Eigen::Vector3d &, const rotation &, const joint_vector &j0)
-{
-    return j0;
-}
-
-motion_ops jogging()
-{
-    return motion_ops{.task_space_pose = &position_as_configuration, .tool_frame_displace = &unmoved};
-}
-
 // The seeding path does nothing unless both the orientation and the position are published.
 std::shared_ptr<const arm_snapshot> chosen_pose()
 {
@@ -135,7 +123,7 @@ TEST_CASE("the orientation a task space window builds a target pose from reaches
     built_radians.clear();
 
     praxis::scheduler::scheduler loop(inline_workers, clock_source{&reading});
-    const composed_arm placed = compose(loop, jogging(), rigid_motion::baseline().screw);
+    const composed_arm placed = compose(loop, composing_motion(), rigid_motion::baseline().screw);
     placed.publishing->publish(chosen_pose());
     task_space_window panel("Task space", placed.seen, placed.owned, framing(), std::make_shared<edited_pose>(), {shape::ptp, mode::simulation});
 
@@ -157,7 +145,7 @@ TEST_CASE("the orientation a tool jog window jogs by reaches the frame seam as t
     built_radians.clear();
 
     praxis::scheduler::scheduler loop(inline_workers, clock_source{&reading});
-    const composed_arm placed = compose(loop, jogging(), rigid_motion::baseline().screw);
+    const composed_arm placed = compose(loop, composing_motion(), rigid_motion::baseline().screw);
     placed.publishing->publish(chosen_pose());
     tool_jog_window panel("Tool frame jog", placed.seen, placed.owned, framing(), std::make_shared<edited_pose>(), {mode::preview});
 

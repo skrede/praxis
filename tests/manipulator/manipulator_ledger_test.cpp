@@ -158,7 +158,7 @@ TEST_CASE("the_residual_kinds_are_distributed_over_the_rows_as_the_tables_assign
     const std::size_t elements                = carrying(compared, residual_kind::element_wise);
     const std::size_t angles                  = carrying(compared, residual_kind::geodesic);
 
-    REQUIRE(poses == 11u);
+    REQUIRE(poses == 10u);
     REQUIRE(elements == 5u);
     REQUIRE(angles == 1u);
     REQUIRE(carrying(compared, residual_kind::axis_up_to_sign) == 0u);

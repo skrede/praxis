@@ -426,7 +426,6 @@ lib/praxis-manipulator/include/praxis/manipulator/baseline/motion.h	manipulator	
 lib/praxis-manipulator/include/praxis/manipulator/baseline/motion.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/baseline/motion.h	task_space_pose	prototype	(const kinematics & solver,const transform & pose,const joint_vector & j0)	typename:expected<joint_vector,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/baseline/motion.h	task_space_screw	prototype	(const rigid_motion::screw_ops & screw,const kinematics & solver,const transform & start_pose,const Eigen::Vector3d & w,const Eigen::Vector3d & q,double theta_radians,double h,const joint_vector & j0)	typename:expected<joint_vector,refusal>
-lib/praxis-manipulator/include/praxis/manipulator/baseline/motion.h	tool_frame_displace	prototype	(const rigid_motion::frame_ops & frames,const kinematics & solver,const transform & start_pose,const Eigen::Vector3d & offset,const rotation & orientation,const joint_vector & j0)	typename:expected<joint_vector,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/baseline/robot.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/baseline/robot.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/baseline/robot.h	tool_pose_from_flange_pose	prototype	(const transform & flange_pose,const transform & tool_offset)	typename:transform
@@ -1064,13 +1063,11 @@ lib/praxis-manipulator/include/praxis/manipulator/motion.h	manipulator	namespace
 lib/praxis-manipulator/include/praxis/manipulator/motion.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/motion.h	task_space_pose	prototype	(const kinematics & solver,const transform & pose,const joint_vector & j0)	typename:expected<joint_vector,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/motion.h	task_space_screw	prototype	(const rigid_motion::screw_ops & screw,const kinematics & solver,const transform & start_pose,const Eigen::Vector3d & w,const Eigen::Vector3d & q,double theta_radians,double h,const joint_vector & j0)	typename:expected<joint_vector,refusal>
-lib/praxis-manipulator/include/praxis/manipulator/motion.h	tool_frame_displace	prototype	(const rigid_motion::frame_ops & frames,const kinematics & solver,const transform & start_pose,const Eigen::Vector3d & offset,const rotation & orientation,const joint_vector & j0)	typename:expected<joint_vector,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/motion.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/motion.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/motion.h	motion_ops	struct	-	-
 lib/praxis-manipulator/include/praxis/manipulator/motion.h	task_space_pose	member	-	typename:expected<joint_vector,refusal> (*)(const kinematics & solver,const transform & pose,const joint_vector & j0)
 lib/praxis-manipulator/include/praxis/manipulator/motion.h	task_space_screw	member	-	typename:expected<joint_vector,refusal> (*)(const rigid_motion::screw_ops & screw,const kinematics & solver,const transform & start_pose,const Eigen::Vector3d & w,const Eigen::Vector3d & q,double theta_radians,double h,const joint_vector & j0)
-lib/praxis-manipulator/include/praxis/manipulator/motion.h	tool_frame_displace	member	-	typename:expected<joint_vector,refusal> (*)(const rigid_motion::frame_ops & frames,const kinematics & solver,const transform & start_pose,const Eigen::Vector3d & offset,const rotation & orientation,const joint_vector & j0)
 lib/praxis-manipulator/include/praxis/manipulator/motion_commands.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/motion_commands.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/motion_commands.h	task_space_path	typedef	-	-
@@ -1633,7 +1630,6 @@ lib/praxis-manipulator/include/praxis/manipulator/slots.h	count	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/slots.h	motion_slot	enum	-	typename:std::uint32_t
 lib/praxis-manipulator/include/praxis/manipulator/slots.h	task_space_pose	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/slots.h	task_space_screw	enumerator	-	-
-lib/praxis-manipulator/include/praxis/manipulator/slots.h	tool_frame_displace	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/slots.h	count	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/slots.h	task_trajectory_slot	enum	-	typename:std::uint32_t
 lib/praxis-manipulator/include/praxis/manipulator/slots.h	task_space_waypoints	enumerator	-	-

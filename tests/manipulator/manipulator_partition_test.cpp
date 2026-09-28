@@ -63,7 +63,6 @@ constexpr std::array robot_partition{
 constexpr std::array motion_partition{
         pairing{static_cast<std::size_t>(motion_slot::task_space_pose), returns_refusal_v<decltype(motion_ops::task_space_pose)>},
         pairing{static_cast<std::size_t>(motion_slot::task_space_screw), returns_refusal_v<decltype(motion_ops::task_space_screw)>},
-        pairing{static_cast<std::size_t>(motion_slot::tool_frame_displace), returns_refusal_v<decltype(motion_ops::tool_frame_displace)>},
 };
 
 constexpr std::array task_trajectory_partition{
@@ -111,7 +110,6 @@ static_assert(robot_partition[static_cast<std::size_t>(robot_slot::ik_solve_flan
 
 static_assert(motion_partition[static_cast<std::size_t>(motion_slot::task_space_pose)].carries_the_channel);
 static_assert(motion_partition[static_cast<std::size_t>(motion_slot::task_space_screw)].carries_the_channel);
-static_assert(motion_partition[static_cast<std::size_t>(motion_slot::tool_frame_displace)].carries_the_channel);
 
 static_assert(task_trajectory_partition[static_cast<std::size_t>(task_trajectory_slot::task_space_waypoints)].carries_the_channel);
 
@@ -137,6 +135,6 @@ TEST_CASE("every_slot_of_this_extension_is_paired_with_its_enumerator_on_the_sid
     const std::size_t fallible = counted(forward_kinematics_partition) + counted(differential_kinematics_partition) + counted(inverse_kinematics_partition) + counted(robot_partition) +
             counted(motion_partition) + counted(task_trajectory_partition) + counted(modeling_partition);
 
-    CHECK(paired == 18u);
-    CHECK(fallible == 14u);
+    CHECK(paired == 17u);
+    CHECK(fallible == 13u);
 }

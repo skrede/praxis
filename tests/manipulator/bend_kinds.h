@@ -54,7 +54,7 @@ inline bool is_bent(bent which, std::string_view slot)
             return slot == "trajectory.task_space_waypoints";
         case bent::configuration:
             return slot == "ik.inverse_kinematics" || slot == "robot.ik_solve_pose" || slot == "robot.ik_solve_flange_pose" || slot == "motion.task_space_pose" ||
-                    slot == "motion.task_space_screw" || slot == "motion.tool_frame_displace";
+                    slot == "motion.task_space_screw";
         case bent::count:
             break;
     }

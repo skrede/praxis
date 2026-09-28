@@ -26,11 +26,4 @@ expected<joint_vector, refusal> task_space_screw(const rigid_motion::screw_ops &
     return task_space_pose(solver, screw.matrix_exponential_screw(*axis, theta_radians) * start_pose, j0);
 }
 
-// The displacement is read in the tool frame, so it postmultiplies the start pose.
-expected<joint_vector, refusal> tool_frame_displace(const rigid_motion::frame_ops &frames, const kinematics &solver, const transform &start_pose, const Eigen::Vector3d &offset,
-                                                    const rotation &orientation, const joint_vector &j0)
-{
-    return task_space_pose(solver, start_pose * frames.transformation_matrix_from_rotation_position(orientation, offset), j0);
-}
-
 }

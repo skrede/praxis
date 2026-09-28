@@ -37,9 +37,8 @@ constexpr robot_ops bound_robot{
 };
 
 constexpr motion_ops bound_motion{
-        .task_space_pose     = &task_space_pose,
-        .task_space_screw    = &task_space_screw,
-        .tool_frame_displace = &tool_frame_displace,
+        .task_space_pose  = &task_space_pose,
+        .task_space_screw = &task_space_screw,
 };
 
 constexpr modeling_ops bound_modeling{

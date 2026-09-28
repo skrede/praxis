@@ -55,16 +55,9 @@ expected<joint_vector, refusal> screw_from_another_seed(const rigid_motion::scre
     return task_space_screw(screw, solver, start_pose, w, q, theta_radians, h, another_seed(j0));
 }
 
-expected<joint_vector, refusal> displace_from_another_seed(const rigid_motion::frame_ops &frames, const kinematics &solver, const transform &start_pose, const Eigen::Vector3d &offset,
-                                                           const rotation &orientation, const joint_vector &j0)
-{
-    return tool_frame_displace(frames, solver, start_pose, offset, orientation, another_seed(j0));
-}
-
 constexpr motion_ops answering_from_another_seed{
-        .task_space_pose     = &pose_from_another_seed,
-        .task_space_screw    = &screw_from_another_seed,
-        .tool_frame_displace = &displace_from_another_seed,
+        .task_space_pose  = &pose_from_another_seed,
+        .task_space_screw = &screw_from_another_seed,
 };
 
 bool a_motion_row(std::string_view slot)

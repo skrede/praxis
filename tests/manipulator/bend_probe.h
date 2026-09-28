@@ -134,7 +134,7 @@ void note_answers_apart(const manipulator::capabilities &held, const manipulator
 
     if(const auto derived = held.modeling.build_chain(machine); derived)
         if(const auto other = bent.modeling.build_chain(machine); other)
-            seen[15] = seen[15] || apart(derived->home, other->home) || apart(derived->space_screws, other->space_screws);
+            seen[14] = seen[14] || apart(derived->home, other->home) || apart(derived->space_screws, other->space_screws);
 
     if(!composed)
         return;
@@ -151,10 +151,8 @@ void note_answers_apart(const manipulator::capabilities &held, const manipulator
     const transform tool                = *reached * offset;
     const Eigen::Vector3d direction     = drawn.unit_direction();
     const Eigen::Vector3d point         = drawn.position_metres();
-    const Eigen::Vector3d shift         = drawn.position_metres();
     const double turn                   = drawn.angle_radians();
     const double travel                 = drawn.pitch();
-    const rotation turning              = drawn.rotation_member();
     const rigid_motion::screw_ops screw = rigid_motion::baseline().screw;
 
     seen[10] = seen[10] ||
@@ -165,9 +163,6 @@ void note_answers_apart(const manipulator::capabilities &held, const manipulator
     seen[13] = seen[13] ||
             answers_apart(held.motion.task_space_screw(screw, *composed, *reached, direction, point, turn, travel, start),
                           bent.motion.task_space_screw(screw, *composed, *reached, direction, point, turn, travel, start));
-    seen[14] = seen[14] ||
-            answers_apart(held.motion.tool_frame_displace(shared_motions().frame, *composed, *reached, shift, turning, start),
-                          bent.motion.tool_frame_displace(shared_motions().frame, *composed, *reached, shift, turning, start));
 
     const expected<transform, refusal> stepped = composed->fk_solve(manipulator::joint_vector(start + manipulator::joint_vector::Constant(start.size(), waypoint_step_radians)));
     if(!stepped)
@@ -175,7 +170,7 @@ void note_answers_apart(const manipulator::capabilities &held, const manipulator
 
     const std::array<transform, 1> route{*stepped};
 
-    seen[16] = seen[16] ||
+    seen[15] = seen[15] ||
             answers_apart(held.trajectory.task_space_waypoints(*composed, route, start, example.chain.limits),
                           bent.trajectory.task_space_waypoints(*composed, route, start, example.chain.limits));
 }

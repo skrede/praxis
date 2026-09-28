@@ -13,10 +13,4 @@ expected<joint_vector, refusal> task_space_screw(const rigid_motion::screw_ops &
     return unexpected(refusal::not_implemented);
 }
 
-expected<joint_vector, refusal> tool_frame_displace(const rigid_motion::frame_ops &, const kinematics &, const transform &, const Eigen::Vector3d &, const rotation &,
-                                                    const joint_vector &)
-{
-    return unexpected(refusal::not_implemented);
-}
-
 }

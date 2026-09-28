@@ -46,16 +46,6 @@ inline expected<joint_vector, refusal> nudged_task_space_screw(const rigid_motio
     return nudged(answer.value());
 }
 
-inline expected<joint_vector, refusal> nudged_tool_frame_displace(const rigid_motion::frame_ops &frames, const kinematics &solver, const transform &start_pose,
-                                                                  const Eigen::Vector3d &offset, const rotation &orientation, const joint_vector &j0)
-{
-    const expected<joint_vector, refusal> answer = tool_frame_displace(frames, solver, start_pose, offset, orientation, j0);
-    if(!answer)
-        return answer;
-
-    return nudged(answer.value());
-}
-
 // A prepared motion answering the reference's, moved in the quantity the row comparing it measures:
 // one element of every configuration it names, at every time it is sampled at.
 class displaced_motion final : public trajectory::trajectory_generator

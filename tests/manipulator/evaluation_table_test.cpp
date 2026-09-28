@@ -135,7 +135,7 @@ TEST_CASE("each_rows_residual_kind_is_the_one_its_return_type_calls_for")
     const manipulator::capabilities reference = manipulator::baseline();
     const auto compared                       = manipulator::evaluation_views(reference, reference);
 
-    REQUIRE(carrying(compared, residual_kind::pose) == 11u);
+    REQUIRE(carrying(compared, residual_kind::pose) == 10u);
     REQUIRE(carrying(compared, residual_kind::element_wise) == 5u);
     REQUIRE(carrying(compared, residual_kind::geodesic) == 1u);
     REQUIRE(carrying(compared, residual_kind::axis_up_to_sign) == 0u);
