@@ -15,6 +15,12 @@ inline void install_frame_markers(manipulator::loadable_robot_stencil &on)
     on.set_flange_attachment(manipulator::flange_attachment::tool_frame_marker, manipulator::make_flange_marker(on.robot()));
 }
 
+// The marker at the description's flange, beside markers that follow a supplied chain.
+inline void install_described_marker(manipulator::loadable_robot_stencil &on)
+{
+    on.set_flange_attachment(manipulator::flange_attachment::described_frame_marker, manipulator::make_flange_marker(on.robot()));
+}
+
 // Every switch and every size the view window offers over what the arm draws at a frame.
 inline manipulator::robot_view_window::controls every_marker_control(manipulator::robot_view_window::controls offered)
 {

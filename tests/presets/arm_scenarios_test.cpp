@@ -859,6 +859,70 @@ TEST_CASE("a supplied chain whose home pose is displaced carries the frame marke
     CHECK(((mark_in_world(*put) - rendered_flange(composed)) - displaced).norm() < read_back);
 }
 
+TEST_CASE("the supplied-chain view offers a switch that stands a marker at the rendered flange beside the typed one", "[presets][windows]")
+{
+    const Eigen::Vector3d displaced(0.0, 0.0, 0.25);
+    const described_arm described(6, "six");
+    const presets::arm_scenario chosen     = described_by(described.where);
+    const manipulator::screw_chain derived = derived_chain(described.where);
+
+    const presets::screw_table_source supplied =
+            supplied_from(kept_chain(derived.space_screws, derived.home.block<3, 1>(0, 3) + displaced, "described-displaced.xml"), chain_binding("described-displaced-into.xml"));
+
+    opened_arm built;
+    const std::shared_ptr<scene::preset> composed = built.open(chosen, presets::arm_windows_modeling(chosen, supplied));
+    built.draw(*composed);
+
+    press_on(*panel_named(composed, "View"), "Description's flange frame");
+    built.draw(*composed);
+
+    const std::shared_ptr<threepp::Object3D> reference = drawn_by(composed).attached_at(manipulator::flange_attachment::described_frame_marker);
+    const std::shared_ptr<threepp::Object3D> typed     = frame_marker_of(composed);
+    REQUIRE(reference != nullptr);
+    REQUIRE(typed != nullptr);
+    CHECK(reference->visible);
+    CHECK((mark_in_world(*reference) - rendered_flange(composed)).norm() < read_back);
+    CHECK(((mark_in_world(*typed) - mark_in_world(*reference)) - displaced).norm() < read_back);
+}
+
+TEST_CASE("only the supplied-chain composition installs a marker at the description flange", "[presets][windows]")
+{
+    const described_arm described(6, "six");
+    const presets::arm_scenario chosen = described_by(described.where);
+
+    for(const auto &named : marking_scenarios(chosen))
+    {
+        INFO(named.first);
+        opened_arm built;
+        const std::shared_ptr<scene::preset> composed = built.open(chosen, named.second);
+        const bool modeling                           = std::string(named.first) == "screw modeling";
+        CHECK((drawn_by(composed).attached_at(manipulator::flange_attachment::described_frame_marker) != nullptr) == modeling);
+    }
+
+    opened_arm tooled;
+    const std::shared_ptr<scene::preset> composed = tooled.open(chosen, presets::arm_windows_modeling(chosen, presets::screw_table_source{}, presets::modeling_beside::pose_and_tool));
+    CHECK(drawn_by(composed).attached_at(manipulator::flange_attachment::described_frame_marker) != nullptr);
+}
+
+TEST_CASE("a supplied-chain document naming no described flange frame opens with that marker hidden", "[presets][windows]")
+{
+    const described_arm described(6, "six");
+    const presets::arm_scenario chosen     = described_by(described.where);
+    const manipulator::screw_chain derived = derived_chain(described.where);
+
+    const presets::screw_table_source supplied = supplied_from(
+            kept_chain(derived.space_screws, derived.home.block<3, 1>(0, 3) + Eigen::Vector3d(0.0, 0.0, 0.25), "described-unnamed.xml"), chain_binding("described-unnamed-into.xml"));
+
+    opened_arm built;
+    const std::shared_ptr<scene::preset> composed = built.open(chosen, presets::arm_windows_modeling(chosen, supplied));
+    built.draw(*composed);
+
+    const std::shared_ptr<threepp::Object3D> reference = drawn_by(composed).attached_at(manipulator::flange_attachment::described_frame_marker);
+    REQUIRE(drawn_by(composed).holds_supplied_chain());
+    REQUIRE(reference != nullptr);
+    CHECK_FALSE(reference->visible);
+}
+
 TEST_CASE("a home position typed into the chain window moves the flange frame marker to where the typed chain ends", "[presets][windows]")
 {
     const described_arm described(6, "six");

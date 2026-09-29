@@ -38,16 +38,17 @@ namespace praxis::manipulator {
 // holds, so an object standing at another link or at a pose in the world is not one of these. The
 // tool frame's marker is carried at the tool offset the arm publishes. While a supplied chain is
 // held, the two frame markers stand where that chain ends rather than at the flange; the tool key
-// always stands at the flange.
+// and the marker at the description's flange always stand at the flange.
 enum class flange_attachment : std::uint8_t
 {
     tool,
     frame_marker,
-    tool_frame_marker
+    tool_frame_marker,
+    described_frame_marker
 };
 
 // Written out beside the enumeration, so that the set and the count of it cannot disagree.
-inline constexpr std::size_t flange_attachment_count = 3;
+inline constexpr std::size_t flange_attachment_count = 4;
 
 // What the marker drawn at the flange does while a tool occupies the flange: it keeps standing
 // beside the tool, or it withholds itself for as long as the tool key is occupied. The set is closed
@@ -181,11 +182,13 @@ public:
     // The marker at the flange is drawn only where the switch and the policy both admit it; either
     // one withholds it, and a switch cannot defeat a policy that yields. The marker at the tool frame
     // answers its own switch alone: the tool offset defines that frame whether or not anything hangs
-    // at the flange.
+    // at the flange. The marker at the description's flange is drawn only while a supplied chain is
+    // held and its own switch admits it.
     void set_flange_marker_policy(flange_marker_policy under);
     flange_marker_policy flange_marker_policy_held() const;
     void set_flange_marker_shown(bool shown);
     void set_tool_marker_shown(bool shown);
+    void set_described_marker_shown(bool shown);
 
     // The tool is drawn as the mesh carried under the tool key, as one segment from the flange to the
     // tool frame the arm publishes, as both or as neither. Neither switch reaches the arm's own
@@ -422,6 +425,7 @@ private:
     bool m_supplied;
     bool m_marker_shown;
     bool m_tool_marker_shown;
+    bool m_described_marker_shown;
     bool m_tool_mesh_shown;
     bool m_force_capped;
     jacobian_frame m_frame;

@@ -174,7 +174,7 @@ Eigen::Vector3d turned_back(const threepp::Matrix4 &placed)
 }
 
 // A scene needs no graphics context and a renderer robot needs no display, so the whole stage is
-// built headlessly. Both frame markers and a bare node under the tool key hang at the flange.
+// built headlessly. The three frame markers and a bare node under the tool key hang at the flange.
 struct stage
 {
     explicit stage(const joint_vector &joints)
@@ -193,6 +193,7 @@ struct stage
         REQUIRE(shown.initialize().has_value());
         shown.set_flange_attachment(flange_attachment::frame_marker, make_flange_marker(shown.robot()));
         shown.set_flange_attachment(flange_attachment::tool_frame_marker, make_flange_marker(shown.robot()));
+        shown.set_flange_attachment(flange_attachment::described_frame_marker, make_flange_marker(shown.robot()));
         shown.set_flange_attachment(flange_attachment::tool, threepp::Object3D::create());
     }
 
@@ -463,4 +464,57 @@ TEST_CASE("a chain supplied as unbuilt parks both markers and names the slot unt
     const praxis::transform flange_rule = fk(displaced_home(), two_axes(), bent());
     CHECK(placement_departure(drawn.attached(flange_attachment::frame_marker), drawn.in_root(flange_rule)) < single_precision_tolerance);
     CHECK(placement_departure(drawn.attached(flange_attachment::tool_frame_marker), drawn.in_root(flange_rule * turned_tool_offset())) < single_precision_tolerance);
+}
+
+TEST_CASE("the marker at the description flange stays hidden until a chain is supplied and its switch is on", "[manipulator][supplied]")
+{
+    stage drawn(bent());
+    threepp::Object3D &reference = drawn.attached(flange_attachment::described_frame_marker);
+    drawn.settle();
+    CHECK_FALSE(reference.visible);
+
+    drawn.shown.set_described_marker_shown(true);
+    drawn.draw();
+    CHECK_FALSE(reference.visible);
+
+    drawn.shown.set_described_marker_shown(false);
+    REQUIRE(drawn.shown.supply_joint_screws(displaced_home(), two_axes()).has_value());
+    drawn.draw();
+    CHECK_FALSE(reference.visible);
+
+    drawn.shown.set_described_marker_shown(true);
+    drawn.draw();
+    CHECK(reference.visible);
+}
+
+TEST_CASE("the marker at the description flange stands on the rendered flange while a supplied chain moves the others", "[manipulator][supplied]")
+{
+    stage drawn(bent());
+    drawn.publish(turned_tool_offset());
+    drawn.shown.set_described_marker_shown(true);
+    REQUIRE(drawn.shown.supply_joint_screws(displaced_home(), two_axes()).has_value());
+    drawn.settle();
+
+    threepp::Object3D &reference = drawn.attached(flange_attachment::described_frame_marker);
+    CHECK(placement_departure(reference, carried_by(drawn.flange(), threepp::Matrix4())) < single_precision_tolerance);
+    CHECK(placement_departure(drawn.attached(flange_attachment::frame_marker), drawn.flange()) > 0.1);
+
+    REQUIRE(drawn.shown.set_marker_scale(2.0).has_value());
+    drawn.draw();
+    CHECK(reference.scale.x == 2.f);
+    CHECK(reference.scale.y == 2.f);
+    CHECK(reference.scale.z == 2.f);
+}
+
+TEST_CASE("a chain told after a supplied one hides the marker at the description flange", "[manipulator][supplied]")
+{
+    stage drawn(bent());
+    drawn.shown.set_described_marker_shown(true);
+    REQUIRE(drawn.shown.supply_joint_screws(displaced_home(), two_axes()).has_value());
+    drawn.settle();
+    REQUIRE(drawn.attached(flange_attachment::described_frame_marker).visible);
+
+    REQUIRE(drawn.shown.set_joint_screws(displaced_home(), two_axes()).has_value());
+    drawn.draw();
+    CHECK_FALSE(drawn.attached(flange_attachment::described_frame_marker).visible);
 }

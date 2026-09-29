@@ -105,6 +105,7 @@ loadable_robot_stencil::loadable_robot_stencil(std::shared_ptr<threepp::Robot> r
         , m_supplied(false)
         , m_marker_shown(true)
         , m_tool_marker_shown(true)
+        , m_described_marker_shown(false)
         , m_tool_mesh_shown(true)
         , m_force_capped(true)
         , m_frame(jacobian_frame::space)

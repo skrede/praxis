@@ -60,7 +60,7 @@ bool tool_render_draws_stick(tool_render which)
 }
 
 robot_view_window::settings::settings(model_render chosen_model, bool chosen_decoration, std::optional<double> chosen_reach, bool chosen_marker, bool chosen_tool_marker,
-                                      double chosen_marker_scale, tool_render chosen_tool)
+                                      double chosen_marker_scale, tool_render chosen_tool, bool chosen_described_marker)
         : tool(chosen_tool)
         , model(chosen_model)
         , decoration(chosen_decoration)
@@ -68,6 +68,7 @@ robot_view_window::settings::settings(model_render chosen_model, bool chosen_dec
         , flange_marker(chosen_marker)
         , tool_frame_marker(chosen_tool_marker)
         , marker_scale(chosen_marker_scale)
+        , described_frame_marker(chosen_described_marker)
 {
 }
 
@@ -82,6 +83,7 @@ robot_view_window::robot_view_window(std::string name, loadable_robot_stencil &t
         , m_marker_scale(std::max(smallest_marker_scale, static_cast<float>(state.marker_scale)))
         , m_marker(state.flange_marker)
         , m_tool_marker(state.tool_frame_marker)
+        , m_described_marker(state.described_frame_marker)
         , m_decoration(state.decoration)
         , m_tool(state.tool)
         , m_model(state.model)
@@ -94,7 +96,8 @@ robot_view_window::robot_view_window(std::string name, loadable_robot_stencil &t
 
 robot_view_window::settings robot_view_window::state() const
 {
-    return settings{m_model, m_decoration, m_reach_named ? std::optional<double>(m_reach) : std::nullopt, m_marker, m_tool_marker, static_cast<double>(m_marker_scale), m_tool};
+    return settings(m_model, m_decoration, m_reach_named ? std::optional<double>(m_reach) : std::nullopt, m_marker, m_tool_marker, static_cast<double>(m_marker_scale), m_tool,
+                    m_described_marker);
 }
 
 std::vector<config::edit> robot_view_window::settings_edits(const config::document &carried) const
@@ -123,6 +126,7 @@ void robot_view_window::initialize()
     m_stencil.set_decoration_shown(m_decoration);
     m_stencil.set_flange_marker_shown(m_marker);
     m_stencil.set_tool_marker_shown(m_tool_marker);
+    m_stencil.set_described_marker_shown(m_described_marker);
     m_stencil.set_decoration_reach(static_cast<double>(m_reach));
     static_cast<void>(m_stencil.set_marker_scale(static_cast<double>(m_marker_scale)));
 }
@@ -140,8 +144,10 @@ void robot_view_window::render()
         render_tool_frame_marker();
     if(m_controls.tool)
         render_tool();
+    if(m_controls.described_frame_marker)
+        render_described_frame_marker();
 
-    const bool switched = m_controls.model || m_controls.decoration || m_controls.flange_marker || m_controls.tool_frame_marker || m_controls.tool;
+    const bool switched = m_controls.model || m_controls.decoration || m_controls.flange_marker || m_controls.tool_frame_marker || m_controls.tool || m_controls.described_frame_marker;
     if(switched && (m_controls.reach || m_controls.marker_scale))
         ImGui::Separator();
     if(m_controls.reach)
@@ -184,6 +190,12 @@ void robot_view_window::render_tool_frame_marker()
 {
     if(ImGui::Checkbox("Tool frame", &m_tool_marker))
         m_stencil.set_tool_marker_shown(m_tool_marker);
+}
+
+void robot_view_window::render_described_frame_marker()
+{
+    if(ImGui::Checkbox("Description's flange frame", &m_described_marker))
+        m_stencil.set_described_marker_shown(m_described_marker);
 }
 
 void robot_view_window::render_marker_scale()

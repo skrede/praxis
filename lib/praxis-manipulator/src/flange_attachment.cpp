@@ -29,7 +29,13 @@ std::size_t slot_of(flange_attachment which)
 
 bool marks_a_frame(flange_attachment which)
 {
-    return which == flange_attachment::frame_marker || which == flange_attachment::tool_frame_marker;
+    return which == flange_attachment::frame_marker || which == flange_attachment::tool_frame_marker || which == flange_attachment::described_frame_marker;
+}
+
+void shown_if(const std::shared_ptr<threepp::Object3D> &marker, bool shown)
+{
+    if(marker != nullptr)
+        marker->visible = shown;
 }
 
 threepp::Matrix4 carried_by(threepp::Matrix4 base, const threepp::Matrix4 &offset)
@@ -182,17 +188,11 @@ void loadable_robot_stencil::place_flange_attachments() const
 
 void loadable_robot_stencil::show_flange_markers() const
 {
-    const carried &at_the_flange = m_attached[slot_of(flange_attachment::frame_marker)];
-    if(at_the_flange.object != nullptr)
-    {
-        const bool occupied           = m_attached[slot_of(flange_attachment::tool)].object != nullptr;
-        const bool withheld           = m_marker_policy == flange_marker_policy::yields && occupied;
-        at_the_flange.object->visible = m_marker_shown && !withheld;
-    }
-
-    const carried &at_the_tool = m_attached[slot_of(flange_attachment::tool_frame_marker)];
-    if(at_the_tool.object != nullptr)
-        at_the_tool.object->visible = m_tool_marker_shown;
+    const bool occupied = m_attached[slot_of(flange_attachment::tool)].object != nullptr;
+    const bool withheld = m_marker_policy == flange_marker_policy::yields && occupied;
+    shown_if(m_attached[slot_of(flange_attachment::frame_marker)].object, m_marker_shown && !withheld);
+    shown_if(m_attached[slot_of(flange_attachment::tool_frame_marker)].object, m_tool_marker_shown);
+    shown_if(m_attached[slot_of(flange_attachment::described_frame_marker)].object, m_described_marker_shown && m_supplied);
 }
 
 }

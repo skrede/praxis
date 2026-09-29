@@ -18,13 +18,14 @@ constexpr float unnamed_reach = 0.f;
 
 struct robot_view_names
 {
-    static constexpr std::string_view tool         = "tool";
-    static constexpr std::string_view model        = "model";
-    static constexpr std::string_view reach        = "axis_reach";
-    static constexpr std::string_view decoration   = "screw_axes";
-    static constexpr std::string_view marker       = "flange_frame";
-    static constexpr std::string_view tool_marker  = "tool_frame";
-    static constexpr std::string_view marker_scale = "frame_marker_scale";
+    static constexpr std::string_view tool             = "tool";
+    static constexpr std::string_view model            = "model";
+    static constexpr std::string_view reach            = "axis_reach";
+    static constexpr std::string_view decoration       = "screw_axes";
+    static constexpr std::string_view marker           = "flange_frame";
+    static constexpr std::string_view tool_marker      = "tool_frame";
+    static constexpr std::string_view marker_scale     = "frame_marker_scale";
+    static constexpr std::string_view described_marker = "described_flange_frame";
 };
 
 const robot_view_window::settings &robot_view_fallbacks()
@@ -65,6 +66,7 @@ void declare_robot_view(config::declaration &shape, std::string_view at)
     shape.field(keys::under(at, robot_view_names::decoration), config::field_kind::flag, was.decoration ? "true" : "false");
     shape.field(keys::under(at, robot_view_names::marker), config::field_kind::flag, was.flange_marker ? "true" : "false");
     shape.field(keys::under(at, robot_view_names::tool_marker), config::field_kind::flag, was.tool_frame_marker ? "true" : "false");
+    shape.field(keys::under(at, robot_view_names::described_marker), config::field_kind::flag, was.described_frame_marker ? "true" : "false");
     shape.field(keys::under(at, robot_view_names::reach), config::field_kind::real, reach_text(was.axis_reach));
     shape.field(keys::under(at, robot_view_names::marker_scale), config::field_kind::real, keys::text_of(static_cast<float>(was.marker_scale)));
 }
@@ -79,8 +81,9 @@ robot_view_window::settings read_robot_view(const config::document &values, std:
     state.decoration        = keys::flag_at(values, keys::under(at, robot_view_names::decoration), was.decoration);
     state.flange_marker     = keys::flag_at(values, keys::under(at, robot_view_names::marker), was.flange_marker);
     state.tool_frame_marker = keys::flag_at(values, keys::under(at, robot_view_names::tool_marker), was.tool_frame_marker);
-    state.axis_reach        = reach_of(keys::real_at(values, keys::under(at, robot_view_names::reach), static_cast<float>(was.axis_reach.value_or(unnamed_reach))));
-    state.marker_scale      = static_cast<double>(keys::real_at(values, keys::under(at, robot_view_names::marker_scale), static_cast<float>(was.marker_scale)));
+    state.described_frame_marker = keys::flag_at(values, keys::under(at, robot_view_names::described_marker), was.described_frame_marker);
+    state.axis_reach             = reach_of(keys::real_at(values, keys::under(at, robot_view_names::reach), static_cast<float>(was.axis_reach.value_or(unnamed_reach))));
+    state.marker_scale           = static_cast<double>(keys::real_at(values, keys::under(at, robot_view_names::marker_scale), static_cast<float>(was.marker_scale)));
 
     return state;
 }
@@ -93,6 +96,7 @@ std::vector<config::edit> write_robot_view(const robot_view_window::settings &st
     changes.push_back(config::edit{keys::under(at, robot_view_names::decoration), state.decoration ? "true" : "false"});
     changes.push_back(config::edit{keys::under(at, robot_view_names::marker), state.flange_marker ? "true" : "false"});
     changes.push_back(config::edit{keys::under(at, robot_view_names::tool_marker), state.tool_frame_marker ? "true" : "false"});
+    changes.push_back(config::edit{keys::under(at, robot_view_names::described_marker), state.described_frame_marker ? "true" : "false"});
     changes.push_back(config::edit{keys::under(at, robot_view_names::reach), reach_text(state.axis_reach)});
     changes.push_back(config::edit{keys::under(at, robot_view_names::marker_scale), keys::text_of(static_cast<float>(state.marker_scale))});
 

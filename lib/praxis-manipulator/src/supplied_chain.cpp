@@ -84,6 +84,11 @@ bool loadable_robot_stencil::holds_supplied_chain() const
     return m_supplied;
 }
 
+void loadable_robot_stencil::set_described_marker_shown(bool shown)
+{
+    m_described_marker_shown = shown;
+}
+
 expected<chain_end, withheld_chain> loadable_robot_stencil::supplied_chain_end(const arm_snapshot &seen) const
 {
     const std::size_t rendered = m_robot->numDOF();

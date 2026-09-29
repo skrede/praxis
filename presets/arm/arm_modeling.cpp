@@ -30,9 +30,10 @@ using composed_windows = std::vector<std::shared_ptr<scene::imgui_window>>;
 manipulator::robot_view_window::controls chain_view_controls(modeling_beside beside)
 {
     manipulator::robot_view_window::controls offered;
-    offered.reach      = true;
-    offered.decoration = false;
-    offered.tool       = beside == modeling_beside::pose_and_tool;
+    offered.reach                  = true;
+    offered.decoration             = false;
+    offered.tool                   = beside == modeling_beside::pose_and_tool;
+    offered.described_frame_marker = true;
 
     return every_marker_control(offered);
 }
@@ -86,6 +87,7 @@ manipulator::arm_composition arm_windows_modeling(arm_scenario chosen, screw_tab
     composed.windows    = [state = std::move(chosen), kept = std::move(keeping), beside](const manipulator::arm_window_inputs &built)
     {
         install_frame_markers(built.stencil);
+        install_described_marker(built.stencil);
 
         return beside_the_chain(state, kept, built, beside);
     };

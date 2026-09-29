@@ -70,6 +70,7 @@ public:
                 , flange_marker(false)
                 , tool_frame_marker(false)
                 , marker_scale(false)
+                , described_frame_marker(false)
         {
         }
 
@@ -80,6 +81,7 @@ public:
         bool flange_marker;
         bool tool_frame_marker;
         bool marker_scale;
+        bool described_frame_marker;
     };
 
     // What the window opens the arm at. An absent reach leaves the decoration at the reach the
@@ -98,9 +100,10 @@ public:
         // A multiple of the size a marker was built at, so one document serves a marker built for a
         // small machine and one built for a large one.
         double marker_scale;
+        bool described_frame_marker;
 
         explicit settings(model_render chosen_model = model_render::meshes, bool chosen_decoration = true, std::optional<double> chosen_reach = std::nullopt, bool chosen_marker = true,
-                          bool chosen_tool_marker = false, double chosen_marker_scale = 1.0, tool_render chosen_tool = tool_render::mesh);
+                          bool chosen_tool_marker = false, double chosen_marker_scale = 1.0, tool_render chosen_tool = tool_render::mesh, bool chosen_described_marker = false);
     };
 
     robot_view_window(std::string name, loadable_robot_stencil &target);
@@ -130,6 +133,7 @@ private:
     float m_marker_scale;
     bool m_marker;
     bool m_tool_marker;
+    bool m_described_marker;
     bool m_decoration;
     tool_render m_tool;
     model_render m_model;
@@ -153,6 +157,7 @@ private:
     void render_decoration();
     void render_flange_marker();
     void render_tool_frame_marker();
+    void render_described_frame_marker();
     void render_marker_scale();
 };
 

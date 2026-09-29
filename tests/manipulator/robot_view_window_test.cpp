@@ -148,6 +148,7 @@ void reads_as(const opening &read, const opening &written)
     CHECK(read.flange_marker == written.flange_marker);
     CHECK(read.tool_frame_marker == written.tool_frame_marker);
     CHECK(read.marker_scale == written.marker_scale);
+    CHECK(read.described_frame_marker == written.described_frame_marker);
 }
 
 arm_snapshot upright()
@@ -317,6 +318,15 @@ void seat_tool(stage &headless)
     headless.shown.set_flange_attachment(flange_attachment::tool, threepp::Mesh::create(threepp::BoxGeometry::create(0.05f, 0.05f, 0.05f)));
 }
 
+// The marker at the description's flange is drawn only beside a supplied chain.
+threepp::Object3D *seat_described(stage &headless)
+{
+    REQUIRE(headless.shown.supply_joint_screws(praxis::transform::Identity(), two_axes()).has_value());
+    headless.shown.set_flange_attachment(flange_attachment::described_frame_marker, make_flange_marker(headless.shown.robot()));
+
+    return headless.shown.attached_at(flange_attachment::described_frame_marker).get();
+}
+
 }
 
 TEST_CASE("every view field written through the declared keys reads back as it was set", "[manipulator][configuration]")
@@ -419,6 +429,34 @@ TEST_CASE("a view window standing at its document's tool entry offers nothing", 
     const config::document carried = carrying("view-stick-standing.xml", "<view tool=\"Stick\"/>");
     robot_view_window panel(panel_title, headless.shown, controls(), read_robot_view(carried, view_at), std::string(view_at));
     REQUIRE(panel.state().tool == tool_render::stick);
+
+    const config::configurable *answered = panel.as_configurable();
+    REQUIRE(answered != nullptr);
+    CHECK(answered->settings_edits(carried).empty());
+}
+
+TEST_CASE("a document naming no described flange frame opens with its marker off", "[manipulator][configuration]")
+{
+    CHECK_FALSE(opening{}.described_frame_marker);
+    CHECK_FALSE(read_robot_view(carrying("view-no-described.xml", "<view model=\"Meshes\"/>"), view_at).described_frame_marker);
+}
+
+TEST_CASE("every described flange frame entry written through the declared keys reads back as it was written", "[manipulator][configuration]")
+{
+    for(const bool chosen : {false, true})
+    {
+        const opening named{model_render::meshes, true, std::nullopt, true, false, 1.0, tool_render::mesh, chosen};
+        reads_as(read_robot_view(saved_and_reloaded("view-described-round-trip-" + std::to_string(static_cast<int>(chosen)) + ".xml", write_robot_view(named, view_at)), view_at),
+                 named);
+    }
+}
+
+TEST_CASE("a view window standing at the described flange frame entry of its document offers nothing", "[manipulator][configuration]")
+{
+    stage headless;
+    const config::document carried = carrying("view-described-standing.xml", "<view described_flange_frame=\"true\"/>");
+    robot_view_window panel(panel_title, headless.shown, controls(), read_robot_view(carried, view_at), std::string(view_at));
+    REQUIRE(panel.state().described_frame_marker);
 
     const config::configurable *answered = panel.as_configurable();
     REQUIRE(answered != nullptr);
@@ -709,6 +747,45 @@ TEST_CASE("the control over the tool frame marker and the control over the marke
     CHECK(drawn(at_the_tool));
     CHECK(std::abs(extent_of(*headless.marker_node()) - scaled_to * built) < read_back);
     CHECK(std::abs(extent_of(*at_the_tool) - scaled_to * built) < read_back);
+}
+
+// Beside the two controls a window offers by default, the model on the first row and the screw axes
+// on the second, the switch over the marker at the description's flange stands on the third.
+TEST_CASE("the control over the marker at the description flange writes through to the stencil", "[manipulator][controls]")
+{
+    stage headless;
+    threepp::Object3D *const reference = seat_described(headless);
+
+    controls offered;
+    offered.described_frame_marker = true;
+    robot_view_window panel(panel_title, headless.shown, offered, opening{});
+    panel.initialize();
+    headless.draw();
+    REQUIRE_FALSE(drawn(reference));
+
+    imgui_frame frames;
+    const drawing draw = over(panel);
+    start_navigating(frames, draw);
+    step_to(frames, draw, 2);
+    tap(frames, draw, ImGuiKey_Space);
+    headless.draw();
+
+    CHECK(panel.state().described_frame_marker);
+    CHECK(drawn(reference));
+}
+
+TEST_CASE("a window opened at the described flange frame shows its marker beside a supplied chain", "[manipulator][controls]")
+{
+    stage headless;
+    threepp::Object3D *const reference = seat_described(headless);
+
+    opening chosen;
+    chosen.described_frame_marker = true;
+    robot_view_window panel(panel_title, headless.shown, controls(), chosen);
+    panel.initialize();
+    headless.draw();
+
+    CHECK(drawn(reference));
 }
 
 // The control admits no reach below the smallest one that draws, and a composition naming a reach
