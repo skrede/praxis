@@ -366,6 +366,41 @@ TEST_CASE("a supplied chain announces the document the chain is kept in", "[pres
     REQUIRE(announced.shape.space() == presets::screw_table_keyspace().space());
 }
 
+TEST_CASE("a supplied chain and tool announces the document the chain is kept in", "[presets][registry]")
+{
+    const fixture::described_arm described(axes, "six");
+    const std::filesystem::path directory = scratch("arm_supplied_chain_tool_kept");
+    const config::location chain          = written(directory, "chain.xml", "<screw_table><screws/></screw_table>");
+    const std::vector<config::location> documents{
+            authored(directory, "modeling-tool.xml", "Six axes", "six.urdf", spelling(presets::arm_scenario_kind::supplied_chain_and_tool), "chain.xml")};
+
+    threepp::Scene target;
+    const config::binding announced = announced_by(documents, {described.directory}, target);
+
+    REQUIRE(announced.at.resolved == chain.resolved);
+    REQUIRE(announced.shape.space() == presets::screw_table_keyspace().space());
+}
+
+TEST_CASE("a document naming the supplied chain and tool scenario composes a pose window and a tool window beside the chain", "[presets][registry]")
+{
+    const fixture::described_arm described(axes, "six");
+    const std::filesystem::path directory = scratch("arm_supplied_chain_and_tool");
+    const std::vector<config::location> documents{authored(directory, "modeling-tool.xml", "Six axes", "six.urdf", "supplied chain and tool")};
+
+    const auto registry = std::make_shared<scene::preset_registry>();
+    REQUIRE(presets::register_arms(registry, documents, std::vector<std::filesystem::path>{described.directory}, {}, {}) == std::vector<std::string>{"Six axes"});
+
+    threepp::Scene target;
+    const std::shared_ptr<scene::preset> built = composed(*registry, "Six axes", target);
+    REQUIRE(built != nullptr);
+
+    std::vector<std::string> named;
+    for(const std::shared_ptr<scene::imgui_window> &panel : built->windows)
+        named.push_back(panel->display_name());
+
+    REQUIRE(named == std::vector<std::string>{"Joint control", "Chain", "Pose", "Tool", "View"});
+}
+
 // The same chain named by a document naming another scenario, which reads no chain at all: the
 // document announced is the arm's own. The pair is what says the differing announce is the
 // scenario's doing rather than the presence of the leaf naming a chain.

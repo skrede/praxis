@@ -6,7 +6,7 @@
   The description path is relative to the description directory the application resolves.
 -->
 <arm>
-    <preset name="ur3e: screw chain preview" scenario="supplied chain"/>
+    <preset name="ur3e: screw chain preview" scenario="supplied chain and tool"/>
 
     <description path="ur_description/urdf/ur.urdf.xacro" evaluation="fail" missing_asset="fail">
         <argument index="0" name="ur_type" value="ur3e"/>
@@ -25,6 +25,9 @@
         <joint index="4" degrees="0"/>
         <joint index="5" degrees="0"/>
     </initial>
+
+    <!-- The values the Tool window opens at. A blank model draws no mesh until one is loaded there. -->
+    <tool active="false" model=""/>
 
     <joint_control mode="simulation"/>
 

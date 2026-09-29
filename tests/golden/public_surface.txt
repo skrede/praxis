@@ -3270,7 +3270,10 @@ presets/include/praxis/presets/arm.h	trajectory_preview	member	-	typename:manipu
 presets/include/praxis/presets/arm.h	velocity_kinematics	member	-	typename:manipulator::velocity_kinematics_window::settings
 presets/include/praxis/presets/arm.h	arm_windows	prototype	(arm_scenario chosen)	typename:manipulator::arm_composition
 presets/include/praxis/presets/arm.h	arm_windows_forward	prototype	(arm_scenario chosen)	typename:manipulator::arm_composition
-presets/include/praxis/presets/arm.h	arm_windows_modeling	prototype	(arm_scenario chosen,screw_table_source keeping)	typename:manipulator::arm_composition
+presets/include/praxis/presets/arm.h	modeling_beside	enum	-	typename:std::uint8_t
+presets/include/praxis/presets/arm.h	pose	enumerator	-	-
+presets/include/praxis/presets/arm.h	pose_and_tool	enumerator	-	-
+presets/include/praxis/presets/arm.h	arm_windows_modeling	prototype	(arm_scenario chosen,screw_table_source keeping,modeling_beside beside=modeling_beside::pose)	typename:manipulator::arm_composition
 presets/include/praxis/presets/arm.h	arm_windows_tooling	prototype	(arm_scenario chosen)	typename:manipulator::arm_composition
 presets/include/praxis/presets/arm.h	arm_windows_numerical_ik	prototype	(arm_scenario chosen)	typename:manipulator::arm_composition
 presets/include/praxis/presets/arm.h	arm_windows_point_to_point	prototype	(arm_scenario chosen)	typename:manipulator::arm_composition
@@ -3300,6 +3303,7 @@ presets/include/praxis/presets/arm_scenarios.h	point_to_point	enumerator	-	-
 presets/include/praxis/presets/arm_scenarios.h	via_point	enumerator	-	-
 presets/include/praxis/presets/arm_scenarios.h	path_comparison	enumerator	-	-
 presets/include/praxis/presets/arm_scenarios.h	velocity_kinematics	enumerator	-	-
+presets/include/praxis/presets/arm_scenarios.h	supplied_chain_and_tool	enumerator	-	-
 presets/include/praxis/presets/arm_scenarios.h	arm_scenario_named	prototype	(const config::document & values)	typename:std::optional<arm_scenario_kind>
 presets/include/praxis/presets/arrangement_scenarios.h	praxis	namespace	-	-
 presets/include/praxis/presets/arrangement_scenarios.h	presets	namespace	-	-

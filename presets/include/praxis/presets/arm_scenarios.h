@@ -21,7 +21,8 @@ enum class arm_scenario_kind : std::uint8_t
     point_to_point,
     via_point,
     path_comparison,
-    velocity_kinematics
+    velocity_kinematics,
+    supplied_chain_and_tool
 };
 
 std::optional<arm_scenario_kind> arm_scenario_named(const config::document &values);

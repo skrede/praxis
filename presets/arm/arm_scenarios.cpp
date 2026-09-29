@@ -27,9 +27,9 @@ namespace {
 // relies on.
 constexpr std::array scenario_spellings{
         "every window",          "forward kinematics", "supplied chain",  "tool and world object", "numerical inverse kinematics", "analytic inverse kinematics",
-        "point to point motion", "via point motion",   "path comparison", "velocity kinematics"};
+        "point to point motion", "via point motion",   "path comparison", "velocity kinematics",   "supplied chain and tool"};
 
-constexpr std::size_t scenario_count = static_cast<std::size_t>(arm_scenario_kind::velocity_kinematics) + 1u;
+constexpr std::size_t scenario_count = static_cast<std::size_t>(arm_scenario_kind::supplied_chain_and_tool) + 1u;
 
 static_assert(scenario_spellings.size() == scenario_count);
 
@@ -45,27 +45,29 @@ opened_scenario windows_over(const arm_scenario &machine, const scenario_documen
 // A chain typed into this scenario is what its windows write back, so the document that chain is
 // kept in is the one announced and every other window beside it is composed with no key path at all.
 // An arm keeping no chain announces its own document and keeps nothing.
+template<modeling_beside beside>
 opened_scenario modeling_windows(const arm_scenario &machine, const scenario_documents &documents, const rigid_motion::capabilities &)
 {
     if(!documents.keeping)
-        return opened_scenario{arm_windows_modeling(machine, screw_table_source{}), documents.bound, documents.carried};
+        return opened_scenario{arm_windows_modeling(machine, screw_table_source{}, beside), documents.bound, documents.carried};
 
     const config::outcome kept = config::load_or_defaults(*documents.keeping);
     const screw_table_source supplied{screw_table_path, kept.values, documents.keeping};
 
-    return opened_scenario{arm_windows_modeling(machine, supplied), *documents.keeping, kept.values};
+    return opened_scenario{arm_windows_modeling(machine, supplied, beside), *documents.keeping, kept.values};
 }
 
 constexpr std::array offered_scenarios{&windows_over<&arm_windows>,
                                        &windows_over<&arm_windows_forward>,
-                                       &modeling_windows,
+                                       &modeling_windows<modeling_beside::pose>,
                                        &windows_over<&arm_windows_tooling>,
                                        &windows_over<&arm_windows_numerical_ik>,
                                        &windows_over<&arm_windows_analytic_ik>,
                                        &windows_over<&arm_windows_point_to_point>,
                                        &windows_over<&arm_windows_via_point>,
                                        &windows_over<&arm_windows_path_comparison>,
-                                       &windows_over<&arm_windows_velocity_kinematics>};
+                                       &windows_over<&arm_windows_velocity_kinematics>,
+                                       &modeling_windows<modeling_beside::pose_and_tool>};
 
 static_assert(offered_scenarios.size() == scenario_count);
 

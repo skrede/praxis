@@ -8,7 +8,9 @@
 #include "praxis/presets/arm.h"
 #include "praxis/presets/screw_table.h"
 
+#include "praxis/manipulator/robot.h"
 #include "praxis/manipulator/screw_chain.h"
+#include "praxis/manipulator/capabilities.h"
 #include "praxis/manipulator/control_mode.h"
 #include "praxis/manipulator/pose_readout.h"
 #include "praxis/manipulator/joint_control_window.h"
@@ -61,6 +63,21 @@ const std::vector<std::string> &modeling_windows()
     static const std::vector<std::string> shown{"Joint control", "Chain", "Pose", "View"};
 
     return shown;
+}
+
+const std::vector<std::string> &modeling_tool_windows()
+{
+    static const std::vector<std::string> shown{"Joint control", "Chain", "Pose", "Tool", "View"};
+
+    return shown;
+}
+
+// Every control a keyboard walk over the panel reaches.
+std::size_t offered_controls(scene::imgui_window &panel)
+{
+    tests::imgui_frame counting;
+
+    return navigable_items(counting, [&panel] { panel.render(); });
 }
 
 std::vector<Eigen::Vector3d> axis_of(threepp::Scene &target, std::size_t joint)
@@ -540,6 +557,25 @@ TEST_CASE("every window the supplied-chain scenario composes opens exactly one p
     each_window_opens_one_panel(built.open(chosen, presets::arm_windows_modeling(chosen, presets::screw_table_source{})));
 }
 
+TEST_CASE("the supplied-chain scenario chosen with a tool composes joint control then chain then pose then tool then view", "[presets][windows]")
+{
+    const described_arm described(6, "six");
+    const presets::arm_scenario chosen = described_by(described.where);
+
+    opened_arm built;
+    REQUIRE(composed_windows(built.open(chosen, presets::arm_windows_modeling(chosen, presets::screw_table_source{}, presets::modeling_beside::pose_and_tool))) ==
+            modeling_tool_windows());
+}
+
+TEST_CASE("every window the supplied-chain scenario composes with a tool opens exactly one panel under its own title", "[presets][windows]")
+{
+    const described_arm described(6, "six");
+    const presets::arm_scenario chosen = described_by(described.where);
+
+    opened_arm built;
+    each_window_opens_one_panel(built.open(chosen, presets::arm_windows_modeling(chosen, presets::screw_table_source{}, presets::modeling_beside::pose_and_tool)));
+}
+
 // The opening state is the one nobody has modelled, and it is asserted in the scene rather than in a
 // struct: every joint's line is the same line through the origin, which no derived chain gives.
 TEST_CASE("a scenario keeping no chain opens with every drawn axis coincident at the origin", "[presets][windows]")
@@ -868,6 +904,79 @@ TEST_CASE("the supplied-chain scenario composes a pose window that reads the too
 
     CHECK(geometry_of(*pose) == geometry_of(*reading_published(typed->tool).panel));
     CHECK(geometry_of(*pose) != geometry_of(*reading_published(derived.home).panel));
+}
+
+// The kept home is displaced and carries no turn, and the joints stand at zero, so the tool offset is
+// read along the root frame's own axes from the typed chain's end.
+TEST_CASE("a supplied chain composed with a tool carries the tool frame marker from the typed end by the tool offset while the mesh stays on the rendered flange", "[presets][windows]")
+{
+    const Eigen::Vector3d offset(0.1, 0.2, 0.3);
+    const described_arm described(6, "six");
+    const written_model tool("praxis_scenarios_supplied_tool.stl", 0.1f);
+    const written_model world("praxis_scenarios_supplied_world.stl", 0.2f);
+    const manipulator::screw_chain derived = derived_chain(described.where);
+    presets::arm_scenario chosen           = carrying_models(described.where, tool.where, world.where);
+    chosen.tool.kinematics_offset          = offset.cast<float>();
+
+    const presets::screw_table_source supplied = supplied_from(kept_chain(derived.space_screws, derived.home.block<3, 1>(0, 3) + Eigen::Vector3d(0.0, 0.0, 0.25), "tool-displaced.xml"),
+                                                               chain_binding("tool-displaced-into.xml"));
+
+    opened_arm built;
+    const std::shared_ptr<scene::preset> composed = built.open(chosen, presets::arm_windows_modeling(chosen, supplied, presets::modeling_beside::pose_and_tool));
+    REQUIRE(built.loop.drain().has_value());
+    built.draw(*composed);
+
+    const std::shared_ptr<threepp::Object3D> mesh   = drawn_by(composed).attached_at(manipulator::flange_attachment::tool);
+    const std::shared_ptr<threepp::Object3D> marker = drawn_by(composed).attached_at(manipulator::flange_attachment::tool_frame_marker);
+    REQUIRE(mesh != nullptr);
+    REQUIRE(marker != nullptr);
+    CHECK((mark_in_world(*mesh) - rendered_flange(composed)).norm() < read_back);
+    CHECK(((mark_in_world(*marker) - supplied_chain_points(*built.scene).back()) - offset).norm() < read_back);
+}
+
+TEST_CASE("the tool window beside a supplied chain names no key path", "[presets][windows]")
+{
+    const described_arm described(6, "six");
+    const presets::arm_scenario chosen = described_by(described.where);
+
+    opened_arm built;
+    const std::shared_ptr<scene::imgui_window> tool =
+            panel_named(built.open(chosen, presets::arm_windows_modeling(chosen, presets::screw_table_source{}, presets::modeling_beside::pose_and_tool)), "Tool");
+    REQUIRE(tool != nullptr);
+    CHECK(tool->as_configurable() == nullptr);
+}
+
+TEST_CASE("the supplied-chain view offers the tool drawing control only where a tool window is composed", "[presets][windows]")
+{
+    const described_arm described(6, "six");
+    const presets::arm_scenario chosen = described_by(described.where);
+
+    opened_arm tooled;
+    opened_arm posed;
+    const std::shared_ptr<scene::imgui_window> with_tool =
+            panel_named(tooled.open(chosen, presets::arm_windows_modeling(chosen, presets::screw_table_source{}, presets::modeling_beside::pose_and_tool)), "View");
+    const std::shared_ptr<scene::imgui_window> without = panel_named(posed.open(chosen, presets::arm_windows_modeling(chosen, presets::screw_table_source{})), "View");
+    REQUIRE(with_tool != nullptr);
+    REQUIRE(without != nullptr);
+
+    stands_on(*with_tool, "Tool render");
+    CHECK(offered_controls(*with_tool) == offered_controls(*without) + 1u);
+}
+
+TEST_CASE("the supplied chain and tool composition composes every window with a pose transformation left at its default", "[presets][windows]")
+{
+    const described_arm described(6, "six");
+    const presets::arm_scenario chosen = described_by(described.where);
+    manipulator::capabilities unbound  = manipulator::baseline();
+    unbound.robot.position_from_pose   = &manipulator::inert::position_from_pose;
+
+    opened_arm built;
+    const std::shared_ptr<scene::preset> composed = presets::arm_preset(built.site(), unbound, trajectory::baseline(), rigid_motion::baseline(), chosen,
+                                                                        presets::arm_windows_modeling(chosen, presets::screw_table_source{}, presets::modeling_beside::pose_and_tool));
+    REQUIRE(composed != nullptr);
+    REQUIRE(composed->initialize().has_value());
+
+    CHECK(composed_windows(composed) == modeling_tool_windows());
 }
 
 // The other direction of the same rule: a composition offering the windows that hide the two models

@@ -41,6 +41,7 @@
 #include <memory>
 #include <vector>
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 
 namespace praxis::presets {
@@ -123,10 +124,19 @@ manipulator::arm_composition arm_windows(arm_scenario chosen);
 // screw axes the description itself names are drawn on the arm they describe.
 manipulator::arm_composition arm_windows_forward(arm_scenario chosen);
 
+// What stands beside a supplied chain: a Pose window, or a Pose window and a Tool window.
+enum class modeling_beside : std::uint8_t
+{
+    pose,
+    pose_and_tool
+};
+
 // The chain is supplied rather than derived: the axes drawn are the ones typed into the window, and
 // `keeping` is where a table typed here is opened from and kept. The rendered arm stays reachable
-// and the drawn axes carry no switch, so nobody is left with only their own claim on screen.
-manipulator::arm_composition arm_windows_modeling(arm_scenario chosen, screw_table_source keeping);
+// and the drawn axes carry no switch, so nobody is left with only their own claim on screen. Beside
+// the chain a Pose window reads where the supplied chain puts the flange and the tool, and `beside`
+// adds a Tool window setting the tool offset.
+manipulator::arm_composition arm_windows_modeling(arm_scenario chosen, screw_table_source keeping, modeling_beside beside = modeling_beside::pose);
 
 // A tool and a world object on top of forward kinematics, with the tool attachable and detachable
 // while the scenario runs. The four frame transformations a tool pose is read through answer the

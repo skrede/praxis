@@ -164,6 +164,24 @@ TEST_CASE("every shipped preset document states a scenario the declaration admit
     }
 }
 
+TEST_CASE("both screw chain preview documents name the supplied chain and tool scenario and carry the tool keys", "[examples][documents]")
+{
+    std::size_t previews = 0;
+    for(const shipped &document : shipped_presets())
+    {
+        if(!document.file.ends_with("-screw-chain-preview.xml"))
+            continue;
+
+        INFO(document.file);
+        ++previews;
+        CHECK(presets::arm_scenario_named(document.values) == presets::arm_scenario_kind::supplied_chain_and_tool);
+        CHECK(document.values.origin_of("tool/active").kind == config::origin_kind::source);
+        CHECK(document.values.origin_of("tool/model").kind == config::origin_kind::source);
+    }
+
+    CHECK(previews == 2u);
+}
+
 TEST_CASE("each shipped preset opens where its scenario needs it", "[examples][documents]")
 {
     std::set<std::string> standing;

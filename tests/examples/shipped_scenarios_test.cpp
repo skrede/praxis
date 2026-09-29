@@ -185,7 +185,7 @@ TEST_CASE("each shipped document opens the windows its own scenario names", "[ex
     REQUIRE(demonstration.names.size() == 12u);
 
     CHECK(demonstration.windows_of("kr6r: forward kinematics") == std::vector<std::string>{"Joint control", "Pose", "View"});
-    CHECK(demonstration.windows_of("kr6r: screw chain preview") == std::vector<std::string>{"Joint control", "Chain", "Pose", "View"});
+    CHECK(demonstration.windows_of("kr6r: screw chain preview") == std::vector<std::string>{"Joint control", "Chain", "Pose", "Tool", "View"});
     CHECK(demonstration.windows_of("kr6r: numerical inverse kinematics") ==
           std::vector<std::string>{"Joint control", "Target pose", "Starts", "Solutions", "Iterations", "Convergence", "View"});
     CHECK(demonstration.windows_of("kr6r: analytic inverse kinematics") == std::vector<std::string>{"Joint control", "Target pose", "Solutions", "View"});
