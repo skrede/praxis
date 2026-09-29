@@ -21,6 +21,9 @@ std::shared_ptr<threepp::Material> chain_material(bool told);
 // The tone the same items wear while they stand at a configuration the arm is not at.
 std::shared_ptr<threepp::Material> solution_material();
 
+// The tone the stick from the flange to the tool frame wears.
+std::shared_ptr<threepp::Material> tool_stick_material();
+
 // One segment of the chain, built at unit height along the renderer's +Y and centered on its own
 // origin, so that scaling it along its own y is what gives it the length it has to span.
 std::shared_ptr<threepp::Object3D> chain_segment_object(std::string name, std::shared_ptr<threepp::Material> tone);

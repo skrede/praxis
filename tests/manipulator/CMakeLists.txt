@@ -76,6 +76,7 @@ praxis_add_test(kinematics_configuration_test.cpp LIBS praxis::manipulator praxi
 praxis_add_test(waypoints_configuration_test.cpp HEADERS fixtures.h window_stage.h LIBS praxis::manipulator praxis::config spdlog::spdlog praxis_test_support)
 praxis_add_test(robot_view_window_test.cpp HEADERS fixtures.h window_stage.h ../presets/drawn_lines.h ../support/drawn_chain.h LIBS praxis::manipulator praxis::config praxis_test_support)
 praxis_add_test(tool_drawing_test.cpp HEADERS fixtures.h window_stage.h ../presets/drawn_lines.h LIBS praxis::manipulator praxis_test_support)
+target_include_directories(tool_drawing_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-manipulator/src)
 praxis_add_test(injected_chain_test.cpp HEADERS six_axis_machine.h LIBS praxis::manipulator)
 praxis_add_test(screw_modeling_window_test.cpp HEADERS six_axis_machine.h ../presets/drawn_lines.h LIBS praxis::manipulator praxis::config spdlog::spdlog praxis_test_support)
 praxis_add_test(pose_path_test.cpp HEADERS fixtures.h ../presets/drawn_lines.h LIBS praxis::manipulator spdlog::spdlog praxis_test_support)

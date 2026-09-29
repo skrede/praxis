@@ -3,6 +3,8 @@
 
 #include "../presets/drawn_lines.h"
 
+#include "robot/chain_figure.h"
+
 #include "praxis/manipulator/robot_view_window.h"
 #include "praxis/manipulator/loadable_robot_stencil.h"
 
@@ -13,6 +15,10 @@
 #include <threepp/objects/Mesh.hpp>
 
 #include <threepp/scenes/Scene.hpp>
+
+#include <threepp/math/Color.hpp>
+
+#include <threepp/materials/interfaces.hpp>
 
 #include <threepp/geometries/BoxGeometry.hpp>
 
@@ -58,6 +64,16 @@ std::shared_ptr<const arm_snapshot> carrying(const praxis::transform &offset)
     seen.tool_offset  = offset;
 
     return std::make_shared<const arm_snapshot>(seen);
+}
+
+// The tone a drawn item wears is the color of the material it was handed.
+threepp::Color tone_of(threepp::Object3D *drawn)
+{
+    REQUIRE(drawn != nullptr);
+    const auto *shaded = drawn->materialAs<threepp::MaterialWithColor>();
+    REQUIRE(shaded != nullptr);
+
+    return shaded->color;
 }
 
 std::shared_ptr<threepp::Object3D> box()
@@ -260,4 +276,39 @@ TEST_CASE("a view window not offered the tool control draws one control fewer an
 
     CHECK(drawn(headless.stick()));
     CHECK_FALSE(drawn(headless.mesh()));
+}
+
+TEST_CASE("the tool stick wears a material of its own so tinting it leaves the chain in its tone", "[manipulator][controls]")
+{
+    stage headless;
+    headless.draw();
+    const auto chain = std::dynamic_pointer_cast<threepp::MaterialWithColor>(chain_material(false));
+    REQUIRE(chain != nullptr);
+    REQUIRE(headless.stick() != nullptr);
+    auto *stick = headless.stick()->materialAs<threepp::MaterialWithColor>();
+    REQUIRE(stick != nullptr);
+
+    stick->color = threepp::Color::red;
+
+    CHECK(tone_of(headless.scene->getObjectByName<threepp::Object3D>(loadable_robot_stencil::chain_segment_name(0))) == chain->color);
+    CHECK(tone_of(headless.scene->getObjectByName<threepp::Object3D>(loadable_robot_stencil::joint_mark_name(0))) == chain->color);
+}
+
+TEST_CASE("the tool stick wears a gray of its own lighter than the chain", "[manipulator][controls]")
+{
+    stage headless;
+    headless.draw();
+    const auto own   = std::dynamic_pointer_cast<threepp::MaterialWithColor>(tool_stick_material());
+    const auto chain = std::dynamic_pointer_cast<threepp::MaterialWithColor>(chain_material(false));
+    REQUIRE(own != nullptr);
+    REQUIRE(chain != nullptr);
+    const threepp::Color gray = own->color;
+
+    CHECK(tone_of(headless.stick()) == gray);
+    CHECK_FALSE(gray == chain->color);
+    CHECK(gray.r > chain->color.r);
+    CHECK(gray.g > chain->color.g);
+    CHECK(gray.b > chain->color.b);
+    CHECK(gray.r == gray.g);
+    CHECK(gray.g == gray.b);
 }

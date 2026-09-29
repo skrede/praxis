@@ -88,7 +88,7 @@ loadable_robot_stencil::loadable_robot_stencil(std::shared_ptr<threepp::Robot> r
         , m_axes(threepp::Group::create())
         , m_figure(threepp::Group::create())
         , m_tool_stick(threepp::Group::create())
-        , m_tool_segment(chain_segment_object(tool_stick_name(), m_chain_tone))
+        , m_tool_segment(chain_segment_object(tool_stick_name(), tool_stick_material()))
         , m_paths(threepp::Group::create())
         , m_solutions(threepp::Group::create())
         , m_ellipsoid_groups{threepp::Group::create(), threepp::Group::create()}

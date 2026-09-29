@@ -3,18 +3,24 @@
 
 #include "praxis/manipulator/loadable_robot_stencil.h"
 
+#include <threepp/math/Color.hpp>
 #include <threepp/math/Matrix4.hpp>
 #include <threepp/math/Vector3.hpp>
+
+#include <threepp/materials/MeshPhongMaterial.hpp>
 
 #include <Eigen/Core>
 
 #include <memory>
 #include <string>
 #include <cstddef>
+#include <cstdint>
 
 namespace praxis::manipulator {
 
 namespace {
+
+constexpr std::uint32_t tool_stick_tone = 0x404040;
 
 Eigen::Vector3d position_of(const threepp::Matrix4 &placed)
 {
@@ -24,6 +30,11 @@ Eigen::Vector3d position_of(const threepp::Matrix4 &placed)
     return Eigen::Vector3d{at.x, at.y, at.z};
 }
 
+}
+
+std::shared_ptr<threepp::Material> tool_stick_material()
+{
+    return threepp::MeshPhongMaterial::create({{"flatShading", true}, {"color", threepp::Color(tool_stick_tone)}});
 }
 
 void loadable_robot_stencil::set_tool_mesh_shown(bool shown)
