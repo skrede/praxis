@@ -1,6 +1,7 @@
 #include "fixtures.h"
 #include "drawn_chain.h"
 #include "window_stage.h"
+#include "literal_exponential.h"
 
 #include "praxis/manipulator/arm_snapshot.h"
 #include "praxis/manipulator/supplied_chain.h"
@@ -96,6 +97,15 @@ praxis::transform turned_tool_offset()
     return offset;
 }
 
+// The fixture arm's two axes with the angular part of `joint`'s screw scaled by two.
+std::vector<praxis::screw_axis> doubled_at(std::size_t joint)
+{
+    std::vector<praxis::screw_axis> axes = two_axes();
+    axes[joint]                          = 2.0 * axes[joint];
+
+    return axes;
+}
+
 // Every screw slot bound but `left`, which is taken from a default-constructed aggregate carrying the
 // inert implementations.
 praxis::rigid_motion::screw_ops bound_without(praxis::rigid_motion::screw_slot left)
@@ -116,6 +126,16 @@ praxis::transform fk(const praxis::transform &home, const std::vector<praxis::sc
     praxis::transform carried = praxis::transform::Identity();
     for(std::size_t joint = 0; joint < screws.size(); ++joint)
         carried = carried * praxis::rigid_motion::baseline().screw.matrix_exponential_screw(screws[joint], theta[static_cast<Eigen::Index>(joint)]);
+
+    return carried * home;
+}
+
+// The same product with each exponential taken from Modern Robotics, eq. (3.88), as written.
+praxis::transform literal_fk(const praxis::transform &home, const std::vector<praxis::screw_axis> &screws, const joint_vector &theta)
+{
+    praxis::transform carried = praxis::transform::Identity();
+    for(std::size_t joint = 0; joint < screws.size(); ++joint)
+        carried = carried * book_literal_exponential(screws[joint], theta[static_cast<Eigen::Index>(joint)]);
 
     return carried * home;
 }
@@ -464,17 +484,92 @@ TEST_CASE("a supplied chain folded through an unbound screw exponential parks bo
     CHECK(why.reason.find("screw.matrix_exponential_screw") != std::string::npos);
 }
 
-TEST_CASE("a supplied chain whose fold refuses a joint parks both markers and names the joint", "[manipulator][supplied]")
+TEST_CASE("a supplied chain whose last exponential is not a rigid transform parks both markers and names that joint", "[manipulator][supplied]")
+{
+    stage drawn(bent(), exponentiating_literally(), praxis::rigid_motion::screw_slot_set{});
+    drawn.publish(turned_tool_offset());
+    REQUIRE(drawn.shown.supply_joint_screws(displaced_home(), doubled_at(1)).has_value());
+    drawn.settle();
+
+    CHECK(drawn.off_the_root() < single_precision_tolerance);
+    const withheld_chain why = drawn.withheld();
+    CHECK(why.cause == withheld_cause::refused);
+    CHECK(why.reason == "The supplied chain is not folded: the exponential of joint 2's screw is not a rigid transform.");
+}
+
+TEST_CASE("a supplied chain whose first exponential is not a rigid transform is withheld naming that joint rather than the next", "[manipulator][supplied]")
+{
+    stage drawn(bent(), exponentiating_literally(), praxis::rigid_motion::screw_slot_set{});
+    drawn.publish(turned_tool_offset());
+    REQUIRE(drawn.shown.supply_joint_screws(displaced_home(), doubled_at(0)).has_value());
+    drawn.settle();
+
+    CHECK(drawn.off_the_root() < single_precision_tolerance);
+    const withheld_chain why = drawn.withheld();
+    CHECK(why.cause == withheld_cause::refused);
+    CHECK(why.reason == "The supplied chain is not folded: the exponential of joint 1's screw is not a rigid transform.");
+}
+
+TEST_CASE("a supplied chain folded with the adjoint map left at its default stands both markers where it ends", "[manipulator][supplied]")
 {
     stage drawn(bent(), bound_without(praxis::rigid_motion::screw_slot::adjoint_map), praxis::rigid_motion::screw_slot_set{});
     drawn.publish(turned_tool_offset());
     REQUIRE(drawn.shown.supply_joint_screws(displaced_home(), two_axes()).has_value());
     drawn.settle();
 
-    CHECK(drawn.off_the_root() < single_precision_tolerance);
-    const withheld_chain why = drawn.withheld();
-    CHECK(why.cause == withheld_cause::refused);
-    CHECK(why.reason == "The supplied chain is not folded: joint 1's screw was refused.");
+    REQUIRE(drawn.shown.supplied_chain_end(*drawn.published->reader().read()).has_value());
+    const praxis::transform flange_rule = fk(displaced_home(), two_axes(), bent());
+    CHECK(placement_departure(drawn.attached(flange_attachment::frame_marker), drawn.in_root(flange_rule)) < single_precision_tolerance);
+    CHECK(placement_departure(drawn.attached(flange_attachment::tool_frame_marker), drawn.in_root(flange_rule * turned_tool_offset())) < single_precision_tolerance);
+}
+
+TEST_CASE("a supplied chain exponentiated as Modern Robotics writes it over unit axes stands both markers where it ends", "[manipulator][supplied]")
+{
+    stage drawn(bent(), exponentiating_literally(), praxis::rigid_motion::screw_slot_set{});
+    drawn.publish(turned_tool_offset());
+    REQUIRE(drawn.shown.supply_joint_screws(displaced_home(), two_axes()).has_value());
+    drawn.settle();
+
+    const praxis::transform flange_rule = fk(displaced_home(), two_axes(), bent());
+    CHECK(placement_departure(drawn.attached(flange_attachment::frame_marker), drawn.in_root(flange_rule)) < single_precision_tolerance);
+    CHECK(placement_departure(drawn.attached(flange_attachment::tool_frame_marker), drawn.in_root(flange_rule * turned_tool_offset())) < single_precision_tolerance);
+}
+
+// Each linear part is -w x q, Modern Robotics, section 3.3.2, with w left at its written length.
+TEST_CASE("a supplied chain whose axes are written to four decimals and left unnormalized stands both markers where it ends", "[manipulator][supplied]")
+{
+    const double reach = static_cast<double>(link_length);
+    praxis::screw_axis first;
+    first << 0.7071, 0.0, 0.7071, 0.0, 0.0, 0.0;
+    praxis::screw_axis second;
+    second << 0.0, 0.7071, 0.7071, 0.0, -0.7071 * reach, 0.7071 * reach;
+    const std::vector<praxis::screw_axis> written{first, second};
+
+    stage drawn(bent(), exponentiating_literally(), praxis::rigid_motion::screw_slot_set{});
+    drawn.publish(turned_tool_offset());
+    REQUIRE(drawn.shown.supply_joint_screws(displaced_home(), written).has_value());
+    drawn.settle();
+
+    REQUIRE(drawn.shown.supplied_chain_end(*drawn.published->reader().read()).has_value());
+    const praxis::transform flange_rule = literal_fk(displaced_home(), written, bent());
+    CHECK(placement_departure(drawn.attached(flange_attachment::frame_marker), drawn.in_root(flange_rule)) < single_precision_tolerance);
+    CHECK(placement_departure(drawn.attached(flange_attachment::tool_frame_marker), drawn.in_root(flange_rule * turned_tool_offset())) < single_precision_tolerance);
+}
+
+// Position only: a rotation block that is not orthonormal has no exact quaternion to be drawn at.
+TEST_CASE("a supplied chain whose home pose is written to one decimal stands both markers where it ends", "[manipulator][supplied]")
+{
+    praxis::transform rough = translated(0.1, 0.2, 0.3);
+    rough.topLeftCorner<2, 2>() << 0.7, -0.7, 0.7, 0.7;
+
+    stage drawn(bent());
+    REQUIRE(drawn.shown.supply_joint_screws(rough, two_axes()).has_value());
+    drawn.settle();
+
+    REQUIRE(drawn.shown.supplied_chain_end(*drawn.published->reader().read()).has_value());
+    threepp::Vector3 place;
+    place.setFromMatrixPosition(drawn.in_root(fk(rough, two_axes(), bent())));
+    CHECK(static_cast<double>(drawn.attached(flange_attachment::frame_marker).position.distanceTo(place)) < single_precision_tolerance);
 }
 
 TEST_CASE("a chain supplied as unbuilt parks both markers and names the slot until a chain is supplied again", "[manipulator][supplied]")

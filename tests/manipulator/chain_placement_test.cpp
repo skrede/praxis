@@ -62,10 +62,10 @@ std::optional<meios::model<>> deployed(const char *path, bool parameterized)
 
 std::vector<Eigen::Vector3d> folded(const transform &home, std::span<const screw_axis> told, const joint_vector &theta)
 {
-    const expected<chain_fold, refused_joint> answer = fold_joint_origins(home, told, theta, rigid_motion::baseline().screw);
+    const expected<std::vector<Eigen::Vector3d>, refusal> answer = fold_joint_origins(home, told, theta, rigid_motion::baseline().screw);
     REQUIRE(answer.has_value());
 
-    return answer->points;
+    return *answer;
 }
 
 std::vector<Eigen::Vector3d> folded(const std::vector<screw_axis> &told)

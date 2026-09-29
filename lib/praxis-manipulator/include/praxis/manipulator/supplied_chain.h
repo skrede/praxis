@@ -9,8 +9,8 @@
 namespace praxis::manipulator {
 
 // What keeps a supplied chain from being folded: a screw count that is not the rendered arm's joint
-// count, a slot the chain is built or folded through that holds its default, or a joint whose screw
-// the fold refused.
+// count, a slot the chain is built or folded through that holds its default, or a joint whose
+// exponential is not a rigid transform.
 enum class withheld_cause : std::uint8_t
 {
     joint_count,

@@ -36,9 +36,9 @@ withheld_chain left_unbound(const rigid_motion::screw_ops &described, rigid_moti
     return withheld_chain{withheld_cause::unbound_slot, std::format("The supplied chain is not folded: '{}' holds its default.", screw_slot_name(described, slot))};
 }
 
-withheld_chain refused_at(std::size_t joint)
+withheld_chain not_rigid_at(std::size_t joint)
 {
-    return withheld_chain{withheld_cause::refused, std::format("The supplied chain is not folded: joint {}'s screw was refused.", joint + 1u)};
+    return withheld_chain{withheld_cause::refused, std::format("The supplied chain is not folded: the exponential of joint {}'s screw is not a rigid transform.", joint + 1u)};
 }
 
 }
@@ -119,15 +119,15 @@ expected<chain_end, withheld_chain> loadable_robot_stencil::supplied_chain_end(c
     if(m_inert.contains(rigid_motion::screw_slot::matrix_exponential_screw))
         return unexpected(left_unbound(m_screw, rigid_motion::screw_slot::matrix_exponential_screw));
 
-    const expected<chain_fold, refused_joint> folded = fold_joint_origins(m_home, m_screws, seen.joints, m_screw);
-    if(!folded)
-        return unexpected(refused_at(folded.error().joint));
+    const expected<transform, std::size_t> reached = fold_chain_end(m_home, m_screws, seen.joints, m_screw);
+    if(!reached)
+        return unexpected(not_rigid_at(reached.error()));
 
-    return chain_end{folded->reached, transform(folded->reached * seen.tool_offset)};
+    return chain_end{*reached, transform(*reached * seen.tool_offset)};
 }
 
-// The frame getEndEffectorTransform() answers the flange in. It is composed from the robot node's
-// own placement because the node's world matrix is refreshed only after the frame is drawn.
+// The model's root-link frame in the scene, which a supplied chain's poses are expressed in, composed
+// from the robot node's own placement because the node's world matrix is refreshed only after the frame is drawn.
 threepp::Matrix4 loadable_robot_stencil::root_frame() const
 {
     threepp::Matrix4 placed;

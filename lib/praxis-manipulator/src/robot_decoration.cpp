@@ -168,10 +168,10 @@ void loadable_robot_stencil::place_joint_decoration() const
     if(m_chain == nullptr)
         return;
 
-    const expected<chain_fold, refused_joint> folded = fold_joint_origins(m_home, m_screws, seen->joints, m_screw);
-    m_chain->visible                                 = folded.has_value();
+    const expected<std::vector<Eigen::Vector3d>, refusal> folded = fold_joint_origins(m_home, m_screws, seen->joints, m_screw);
+    m_chain->visible                                             = folded.has_value();
     if(folded)
-        place_chain_figure(m_segments, m_marks, folded->points);
+        place_chain_figure(m_segments, m_marks, *folded);
 }
 
 }

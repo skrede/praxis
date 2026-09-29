@@ -2,6 +2,7 @@
 #include "drawn_chain.h"
 #include "imgui_frame.h"
 #include "window_stage.h"
+#include "literal_exponential.h"
 
 #include "praxis/manipulator/arm_snapshot.h"
 #include "praxis/manipulator/pose_readout.h"
@@ -143,10 +144,15 @@ void view_the_flange(pose_readout &readout)
 struct stage
 {
     explicit stage(robot_slot_set inert = robot_slot_set())
+            : stage(praxis::rigid_motion::baseline().screw, inert)
+    {
+    }
+
+    explicit stage(const praxis::rigid_motion::screw_ops &turning, robot_slot_set inert = robot_slot_set())
             : loop(inline_workers)
             , scene(threepp::Scene::create())
             , published(std::make_shared<arm_publisher>())
-            , shown(two_joint_handle(), attachments{}, *scene, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw, praxis::rigid_motion::screw_slot_set{})
+            , shown(two_joint_handle(), attachments{}, *scene, loop.main_strand(), published->reader(), turning, praxis::rigid_motion::screw_slot_set{})
             , readout(published->reader(), praxis::rigid_motion::baseline().frame, inert, shown)
     {
         publish(turned_tool_offset());
@@ -228,6 +234,28 @@ TEST_CASE("a pose readout over a supplied chain that cannot be folded reads zero
     CHECK(shown.rows[3][0].label.empty());
     CHECK_FALSE(end.error().reason.empty());
     CHECK(shown.rows[3][0].stated == end.error().reason);
+}
+
+TEST_CASE("a supplied chain whose last exponential is not a rigid transform reads zeros naming that joint and parks the flange frame marker", "[manipulator][supplied]")
+{
+    const std::vector<praxis::screw_axis> doubled{revolute_screw(0.0), praxis::screw_axis(2.0 * revolute_screw(static_cast<double>(link_length)))};
+
+    stage drawn(exponentiating_literally());
+    REQUIRE(drawn.shown.supply_joint_screws(displaced_home(), doubled).has_value());
+    drawn.draw();
+
+    const praxis::scene::readout shown = drawn.readout.reading();
+    CHECK(shown.message.empty());
+    REQUIRE(shown.rows.size() == 4u);
+    for(std::size_t row = 0; row < 3u; ++row)
+        CHECK(std::all_of(shown.rows[row].begin(), shown.rows[row].end(), [](const praxis::scene::labeled_value &cell) { return cell.value == 0.f; }));
+    REQUIRE(shown.rows[3].size() == 1u);
+    CHECK(shown.rows[3][0].label.empty());
+    CHECK(shown.rows[3][0].stated == "The supplied chain is not folded: the exponential of joint 2's screw is not a rigid transform.");
+
+    const std::shared_ptr<threepp::Object3D> marker = drawn.shown.attached_at(flange_attachment::frame_marker);
+    REQUIRE(marker != nullptr);
+    CHECK(mark_in_world(*marker).norm() < position_tolerance);
 }
 
 TEST_CASE("a pose readout reads a supplied chain whatever robot slots the composition left unbound", "[manipulator][supplied]")
