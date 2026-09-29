@@ -23,12 +23,16 @@
         <joint index="5" degrees="0"/>
     </initial>
 
-    <!-- The values the Tool window opens at. A blank model draws no mesh until one is loaded there. -->
+    <!-- The values the Tool window opens at wherever the screw table document named above carries
+         none of its own; a save writes the window's values there. A blank model draws no mesh until
+         one is loaded there. -->
     <tool active="false" model=""/>
 
     <joint_control mode="simulation"/>
 
-    <!-- A reach of zero names no reach, and the axes then run as far as the arm's own size gives
-         them. Any other value is a half-length in metres. -->
+    <!-- The values the View window opens at wherever the screw table document named above carries
+         none of its own; a save writes the window's values there. A reach of zero names no reach,
+         and the axes then run as far as the arm's own size gives them. Any other value is a
+         half-length in metres. -->
     <robot_view model="Meshes" screw_axes="true" axis_reach="0"/>
 </arm>

@@ -998,16 +998,21 @@ TEST_CASE("a supplied chain composed with a tool carries the tool frame marker f
     CHECK(((mark_in_world(*marker) - supplied_chain_points(*built.scene).back()) - offset).norm() < read_back);
 }
 
-TEST_CASE("the tool window beside a supplied chain names no key path", "[presets][windows]")
+TEST_CASE("the view and tool windows beside a supplied chain write under their own key paths", "[presets][windows]")
 {
     const described_arm described(6, "six");
     const presets::arm_scenario chosen = described_by(described.where);
 
     opened_arm built;
-    const std::shared_ptr<scene::imgui_window> tool =
-            panel_named(built.open(chosen, presets::arm_windows_modeling(chosen, presets::screw_table_source{}, presets::modeling_beside::pose_and_tool)), "Tool");
+    const std::shared_ptr<scene::preset> composed   = built.open(chosen, presets::arm_windows_modeling(chosen, presets::screw_table_source{}, presets::modeling_beside::pose_and_tool));
+    const std::shared_ptr<scene::imgui_window> tool = panel_named(composed, "Tool");
+    const std::shared_ptr<scene::imgui_window> view = panel_named(composed, "View");
     REQUIRE(tool != nullptr);
-    CHECK(tool->as_configurable() == nullptr);
+    REQUIRE(view != nullptr);
+    REQUIRE(tool->as_configurable() != nullptr);
+    REQUIRE(view->as_configurable() != nullptr);
+    CHECK(tool->as_configurable()->settings_path() == presets::window_paths::tool);
+    CHECK(view->as_configurable()->settings_path() == presets::window_paths::robot_view);
 }
 
 TEST_CASE("the supplied-chain view offers the tool drawing control only where a tool window is composed", "[presets][windows]")

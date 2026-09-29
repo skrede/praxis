@@ -73,7 +73,7 @@ scene::preset_registry::factory arm_factory(config::location registered, std::ve
         const scenario_documents documents{bound, carried.values, kept_chain(carried.values, bound.at, located)};
         const opened_scenario opened = windows(machine, documents, composed.motions);
 
-        std::shared_ptr<scene::preset> built = arm_preset(site, composed.arm, composed.shapes, composed.motions, machine, opened.composed);
+        std::shared_ptr<scene::preset> built = arm_preset(site, composed.arm, composed.shapes, composed.motions, opened.opening, opened.composed);
         if(built != nullptr && announced)
             announced(opened.announced, opened.carried);
 

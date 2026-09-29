@@ -29,7 +29,8 @@ namespace praxis::presets {
 inline constexpr const char *screw_table_path = "screws";
 
 // The values one supplied chain composes from, at the root of a space of its own, so a document
-// read against another one is refused rather than answered from fallbacks throughout.
+// read against another one is refused rather than answered from fallbacks throughout. The View and
+// Tool windows composed beside the chain keep their values here too.
 config::declaration screw_table_keyspace();
 
 // The document is named by the caller and resolved against the directory it is expected to sit

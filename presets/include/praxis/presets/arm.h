@@ -135,7 +135,9 @@ enum class modeling_beside : std::uint8_t
 // `keeping` is where a table typed here is opened from and kept. The rendered arm stays reachable
 // and the drawn axes carry no switch, so nobody is left with only their own claim on screen. Beside
 // the chain a Pose window reads where the supplied chain puts the flange and the tool, and `beside`
-// adds a Tool window setting the tool offset.
+// adds a Tool window setting the tool offset. The View and Tool windows write under
+// `window_paths::robot_view` and `window_paths::tool`, into the document a kept chain is kept in or
+// the arm's own.
 manipulator::arm_composition arm_windows_modeling(arm_scenario chosen, screw_table_source keeping, modeling_beside beside = modeling_beside::pose);
 
 // A tool and a world object on top of forward kinematics, with the tool attachable and detachable

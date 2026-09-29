@@ -59,9 +59,8 @@ manipulator::screw_modeling_window::settings opened_chain(const screw_table_sour
     return manipulator::screw_modeling_window::settings{};
 }
 
-// The document this scenario announces declares the chain's keys and no others, so a window beside
-// the chain names no key path: an edit written against a declaration that does not name it makes
-// the whole save write nothing at all.
+// The View and Tool windows write under the paths every arm document declares them at, and the screw
+// table's declaration names both, so a document keeping the chain keeps them beside it.
 composed_windows beside_the_chain(const arm_scenario &state, const screw_table_source &kept, const manipulator::arm_window_inputs &built, modeling_beside beside)
 {
     composed_windows opened{
@@ -72,8 +71,8 @@ composed_windows beside_the_chain(const arm_scenario &state, const screw_table_s
             manipulator::compose_pose_readout("Pose", built.seen, built.frames, built.inert, built.stencil),
     };
     if(beside == modeling_beside::pose_and_tool)
-        opened.push_back(std::make_shared<manipulator::tool_window>("Tool", built.stencil, built.seen, built.arm, built.frames, state.tool, std::string(), state.model_roots));
-    opened.push_back(std::make_shared<manipulator::robot_view_window>("View", built.stencil, chain_view_controls(beside), chain_view(state.robot_view)));
+        opened.push_back(std::make_shared<manipulator::tool_window>("Tool", built.stencil, built.seen, built.arm, built.frames, state.tool, window_paths::tool, state.model_roots));
+    opened.push_back(std::make_shared<manipulator::robot_view_window>("View", built.stencil, chain_view_controls(beside), chain_view(state.robot_view), window_paths::robot_view));
 
     return opened;
 }

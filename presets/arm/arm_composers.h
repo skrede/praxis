@@ -32,6 +32,8 @@ struct opened_scenario
     manipulator::arm_composition composed;
     config::binding announced;
     config::document carried;
+    // The scenario the windows open at and the models are drawn for.
+    arm_scenario opening;
 };
 
 // Which windows a scenario opens, answered from the arm the composition just read and the spatial

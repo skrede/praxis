@@ -1,6 +1,10 @@
 #include "screw_table_keys.h"
 
+#include "praxis/presets/arm.h"
 #include "praxis/presets/screw_table.h"
+
+#include "praxis/manipulator/tool_configuration.h"
+#include "praxis/manipulator/view_configuration.h"
 
 #include "praxis/config/store.h"
 #include "praxis/config/configurable.h"
@@ -137,6 +141,8 @@ config::declaration screw_table_keyspace()
     shape.collection(rows, std::string(names::index));
     keys::declare_triple(shape, keys::under(rows, names::angular));
     keys::declare_triple(shape, keys::under(rows, names::linear));
+    manipulator::declare_robot_view(shape, window_paths::robot_view);
+    manipulator::declare_tool(shape, window_paths::tool);
 
     return shape;
 }
