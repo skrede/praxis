@@ -26,6 +26,7 @@ praxis_add_test(registered_presets_test.cpp HEADERS scratch_directory.h LIBS pra
 praxis_add_test(arm_keyspace_test.cpp HEADERS scratch_directory.h LIBS praxis::manipulator_presets praxis::manipulator praxis::rigid_motion praxis::trajectory praxis::scene praxis::config praxis_test_support)
 praxis_add_test(registered_arms_test.cpp HEADERS described_arm.h scratch_directory.h LIBS praxis::manipulator_presets praxis::rigid_motion praxis::trajectory praxis::manipulator praxis::scene praxis::config praxis_test_support)
 praxis_add_test(kept_beside_the_chain_test.cpp HEADERS opened_arm.h drawn_lines.h described_arm.h scratch_directory.h saved_document.h composed_panels.h labeled_panels.h carried_models.h LIBS praxis::manipulator_presets praxis::rigid_motion praxis::trajectory praxis::manipulator praxis::scene praxis::config praxis_test_support)
+praxis_add_test(kept_modeling_test.cpp HEADERS opened_arm.h drawn_lines.h described_arm.h scratch_directory.h saved_document.h composed_panels.h labeled_panels.h carried_models.h LIBS praxis::manipulator_presets praxis::rigid_motion praxis::trajectory praxis::manipulator praxis::scene praxis::config praxis_test_support)
 praxis_add_test(arrangement_capability_binding_test.cpp HEADERS scratch_directory.h LIBS praxis::rigid_presets praxis::scene praxis::rigid_motion praxis::config)
 praxis_add_test(seam_routing_test.cpp HEADERS substituted_rigid_motion.h LIBS praxis::scene praxis::manipulator praxis::trajectory praxis::rigid_motion praxis_test_support)
 praxis_add_test(body_frame_routing_test.cpp HEADERS substituted_rigid_motion.h LIBS praxis::manipulator praxis::rigid_motion praxis_test_support)
@@ -40,4 +41,4 @@ if (TARGET manipulator_demo)
 endif ()
 
 # A case that drains a scheduler hangs rather than failing if a retirement stops being acknowledged.
-set_tests_properties(shipped_preset_lifetime_test arm_scenarios_test arm_tooling_test models_without_windows_test models_without_windows_kept_test model_paths_test saved_target_pose_test motion_windows_save_test arm_comparison_scenario_test kept_beside_the_chain_test PROPERTIES TIMEOUT 120)
+set_tests_properties(shipped_preset_lifetime_test arm_scenarios_test arm_tooling_test models_without_windows_test models_without_windows_kept_test model_paths_test saved_target_pose_test motion_windows_save_test arm_comparison_scenario_test kept_beside_the_chain_test kept_modeling_test PROPERTIES TIMEOUT 120)

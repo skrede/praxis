@@ -29,7 +29,7 @@ target_sources(praxis_rigid_presets PRIVATE include/praxis/presets/screw.h inclu
     include/praxis/presets/arrangement_scenarios.h)
 
 target_sources(praxis_manipulator_presets PRIVATE include/praxis/presets/arm.h include/praxis/presets/screw_table.h
-    include/praxis/presets/arm_scenarios.h include/praxis/presets/arm_registration.h)
+    include/praxis/presets/arm_scenarios.h include/praxis/presets/kept_modeling.h include/praxis/presets/arm_registration.h)
 
 add_subdirectory(arm)
 add_subdirectory(screw)

@@ -3357,6 +3357,14 @@ presets/include/praxis/presets/euler_rungs.h	euler_rung_preset	prototype	(const 
 presets/include/praxis/presets/frame_workbench.h	praxis	namespace	-	-
 presets/include/praxis/presets/frame_workbench.h	presets	namespace	-	-
 presets/include/praxis/presets/frame_workbench.h	frame_workbench_preset	prototype	(const scene::preset_site & site,const rigid_motion::capabilities & motions,arrangement_source arrangement=arrangement_source ())	typename:std::shared_ptr<scene::preset>
+presets/include/praxis/presets/kept_modeling.h	praxis	namespace	-	-
+presets/include/praxis/presets/kept_modeling.h	presets	namespace	-	-
+presets/include/praxis/presets/kept_modeling.h	kept_modeling	struct	-	-
+presets/include/praxis/presets/kept_modeling.h	opening	member	-	typename:arm_scenario
+presets/include/praxis/presets/kept_modeling.h	bound	member	-	typename:config::binding
+presets/include/praxis/presets/kept_modeling.h	carried	member	-	typename:config::document
+presets/include/praxis/presets/kept_modeling.h	composed	member	-	typename:manipulator::arm_composition
+presets/include/praxis/presets/kept_modeling.h	arm_windows_kept_modeling	prototype	(const arm_scenario & chosen,const config::binding & keeping,modeling_beside beside=modeling_beside::pose)	typename:kept_modeling
 presets/include/praxis/presets/rotation_axis.h	praxis	namespace	-	-
 presets/include/praxis/presets/rotation_axis.h	presets	namespace	-	-
 presets/include/praxis/presets/rotation_axis.h	rotation_axis_preset	prototype	(const scene::preset_site & site,const rigid_motion::capabilities & motions)	typename:std::shared_ptr<scene::preset>

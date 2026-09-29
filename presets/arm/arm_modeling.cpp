@@ -2,21 +2,32 @@
 
 #include "praxis/presets/arm.h"
 #include "praxis/presets/screw_table.h"
+#include "praxis/presets/kept_modeling.h"
 
 #include "praxis/manipulator/tool_window.h"
 #include "praxis/manipulator/pose_readout.h"
 #include "praxis/manipulator/robot_view_window.h"
+#include "praxis/manipulator/tool_configuration.h"
+#include "praxis/manipulator/view_configuration.h"
 #include "praxis/manipulator/screw_modeling_window.h"
 #include "praxis/manipulator/loadable_robot_stencil.h"
 
 #include "praxis/scene/imgui_window.h"
 
+#include "praxis/config/store.h"
+#include "praxis/config/writer.h"
+#include "praxis/config/binding.h"
+#include "praxis/config/document.h"
+#include "praxis/config/declaration.h"
+
 #include <spdlog/spdlog.h>
 
+#include <span>
 #include <memory>
 #include <string>
 #include <vector>
 #include <utility>
+#include <algorithm>
 
 namespace praxis::presets {
 
@@ -77,6 +88,45 @@ composed_windows beside_the_chain(const arm_scenario &state, const screw_table_s
     return opened;
 }
 
+// A document carrying none of these keys reads what the caller opened at.
+config::declaration falling_back_to(const config::declaration &declared, std::span<const config::edit> opened)
+{
+    config::declaration shape(declared.space());
+    for(const config::node &held : declared.nodes())
+    {
+        const auto named     = std::ranges::find(opened, held.path, &config::edit::key);
+        std::string fallback = named == opened.end() ? held.fallback : named->value;
+        if(held.shape == config::node_kind::group)
+            shape.group(held.path);
+        else if(held.shape == config::node_kind::collection)
+            shape.collection(held.path, held.identity);
+        else if(!held.allowed.empty())
+            shape.choice(held.path, held.allowed, std::move(fallback));
+        else
+            shape.field(held.path, held.kind, std::move(fallback));
+    }
+
+    return shape;
+}
+
+std::vector<config::edit> opened_beside_the_chain(const arm_scenario &machine)
+{
+    std::vector<config::edit> opened       = manipulator::write_robot_view(machine.robot_view, window_paths::robot_view);
+    const std::vector<config::edit> tooled = manipulator::write_tool(machine.tool, window_paths::tool);
+    opened.insert(opened.end(), tooled.begin(), tooled.end());
+
+    return opened;
+}
+
+arm_scenario reopened_beside_the_chain(const arm_scenario &machine, const config::document &kept)
+{
+    arm_scenario opening = machine;
+    opening.robot_view   = manipulator::read_robot_view(kept, window_paths::robot_view);
+    opening.tool         = manipulator::read_tool(kept, window_paths::tool);
+
+    return opening;
+}
+
 }
 
 manipulator::arm_composition arm_windows_modeling(arm_scenario chosen, screw_table_source keeping, modeling_beside beside)
@@ -92,6 +142,16 @@ manipulator::arm_composition arm_windows_modeling(arm_scenario chosen, screw_tab
     };
 
     return composed;
+}
+
+kept_modeling arm_windows_kept_modeling(const arm_scenario &chosen, const config::binding &keeping, modeling_beside beside)
+{
+    const config::binding bound{falling_back_to(keeping.shape, opened_beside_the_chain(chosen)), keeping.at, keeping.carries};
+    const config::outcome kept = config::load_or_defaults(bound);
+    const arm_scenario opening = reopened_beside_the_chain(chosen, kept.values);
+    const screw_table_source supplied{screw_table_path, kept.values, bound};
+
+    return kept_modeling{opening, bound, kept.values, arm_windows_modeling(opening, supplied, beside)};
 }
 
 }
