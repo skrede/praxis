@@ -16,8 +16,12 @@
 
 #include <threepp/core/Object3D.hpp>
 
+#include <threepp/math/Box3.hpp>
+#include <threepp/math/Color.hpp>
 #include <threepp/math/Matrix4.hpp>
 #include <threepp/math/Vector3.hpp>
+
+#include <threepp/materials/interfaces.hpp>
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -29,6 +33,7 @@
 #include <vector>
 #include <cstddef>
 #include <numbers>
+#include <utility>
 #include <algorithm>
 
 using namespace praxis::fixture;
@@ -38,6 +43,11 @@ using namespace praxis::manipulator;
 namespace {
 
 constexpr double single_precision_tolerance = 1.0e-5;
+
+// The size, as a fraction of the arm's extent, and the opacity the marker at the description's flange
+// is built at.
+constexpr double described_extent_fraction = 0.10;
+constexpr float described_opacity          = 0.5f;
 
 // Only the configuration and the tool offset are read by what is under test.
 arm_snapshot carrying(const joint_vector &joints, const praxis::transform &offset)
@@ -269,6 +279,25 @@ struct stage
     std::shared_ptr<arm_publisher> published;
     loadable_robot_stencil shown;
 };
+
+double extent_of(threepp::Object3D &measured)
+{
+    threepp::Box3 box;
+    box.setFromObject(measured);
+
+    return static_cast<double>(box.getSize().length());
+}
+
+// The material an axis of a marker is drawn in, which its shaft and its tip share.
+threepp::MaterialWithColor &worn_by(threepp::Object3D &marker, const std::string &axis)
+{
+    threepp::Object3D *drawn = marker.getObjectByName(axis);
+    REQUIRE(drawn != nullptr);
+    auto *worn = drawn->getObjectByName("shaft")->materialAs<threepp::MaterialWithColor>();
+    REQUIRE(worn != nullptr);
+
+    return *worn;
+}
 
 const joint_vector &bent()
 {
@@ -517,4 +546,27 @@ TEST_CASE("a chain told after a supplied one hides the marker at the description
     REQUIRE(drawn.shown.set_joint_screws(displaced_home(), two_axes()).has_value());
     drawn.draw();
     CHECK_FALSE(drawn.attached(flange_attachment::described_frame_marker).visible);
+}
+
+TEST_CASE("the marker at the description flange is built at its own size and in its own tone", "[manipulator][supplied]")
+{
+    stage drawn(bent());
+    const std::shared_ptr<threepp::Object3D> reference = make_described_flange_marker(drawn.shown.robot());
+    const std::shared_ptr<threepp::Object3D> typed     = make_flange_marker(drawn.shown.robot());
+    CHECK(std::abs(extent_of(*reference) / extent_of(*typed) - described_extent_fraction / opening_marker_extent_fraction) < 1.0e-4);
+
+    const std::array<std::pair<std::string, threepp::Color>, 3> hues{
+            {{"x", threepp::Color(threepp::Color::red)}, {"y", threepp::Color(threepp::Color::green)}, {"z", threepp::Color(threepp::Color::blue)}}};
+    for(const auto &[axis, hue] : hues)
+    {
+        const threepp::MaterialWithColor &faint = worn_by(*reference, axis);
+        CHECK(faint.color == hue);
+        CHECK(faint.transparent);
+        CHECK(faint.opacity == described_opacity);
+
+        const threepp::MaterialWithColor &plain = worn_by(*typed, axis);
+        CHECK(plain.color == hue);
+        CHECK_FALSE(plain.transparent);
+        CHECK(plain.opacity == 1.f);
+    }
 }

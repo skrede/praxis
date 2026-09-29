@@ -9,6 +9,10 @@
 
 #include <threepp/math/Matrix4.hpp>
 
+#include <threepp/objects/Mesh.hpp>
+
+#include <threepp/materials/Material.hpp>
+
 #include <format>
 #include <memory>
 #include <string>
@@ -18,6 +22,9 @@
 namespace praxis::manipulator {
 
 namespace {
+
+constexpr double described_marker_extent_fraction = 0.10;
+constexpr float described_marker_opacity          = 0.5f;
 
 withheld_chain counted_apart(std::size_t screws, std::size_t joints)
 {
@@ -87,6 +94,19 @@ bool loadable_robot_stencil::holds_supplied_chain() const
 void loadable_robot_stencil::set_described_marker_shown(bool shown)
 {
     m_described_marker_shown = shown;
+}
+
+std::shared_ptr<threepp::Object3D> make_described_flange_marker(threepp::Object3D &arm)
+{
+    std::shared_ptr<threepp::Object3D> built = make_flange_marker(arm, described_marker_extent_fraction);
+    built->traverseType<threepp::Mesh>(
+            [](threepp::Mesh &part)
+            {
+                part.material()->transparent = true;
+                part.material()->opacity     = described_marker_opacity;
+            });
+
+    return built;
 }
 
 expected<chain_end, withheld_chain> loadable_robot_stencil::supplied_chain_end(const arm_snapshot &seen) const

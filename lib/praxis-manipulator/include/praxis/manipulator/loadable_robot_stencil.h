@@ -102,6 +102,10 @@ inline constexpr double opening_marker_extent_fraction = 0.15;
 std::shared_ptr<threepp::Object3D> make_flange_marker(threepp::Object3D &arm);
 std::shared_ptr<threepp::Object3D> make_flange_marker(threepp::Object3D &arm, double of_the_arms_extent);
 
+// The marker at the description's flange, built at a size and in a tone of its own so it is told
+// apart from the frame markers beside it.
+std::shared_ptr<threepp::Object3D> make_described_flange_marker(threepp::Object3D &arm);
+
 // The two models an arm carries beside the robot itself, and the policy the marker at its flange is
 // drawn under. A null tool leaves the flange carrying nothing under the tool key until one is
 // installed; a null world reference is no world object at all rather than an empty one.
