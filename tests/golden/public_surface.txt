@@ -488,6 +488,7 @@ lib/praxis-manipulator/include/praxis/manipulator/control_configuration.h	write_
 lib/praxis-manipulator/include/praxis/manipulator/control_configuration.h	declare_screw_jog	prototype	(config::declaration & shape,std::string_view at)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/control_configuration.h	read_screw_jog	prototype	(const config::document & values,std::string_view at)	typename:screw_jog_window::settings
 lib/praxis-manipulator/include/praxis/manipulator/control_configuration.h	write_screw_jog	prototype	(const screw_jog_window::settings & state,std::string_view at)	typename:std::vector<config::edit>
+lib/praxis-manipulator/include/praxis/manipulator/control_configuration.h	write_screw_jog	prototype	(const screw_jog_window::settings & state,std::string_view at,std::string_view screw_at)	typename:std::vector<config::edit>
 lib/praxis-manipulator/include/praxis/manipulator/control_configuration.h	declare_control_parameters	prototype	(config::declaration & shape,std::string_view at)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/control_configuration.h	read_control_parameters	prototype	(const config::document & values,std::string_view at)	typename:control_parameters_window::settings
 lib/praxis-manipulator/include/praxis/manipulator/control_configuration.h	write_control_parameters	prototype	(const control_parameters_window::settings & state,std::string_view at)	typename:std::vector<config::edit>
@@ -1548,7 +1549,7 @@ lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	w	member	-	
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	theta_degrees	member	-	typename:float
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	settings	prototype	(control_mode chosen=control_mode::simulation,const Eigen::Vector3f & chosen_q=Eigen::Vector3f::Zero (),const Eigen::Vector3f & chosen_w=Eigen::Vector3f::UnitZ (),float chosen_pitch=0.f,float chosen_theta_degrees=0.f)	-
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	screw_jog_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,const rigid_motion::frame_ops & injected,std::shared_ptr<edited_pose> edited)	-
-lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	screw_jog_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,const rigid_motion::frame_ops & injected,std::shared_ptr<edited_pose> edited,const settings & state,std::string at=std::string (),std::string pose_at=std::string ())	-
+lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	screw_jog_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,const rigid_motion::frame_ops & injected,std::shared_ptr<edited_pose> edited,const settings & state,std::string at=std::string (),std::string pose_at=std::string (),std::string screw_at=std::string ())	-
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	state	prototype	() const	typename:settings
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	render	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	settings_path	function	() const	typename:std::string_view
@@ -1560,6 +1561,7 @@ lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	m_q	member	
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	m_w	member	-	typename:Eigen::Vector3f
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	m_theta_degrees	member	-	typename:float
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	m_pose_at	member	-	typename:std::string
+lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	m_screw_at	member	-	typename:std::string
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	m_settings_at	member	-	typename:std::string
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	m_arm	member	-	typename:std::weak_ptr<owned_arm>
 lib/praxis-manipulator/include/praxis/manipulator/screw_jog_window.h	m_frame	member	-	typename:rigid_motion::frame_ops

@@ -43,9 +43,10 @@ public:
     };
 
     screw_jog_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, const rigid_motion::frame_ops &injected, std::shared_ptr<edited_pose> edited);
-    // The pose is written under `pose_at`, and a window with no key path of its own offers nothing.
+    // The pose is written under `pose_at` and the screw under `screw_at`. A window with no key path of
+    // its own offers nothing, and one given no screw path keeps its screw for the run.
     screw_jog_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, const rigid_motion::frame_ops &injected, std::shared_ptr<edited_pose> edited,
-                     const settings &state, std::string at = std::string(), std::string pose_at = std::string());
+                     const settings &state, std::string at = std::string(), std::string pose_at = std::string(), std::string screw_at = std::string());
 
     settings state() const;
 
@@ -71,6 +72,7 @@ private:
     Eigen::Vector3f m_w;
     float m_theta_degrees;
     std::string m_pose_at;
+    std::string m_screw_at;
     std::string m_settings_at;
     std::weak_ptr<owned_arm> m_arm;
     rigid_motion::frame_ops m_frame;

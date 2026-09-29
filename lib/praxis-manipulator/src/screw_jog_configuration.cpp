@@ -18,6 +18,14 @@ struct screw_names
     static constexpr std::string_view w     = "w";
 };
 
+void write_screw(std::vector<config::edit> &changes, const screw_jog_window::settings &state, std::string_view at)
+{
+    changes.push_back(config::edit{keys::under(at, screw_names::pitch), keys::text_of(state.pitch)});
+    changes.push_back(config::edit{keys::under(at, screw_names::theta), keys::text_of(state.theta_degrees)});
+    keys::write_vector(changes, keys::under(at, screw_names::q), state.q);
+    keys::write_vector(changes, keys::under(at, screw_names::w), state.w);
+}
+
 }
 
 void declare_screw_jog(config::declaration &shape, std::string_view at)
@@ -43,13 +51,15 @@ screw_jog_window::settings read_screw_jog(const config::document &values, std::s
 
 std::vector<config::edit> write_screw_jog(const screw_jog_window::settings &state, std::string_view at)
 {
-    std::vector<config::edit> changes{
-            keys::written_mode(state.mode, at),
-            config::edit{keys::under(at, screw_names::pitch), keys::text_of(state.pitch)},
-            config::edit{keys::under(at, screw_names::theta), keys::text_of(state.theta_degrees)},
-    };
-    keys::write_vector(changes, keys::under(at, screw_names::q), state.q);
-    keys::write_vector(changes, keys::under(at, screw_names::w), state.w);
+    return write_screw_jog(state, at, at);
+}
+
+std::vector<config::edit> write_screw_jog(const screw_jog_window::settings &state, std::string_view at, std::string_view screw_at)
+{
+    std::vector<config::edit> changes{keys::written_mode(state.mode, at)};
+    if(!screw_at.empty())
+        write_screw(changes, state, screw_at);
+
     return changes;
 }
 

@@ -41,6 +41,8 @@ constexpr const char *every_window = "every window";
 // window its control mode, the two pose fields and the order selector above Reset start.
 constexpr std::size_t start_position_row = 1;
 constexpr std::size_t reset_start_row    = 4;
+// The screw's point, direction and pitch follow Reset start, one row each.
+constexpr std::size_t screw_pitch_row = reset_start_row + 3;
 
 // A position saved as text and read back as floats, compared in metres.
 constexpr double saved_position_tolerance = 1.0e-4;
@@ -188,4 +190,22 @@ TEST_CASE("an arm document carrying a screw opens the every window scenario's sc
         static_cast<void>(fixture::geometry_of(*panel));
     CHECK(fixture::offered_by(*composed, carried).empty());
     CHECK_FALSE(config::anything_unsaved(shown_by(*composed), carried));
+}
+
+TEST_CASE("the every window scenario keeps a screw moved in its screw jog window with the document", "[presets][documents]")
+{
+    const fixture::described_arm described(6, "six");
+    const std::vector<std::filesystem::path> roots{described.directory};
+    const config::location at      = every_window_document("kept_screw");
+    const config::document carried = fixture::read_arm_document(at);
+
+    fixture::opened_arm stage;
+    const std::shared_ptr<scene::preset> composed = opened(stage, carried, roots);
+    draw_motion_windows(composed);
+    fixture::type_component_at(window_named(composed, "Screw jog"), screw_pitch_row, 0u, "0.25");
+
+    const std::vector<config::edit> offered = fixture::offered_by(*composed, carried);
+    INFO("offered " << offered.size());
+    CHECK(offers(offered, "screw_jog/pitch", "0.25"));
+    CHECK(presets::read_arm(fixture::saved_into(at, offered), roots).screw_jog.pitch == 0.25f);
 }
