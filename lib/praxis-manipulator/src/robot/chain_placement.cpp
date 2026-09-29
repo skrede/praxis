@@ -3,6 +3,7 @@
 #include "praxis/rigid_motion/types.h"
 
 #include <Eigen/LU>
+#include <Eigen/SVD>
 #include <Eigen/Core>
 
 #include <span>
@@ -41,11 +42,22 @@ Eigen::Vector3d next_origin(const Eigen::Vector3d &before, const twist &carried_
     return through + along * (before - through).dot(along);
 }
 
+double turn_at(const joint_vector &theta, std::size_t joint)
+{
+    const auto at = static_cast<Eigen::Index>(joint);
+
+    return at < theta.size() ? theta[at] : 0.0;
+}
+
 }
 
 expected<std::vector<Eigen::Vector3d>, refusal> fold_joint_origins(const transform &home, std::span<const screw_axis> space_screws, const joint_vector &theta,
                                                                    const rigid_motion::screw_ops &screw)
 {
+    const expected<transform, std::size_t> reached = fold_chain_end(home, space_screws, theta, screw);
+    if(!home.allFinite() || !reached)
+        return unexpected(refusal::degenerate);
+
     std::vector<Eigen::Vector3d> points;
     points.reserve(space_screws.size() + 2u);
     points.emplace_back(Eigen::Vector3d::Zero());
@@ -53,19 +65,15 @@ expected<std::vector<Eigen::Vector3d>, refusal> fold_joint_origins(const transfo
     transform carried = transform::Identity();
     for(std::size_t joint = 0; joint < space_screws.size(); ++joint)
     {
-        const expected<twist, refusal> moved = screw.adjoint_map(space_screws[joint], carried);
+        const expected<twist, refusal> moved = screw.adjoint_map(space_screws[joint], nearest_rigid_motion(carried));
         if(!moved)
             return unexpected(moved.error());
 
         points.push_back(next_origin(points.back(), *moved));
-
-        const auto at     = static_cast<Eigen::Index>(joint);
-        const double turn = at < theta.size() ? theta[at] : 0.0;
-        carried           = transform(carried * screw.matrix_exponential_screw(space_screws[joint], turn));
+        carried = transform(carried * screw.matrix_exponential_screw(space_screws[joint], turn_at(theta, joint)));
     }
 
-    const transform reached = carried * home;
-    points.emplace_back(reached.block<3, 1>(0, 3));
+    points.emplace_back(reached->block<3, 1>(0, 3));
 
     return points;
 }
@@ -97,6 +105,26 @@ expected<transform, std::size_t> fold_chain_end(const transform &home, std::span
     }
 
     return transform(carried * home);
+}
+
+Eigen::Matrix3d nearest_rotation(const Eigen::Matrix3d &block)
+{
+    const Eigen::JacobiSVD<Eigen::Matrix3d> taken(block, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    const Eigen::Matrix3d turned(taken.matrixU() * taken.matrixV().transpose());
+
+    Eigen::Matrix3d handed = Eigen::Matrix3d::Identity();
+    handed(2, 2)           = turned.determinant() < 0.0 ? -1.0 : 1.0;
+
+    return taken.matrixU() * handed * taken.matrixV().transpose();
+}
+
+transform nearest_rigid_motion(const transform &placed)
+{
+    transform rigid             = transform::Identity();
+    rigid.topLeftCorner<3, 3>() = nearest_rotation(placed.topLeftCorner<3, 3>());
+    rigid.block<3, 1>(0, 3)     = placed.block<3, 1>(0, 3);
+
+    return rigid;
 }
 
 }

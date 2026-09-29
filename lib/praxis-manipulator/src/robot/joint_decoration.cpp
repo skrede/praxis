@@ -2,6 +2,8 @@
 
 #include "inert_screw_report.h"
 
+#include "robot/chain_placement.h"
+
 #include <threepp/objects/Line.hpp>
 #include <threepp/objects/ObjectWithMaterials.hpp>
 
@@ -122,7 +124,7 @@ void place_joint_axes(std::span<const std::shared_ptr<threepp::Object3D>> drawn,
     transform carried = transform::Identity();
     for(std::size_t joint = 0; joint < drawn.size() && joint < space_screws.size(); ++joint)
     {
-        const std::optional<transform> placed = axis_placement(space_screws[joint], carried, screw);
+        const std::optional<transform> placed = axis_placement(space_screws[joint], nearest_rigid_motion(carried), screw);
         if(placed)
             write_placement(*drawn[joint], *placed);
         drawn[joint]->visible = placed.has_value();
@@ -146,11 +148,17 @@ bool decline_unbound_fold(std::span<const std::shared_ptr<threepp::Object3D>> dr
     if(!inert_and_reported(screw, inert, rigid_motion::screw_slot::matrix_exponential_screw, "the joint chain and the screw axes are not drawn", reported))
         return false;
 
-    for(const std::shared_ptr<threepp::Object3D> &line : drawn)
-        line->visible = false;
-    chain->visible = false;
+    withhold_joint_decoration(drawn, chain);
 
     return true;
+}
+
+void withhold_joint_decoration(std::span<const std::shared_ptr<threepp::Object3D>> drawn, threepp::Object3D *chain)
+{
+    for(const std::shared_ptr<threepp::Object3D> &line : drawn)
+        line->visible = false;
+    if(chain != nullptr)
+        chain->visible = false;
 }
 
 threepp::Matrix4 to_renderer_transform(const transform &placed)

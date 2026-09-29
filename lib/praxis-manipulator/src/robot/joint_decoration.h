@@ -44,9 +44,13 @@ std::shared_ptr<threepp::Object3D> joint_axis_object(std::string name, double re
 
 // The screws are the home axes in the model's root-link frame and the configuration is the one the
 // arm is drawn at; joint i's axis is its home screw carried by the product of the exponentials of
-// the screws before it. An object whose axis the bound operations decline to carry is not drawn.
+// the screws before it, handed to the adjoint map as the rigid motion nearest that product. An object
+// whose axis the bound operations decline to carry is not drawn.
 void place_joint_axes(std::span<const std::shared_ptr<threepp::Object3D>> drawn, std::span<const screw_axis> space_screws, const joint_vector &theta,
                       const rigid_motion::screw_ops &screw);
+
+// Hides every axis line and the chain; a null chain is left alone.
+void withhold_joint_decoration(std::span<const std::shared_ptr<threepp::Object3D>> drawn, threepp::Object3D *chain);
 
 // Whether the axes and the chain are withheld rather than placed. Both are placed from a fold
 // running through the screw exponential, which carries no refusal channel: a composition that left

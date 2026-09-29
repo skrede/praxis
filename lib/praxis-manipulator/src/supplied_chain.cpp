@@ -41,6 +41,11 @@ withheld_chain not_rigid_at(std::size_t joint)
     return withheld_chain{withheld_cause::refused, std::format("The supplied chain is not folded: the exponential of joint {}'s screw is not a rigid transform.", joint + 1u)};
 }
 
+withheld_chain home_not_finite()
+{
+    return withheld_chain{withheld_cause::refused, "The supplied chain is not folded: its home pose is not finite."};
+}
+
 }
 
 expected<void, refusal> loadable_robot_stencil::set_joint_screws(const transform &home, std::span<const screw_axis> space_screws)
@@ -118,6 +123,8 @@ expected<chain_end, withheld_chain> loadable_robot_stencil::supplied_chain_end(c
         return unexpected(counted_apart(m_supplied_count, rendered));
     if(m_inert.contains(rigid_motion::screw_slot::matrix_exponential_screw))
         return unexpected(left_unbound(m_screw, rigid_motion::screw_slot::matrix_exponential_screw));
+    if(!m_home.allFinite())
+        return unexpected(home_not_finite());
 
     const expected<transform, std::size_t> reached = fold_chain_end(m_home, m_screws, seen.joints, m_screw);
     if(!reached)

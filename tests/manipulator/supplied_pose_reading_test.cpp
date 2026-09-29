@@ -26,6 +26,7 @@
 #include <Eigen/Geometry>
 
 #include <cmath>
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -252,6 +253,29 @@ TEST_CASE("a supplied chain whose last exponential is not a rigid transform read
     REQUIRE(shown.rows[3].size() == 1u);
     CHECK(shown.rows[3][0].label.empty());
     CHECK(shown.rows[3][0].stated == "The supplied chain is not folded: the exponential of joint 2's screw is not a rigid transform.");
+
+    const std::shared_ptr<threepp::Object3D> marker = drawn.shown.attached_at(flange_attachment::frame_marker);
+    REQUIRE(marker != nullptr);
+    CHECK(mark_in_world(*marker).norm() < position_tolerance);
+}
+
+TEST_CASE("a supplied chain whose home pose is not finite reads zeros saying so and parks the flange frame marker", "[manipulator][supplied]")
+{
+    praxis::transform home = displaced_home();
+    home(1, 3)             = std::numeric_limits<double>::quiet_NaN();
+
+    stage drawn;
+    REQUIRE(drawn.shown.supply_joint_screws(home, two_axes()).has_value());
+    drawn.draw();
+
+    const praxis::scene::readout shown = drawn.readout.reading();
+    CHECK(shown.message.empty());
+    REQUIRE(shown.rows.size() == 4u);
+    for(std::size_t row = 0; row < 3u; ++row)
+        CHECK(std::all_of(shown.rows[row].begin(), shown.rows[row].end(), [](const praxis::scene::labeled_value &cell) { return cell.value == 0.f; }));
+    REQUIRE(shown.rows[3].size() == 1u);
+    CHECK(shown.rows[3][0].label.empty());
+    CHECK(shown.rows[3][0].stated == "The supplied chain is not folded: its home pose is not finite.");
 
     const std::shared_ptr<threepp::Object3D> marker = drawn.shown.attached_at(flange_attachment::frame_marker);
     REQUIRE(marker != nullptr);

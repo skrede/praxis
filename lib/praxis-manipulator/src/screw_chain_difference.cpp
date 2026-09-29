@@ -1,10 +1,11 @@
+#include "robot/chain_placement.h"
+
 #include "praxis/manipulator/screw_chain_difference.h"
 
 #include "praxis/evaluation/comparators.h"
 
 #include "praxis/rigid_motion/types.h"
 
-#include <Eigen/SVD>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
@@ -55,26 +56,13 @@ double greater_defect(double first, double second)
     return std::max(first, second);
 }
 
-// A reflection is exactly orthonormal and a shear leaves the determinant where it was, so each term
-// catches a class the other misses.
-double rigidity_defect(const Eigen::Matrix3d &block)
+// The pose's rotation block, with no translation and an exact bottom row.
+transform rotation_block_of(const transform &pose)
 {
-    const Eigen::Matrix3d gram(block.transpose() * block);
+    transform block             = transform::Identity();
+    block.topLeftCorner<3, 3>() = pose.topLeftCorner<3, 3>();
 
-    return greater_defect((gram - Eigen::Matrix3d::Identity()).cwiseAbs().maxCoeff<Eigen::PropagateNaN>(), std::fabs(block.determinant() - 1.0));
-}
-
-// The rotation nearest a block in the Frobenius sense, with the last singular direction flipped
-// where the decomposition would otherwise answer a reflection.
-Eigen::Matrix3d nearest_rotation(const Eigen::Matrix3d &block)
-{
-    const Eigen::JacobiSVD<Eigen::Matrix3d> taken(block, Eigen::ComputeFullU | Eigen::ComputeFullV);
-    const Eigen::Matrix3d turned(taken.matrixU() * taken.matrixV().transpose());
-
-    Eigen::Matrix3d handed = Eigen::Matrix3d::Identity();
-    handed(2, 2)           = turned.determinant() < 0.0 ? -1.0 : 1.0;
-
-    return taken.matrixU() * handed * taken.matrixV().transpose();
+    return block;
 }
 
 // A linear half of no length names no direction either, so the angle between two of them is left
@@ -110,7 +98,7 @@ chain_home_difference home_compared(const screw_chain &derived, const transform 
 {
     const Eigen::Matrix3d held(supplied_home.block<3, 3>(0, 0));
     const Eigen::Matrix3d described(derived.home.block<3, 3>(0, 0));
-    const double rigidity = greater_defect(rigidity_defect(held), rigidity_defect(described));
+    const double rigidity = greater_defect(rigidity_defect(rotation_block_of(supplied_home)), rigidity_defect(rotation_block_of(derived.home)));
     const double moved    = (supplied_home.block<3, 1>(0, 3) - derived.home.block<3, 1>(0, 3)).norm();
 
     if(!(rigidity <= home_rigidity_bound))
