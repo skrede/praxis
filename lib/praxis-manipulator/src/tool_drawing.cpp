@@ -20,7 +20,7 @@ namespace praxis::manipulator {
 
 namespace {
 
-constexpr std::uint32_t tool_stick_tone = 0x404040;
+constexpr std::uint32_t tool_stick_tone = 0x909090;
 
 Eigen::Vector3d position_of(const threepp::Matrix4 &placed)
 {
