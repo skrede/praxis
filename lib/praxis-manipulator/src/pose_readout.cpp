@@ -56,6 +56,11 @@ std::vector<std::vector<scene::labeled_value>> rows_of(const Eigen::Vector3d &po
     return rows;
 }
 
+pose_readout::frame_view opening_view(pose_readout::offered_frames offered)
+{
+    return offered == pose_readout::offered_frames::flange ? pose_readout::frame_view::flange : pose_readout::frame_view::tool;
+}
+
 std::vector<std::vector<scene::labeled_value>> withheld_rows(const std::string &reason)
 {
     std::vector<std::vector<scene::labeled_value>> rows = rows_of(Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero());
@@ -66,29 +71,32 @@ std::vector<std::vector<scene::labeled_value>> withheld_rows(const std::string &
 
 }
 
-pose_readout::pose_readout(arm_reader seen, const rigid_motion::frame_ops &injected, robot_slot_set inert)
+pose_readout::pose_readout(arm_reader seen, const rigid_motion::frame_ops &injected, robot_slot_set inert, offered_frames offered)
         : m_seen(std::move(seen))
         , m_inert(inert)
         , m_euler_order(axis_order::zyx)
+        , m_offered(offered)
         , m_frame(injected)
-        , m_frame_view(frame_view::tool, {frame_view::tool, frame_view::flange}, {"Tool", "Flange"})
+        , m_frame_view(opening_view(offered), {frame_view::tool, frame_view::flange}, {"Tool", "Flange"})
         , m_drawn(std::nullopt)
 {
 }
 
-pose_readout::pose_readout(arm_reader seen, const rigid_motion::frame_ops &injected, robot_slot_set inert, const loadable_robot_stencil &drawn)
+pose_readout::pose_readout(arm_reader seen, const rigid_motion::frame_ops &injected, robot_slot_set inert, const loadable_robot_stencil &drawn, offered_frames offered)
         : m_seen(std::move(seen))
         , m_inert(inert)
         , m_euler_order(axis_order::zyx)
+        , m_offered(offered)
         , m_frame(injected)
-        , m_frame_view(frame_view::tool, {frame_view::tool, frame_view::flange}, {"Tool", "Flange"})
+        , m_frame_view(opening_view(offered), {frame_view::tool, frame_view::flange}, {"Tool", "Flange"})
         , m_drawn(std::cref(drawn))
 {
 }
 
 void pose_readout::render_controls()
 {
-    render_option_cycle("Frame", m_frame_view);
+    if(m_offered == offered_frames::both)
+        render_option_cycle("Frame", m_frame_view);
     scene::render_enum_selection("Euler order", m_euler_order, axis_order_labels());
 }
 
@@ -144,17 +152,18 @@ pose_readout::pose_reading pose_readout::reading_of(const arm_snapshot &seen, fr
     return pose_reading::value;
 }
 
-std::shared_ptr<scene::labeled_value_window> compose_pose_readout(std::string name, arm_reader seen, const rigid_motion::frame_ops &injected, robot_slot_set inert)
+std::shared_ptr<scene::labeled_value_window> compose_pose_readout(std::string name, arm_reader seen, const rigid_motion::frame_ops &injected, robot_slot_set inert,
+                                                                  pose_readout::offered_frames offered)
 {
-    const auto held = std::make_shared<pose_readout>(std::move(seen), injected, inert);
+    const auto held = std::make_shared<pose_readout>(std::move(seen), injected, inert, offered);
 
     return std::make_shared<scene::labeled_value_window>(std::move(name), [held] { held->render_controls(); }, [held] { return held->reading(); });
 }
 
 std::shared_ptr<scene::labeled_value_window> compose_pose_readout(std::string name, arm_reader seen, const rigid_motion::frame_ops &injected, robot_slot_set inert,
-                                                                  const loadable_robot_stencil &drawn)
+                                                                  const loadable_robot_stencil &drawn, pose_readout::offered_frames offered)
 {
-    const auto held = std::make_shared<pose_readout>(std::move(seen), injected, inert, drawn);
+    const auto held = std::make_shared<pose_readout>(std::move(seen), injected, inert, drawn, offered);
 
     return std::make_shared<scene::labeled_value_window>(std::move(name), [held] { held->render_controls(); }, [held] { return held->reading(); });
 }

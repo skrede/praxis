@@ -1077,6 +1077,13 @@ lib/praxis-manipulator/include/praxis/manipulator/model_file.h	praxis	namespace	
 lib/praxis-manipulator/include/praxis/manipulator/model_file.h	located_model	prototype	(const std::filesystem::path & named,std::span<const std::filesystem::path> roots)	typename:std::optional<std::filesystem::path>
 lib/praxis-manipulator/include/praxis/manipulator/model_file.h	loaded_model	prototype	(const std::filesystem::path & file)	typename:std::shared_ptr<threepp::Object3D>
 lib/praxis-manipulator/include/praxis/manipulator/model_file.h	loaded_model_line	prototype	(const std::string & named,std::span<const std::filesystem::path> roots,bool holding)	typename:std::string
+lib/praxis-manipulator/include/praxis/manipulator/model_placement.h	manipulator	namespace	-	-
+lib/praxis-manipulator/include/praxis/manipulator/model_placement.h	praxis	namespace	-	-
+lib/praxis-manipulator/include/praxis/manipulator/model_placement.h	placement_doubts	struct	-	-
+lib/praxis-manipulator/include/praxis/manipulator/model_placement.h	defaulted	member	-	typename:rigid_motion::frame_slot_set
+lib/praxis-manipulator/include/praxis/manipulator/model_placement.h	not_finite	member	-	typename:rigid_motion::frame_slot_set
+lib/praxis-manipulator/include/praxis/manipulator/model_placement.h	seat_tool	prototype	(loadable_robot_stencil & on,const std::weak_ptr<owned_arm> & arm,const rigid_motion::frame_ops & frames,const tool_window::settings & state)	typename:placement_doubts
+lib/praxis-manipulator/include/praxis/manipulator/model_placement.h	place_world_object	prototype	(loadable_robot_stencil & on,const rigid_motion::frame_ops & frames,const world_object_window::settings & state)	typename:placement_doubts
 lib/praxis-manipulator/include/praxis/manipulator/modeling.h	inert	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/modeling.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/modeling.h	praxis	namespace	-	-
@@ -1222,6 +1229,10 @@ lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	pose_readout	cl
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	frame_view	enum	-	typename:std::uint8_t
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	flange	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	tool	enumerator	-	-
+lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	offered_frames	enum	-	typename:std::uint8_t
+lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	flange	enumerator	-	-
+lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	tool	enumerator	-	-
+lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	both	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	pose_reading	enum	-	typename:std::uint8_t
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	value	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	unpublished	enumerator	-	-
@@ -1229,20 +1240,21 @@ lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	refused	enumera
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	position_unbound	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	orientation_unbound	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	both_unbound	enumerator	-	-
-lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	pose_readout	prototype	(arm_reader seen,const rigid_motion::frame_ops & injected,robot_slot_set inert)	-
-lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	pose_readout	prototype	(arm_reader seen,const rigid_motion::frame_ops & injected,robot_slot_set inert,const loadable_robot_stencil & drawn)	-
+lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	pose_readout	prototype	(arm_reader seen,const rigid_motion::frame_ops & injected,robot_slot_set inert,offered_frames offered=offered_frames::both)	-
+lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	pose_readout	prototype	(arm_reader seen,const rigid_motion::frame_ops & injected,robot_slot_set inert,const loadable_robot_stencil & drawn,offered_frames offered=offered_frames::both)	-
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	render_controls	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	reading	prototype	() const	typename:scene::readout
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	reading_of	prototype	(const arm_snapshot & seen,frame_view frame) const	typename:pose_reading
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	m_seen	member	-	typename:arm_reader
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	m_inert	member	-	typename:robot_slot_set
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	m_euler_order	member	-	typename:axis_order
+lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	m_offered	member	-	typename:offered_frames
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	m_frame	member	-	typename:rigid_motion::frame_ops
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	m_frame_view	member	-	typename:option_cycle<frame_view,2>
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	m_drawn	member	-	typename:std::optional<std::reference_wrapper<const loadable_robot_stencil>>
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	supplied_reading	prototype	(const arm_snapshot & seen,frame_view frame) const	typename:scene::readout
-lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	compose_pose_readout	prototype	(std::string name,arm_reader seen,const rigid_motion::frame_ops & injected,robot_slot_set inert)	typename:std::shared_ptr<scene::labeled_value_window>
-lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	compose_pose_readout	prototype	(std::string name,arm_reader seen,const rigid_motion::frame_ops & injected,robot_slot_set inert,const loadable_robot_stencil & drawn)	typename:std::shared_ptr<scene::labeled_value_window>
+lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	compose_pose_readout	prototype	(std::string name,arm_reader seen,const rigid_motion::frame_ops & injected,robot_slot_set inert,pose_readout::offered_frames offered=pose_readout::offered_frames::both)	typename:std::shared_ptr<scene::labeled_value_window>
+lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	compose_pose_readout	prototype	(std::string name,arm_reader seen,const rigid_motion::frame_ops & injected,robot_slot_set inert,const loadable_robot_stencil & drawn,pose_readout::offered_frames offered=pose_readout::offered_frames::both)	typename:std::shared_ptr<scene::labeled_value_window>
 lib/praxis-manipulator/include/praxis/manipulator/render_configuration.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/render_configuration.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/render_configuration.h	declare_render_controls	prototype	(config::declaration & shape,std::string_view at)	typename:void
@@ -1872,7 +1884,6 @@ lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	render_graphics_
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	render_kinematics_transform	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	assign_gfx_transform	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	assign_kinematics_transform	prototype	()	typename:void
-lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	seat_attached_tool	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	activate_custom_tool	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	activate_default_tool	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/tool_window.h	load_stl	prototype	()	typename:bool

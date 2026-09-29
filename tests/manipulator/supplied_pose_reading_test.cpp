@@ -149,12 +149,17 @@ struct stage
     {
     }
 
-    explicit stage(const praxis::rigid_motion::screw_ops &turning, robot_slot_set inert = robot_slot_set())
+    explicit stage(pose_readout::offered_frames offered)
+            : stage(praxis::rigid_motion::baseline().screw, robot_slot_set(), offered)
+    {
+    }
+
+    explicit stage(const praxis::rigid_motion::screw_ops &turning, robot_slot_set inert = robot_slot_set(), pose_readout::offered_frames offered = pose_readout::offered_frames::both)
             : loop(inline_workers)
             , scene(threepp::Scene::create())
             , published(std::make_shared<arm_publisher>())
             , shown(two_joint_handle(), attachments{}, *scene, loop.main_strand(), published->reader(), turning, praxis::rigid_motion::screw_slot_set{})
-            , readout(published->reader(), praxis::rigid_motion::baseline().frame, inert, shown)
+            , readout(published->reader(), praxis::rigid_motion::baseline().frame, inert, shown, offered)
     {
         publish(turned_tool_offset());
         REQUIRE(shown.initialize().has_value());
@@ -361,4 +366,18 @@ TEST_CASE("a pose readout handed a drawing reads nothing while the arm has publi
 
     CHECK(shown.rows.empty());
     CHECK(shown.message == "The arm has published nothing yet.");
+}
+
+TEST_CASE("a pose readout offering one frame reads that frame's end of a supplied chain", "[manipulator][supplied]")
+{
+    const praxis::transform flange = fk(displaced_home(), two_axes(), bent());
+
+    stage flange_only(pose_readout::offered_frames::flange);
+    REQUIRE(flange_only.shown.supply_joint_screws(displaced_home(), two_axes()).has_value());
+    CHECK(reads_at(flange_only.readout.reading(), flange));
+    CHECK_FALSE(reads_at(flange_only.readout.reading(), flange * turned_tool_offset()));
+
+    stage tool_only(pose_readout::offered_frames::tool);
+    REQUIRE(tool_only.shown.supply_joint_screws(displaced_home(), two_axes()).has_value());
+    CHECK(reads_at(tool_only.readout.reading(), flange * turned_tool_offset()));
 }

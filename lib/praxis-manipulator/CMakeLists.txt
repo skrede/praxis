@@ -30,6 +30,7 @@ praxis_add_module(manipulator
     include/praxis/manipulator/kinematics_configuration.h
     include/praxis/manipulator/loadable_robot_stencil.h
     include/praxis/manipulator/model_file.h
+    include/praxis/manipulator/model_placement.h
     include/praxis/manipulator/modeling.h
     include/praxis/manipulator/motion.h
     include/praxis/manipulator/motion_commands.h
@@ -139,6 +140,7 @@ praxis_add_module(manipulator
     src/path_comparison_paths.h
     src/path_comparison_paths.cpp
     src/path_comparison_window.cpp
+    src/placement_reading.h
     src/pose_configuration.cpp
     src/pose_readout.cpp
     src/pose_waypoints_configuration.cpp
@@ -221,6 +223,7 @@ praxis_add_module(manipulator
     src/view_configuration.cpp
     src/waypoint_rows_document.h
     src/waypoint_rows_document.cpp
+    src/world_object_placement.cpp
     src/world_object_window.cpp
     PUBLIC_LIBS
     praxis::extension

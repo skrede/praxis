@@ -144,6 +144,9 @@ manipulator::arm_composition arm_windows_modeling(arm_scenario chosen, screw_tab
 // while the scenario runs. The four frame transformations a tool pose is read through answer the
 // origin unrotated when nobody binds them, which is a pose an arm can genuinely be at, so a
 // composition handed any of them unbound opens no window at all and names the ones it was denied.
+// The tool and the world object are placed as the scenario states them whether or not their windows
+// are kept, and a frame transformation the placement reads at its default, or that answers a value
+// that is not finite, is named in the log.
 manipulator::arm_composition arm_windows_tooling(arm_scenario chosen);
 
 // A target pose, a list of starts to search from and the answers a search found, with the steps of

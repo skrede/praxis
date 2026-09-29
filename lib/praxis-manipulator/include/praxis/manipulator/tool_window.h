@@ -111,8 +111,6 @@ private:
     void assign_gfx_transform();
     void assign_kinematics_transform();
 
-    void seat_attached_tool();
-
     void activate_custom_tool();
     void activate_default_tool();
 

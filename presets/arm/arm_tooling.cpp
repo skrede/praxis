@@ -4,8 +4,14 @@
 #include "praxis/presets/arm.h"
 
 #include "praxis/manipulator/pose_readout.h"
+#include "praxis/manipulator/model_placement.h"
 #include "praxis/manipulator/robot_view_window.h"
 #include "praxis/manipulator/loadable_robot_stencil.h"
+
+#include "praxis/rigid_motion/frame.h"
+#include "praxis/rigid_motion/slots.h"
+
+#include "praxis/extension/coverage.h"
 
 #include "praxis/scene/imgui_window.h"
 
@@ -59,6 +65,41 @@ manipulator::robot_view_window::controls every_view_control()
     return every_marker_control(offered);
 }
 
+void report_doubts(const char *model, const manipulator::placement_doubts &doubts)
+{
+    constexpr rigid_motion::frame_ops slot_names{};
+
+    if(!doubts.defaulted.empty())
+        spdlog::error("praxis: 'presets.arm_windows_tooling' placed {} through {}, which still hold their defaults, so it stands where their answers put it", model,
+                      joined_slot_names(slot_names, doubts.defaulted));
+    if(!doubts.not_finite.empty())
+        spdlog::error("praxis: 'presets.arm_windows_tooling' placed {} through {}, which answered values that are not finite, so it stands where those values put it", model,
+                      joined_slot_names(slot_names, doubts.not_finite));
+}
+
+// Both models are placed once the windows exist, so a window capturing a model on construction finds
+// an inactive one still in the stencil.
+composed_windows tooling_windows(const arm_scenario &state, const manipulator::arm_window_inputs &built)
+{
+    if(const std::string unbound = unbound_pose_transformations(built.inert); !unbound.empty())
+        return declined(built.stencil, unbound);
+
+    draw_derived_chain(built.stencil, built.chain);
+    install_frame_markers(built.stencil);
+
+    composed_windows windows{
+            std::make_shared<manipulator::joint_control_window>("Joint control", built.seen, built.arm, state.joint_control, window_paths::joint_control),
+            manipulator::compose_pose_readout("Pose", built.seen, built.frames, built.inert),
+            std::make_shared<manipulator::tool_window>("Tool", built.stencil, built.seen, built.arm, built.frames, state.tool, window_paths::tool, state.model_roots),
+            std::make_shared<manipulator::world_object_window>("World object", built.stencil, built.frames, state.world_object, window_paths::world_object, state.model_roots),
+            std::make_shared<manipulator::robot_view_window>("View", built.stencil, every_view_control(), state.robot_view, window_paths::robot_view),
+    };
+    report_doubts("the tool", manipulator::seat_tool(built.stencil, built.arm, built.frames, state.tool));
+    report_doubts("the world object", manipulator::place_world_object(built.stencil, built.frames, state.world_object));
+
+    return windows;
+}
+
 }
 
 manipulator::arm_composition arm_windows_tooling(arm_scenario chosen)
@@ -67,22 +108,7 @@ manipulator::arm_composition arm_windows_tooling(arm_scenario chosen)
     composed.draws_tool    = true;
     composed.draws_world   = true;
     composed.flange_marker = manipulator::flange_marker_policy::stands;
-    composed.windows       = [state = std::move(chosen)](const manipulator::arm_window_inputs &built)
-    {
-        if(const std::string unbound = unbound_pose_transformations(built.inert); !unbound.empty())
-            return declined(built.stencil, unbound);
-
-        draw_derived_chain(built.stencil, built.chain);
-        install_frame_markers(built.stencil);
-
-        return composed_windows{
-                std::make_shared<manipulator::joint_control_window>("Joint control", built.seen, built.arm, state.joint_control, window_paths::joint_control),
-                manipulator::compose_pose_readout("Pose", built.seen, built.frames, built.inert),
-                std::make_shared<manipulator::tool_window>("Tool", built.stencil, built.seen, built.arm, built.frames, state.tool, window_paths::tool, state.model_roots),
-                std::make_shared<manipulator::world_object_window>("World object", built.stencil, built.frames, state.world_object, window_paths::world_object, state.model_roots),
-                std::make_shared<manipulator::robot_view_window>("View", built.stencil, every_view_control(), state.robot_view, window_paths::robot_view),
-        };
-    };
+    composed.windows       = [state = std::move(chosen)](const manipulator::arm_window_inputs &built) { return tooling_windows(state, built); };
 
     return composed;
 }

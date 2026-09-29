@@ -1,38 +1,18 @@
 #include "praxis/manipulator/model_file.h"
+#include "praxis/manipulator/model_placement.h"
 #include "praxis/manipulator/tool_configuration.h"
 #include "praxis/manipulator/world_object_window.h"
 
 #include "praxis/scene/widgets.h"
 
-#include "praxis/rigid_motion/angles.h"
-#include "praxis/rigid_motion/axis_order.h"
-
-#include <array>
 #include <string>
 #include <vector>
-#include <cstddef>
 #include <cstring>
 #include <utility>
 #include <optional>
 #include <filesystem>
 
 namespace praxis::manipulator {
-
-namespace {
-
-// The renderer stores a transform column by column, and in single precision. Only the rotation
-// block is read back from it: the object's position and scale are set on the node itself.
-threepp::Matrix4 to_renderer_rotation(const rotation &r)
-{
-    std::array<float, 16> rendered{0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 1.f};
-    for(Eigen::Index column = 0; column < 3; ++column)
-        for(Eigen::Index row = 0; row < 3; ++row)
-            rendered[static_cast<std::size_t>(4 * column + row)] = static_cast<float>(r(row, column));
-
-    return threepp::Matrix4(rendered);
-}
-
-}
 
 world_object_window::settings::settings(bool chosen_active, std::string chosen_model_path, world_view chosen_view, const Eigen::Vector3f &chosen_gfx_scale,
                                         const Eigen::Vector3f &chosen_gfx_offset, const Eigen::Vector3f &chosen_gfx_euler_zyx_degrees)
@@ -102,19 +82,11 @@ void world_object_window::render()
 // swap control below.
 void world_object_window::initialize()
 {
+    place_world_object(m_stencil, m_frame, state());
     if(m_world_object == nullptr)
-    {
         m_world_view.set(world_view::load_stl);
-        return;
-    }
-
-    if(m_active)
-    {
-        assign_gfx_transform();
+    else if(m_active)
         m_world_view.set(world_view::transform);
-    }
-    else
-        deactivate_loaded_object();
 }
 
 void world_object_window::render_activation()
@@ -165,19 +137,6 @@ void world_object_window::render_graphics_transform()
     scene::render_float3_inputs_with_reset(m_gfx_euler_zyx_degrees, orientation_labels, 1.f, 10.f, reassign);
     ImGui::NewLine();
     scene::render_float3_inputs(m_gfx_scale, scale_labels, 0.1f, 1.f, reassign);
-}
-
-void world_object_window::assign_gfx_transform()
-{
-    if(m_world_object == nullptr)
-        return;
-
-    const Eigen::Vector3d angles = m_gfx_euler_zyx_degrees.cast<double>() * radians_per_degree;
-    const rotation orientation   = m_frame.rotation_matrix_from_euler(angles, axis_order::zyx);
-
-    m_world_object->scale    = threepp::Vector3(m_gfx_scale.x(), m_gfx_scale.y(), m_gfx_scale.z());
-    m_world_object->position = threepp::Vector3(m_gfx_offset.x(), m_gfx_offset.y(), m_gfx_offset.z());
-    m_world_object->setRotationFromMatrix(to_renderer_rotation(orientation));
 }
 
 void world_object_window::activate_loaded_object()

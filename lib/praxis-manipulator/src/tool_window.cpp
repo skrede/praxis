@@ -1,6 +1,7 @@
 #include "praxis/manipulator/model_file.h"
 #include "praxis/manipulator/tool_window.h"
 #include "praxis/manipulator/option_widgets.h"
+#include "praxis/manipulator/model_placement.h"
 #include "praxis/manipulator/tool_configuration.h"
 
 #include "praxis/scene/widgets.h"
@@ -107,22 +108,9 @@ void tool_window::render()
 // so a window holding none opens at the loader whatever view it was given.
 void tool_window::initialize()
 {
-    if(m_active && m_tool != nullptr)
-    {
-        seat_attached_tool();
-
-        return;
-    }
-
-    activate_default_tool();
+    seat_tool(m_stencil, m_arm, m_frame, state());
     if(m_tool == nullptr)
         m_tool_view.set(tool_view::load_stl);
-}
-
-void tool_window::seat_attached_tool()
-{
-    assign_gfx_transform();
-    assign_kinematics_transform();
 }
 
 void tool_window::render_activation()

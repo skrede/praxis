@@ -1,3 +1,4 @@
+#include "panel_keys.h"
 #include "imgui_frame.h"
 
 #include "praxis/manipulator/arm_snapshot.h"
@@ -206,6 +207,33 @@ std::vector<extraction> driven_through_every_entry(const arm_reader &seen)
     return selected;
 }
 
+// One frame refused and the other valued at its own position, so rows read off the wrong frame are
+// told apart from rows read off the right one.
+arm_snapshot refusing_the(bool tool)
+{
+    arm_snapshot seen                                  = valued(posed());
+    seen.flange_position                               = Eigen::Vector3d::Constant(0.5);
+    (tool ? seen.tool_position : seen.flange_position) = praxis::unexpected(refusal::not_implemented);
+
+    return seen;
+}
+
+float first_position(const scene::readout &shown)
+{
+    REQUIRE(shown.message.empty());
+    REQUIRE(shown.rows.size() == 3u);
+
+    return shown.rows[0][0].value;
+}
+
+std::size_t offered_controls(const arm_reader &seen, pose_readout::offered_frames offered)
+{
+    imgui_frame frames;
+    const std::shared_ptr<scene::labeled_value_window> readout = compose_pose_readout("Pose display", seen, recording(), robot_slot_set(), offered);
+
+    return fixture::navigable_items(frames, [&readout] { readout->render(); });
+}
+
 }
 
 TEST_CASE("a readout whose arm has published nothing draws its own account of that", "[manipulator]")
@@ -294,4 +322,45 @@ TEST_CASE("the axis order a readout's selector is driven to is the one its angle
     }
 
     CHECK(std::any_of(selected.begin() + 1, selected.end(), [&selected](const extraction &e) { return differs(e.angles, selected.front().angles); }));
+}
+
+TEST_CASE("a readout offering only the flange reads it where the tool is refused", "[manipulator]")
+{
+    const std::shared_ptr<arm_publisher> published = publishing(refusing_the(true));
+    const pose_readout flange_only(published->reader(), recording(), robot_slot_set(), pose_readout::offered_frames::flange);
+    const pose_readout both(published->reader(), recording(), robot_slot_set());
+
+    CHECK(first_position(flange_only.reading()) == 0.5f);
+    CHECK(both.reading().message == "The pose was refused.");
+}
+
+TEST_CASE("a readout offering only the tool reads it where the flange is refused", "[manipulator]")
+{
+    const std::shared_ptr<arm_publisher> published = publishing(refusing_the(false));
+    const pose_readout tool_only(published->reader(), recording(), robot_slot_set(), pose_readout::offered_frames::tool);
+
+    CHECK(first_position(tool_only.reading()) == 0.25f);
+}
+
+TEST_CASE("a readout offering one frame draws no frame control", "[manipulator]")
+{
+    const std::shared_ptr<arm_publisher> published = publishing(valued(posed()));
+    const std::size_t both                         = offered_controls(published->reader(), pose_readout::offered_frames::both);
+
+    CHECK(offered_controls(published->reader(), pose_readout::offered_frames::flange) + 1u == both);
+    CHECK(offered_controls(published->reader(), pose_readout::offered_frames::tool) + 1u == both);
+}
+
+TEST_CASE("a readout offering one frame over an unbound position answers what one offering both does", "[manipulator]")
+{
+    const std::shared_ptr<arm_publisher> published = publishing(valued(posed()));
+    const robot_slot_set inert                     = left_at_defaults({robot_slot::position_from_pose});
+    const pose_readout both(published->reader(), recording(), inert);
+
+    for(const pose_readout::offered_frames offered : {pose_readout::offered_frames::flange, pose_readout::offered_frames::tool})
+    {
+        const pose_readout one(published->reader(), recording(), inert, offered);
+        CHECK(one.reading().message == both.reading().message);
+        CHECK(one.reading().message == "The position is not bound.");
+    }
 }
