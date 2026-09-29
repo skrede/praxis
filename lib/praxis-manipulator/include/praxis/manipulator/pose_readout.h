@@ -13,8 +13,12 @@
 #include <memory>
 #include <string>
 #include <cstdint>
+#include <optional>
+#include <functional>
 
 namespace praxis::manipulator {
+
+class loadable_robot_stencil;
 
 class pose_readout
 {
@@ -38,6 +42,7 @@ public:
     };
 
     pose_readout(arm_reader seen, const rigid_motion::frame_ops &injected, robot_slot_set inert);
+    pose_readout(arm_reader seen, const rigid_motion::frame_ops &injected, robot_slot_set inert, const loadable_robot_stencil &drawn);
 
     void render_controls();
 
@@ -51,9 +56,17 @@ private:
     axis_order m_euler_order;
     rigid_motion::frame_ops m_frame;
     option_cycle<frame_view, 2> m_frame_view;
+    std::optional<std::reference_wrapper<const loadable_robot_stencil>> m_drawn;
+
+    scene::readout supplied_reading(const arm_snapshot &seen, frame_view frame) const;
 };
 
 std::shared_ptr<scene::labeled_value_window> compose_pose_readout(std::string name, arm_reader seen, const rigid_motion::frame_ops &injected, robot_slot_set inert);
+
+// Handed the drawing, the readout reads the chain the drawing was supplied while it holds one and the
+// published poses otherwise; a supplied chain the drawing cannot fold reads zeros and a line saying why.
+std::shared_ptr<scene::labeled_value_window> compose_pose_readout(std::string name, arm_reader seen, const rigid_motion::frame_ops &injected, robot_slot_set inert,
+                                                                  const loadable_robot_stencil &drawn);
 
 }
 

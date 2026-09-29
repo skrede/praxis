@@ -1226,6 +1226,7 @@ lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	position_unboun
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	orientation_unbound	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	both_unbound	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	pose_readout	prototype	(arm_reader seen,const rigid_motion::frame_ops & injected,robot_slot_set inert)	-
+lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	pose_readout	prototype	(arm_reader seen,const rigid_motion::frame_ops & injected,robot_slot_set inert,const loadable_robot_stencil & drawn)	-
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	render_controls	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	reading	prototype	() const	typename:scene::readout
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	reading_of	prototype	(const arm_snapshot & seen,frame_view frame) const	typename:pose_reading
@@ -1234,7 +1235,10 @@ lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	m_inert	member	
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	m_euler_order	member	-	typename:axis_order
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	m_frame	member	-	typename:rigid_motion::frame_ops
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	m_frame_view	member	-	typename:option_cycle<frame_view,2>
+lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	m_drawn	member	-	typename:std::optional<std::reference_wrapper<const loadable_robot_stencil>>
+lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	supplied_reading	prototype	(const arm_snapshot & seen,frame_view frame) const	typename:scene::readout
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	compose_pose_readout	prototype	(std::string name,arm_reader seen,const rigid_motion::frame_ops & injected,robot_slot_set inert)	typename:std::shared_ptr<scene::labeled_value_window>
+lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	compose_pose_readout	prototype	(std::string name,arm_reader seen,const rigid_motion::frame_ops & injected,robot_slot_set inert,const loadable_robot_stencil & drawn)	typename:std::shared_ptr<scene::labeled_value_window>
 lib/praxis-manipulator/include/praxis/manipulator/render_configuration.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/render_configuration.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/render_configuration.h	declare_render_controls	prototype	(config::declaration & shape,std::string_view at)	typename:void

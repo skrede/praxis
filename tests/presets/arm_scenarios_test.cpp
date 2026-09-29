@@ -10,6 +10,7 @@
 
 #include "praxis/manipulator/screw_chain.h"
 #include "praxis/manipulator/control_mode.h"
+#include "praxis/manipulator/pose_readout.h"
 #include "praxis/manipulator/joint_control_window.h"
 #include "praxis/manipulator/screw_modeling_window.h"
 #include "praxis/manipulator/loadable_robot_stencil.h"
@@ -57,7 +58,7 @@ const std::vector<std::string> &forward_windows()
 
 const std::vector<std::string> &modeling_windows()
 {
-    static const std::vector<std::string> shown{"Joint control", "Chain", "View"};
+    static const std::vector<std::string> shown{"Joint control", "Chain", "Pose", "View"};
 
     return shown;
 }
@@ -158,6 +159,36 @@ std::shared_ptr<manipulator::screw_modeling_window> chain_window_of(const std::s
 {
     const auto held = std::dynamic_pointer_cast<manipulator::screw_modeling_window>(panel_named(composed, "Chain"));
     REQUIRE(held != nullptr);
+
+    return held;
+}
+
+// A publication at no turn of any joint and no tool offset, standing the flange and the tool both at
+// the pose handed in.
+manipulator::arm_snapshot at_no_turn(const transform &pose)
+{
+    const manipulator::joint_vector joints = manipulator::joint_vector::Zero(6);
+    const transform identity               = transform::Identity();
+    const Eigen::Vector3d at               = pose.block<3, 1>(0, 3);
+    const rotation turned                  = pose.topLeftCorner<3, 3>();
+    const auto none                        = unexpected(refusal::not_implemented);
+    const manipulator::jacobian_manipulability neither{none, none};
+
+    return {joints, {}, identity, identity, identity, at, at, turned, turned, {}, 1.0, false, {}, {}, none, none, neither, neither, {}, {}, nullptr, nullptr, {}, {}, true};
+}
+
+// A Pose window over an arm publishing that pose. The publisher lives as long as the panel reading it.
+struct published_pose
+{
+    std::shared_ptr<manipulator::arm_publisher> published;
+    std::shared_ptr<scene::labeled_value_window> panel;
+};
+
+published_pose reading_published(const transform &pose)
+{
+    published_pose held{std::make_shared<manipulator::arm_publisher>(), nullptr};
+    held.published->publish(std::make_shared<const manipulator::arm_snapshot>(at_no_turn(pose)));
+    held.panel = manipulator::compose_pose_readout("Pose", held.published->reader(), rigid_motion::baseline().frame, manipulator::robot_slot_set());
 
     return held;
 }
@@ -491,7 +522,7 @@ TEST_CASE("both deployed machines open the forward-kinematics scenario", "[prese
     }
 }
 
-TEST_CASE("the supplied-chain scenario composes the joint control, the chain and the view", "[presets][windows]")
+TEST_CASE("the supplied-chain scenario composes joint control then chain then pose then view", "[presets][windows]")
 {
     const described_arm described(6, "six");
     const presets::arm_scenario chosen = described_by(described.where);
@@ -814,6 +845,29 @@ TEST_CASE("a home position typed into the chain window moves the flange frame ma
 
     CHECK((mark_in_world(*marker) - supplied_chain_points(*built.scene).back()).norm() < read_back);
     CHECK((mark_in_world(*marker) - before).norm() > 0.2);
+}
+
+TEST_CASE("the supplied-chain scenario composes a pose window that reads the tool where a displaced home pose puts it", "[presets][windows]")
+{
+    const described_arm described(6, "six");
+    const presets::arm_scenario chosen     = described_by(described.where);
+    const manipulator::screw_chain derived = derived_chain(described.where);
+
+    const presets::screw_table_source supplied = supplied_from(kept_chain(derived.space_screws, derived.home.block<3, 1>(0, 3) + Eigen::Vector3d(0.0, 0.0, 0.25), "pose-displaced.xml"),
+                                                               chain_binding("pose-displaced-into.xml"));
+
+    opened_arm built;
+    const std::shared_ptr<scene::preset> composed = built.open(chosen, presets::arm_windows_modeling(chosen, supplied));
+    built.draw(*composed);
+    const std::shared_ptr<scene::imgui_window> pose = panel_named(composed, "Pose");
+    REQUIRE(pose != nullptr);
+
+    const expected<manipulator::chain_end, manipulator::withheld_chain> typed = drawn_by(composed).supplied_chain_end(at_no_turn(transform::Identity()));
+    REQUIRE(typed.has_value());
+    CHECK((typed->tool.block<3, 1>(0, 3) - chain_window_of(composed)->state().home.block<3, 1>(0, 3)).norm() < read_back);
+
+    CHECK(geometry_of(*pose) == geometry_of(*reading_published(typed->tool).panel));
+    CHECK(geometry_of(*pose) != geometry_of(*reading_published(derived.home).panel));
 }
 
 // The other direction of the same rule: a composition offering the windows that hide the two models

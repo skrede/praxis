@@ -1,6 +1,8 @@
 #include "praxis/manipulator/pose_readout.h"
 
 #include "praxis/manipulator/option_widgets.h"
+#include "praxis/manipulator/supplied_chain.h"
+#include "praxis/manipulator/loadable_robot_stencil.h"
 
 #include "praxis/scene/widgets.h"
 
@@ -54,6 +56,14 @@ std::vector<std::vector<scene::labeled_value>> rows_of(const Eigen::Vector3d &po
     return rows;
 }
 
+std::vector<std::vector<scene::labeled_value>> withheld_rows(const std::string &reason)
+{
+    std::vector<std::vector<scene::labeled_value>> rows = rows_of(Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero());
+    rows.push_back({scene::labeled_value{0.f, std::string(), reason}});
+
+    return rows;
+}
+
 }
 
 pose_readout::pose_readout(arm_reader seen, const rigid_motion::frame_ops &injected, robot_slot_set inert)
@@ -62,6 +72,17 @@ pose_readout::pose_readout(arm_reader seen, const rigid_motion::frame_ops &injec
         , m_euler_order(axis_order::zyx)
         , m_frame(injected)
         , m_frame_view(frame_view::tool, {frame_view::tool, frame_view::flange}, {"Tool", "Flange"})
+        , m_drawn(std::nullopt)
+{
+}
+
+pose_readout::pose_readout(arm_reader seen, const rigid_motion::frame_ops &injected, robot_slot_set inert, const loadable_robot_stencil &drawn)
+        : m_seen(std::move(seen))
+        , m_inert(inert)
+        , m_euler_order(axis_order::zyx)
+        , m_frame(injected)
+        , m_frame_view(frame_view::tool, {frame_view::tool, frame_view::flange}, {"Tool", "Flange"})
+        , m_drawn(std::cref(drawn))
 {
 }
 
@@ -75,7 +96,12 @@ scene::readout pose_readout::reading() const
 {
     const std::shared_ptr<const arm_snapshot> published = m_seen.read();
     const frame_view frame                              = m_frame_view.value();
-    const pose_reading answer                           = published ? reading_of(*published, frame) : pose_reading::unpublished;
+    if(!published)
+        return scene::readout{words_for(pose_reading::unpublished), {}};
+    if(m_drawn && m_drawn->get().holds_supplied_chain())
+        return supplied_reading(*published, frame);
+
+    const pose_reading answer = reading_of(*published, frame);
     if(answer != pose_reading::value)
         return scene::readout{words_for(answer), {}};
 
@@ -84,6 +110,18 @@ scene::readout pose_readout::reading() const
     const rotation &orientation     = *(flange ? published->flange_orientation : published->tool_orientation);
 
     return scene::readout{std::string(), rows_of(position, m_frame.euler_from_rotation_matrix(orientation, m_euler_order))};
+}
+
+scene::readout pose_readout::supplied_reading(const arm_snapshot &seen, frame_view frame) const
+{
+    const expected<chain_end, withheld_chain> end = m_drawn->get().supplied_chain_end(seen);
+    if(!end)
+        return scene::readout{std::string(), withheld_rows(end.error().reason)};
+
+    const transform &pose = frame == frame_view::flange ? end->flange : end->tool;
+    const rotation turned = pose.topLeftCorner<3, 3>();
+
+    return scene::readout{std::string(), rows_of(pose.block<3, 1>(0, 3), m_frame.euler_from_rotation_matrix(turned, m_euler_order))};
 }
 
 // The unbound answer is decided before the refusal one: an accessor the composition never bound is
@@ -109,6 +147,14 @@ pose_readout::pose_reading pose_readout::reading_of(const arm_snapshot &seen, fr
 std::shared_ptr<scene::labeled_value_window> compose_pose_readout(std::string name, arm_reader seen, const rigid_motion::frame_ops &injected, robot_slot_set inert)
 {
     const auto held = std::make_shared<pose_readout>(std::move(seen), injected, inert);
+
+    return std::make_shared<scene::labeled_value_window>(std::move(name), [held] { held->render_controls(); }, [held] { return held->reading(); });
+}
+
+std::shared_ptr<scene::labeled_value_window> compose_pose_readout(std::string name, arm_reader seen, const rigid_motion::frame_ops &injected, robot_slot_set inert,
+                                                                  const loadable_robot_stencil &drawn)
+{
+    const auto held = std::make_shared<pose_readout>(std::move(seen), injected, inert, drawn);
 
     return std::make_shared<scene::labeled_value_window>(std::move(name), [held] { held->render_controls(); }, [held] { return held->reading(); });
 }

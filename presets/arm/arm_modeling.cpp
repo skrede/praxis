@@ -3,6 +3,7 @@
 #include "praxis/presets/arm.h"
 #include "praxis/presets/screw_table.h"
 
+#include "praxis/manipulator/pose_readout.h"
 #include "praxis/manipulator/robot_view_window.h"
 #include "praxis/manipulator/screw_modeling_window.h"
 #include "praxis/manipulator/loadable_robot_stencil.h"
@@ -69,6 +70,7 @@ manipulator::arm_composition arm_windows_modeling(arm_scenario chosen, screw_tab
                 std::make_shared<manipulator::screw_modeling_window>("Chain", built.stencil, built.seen, built.screw, built.frames, built.fk, built.chain,
                                                                      manipulator::screw_modeling_window::controls(), opened_chain(kept, built),
                                                                      screw_table_edits(built.chain, built.frames), screw_table_route(kept.into, built.chain, built.frames), kept.at),
+                manipulator::compose_pose_readout("Pose", built.seen, built.frames, built.inert, built.stencil),
                 std::make_shared<manipulator::robot_view_window>("View", built.stencil, chain_view_controls(), chain_view(state.robot_view)),
         };
     };
