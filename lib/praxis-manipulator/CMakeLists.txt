@@ -52,6 +52,7 @@ praxis_add_module(manipulator
     include/praxis/manipulator/screw_jog_window.h
     include/praxis/manipulator/screw_modeling_window.h
     include/praxis/manipulator/slots.h
+    include/praxis/manipulator/supplied_chain.h
     include/praxis/manipulator/task_space_window.h
     include/praxis/manipulator/task_trajectory.h
     include/praxis/manipulator/tool_configuration.h
@@ -196,6 +197,7 @@ praxis_add_module(manipulator
     src/screw_modeling_table.h
     src/screw_modeling_table.cpp
     src/screw_modeling_window.cpp
+    src/supplied_chain.cpp
     src/task_space_window.cpp
     src/tool_attachment.cpp
     src/tool_configuration.cpp

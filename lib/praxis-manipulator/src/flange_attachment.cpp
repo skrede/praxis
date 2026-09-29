@@ -11,6 +11,7 @@
 #include <memory>
 #include <cstddef>
 #include <utility>
+#include <optional>
 
 namespace praxis::manipulator {
 
@@ -29,6 +30,27 @@ std::size_t slot_of(flange_attachment which)
 bool marks_a_frame(flange_attachment which)
 {
     return which == flange_attachment::frame_marker || which == flange_attachment::tool_frame_marker;
+}
+
+threepp::Matrix4 carried_by(threepp::Matrix4 base, const threepp::Matrix4 &offset)
+{
+    base.multiply(offset);
+
+    return base;
+}
+
+// The supplied chain's poses are in the model's root-link frame, which `root` carries into the scene.
+threepp::Matrix4 placed_at(flange_attachment which, const threepp::Matrix4 &offset, const threepp::Matrix4 &flange, const std::shared_ptr<const arm_snapshot> &seen,
+                           const std::optional<chain_end> &supplied, const threepp::Matrix4 &root)
+{
+    if(supplied && which == flange_attachment::frame_marker)
+        return carried_by(carried_by(root, to_renderer_transform(supplied->flange)), offset);
+    if(supplied && which == flange_attachment::tool_frame_marker)
+        return carried_by(root, to_renderer_transform(supplied->tool));
+    if(which == flange_attachment::tool_frame_marker && seen != nullptr)
+        return carried_by(flange, to_renderer_transform(seen->tool_offset));
+
+    return carried_by(flange, offset);
 }
 
 }
@@ -130,13 +152,14 @@ void loadable_robot_stencil::detach_flange_attachments()
             m_scene.remove(*held.object);
 }
 
-// The one rule every attachment is carried by: the flange's pose composed with the offset the
-// attachment was installed under. The tool frame's marker is carried at the tool offset the arm
-// published, which is written here so that the one rule places it like any other.
+// Each attachment stands at the flange composed with its offset, the tool frame's marker at the tool
+// offset the arm published. While a supplied chain is held the two frame markers stand where it ends.
 void loadable_robot_stencil::place_flange_attachments() const
 {
     const std::shared_ptr<const arm_snapshot> seen = m_seen.read();
     const threepp::Matrix4 flange                  = m_robot->getEndEffectorTransform();
+    const std::optional<chain_end> supplied        = supplied_marker_poses(seen);
+    const threepp::Matrix4 root                    = root_frame();
     for(std::size_t slot = 0; slot < flange_attachment_count; ++slot)
     {
         const carried &held           = m_attached[slot];
@@ -144,8 +167,7 @@ void loadable_robot_stencil::place_flange_attachments() const
         if(held.object == nullptr)
             continue;
 
-        threepp::Matrix4 at(flange);
-        at.multiply(which == flange_attachment::tool_frame_marker && seen != nullptr ? to_renderer_transform(seen->tool_offset) : held.offset);
+        const threepp::Matrix4 at = placed_at(which, held.offset, flange, seen, supplied, root);
         held.object->position.setFromMatrixPosition(at);
         held.object->quaternion.setFromRotationMatrix(at);
         if(marks_a_frame(which))

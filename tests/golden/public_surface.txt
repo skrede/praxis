@@ -934,6 +934,10 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_w
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	clear_world_object	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_joint_screws	prototype	(const transform & home,std::span<const screw_axis> space_screws)	typename:expected<void,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	clear_joint_screws	prototype	()	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	supply_joint_screws	prototype	(const transform & home,std::span<const screw_axis> space_screws)	typename:expected<void,refusal>
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	holds_supplied_chain	prototype	() const	typename:bool
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	supply_unbuilt_chain	prototype	(rigid_motion::screw_slot unbound)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	supplied_chain_end	prototype	(const arm_snapshot & seen) const	typename:expected<chain_end,withheld_chain>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	holds_chain	prototype	() const	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	inert_screw_slots	function	() const	typename:rigid_motion::screw_slot_set
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_decoration_reach	prototype	(double metres)	typename:void
@@ -993,7 +997,9 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_scr
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_inert	member	-	typename:rigid_motion::screw_slot_set
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_reported_unbound	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_reach	member	-	typename:double
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_supplied_count	member	-	typename:std::size_t
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_selected	member	-	typename:std::optional<std::size_t>
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_unbuilt	member	-	typename:std::optional<rigid_motion::screw_slot>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_home	member	-	typename:transform
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_screws	member	-	typename:std::vector<screw_axis>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_axis_tone	member	-	typename:std::shared_ptr<threepp::Material>
@@ -1027,6 +1033,7 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_ell
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_column_scale	member	-	typename:std::array<double,jacobian_block_count>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_force_cap_ratio	member	-	typename:double
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_marker_scale	member	-	typename:double
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_supplied	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_marker_shown	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_tool_marker_shown	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_tool_mesh_shown	member	-	typename:bool
@@ -1043,6 +1050,7 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	apply
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	detach_flange_attachments	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	place_flange_attachments	prototype	() const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	show_flange_markers	prototype	() const	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	root_frame	prototype	() const	typename:threepp::Matrix4
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	place_tool_drawing	prototype	() const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	rebuild_decoration	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	rebuild_chain	prototype	()	typename:void
@@ -1051,6 +1059,7 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	apply
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	place_joint_decoration	prototype	() const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	place_ellipsoids	prototype	() const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	place_jacobian_columns	prototype	() const	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	supplied_marker_poses	prototype	(const std::shared_ptr<const arm_snapshot> & seen) const	typename:std::optional<chain_end>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	carried_into_space	prototype	(const arm_snapshot & seen) const	typename:expected<rotation,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	wear_jacobian_columns	prototype	() const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	hide_jacobian_columns	prototype	() const	typename:void
@@ -1715,6 +1724,18 @@ lib/praxis-manipulator/include/praxis/manipulator/slots.h	capability_slots	struc
 lib/praxis-manipulator/include/praxis/manipulator/slots.h	type	typedef	-	typename:manipulator::task_trajectory_slot
 lib/praxis-manipulator/include/praxis/manipulator/slots.h	capability_slots	struct	-	-
 lib/praxis-manipulator/include/praxis/manipulator/slots.h	type	typedef	-	typename:manipulator::modeling_slot
+lib/praxis-manipulator/include/praxis/manipulator/supplied_chain.h	manipulator	namespace	-	-
+lib/praxis-manipulator/include/praxis/manipulator/supplied_chain.h	praxis	namespace	-	-
+lib/praxis-manipulator/include/praxis/manipulator/supplied_chain.h	withheld_cause	enum	-	typename:std::uint8_t
+lib/praxis-manipulator/include/praxis/manipulator/supplied_chain.h	joint_count	enumerator	-	-
+lib/praxis-manipulator/include/praxis/manipulator/supplied_chain.h	unbound_slot	enumerator	-	-
+lib/praxis-manipulator/include/praxis/manipulator/supplied_chain.h	refused	enumerator	-	-
+lib/praxis-manipulator/include/praxis/manipulator/supplied_chain.h	withheld_chain	struct	-	-
+lib/praxis-manipulator/include/praxis/manipulator/supplied_chain.h	cause	member	-	typename:withheld_cause
+lib/praxis-manipulator/include/praxis/manipulator/supplied_chain.h	reason	member	-	typename:std::string
+lib/praxis-manipulator/include/praxis/manipulator/supplied_chain.h	chain_end	struct	-	-
+lib/praxis-manipulator/include/praxis/manipulator/supplied_chain.h	flange	member	-	typename:transform
+lib/praxis-manipulator/include/praxis/manipulator/supplied_chain.h	tool	member	-	typename:transform
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	task_space_window	class	-	-

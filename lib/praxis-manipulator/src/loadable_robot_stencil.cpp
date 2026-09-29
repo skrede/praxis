@@ -78,6 +78,8 @@ loadable_robot_stencil::loadable_robot_stencil(std::shared_ptr<threepp::Robot> r
         , m_inert(inert)
         , m_reported_unbound(false)
         , m_reach(opening_axis_reach(robot_object.get()))
+        , m_supplied_count(0u)
+        , m_unbuilt(std::nullopt)
         , m_home(transform::Identity())
         , m_axis_tone(axis_material(false))
         , m_axis_told(axis_material(true))
@@ -100,6 +102,7 @@ loadable_robot_stencil::loadable_robot_stencil(std::shared_ptr<threepp::Robot> r
         , m_column_scale{opening_angular_column_scale, opening_linear_column_scale}
         , m_force_cap_ratio(opening_force_cap_ratio)
         , m_marker_scale(1.0)
+        , m_supplied(false)
         , m_marker_shown(true)
         , m_tool_marker_shown(true)
         , m_tool_mesh_shown(true)

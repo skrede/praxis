@@ -7,6 +7,7 @@
 #include <span>
 #include <vector>
 #include <cstddef>
+#include <utility>
 
 namespace praxis::manipulator {
 
@@ -30,8 +31,7 @@ Eigen::Vector3d next_origin(const Eigen::Vector3d &before, const twist &carried_
 
 }
 
-expected<std::vector<Eigen::Vector3d>, refusal> fold_joint_origins(const transform &home, std::span<const screw_axis> space_screws, const joint_vector &theta,
-                                                                   const rigid_motion::screw_ops &screw)
+expected<chain_fold, refused_joint> fold_joint_origins(const transform &home, std::span<const screw_axis> space_screws, const joint_vector &theta, const rigid_motion::screw_ops &screw)
 {
     std::vector<Eigen::Vector3d> points;
     points.reserve(space_screws.size() + 2u);
@@ -42,7 +42,7 @@ expected<std::vector<Eigen::Vector3d>, refusal> fold_joint_origins(const transfo
     {
         const expected<twist, refusal> moved = screw.adjoint_map(space_screws[joint], carried);
         if(!moved)
-            return unexpected(moved.error());
+            return unexpected(refused_joint{joint, moved.error()});
 
         points.push_back(next_origin(points.back(), *moved));
 
@@ -54,7 +54,7 @@ expected<std::vector<Eigen::Vector3d>, refusal> fold_joint_origins(const transfo
     const transform reached = carried * home;
     points.emplace_back(reached.block<3, 1>(0, 3));
 
-    return points;
+    return chain_fold{std::move(points), reached};
 }
 
 }

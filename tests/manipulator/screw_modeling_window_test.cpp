@@ -1377,6 +1377,20 @@ TEST_CASE("a window whose screw construction is unbound composes no chain and na
     CHECK_FALSE(headless.shown.holds_chain());
 }
 
+TEST_CASE("a window whose screw construction is unbound marks its chain supplied and names that slot as why it is not folded", "[manipulator][modeling]")
+{
+    stage headless(described_chain(), at_rest(), without_the_construction(), the_construction());
+
+    screw_modeling_window panel(panel_title, headless.shown, headless.published->reader(), without_the_construction(), framing(), solving(), headless.chain);
+    panel.initialize();
+
+    CHECK(headless.shown.holds_supplied_chain());
+    const expected<chain_end, withheld_chain> end = headless.shown.supplied_chain_end(*headless.published->reader().read());
+    REQUIRE_FALSE(end.has_value());
+    CHECK(end.error().cause == withheld_cause::unbound_slot);
+    CHECK_THAT(end.error().reason, Catch::Matchers::ContainsSubstring("screw.screw_axis_from_angular_linear"));
+}
+
 TEST_CASE("a window whose screw construction is bound composes its chain and says nothing", "[manipulator][modeling]")
 {
     stage headless(described_chain(), at_rest());
@@ -1390,4 +1404,15 @@ TEST_CASE("a window whose screw construction is bound composes its chain and say
 
     CHECK(reported.empty());
     CHECK(headless.shown.holds_chain());
+}
+
+TEST_CASE("a window whose screw construction is bound supplies the chain it composes to the drawing", "[manipulator][modeling]")
+{
+    stage headless(described_chain(), at_rest());
+
+    screw_modeling_window panel(panel_title, headless.shown, headless.published->reader(), turning(), framing(), solving(), headless.chain);
+    panel.initialize();
+
+    CHECK(headless.shown.holds_supplied_chain());
+    CHECK(headless.shown.supplied_chain_end(*headless.published->reader().read()).has_value());
 }

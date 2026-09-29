@@ -95,16 +95,16 @@ expected<std::vector<std::vector<Eigen::Vector3d>>, refusal> loadable_robot_sten
         if(configuration.size() != static_cast<Eigen::Index>(m_screws.size()))
             return unexpected(narrower_or_wider_than(m_screws.size(), configuration.size()));
 
-        const expected<std::vector<Eigen::Vector3d>, refusal> points = fold_joint_origins(m_home, m_screws, configuration, m_screw);
+        const expected<chain_fold, refused_joint> points = fold_joint_origins(m_home, m_screws, configuration, m_screw);
         if(!points)
         {
             spdlog::error(
                     "praxis: a configuration the drawing was told to stand at cannot be folded to joint origins, so no figure is drawn and the ones standing are left as they were");
 
-            return unexpected(points.error());
+            return unexpected(points.error().reason);
         }
 
-        folded.push_back(*points);
+        folded.push_back(points->points);
     }
 
     return folded;

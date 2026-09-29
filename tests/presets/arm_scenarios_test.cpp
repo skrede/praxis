@@ -26,11 +26,13 @@
 #include <Eigen/Core>
 
 #include <threepp/math/Box3.hpp>
+#include <threepp/math/Matrix4.hpp>
 #include <threepp/math/Vector3.hpp>
 #include <threepp/math/Quaternion.hpp>
 
 #include <array>
 #include <cmath>
+#include <format>
 #include <memory>
 #include <string>
 #include <vector>
@@ -89,6 +91,16 @@ manipulator::loadable_robot_stencil &drawn_by(const std::shared_ptr<scene::prese
 std::shared_ptr<threepp::Object3D> frame_marker_of(const std::shared_ptr<scene::preset> &composed)
 {
     return drawn_by(composed).attached_at(manipulator::flange_attachment::frame_marker);
+}
+
+// Where the rendered arm's flange stands, turned out of the renderer's world as `carried_out` turns a
+// point.
+Eigen::Vector3d rendered_flange(const std::shared_ptr<scene::preset> &composed)
+{
+    threepp::Vector3 at;
+    at.setFromMatrixPosition(drawn_by(composed).robot().getEndEffectorTransform());
+
+    return {at.x, -at.z, at.y};
 }
 
 // How far the marker reaches, which is the proportion the one builder took of the arm it was built
@@ -754,9 +766,9 @@ TEST_CASE("a supplied chain that is the derived one ends where the frame marker 
     CHECK((mark_in_world(*put) - points.back()).norm() < read_back);
 }
 
-// The marker is where the arm is and the chain's end is where the model says it is, so a home pose
-// typed somewhere the flange is not separates the two by exactly what was typed wrong.
-TEST_CASE("a supplied chain whose home pose is displaced ends that far from the frame marker", "[presets][windows]")
+// The frame marker stands where the supplied chain ends and the rendered flange where the description
+// puts it, so a home pose typed somewhere the flange is not carries the marker exactly that far.
+TEST_CASE("a supplied chain whose home pose is displaced carries the frame marker that far from the rendered flange", "[presets][windows]")
 {
     const Eigen::Vector3d displaced(0.0, 0.0, 0.25);
 
@@ -776,7 +788,32 @@ TEST_CASE("a supplied chain whose home pose is displaced ends that far from the 
 
     const std::vector<Eigen::Vector3d> points = supplied_chain_points(*built.scene);
     REQUIRE(points.size() == 8u);
-    CHECK(((points.back() - mark_in_world(*put)) - displaced).norm() < read_back);
+    CHECK((mark_in_world(*put) - points.back()).norm() < read_back);
+    CHECK(((mark_in_world(*put) - rendered_flange(composed)) - displaced).norm() < read_back);
+}
+
+TEST_CASE("a home position typed into the chain window moves the flange frame marker to where the typed chain ends", "[presets][windows]")
+{
+    const described_arm described(6, "six");
+    const presets::arm_scenario chosen     = described_by(described.where);
+    const manipulator::screw_chain derived = derived_chain(described.where);
+
+    const presets::screw_table_source supplied =
+            supplied_from(kept_chain(derived.space_screws, derived.home.block<3, 1>(0, 3), "marker-typed.xml"), chain_binding("marker-typed-into.xml"));
+
+    opened_arm built;
+    const std::shared_ptr<scene::preset> composed = built.open(chosen, presets::arm_windows_modeling(chosen, supplied));
+    built.draw(*composed);
+    const std::shared_ptr<threepp::Object3D> marker = frame_marker_of(composed);
+    REQUIRE(marker != nullptr);
+    const Eigen::Vector3d before = mark_in_world(*marker);
+
+    type_at(*chain_window_of(composed), 0u, std::format("{:.4f}", derived.home(0, 3) + 0.25).c_str());
+    REQUIRE(built.loop.drain().has_value());
+    built.draw(*composed);
+
+    CHECK((mark_in_world(*marker) - supplied_chain_points(*built.scene).back()).norm() < read_back);
+    CHECK((mark_in_world(*marker) - before).norm() > 0.2);
 }
 
 // The other direction of the same rule: a composition offering the windows that hide the two models

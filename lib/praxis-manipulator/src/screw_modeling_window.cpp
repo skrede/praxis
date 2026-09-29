@@ -138,10 +138,13 @@ void screw_modeling_window::push()
 {
     if(inert_and_reported(m_screw, m_stencil.inert_screw_slots(), rigid_motion::screw_slot::screw_axis_from_angular_linear,
                           "'" + display_name() + "' composes no chain from the rows it holds", m_unbound))
+    {
+        m_stencil.supply_unbuilt_chain(rigid_motion::screw_slot::screw_axis_from_angular_linear);
         return;
+    }
 
     const std::vector<screw_axis> drawn = as_drawn(m_derived, m_screw, m_supplied);
-    if(!m_stencil.set_joint_screws(m_home, drawn))
+    if(!m_stencil.supply_joint_screws(m_home, drawn))
         spdlog::error("praxis: '{}' holds {} screws and the arm they are drawn against does not take that many", display_name(), drawn.size());
 }
 

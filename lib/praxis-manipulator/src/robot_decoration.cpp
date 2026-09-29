@@ -37,29 +37,6 @@ std::string loadable_robot_stencil::joint_mark_name(std::size_t joint)
     return "Joint origin mark " + std::to_string(joint + 1);
 }
 
-expected<void, refusal> loadable_robot_stencil::set_joint_screws(const transform &home, std::span<const screw_axis> space_screws)
-{
-    const std::size_t rendered = m_robot->numDOF();
-    if(space_screws.size() != rendered)
-    {
-        spdlog::error("praxis: the rendered arm has {} joints and the screws it was told name {}, so the axes cannot be drawn against it", rendered, space_screws.size());
-
-        return unexpected(refusal::unsupported_input);
-    }
-
-    m_home = home;
-    m_screws.assign(space_screws.begin(), space_screws.end());
-    rebuild_decoration();
-
-    return {};
-}
-
-void loadable_robot_stencil::clear_joint_screws()
-{
-    m_screws.clear();
-    rebuild_decoration();
-}
-
 bool loadable_robot_stencil::holds_chain() const
 {
     return m_chain != nullptr;
@@ -191,10 +168,10 @@ void loadable_robot_stencil::place_joint_decoration() const
     if(m_chain == nullptr)
         return;
 
-    const expected<std::vector<Eigen::Vector3d>, refusal> folded = fold_joint_origins(m_home, m_screws, seen->joints, m_screw);
-    m_chain->visible                                             = folded.has_value();
+    const expected<chain_fold, refused_joint> folded = fold_joint_origins(m_home, m_screws, seen->joints, m_screw);
+    m_chain->visible                                 = folded.has_value();
     if(folded)
-        place_chain_figure(m_segments, m_marks, *folded);
+        place_chain_figure(m_segments, m_marks, folded->points);
 }
 
 }

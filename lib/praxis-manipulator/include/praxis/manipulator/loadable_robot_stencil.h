@@ -2,6 +2,7 @@
 #define HPP_GUARD_PRAXIS_MANIPULATOR_LOADABLE_ROBOT_STENCIL_H
 
 #include "praxis/manipulator/arm_snapshot.h"
+#include "praxis/manipulator/supplied_chain.h"
 
 #include "praxis/scene/stencil.h"
 
@@ -33,11 +34,11 @@
 namespace praxis::manipulator {
 
 // What the flange can carry. An attachment is an object drawn at the flange, placed by the flange's
-// own pose composed with the offset it was installed under; that one rule carries every member of
-// this set. The set is closed at what the flange holds, so an object standing at another link or at
-// a pose in the world is not one of these. The tool frame's marker stands at the frame the arm's own
-// tool offset defines, so that key is carried at the offset the arm publishes rather than at one
-// whoever installed the marker has to keep in step with it.
+// own pose composed with the offset it was installed under. The set is closed at what the flange
+// holds, so an object standing at another link or at a pose in the world is not one of these. The
+// tool frame's marker is carried at the tool offset the arm publishes. While a supplied chain is
+// held, the two frame markers stand where that chain ends rather than at the flange; the tool key
+// always stands at the flange.
 enum class flange_attachment : std::uint8_t
 {
     tool,
@@ -206,6 +207,19 @@ public:
     expected<void, refusal> set_joint_screws(const transform &home, std::span<const screw_axis> space_screws);
     void clear_joint_screws();
 
+    // A chain supplied rather than told is also where the two frame markers stand, at the joints the
+    // arm publishes; telling or clearing a chain after it ends that.
+    expected<void, refusal> supply_joint_screws(const transform &home, std::span<const screw_axis> space_screws);
+    bool holds_supplied_chain() const;
+
+    // A chain that could not be built because the named slot holds its default is still supplied,
+    // and is withheld naming that slot. The chain the stencil was told before is left as it stands.
+    void supply_unbuilt_chain(rigid_motion::screw_slot unbound);
+
+    // The chain last supplied, folded at the joints of the snapshot handed in. It is read while
+    // holds_supplied_chain() holds.
+    expected<chain_end, withheld_chain> supplied_chain_end(const arm_snapshot &seen) const;
+
     // Whether a chain through the joint origins stands to be shown at all. It is folded from the
     // screws the stencil was told, so an arm told none carries no chain and nothing a switch over
     // one says reaches anything.
@@ -359,7 +373,9 @@ private:
     // placement running every frame says it once rather than once a frame.
     mutable bool m_reported_unbound;
     double m_reach;
+    std::size_t m_supplied_count;
     std::optional<std::size_t> m_selected;
+    std::optional<rigid_motion::screw_slot> m_unbuilt;
     transform m_home;
     std::vector<screw_axis> m_screws;
     std::shared_ptr<threepp::Material> m_axis_tone;
@@ -403,6 +419,7 @@ private:
     double m_force_cap_ratio;
     // A multiple of the size a marker was built at.
     double m_marker_scale;
+    bool m_supplied;
     bool m_marker_shown;
     bool m_tool_marker_shown;
     bool m_tool_mesh_shown;
@@ -424,6 +441,7 @@ private:
     void detach_flange_attachments();
     void place_flange_attachments() const;
     void show_flange_markers() const;
+    threepp::Matrix4 root_frame() const;
     void place_tool_drawing() const;
     void rebuild_decoration();
     void rebuild_chain();
@@ -432,6 +450,10 @@ private:
     void place_joint_decoration() const;
     void place_ellipsoids() const;
     void place_jacobian_columns() const;
+
+    // Where the two frame markers stand while a supplied chain is held, in the model's root-link
+    // frame: its end where it folds and the identity where it is withheld.
+    std::optional<chain_end> supplied_marker_poses(const std::shared_ptr<const arm_snapshot> &seen) const;
 
     // The rotation carrying a quantity taken from the shown Jacobian into the space frame: the
     // identity where the space Jacobian is shown, whose quantities are expressed there already, and
