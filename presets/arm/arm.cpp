@@ -106,7 +106,7 @@ manipulator::arm_composition arm_windows(arm_scenario chosen)
                 std::make_shared<manipulator::task_space_window>("Task space", built.seen, built.arm, built.frames, edited, state.task_space, window_paths::task_space, tool_pose_path),
                 std::make_shared<manipulator::tool_jog_window>("Tool frame jog", built.seen, built.arm, built.frames, edited, state.tool_jog, window_paths::tool_jog, tool_pose_path),
                 std::make_shared<manipulator::screw_jog_window>("Screw jog", built.seen, built.arm, built.frames, edited, state.screw_jog, window_paths::screw_jog, tool_pose_path,
-                                                                window_paths::screw_jog),
+                                                                manipulator::screw_jog_window::screw_keeping::with_document),
                 std::make_shared<manipulator::control_parameters_window>("Control parameters", built.seen, built.arm, state.parameters, window_paths::parameters),
                 manipulator::compose_pose_readout("Pose##1", built.seen, built.frames, built.inert),
                 manipulator::compose_pose_readout("Pose##2", built.seen, built.frames, built.inert),

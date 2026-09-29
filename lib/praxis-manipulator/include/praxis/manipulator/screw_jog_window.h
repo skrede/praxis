@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <cstdint>
 #include <string_view>
 
 namespace praxis::manipulator {
@@ -30,6 +31,12 @@ namespace praxis::manipulator {
 class screw_jog_window : public scene::imgui_window, public config::configurable
 {
 public:
+    enum class screw_keeping : std::uint8_t
+    {
+        for_the_run,
+        with_document
+    };
+
     struct settings
     {
         float pitch;
@@ -43,10 +50,10 @@ public:
     };
 
     screw_jog_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, const rigid_motion::frame_ops &injected, std::shared_ptr<edited_pose> edited);
-    // The pose is written under `pose_at` and the screw under `screw_at`. A window with no key path of
-    // its own offers nothing, and one given no screw path keeps its screw for the run.
+    // The pose is written under `pose_at`, and the screw beneath `at` where `keeping` keeps it with the
+    // document. A window with no key path of its own offers nothing.
     screw_jog_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, const rigid_motion::frame_ops &injected, std::shared_ptr<edited_pose> edited,
-                     const settings &state, std::string at = std::string(), std::string pose_at = std::string(), std::string screw_at = std::string());
+                     const settings &state, std::string at = std::string(), std::string pose_at = std::string(), screw_keeping keeping = screw_keeping::for_the_run);
 
     settings state() const;
 
@@ -72,7 +79,7 @@ private:
     Eigen::Vector3f m_w;
     float m_theta_degrees;
     std::string m_pose_at;
-    std::string m_screw_at;
+    screw_keeping m_keeping;
     std::string m_settings_at;
     std::weak_ptr<owned_arm> m_arm;
     rigid_motion::frame_ops m_frame;

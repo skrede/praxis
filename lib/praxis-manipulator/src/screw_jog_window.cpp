@@ -61,7 +61,7 @@ screw_jog_window::screw_jog_window(std::string name, arm_reader seen, std::weak_
 }
 
 screw_jog_window::screw_jog_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, const rigid_motion::frame_ops &injected, std::shared_ptr<edited_pose> edited,
-                                   const settings &state, std::string at, std::string pose_at, std::string screw_at)
+                                   const settings &state, std::string at, std::string pose_at, screw_keeping keeping)
         : imgui_window(std::move(name))
         , m_pitch(state.pitch)
         , m_seen(seen)
@@ -69,7 +69,7 @@ screw_jog_window::screw_jog_window(std::string name, arm_reader seen, std::weak_
         , m_w(state.w)
         , m_theta_degrees(state.theta_degrees)
         , m_pose_at(std::move(pose_at))
-        , m_screw_at(std::move(screw_at))
+        , m_keeping(keeping)
         , m_settings_at(std::move(at))
         , m_arm(std::move(arm))
         , m_frame(injected)
@@ -87,7 +87,7 @@ screw_jog_window::settings screw_jog_window::state() const
 
 std::vector<config::edit> screw_jog_window::settings_edits(const config::document &carried) const
 {
-    std::vector<config::edit> changes = config::unsaved_edits(carried, write_screw_jog(state(), m_settings_at, m_screw_at));
+    std::vector<config::edit> changes = config::unsaved_edits(carried, write_screw_jog(state(), m_settings_at, m_keeping));
     std::ranges::copy(unsaved_shared_pose(carried, *m_edited, m_pose_at), std::back_inserter(changes));
 
     return changes;

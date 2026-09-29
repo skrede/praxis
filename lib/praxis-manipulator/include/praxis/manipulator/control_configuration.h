@@ -36,8 +36,8 @@ std::vector<config::edit> write_tool_jog(const tool_jog_window::settings &state,
 void declare_screw_jog(config::declaration &shape, std::string_view at);
 screw_jog_window::settings read_screw_jog(const config::document &values, std::string_view at);
 std::vector<config::edit> write_screw_jog(const screw_jog_window::settings &state, std::string_view at);
-// The mode under `at` and the screw beneath `screw_at`, or the mode alone where `screw_at` is empty.
-std::vector<config::edit> write_screw_jog(const screw_jog_window::settings &state, std::string_view at, std::string_view screw_at);
+// The mode under `at`, and beneath it the screw where `keeping` keeps it with the document.
+std::vector<config::edit> write_screw_jog(const screw_jog_window::settings &state, std::string_view at, screw_jog_window::screw_keeping keeping);
 
 void declare_control_parameters(config::declaration &shape, std::string_view at);
 control_parameters_window::settings read_control_parameters(const config::document &values, std::string_view at);

@@ -28,6 +28,7 @@
 #include <iterator>
 #include <filesystem>
 #include <string_view>
+#include <type_traits>
 
 using namespace praxis;
 using namespace praxis::tests;
@@ -106,13 +107,20 @@ arm_reader published_arm()
 std::unique_ptr<screw_jog_window> window_over(const screw_jog_window::settings &state)
 {
     return std::make_unique<screw_jog_window>("Screw jog", published_arm(), std::weak_ptr<owned_arm>(), reference, std::make_shared<edited_pose>(), state, std::string(screw_jog_at),
-                                              std::string(), std::string(screw_jog_at));
+                                              std::string(), screw_jog_window::screw_keeping::with_document);
 }
 
 std::unique_ptr<screw_jog_window> window_at_its_path_alone(const screw_jog_window::settings &state)
 {
     return std::make_unique<screw_jog_window>("Screw jog", published_arm(), std::weak_ptr<owned_arm>(), reference, std::make_shared<edited_pose>(), state, std::string(screw_jog_at));
 }
+
+template<typename... Trailing>
+constexpr bool constructible_with = std::is_constructible_v<screw_jog_window, std::string, arm_reader, std::weak_ptr<owned_arm>, const rigid_motion::frame_ops &,
+                                                            std::shared_ptr<edited_pose>, const screw_jog_window::settings &, Trailing...>;
+
+template<typename Keeping>
+concept keeps_the_screw_by = requires(const screw_jog_window::settings &state, std::string_view at, Keeping keeping) { write_screw_jog(state, at, keeping); };
 
 // The pane's last row carries the reset control; the pitch stands two rows above it.
 void type_rows_above(imgui_frame &frames, const drawing &draw, int rows, const char *text)
@@ -238,7 +246,7 @@ TEST_CASE("a zero direction saved reads back zero", "[manipulator][configuration
     CHECK(window_over(reread)->state().w.isZero());
 }
 
-TEST_CASE("a screw jog window given no screw path offers its mode alone and keeps its screw for the run", "[manipulator][configuration]")
+TEST_CASE("a screw jog window keeping its screw for the run offers its mode alone", "[manipulator][configuration]")
 {
     const config::location at                     = starter_at("mode-alone.xml");
     const std::unique_ptr<screw_jog_window> panel = window_at_its_path_alone(moved_screw());
@@ -257,13 +265,13 @@ TEST_CASE("a screw jog window given no key path offers nothing", "[manipulator][
 {
     const screw_jog_window unnamed("Screw jog", published_arm(), std::weak_ptr<owned_arm>(), reference, std::make_shared<edited_pose>(), moved_screw());
     const screw_jog_window screw_alone("Screw jog", published_arm(), std::weak_ptr<owned_arm>(), reference, std::make_shared<edited_pose>(), moved_screw(), std::string(),
-                                       std::string("tool_pose"), std::string(screw_jog_at));
+                                       std::string("tool_pose"), screw_jog_window::screw_keeping::with_document);
 
     CHECK(unnamed.as_configurable() == nullptr);
     CHECK(screw_alone.as_configurable() == nullptr);
 }
 
-TEST_CASE("a screw jog window given no screw path leaves the screw its document carries", "[manipulator][configuration]")
+TEST_CASE("a screw jog window keeping its screw for the run leaves the screw its document carries", "[manipulator][configuration]")
 {
     const config::document carried                = read(authored("carried-pitch.xml", "<screw_jog mode=\"preview\" pitch=\"0.5\"/>"));
     const std::unique_ptr<screw_jog_window> panel = window_at_its_path_alone(read_screw_jog(carried, screw_jog_at));
@@ -279,19 +287,27 @@ TEST_CASE("a screw jog window given no screw path leaves the screw its document 
     CHECK(panel->settings_edits(carried).empty());
 }
 
-TEST_CASE("the screw jog's mapping writes the mode alone where no screw path is named and the whole element where both paths are alike", "[manipulator][configuration]")
+TEST_CASE("the screw jog's mapping writes the mode alone for the run and the whole element with the document", "[manipulator][configuration]")
 {
-    const std::vector<config::edit> mode_alone = write_screw_jog(moved_screw(), screw_jog_at, "");
-    REQUIRE(mode_alone.size() == 1u);
-    CHECK(mode_alone.front().key == "machine/screw_jog/mode");
-    CHECK(mode_alone.front().value == "preview");
+    const std::vector<config::edit> for_the_run = write_screw_jog(moved_screw(), screw_jog_at, screw_jog_window::screw_keeping::for_the_run);
+    REQUIRE(for_the_run.size() == 1u);
+    CHECK(for_the_run.front().key == "machine/screw_jog/mode");
+    CHECK(for_the_run.front().value == "preview");
 
-    const std::vector<config::edit> both_alike = write_screw_jog(moved_screw(), screw_jog_at, screw_jog_at);
-    const std::vector<config::edit> whole      = write_screw_jog(moved_screw(), screw_jog_at);
-    REQUIRE(both_alike.size() == whole.size());
+    const std::vector<config::edit> with_document = write_screw_jog(moved_screw(), screw_jog_at, screw_jog_window::screw_keeping::with_document);
+    const std::vector<config::edit> whole         = write_screw_jog(moved_screw(), screw_jog_at);
+    REQUIRE(with_document.size() == whole.size());
     for(std::size_t at = 0; at < whole.size(); ++at)
     {
-        CHECK(both_alike[at].key == whole[at].key);
-        CHECK(both_alike[at].value == whole[at].value);
+        CHECK(with_document[at].key == whole[at].key);
+        CHECK(with_document[at].value == whole[at].value);
     }
+}
+
+TEST_CASE("the screw jog's screw is kept by a choice and never by a key path", "[manipulator][configuration]")
+{
+    STATIC_REQUIRE(!constructible_with<std::string, std::string, std::string>);
+    STATIC_REQUIRE(!keeps_the_screw_by<std::string_view>);
+    STATIC_REQUIRE(constructible_with<std::string, std::string, screw_jog_window::screw_keeping>);
+    STATIC_REQUIRE(keeps_the_screw_by<screw_jog_window::screw_keeping>);
 }

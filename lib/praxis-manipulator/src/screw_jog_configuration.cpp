@@ -51,14 +51,14 @@ screw_jog_window::settings read_screw_jog(const config::document &values, std::s
 
 std::vector<config::edit> write_screw_jog(const screw_jog_window::settings &state, std::string_view at)
 {
-    return write_screw_jog(state, at, at);
+    return write_screw_jog(state, at, screw_jog_window::screw_keeping::with_document);
 }
 
-std::vector<config::edit> write_screw_jog(const screw_jog_window::settings &state, std::string_view at, std::string_view screw_at)
+std::vector<config::edit> write_screw_jog(const screw_jog_window::settings &state, std::string_view at, screw_jog_window::screw_keeping keeping)
 {
     std::vector<config::edit> changes{keys::written_mode(state.mode, at)};
-    if(!screw_at.empty())
-        write_screw(changes, state, screw_at);
+    if(keeping == screw_jog_window::screw_keeping::with_document)
+        write_screw(changes, state, at);
 
     return changes;
 }
