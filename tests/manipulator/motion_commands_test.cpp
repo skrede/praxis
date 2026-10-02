@@ -216,8 +216,8 @@ TEST_CASE("the_quintic_choice_answers_the_duration_and_the_samples_the_compositi
     }
 }
 
-// The bound profile is rescaled to whatever duration it is handed and rescaling only stretches, so a
-// duration below the profile's own is refused rather than slowed down.
+// The reference refuses a trapezoid any duration below its natural one, so a motion answering at
+// every sample was handed a duration the reference accepts.
 TEST_CASE("the_trapezoidal_choice_hands_the_profile_a_duration_it_accepts_over_both_branches")
 {
     const prepared_time_scaling scaled(trajectory::baseline().time_scaling, time_scaling_choice::trapezoidal);
@@ -235,9 +235,9 @@ TEST_CASE("the_trapezoidal_choice_hands_the_profile_a_duration_it_accepts_over_b
     }
 }
 
-// A duration merely long enough would pass the case above, so each branch is also asked for the
-// largest duration the profile refuses.
-TEST_CASE("the_trapezoidal_duration_is_the_profiles_own_and_not_merely_long_enough")
+// A duration merely long enough would pass the case above, so on each branch the reference accepts
+// the handed duration and refuses 0.999 of it.
+TEST_CASE("the_trapezoidal_duration_stands_within_a_small_fraction_of_the_shortest_the_reference_accepts")
 {
     const trajectory::time_scaling_ops reference = trajectory::baseline().time_scaling;
     const prepared_time_scaling scaled(reference, time_scaling_choice::trapezoidal);
@@ -254,8 +254,8 @@ TEST_CASE("the_trapezoidal_duration_is_the_profiles_own_and_not_merely_long_enou
 }
 
 // Where the rate is exactly the peak the rate of change reaches, the coast has collapsed and the
-// residual displacement it would be taken from rounds below zero, which is the one place a duration
-// written in any other arrangement of the same algebra lands short of the profile's own.
+// displacement left for it rounds below zero, where another arrangement of the same algebra lands
+// below the reference's natural duration.
 TEST_CASE("a_trapezoid_whose_coast_has_exactly_collapsed_is_still_a_duration_the_profile_accepts")
 {
     const trajectory::time_scaling_ops reference = trajectory::baseline().time_scaling;

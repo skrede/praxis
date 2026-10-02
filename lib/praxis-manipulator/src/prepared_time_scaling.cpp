@@ -9,18 +9,21 @@ namespace praxis::manipulator {
 namespace {
 
 // A quintic time scaling peaks at 15/(8T) in the path parameter's first derivative and at
-// 10/(sqrt(3) T^2) in its second: Lynch & Park, Modern Robotics, eq. (9.6) differentiated twice.
+// 10/(sqrt(3) T^2) in its second: Lynch & Park, Modern Robotics, sec. 9.2.2.1, Fig. 9.4.
 constexpr double velocity_peak     = 15.0 / 8.0;
 constexpr double acceleration_peak = 10.0 / 1.7320508075688772;
 
 // A cubic time scaling peaks at 3/(2T) and at 6/T^2 in the same two derivatives: Lynch & Park,
-// Modern Robotics, eq. (9.5) differentiated twice.
+// Modern Robotics, sec. 9.2.2.1, beside eq. (9.12) and (9.13).
 constexpr double cubic_velocity_peak     = 3.0 / 2.0;
 constexpr double cubic_acceleration_peak = 6.0;
 
 // A motion whose bounds say nothing still has to take time; without a floor a trajectory would
 // report a zero duration and end before its first sample.
 constexpr double shortest_motion = 0.25;
+
+// The trapezoid is handed its natural duration lengthened by this fraction.
+constexpr double trapezoid_margin = 1.0e-5;
 
 // A motion of no extent leaves both derivatives of the path parameter unbounded; these stand in for
 // the infinities the closed forms cannot divide by.
@@ -52,28 +55,30 @@ double peak_bounded_duration(const joint_limits &bounds, const joint_vector &sta
     return span;
 }
 
-// Lynch & Park, Modern Robotics, sec. 9.2.2: over a unit path a trapezoid coasts at its rate where
-// the peak sqrt(a) reaches it and spans 1/v + v/a, and degenerates to the triangle spanning
-// 2 sqrt(a)/a where it does not. Both branches are written in the ramp-and-coast form the bound
-// profile computes its own duration in, down to the negative-coast guard and the order the three
-// phases are added in: the profile is rescaled to what it is handed, rescaling only stretches, and a
-// value one bit short of its own is refused.
-double trapezoid_duration(const path_parameter_bounds &held_to)
+// Lynch & Park, Modern Robotics, sec. 9.2.2.2: over a unit path a trapezoid that coasts spans
+// 1/v + v/a, and one whose peak sqrt(a) stays below v is the triangle spanning 2 sqrt(a)/a.
+double natural_trapezoid_duration(const path_parameter_bounds &held_to)
 {
     const double rate        = held_to.max_rate;
     const double rate_change = held_to.max_rate_change;
-    if(!(rate > 0.0) || !(rate_change > 0.0))
-        return shortest_motion;
 
     const double peak = std::sqrt(rate_change);
     if(peak < rate)
-        return std::max(shortest_motion, peak / rate_change + peak / rate_change);
+        return peak / rate_change + peak / rate_change;
 
     const double ramp    = rate / rate_change;
     const double covered = 0.5 * rate_change * ramp * ramp;
     const double coast   = ((1.0 - covered) - covered) / rate;
 
-    return std::max(shortest_motion, ramp + (coast < 0.0 ? 0.0 : coast) + ramp);
+    return ramp + (coast < 0.0 ? 0.0 : coast) + ramp;
+}
+
+double trapezoid_duration(const path_parameter_bounds &held_to)
+{
+    if(!(held_to.max_rate > 0.0) || !(held_to.max_rate_change > 0.0))
+        return shortest_motion;
+
+    return std::max(shortest_motion, natural_trapezoid_duration(held_to) * (1.0 + trapezoid_margin));
 }
 
 }
@@ -118,14 +123,15 @@ prepared_time_scaling::prepared_time_scaling(const prepared_time_scaling &scaled
 
 expected<trajectory::scaling_sample, refusal> prepared_time_scaling::sample(double t, double duration) const
 {
+    const double at = std::max(0.0, std::min(t, duration));
     if(m_chosen == time_scaling_choice::cubic)
-        return m_scaling.cubic(t, duration);
+        return m_scaling.cubic(at, duration);
     if(m_chosen == time_scaling_choice::quintic)
-        return m_scaling.quintic(t, duration);
+        return m_scaling.quintic(at, duration);
     if(!m_bounds)
         return unexpected(refusal::unsupported_input);
 
-    return m_scaling.trapezoidal(t, duration, m_bounds->max_rate, m_bounds->max_rate_change);
+    return m_scaling.trapezoidal(at, duration, m_bounds->max_rate, m_bounds->max_rate_change);
 }
 
 double prepared_time_scaling::duration(const joint_limits &bounds, const joint_vector &start, const joint_vector &target) const

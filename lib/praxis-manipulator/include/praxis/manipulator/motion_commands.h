@@ -54,12 +54,13 @@ public:
     // The same scaling and choice, holding bounds resolved once the motion's extent was known.
     prepared_time_scaling(const prepared_time_scaling &scaled, path_parameter_bounds held_to);
 
-    // A trapezoidal profile is the bounds it was built from, so a value holding none has nothing to
-    // sample against and refuses rather than inventing a pair.
+    // The time is held to [0, duration] before a scaling is asked. A trapezoid is the bounds it was
+    // built from, so a value holding none has nothing to sample against and refuses rather than
+    // inventing a pair.
     expected<trajectory::scaling_sample, refusal> sample(double t, double duration) const;
 
-    // Never below the duration the trapezoidal profile reports for the same bounds, because the
-    // bound baseline rescales that profile to what it is handed and rescaling only stretches.
+    // A trapezoidal duration is never less than the trapezoid's natural duration for the same bounds
+    // lengthened by a fixed fraction.
     double duration(const joint_limits &bounds, const joint_vector &start, const joint_vector &target) const;
 
     time_scaling_choice chosen() const;
