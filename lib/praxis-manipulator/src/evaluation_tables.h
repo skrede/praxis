@@ -40,7 +40,7 @@ inline constexpr double prepared_motion_element_wise_tolerance = 1.0e-7;
 
 // The run the bound above was measured over. It is not known to hold over a longer one: the shortest
 // segment a run draws has no floor.
-inline constexpr std::size_t prepared_motion_measured_to_cases = 1000;
+inline constexpr std::size_t prepared_motion_measured_to_cases = 2000;
 
 const evaluation::capability_evaluations<robot_ops> &robot_evaluations();
 const evaluation::capability_evaluations<motion_ops> &motion_evaluations();

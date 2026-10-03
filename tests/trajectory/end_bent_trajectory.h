@@ -25,7 +25,7 @@ enum class displaced_end : std::uint8_t
     finish,
 };
 
-// Radians, a decade above the bound the row is judged at.
+// Radians, above the bound the row is judged at.
 inline constexpr double bent_at_one_end = 1.0e-3;
 
 // The fraction of the span each end reaches over. Two evenly spaced times fall in the two bands only

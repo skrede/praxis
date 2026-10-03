@@ -44,7 +44,7 @@ constexpr std::array<judged_at, 13> every_bound{
         judged_at{3u, {1.0e-13, 0.0, 0.0, 0.0, 0.0}},   judged_at{4u, {0.0, 1.0e-13, 0.0, 0.0, 0.0}},   judged_at{4u, {0.0, 0.0, 1.0e-12, 0.0, 0.0}},
         judged_at{5u, {0.0, 1.0e-13, 0.0, 0.0, 0.0}},   judged_at{5u, {0.0, 0.0, 1.0e-12, 0.0, 0.0}},   judged_at{6u, {0.0, 1.0e-3, 0.0, 1.0e-3, 0.0}},
         judged_at{6u, {0.0, 0.0, 1.0e-2, 0.0, 1.0e-2}}, judged_at{7u, {0.0, 1.0e-3, 0.0, 1.0e-3, 0.0}}, judged_at{7u, {0.0, 0.0, 1.0e-2, 0.0, 1.0e-2}},
-        judged_at{8u, {1.0e-4, 0.0, 0.0, 0.0, 0.0}},
+        judged_at{8u, {1.0e-8, 0.0, 0.0, 0.0, 0.0}},
 };
 
 // The same displacements a decade beneath, which the row must fail to report.

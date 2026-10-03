@@ -103,7 +103,7 @@ slot_report judged_displaced_by(double fraction)
 
 TEST_CASE("an_acceleration_moved_by_a_fraction_of_its_own_size_a_decade_above_the_joint_space_waypoint_bound_is_judged_differing_on_every_case")
 {
-    const slot_report row = judged_displaced_by(1.0e-3);
+    const slot_report row = judged_displaced_by(1.0e-7);
 
     REQUIRE(row.slot == "trajectory.joint_space_waypoints");
     REQUIRE(row.outcomes.differed == default_cases_per_slot);
@@ -111,7 +111,7 @@ TEST_CASE("an_acceleration_moved_by_a_fraction_of_its_own_size_a_decade_above_th
 
 TEST_CASE("an_acceleration_moved_by_a_fraction_of_its_own_size_a_decade_beneath_the_joint_space_waypoint_bound_is_judged_agreeing_on_every_case")
 {
-    const slot_report row = judged_displaced_by(1.0e-5);
+    const slot_report row = judged_displaced_by(1.0e-9);
 
     REQUIRE(row.slot == "trajectory.joint_space_waypoints");
     REQUIRE(row.verdict == agreement::agreed);
