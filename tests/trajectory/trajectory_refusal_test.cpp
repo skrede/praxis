@@ -33,8 +33,7 @@ constexpr std::size_t compared_rows   = 9u;
 // The three after them hand back an object and decline through it instead.
 constexpr std::size_t value_rows = 6u;
 
-// Wide enough that the bounded profile reaches both sides of its own feasibility at the shipped
-// draw, which is what the last case below reads.
+// Wider than the run the other cases draw, so the bounded profile is drawn over many bound pairs.
 constexpr std::size_t wider_run = 200u;
 
 expected<trajectory::scaling_sample, refusal> degenerate_scaling(double, double)
@@ -137,16 +136,15 @@ TEST_CASE("a_case_exactly_one_side_declines_is_counted_and_folds_nothing")
     }
 }
 
-TEST_CASE("the_row_over_the_bounded_profile_reaches_a_duration_its_bounds_can_stretch_to_and_one_they_cannot")
+TEST_CASE("the_row_over_the_bounded_profile_draws_only_durations_its_bounds_can_stretch_to")
 {
     const trajectory::capabilities reference = trajectory::baseline();
     const evaluation_report reported         = evaluate(trajectory::evaluation_views(reference, reference), recorded_seed, wider_run);
     const slot_report &bounded               = reported.slots.at(2);
 
     REQUIRE(bounded.slot == "time_scaling.trapezoidal");
-    REQUIRE(bounded.outcomes.agreed > 0u);
-    REQUIRE(bounded.outcomes.both_refused > 0u);
-    REQUIRE(bounded.outcomes.agreed + bounded.outcomes.both_refused == wider_run);
+    REQUIRE(bounded.outcomes.agreed == wider_run);
+    REQUIRE(bounded.outcomes.both_refused == 0u);
 }
 
 TEST_CASE("an_unbound_generator_slot_against_a_bound_one_is_a_difference_in_what_the_two_span")

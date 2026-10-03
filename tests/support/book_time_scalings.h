@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <utility>
+#include <optional>
 #include <algorithm>
 
 namespace praxis::tests {
@@ -58,7 +59,8 @@ enum class deceleration : std::uint8_t
 enum class end_handling : std::uint8_t
 {
     as_written,
-    held
+    held,
+    at_rest
 };
 
 struct trapezoid_form
@@ -72,18 +74,18 @@ struct trapezoid_form
     end_handling ends;
 };
 
-inline constexpr std::size_t trapezoid_form_count = 2u * 2u * 3u * 3u * 3u * 2u * 2u;
+inline constexpr std::size_t trapezoid_form_count = 2u * 2u * 3u * 3u * 3u * 2u * 3u;
 
 constexpr trapezoid_form trapezoid_form_at(std::size_t index)
 {
     trapezoid_form form{};
-    form.ends      = static_cast<end_handling>(index % 2u);
-    form.late      = static_cast<deceleration>(index / 2u % 2u);
-    form.check     = static_cast<duration_check>(index / 4u % 3u);
-    form.solve     = static_cast<rate_solve>(index / 12u % 3u);
-    form.apex      = static_cast<apex_duration>(index / 36u % 3u);
-    form.coast     = static_cast<coast_duration>(index / 108u % 2u);
-    form.apex_when = static_cast<apex_test>(index / 216u % 2u);
+    form.ends      = static_cast<end_handling>(index % 3u);
+    form.late      = static_cast<deceleration>(index / 3u % 2u);
+    form.check     = static_cast<duration_check>(index / 6u % 3u);
+    form.solve     = static_cast<rate_solve>(index / 18u % 3u);
+    form.apex      = static_cast<apex_duration>(index / 54u % 3u);
+    form.coast     = static_cast<coast_duration>(index / 162u % 2u);
+    form.apex_when = static_cast<apex_test>(index / 324u % 2u);
 
     return form;
 }
@@ -98,6 +100,21 @@ constexpr std::array<trapezoid_form, trapezoid_form_count> every_trapezoid_form(
 }
 
 inline constexpr std::array<trapezoid_form, trapezoid_form_count> trapezoid_forms = every_trapezoid_form();
+
+// Where a form is at rest at and beyond both ends, the sample it reports there; inside (0, T), or for
+// any other form, nothing.
+inline std::optional<trajectory::scaling_sample> resting(end_handling ends, double t, double T)
+{
+    if(ends != end_handling::at_rest || (t > 0.0 && t < T))
+        return std::nullopt;
+
+    return trajectory::scaling_sample{t <= 0.0 ? 0.0 : 1.0, 0.0, 0.0};
+}
+
+inline double ended(end_handling ends, double t, double T)
+{
+    return ends == end_handling::held ? std::clamp(t, 0.0, T) : t;
+}
 
 inline double book_natural_duration(const trapezoid_form &form, double v, double a)
 {
@@ -146,9 +163,10 @@ expected<trajectory::scaling_sample, refusal> book_trapezoid(double t, double du
     if(form.check == duration_check::solved_rate && rate > max_velocity)
         return unexpected(refusal::unsupported_input);
 
-    const double at = form.ends == end_handling::held ? std::clamp(t, 0.0, duration) : t;
+    if(const std::optional<trajectory::scaling_sample> rest = resting(form.ends, t, duration))
+        return *rest;
 
-    return book_phases(form.late, at, duration, rate, max_acceleration);
+    return book_phases(form.late, ended(form.ends, t, duration), duration, rate, max_acceleration);
 }
 
 using trapezoid_slot = expected<trajectory::scaling_sample, refusal> (*)(double t, double duration, double max_velocity, double max_acceleration);

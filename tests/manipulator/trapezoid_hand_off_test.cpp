@@ -64,10 +64,13 @@ std::vector<bounded_motion> population()
 }
 
 // A form whose check never computes a natural duration runs the same arithmetic whichever natural
-// duration it is labeled with.
+// duration it is labeled with, and a form at rest beyond both ends runs a held form's arithmetic
+// everywhere inside them.
 bool distinct(const trapezoid_form &form)
 {
     const trapezoid_form first = trapezoid_forms.front();
+    if(form.ends == end_handling::at_rest)
+        return false;
 
     return form.check == duration_check::natural || (form.apex_when == first.apex_when && form.coast == first.coast && form.apex == first.apex);
 }

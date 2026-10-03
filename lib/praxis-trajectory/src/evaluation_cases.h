@@ -9,8 +9,20 @@
 
 #include <vector>
 #include <cstddef>
+#include <cstdint>
 
 namespace praxis::trajectory {
+
+// The instant a case was moved onto, where a scaling's second derivative steps, or `drawn` where the
+// case kept the time drawn for it.
+enum class snapped_instant : std::uint8_t
+{
+    drawn,
+    start,
+    ramp_end,
+    coast_end,
+    finish
+};
 
 // The duration and the time it is sampled at are in seconds. A time scaling carries the path
 // parameter from zero to one over that duration, so the two bounds a trapezoidal profile is built
@@ -21,6 +33,7 @@ struct scaling_case
     double at;
     double speed_bound;
     double acceleration_bound;
+    snapped_instant snapped;
 };
 
 struct joint_path_case
@@ -38,11 +51,24 @@ struct pose_path_case
 };
 
 // Drawn from one source in this order and no other: the duration, the time it is sampled at, the
-// speed bound, then the acceleration bound. The sampled time reaches beyond both ends of the
-// duration, so a run asks a scaling about times before its motion begins and after it finishes as
-// well as about times inside it. The bounds straddle the ratio at which a trapezoidal profile stops
-// reaching a cruise phase, so both shapes of that profile are drawn.
+// speed bound, the acceleration bound, then the instant the case is snapped to, the start or the
+// finish. The duration lies in [0.25, 4] seconds and the time in [0, duration].
 scaling_case drawn_scaling_case(evaluation::case_source &drawn);
+
+// Drawn from one source in this order and no other: the fraction of the drawable durations, the
+// fraction of the duration the time is sampled at, the speed bound, the acceleration bound, then the
+// instant the case is snapped to, the start, the ramp end, the coast end or the finish. The duration
+// lies in [trapezoid_duration_floor, 4] seconds and the time in [0, duration]. The bounds straddle
+// the ratio at which a trapezoidal profile stops reaching a cruise phase, so both shapes of that
+// profile are drawn.
+scaling_case drawn_trapezoid_case(evaluation::case_source &drawn);
+
+// Seconds, under a speed bound per second and an acceleration bound per second squared.
+double trapezoid_duration_floor(double speed_bound, double acceleration_bound);
+
+// Seconds a trapezoid of that duration spends reaching its cruise rate under an acceleration bound
+// per second squared.
+double trapezoid_ramp_duration(double duration, double acceleration_bound);
 
 // Drawn from one source in this order and no other: the coordinate count, one coordinate in radians
 // per degree of freedom for the start, one per degree of freedom for the end, then the path
