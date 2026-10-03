@@ -243,10 +243,10 @@ praxis_add_module(manipulator
 )
 
 # The renderer, the GUI library and the scene the operator windows derive from are published surface
-# here, as is the model library, so none of them is on the list. The solver and the control library
-# are what an extension must never publish: the solver is linked here for the reference
-# implementation and confined to it, and the logging dependency is confined the same way.
-praxis_assert_no_include_leak(praxis_manipulator cartan ctrlpp spdlog)
+# here, as is the model library, so none of them is on the list. The solver is what an extension must
+# never publish: it is linked here for the reference implementation and confined to it, and the
+# logging dependency is confined the same way.
+praxis_assert_no_include_leak(praxis_manipulator cartan spdlog)
 
 set(PRAXIS_PUBLIC_DEPENDENCIES meios threepp imgui)
 

@@ -70,15 +70,15 @@ praxis_add_module(rigid_motion
 # The renderer and the GUI library arrive with the scene this extension's stencil and window build
 # on, so both are published surface here and neither is on the list. cartan and the logging library
 # are on it even though this module links them: the assertion is not that the dependency is absent
-# but that the private link never reaches the published interface, and the same holds for the control
-# and model dependencies, which this module never links at all.
-praxis_assert_no_include_leak(praxis_rigid_motion cartan ctrlpp meios spdlog)
+# but that the private link never reaches the published interface, and the same holds for the model
+# library, which this module never links at all.
+praxis_assert_no_include_leak(praxis_rigid_motion cartan meios spdlog)
 
 set(PRAXIS_PUBLIC_DEPENDENCIES Eigen3)
 
-# Rigid-body mathematics needs neither the control library nor a robot description; the
-# link-isolation gate reads this list and fails on either reaching this target's closure.
-set(PRAXIS_CLOSURE_ABSENT ctrlpp meios)
+# Rigid-body mathematics needs no robot description; the link-isolation gate reads this list and
+# fails on the model library reaching this target's closure.
+set(PRAXIS_CLOSURE_ABSENT meios)
 
 # NAMESPACE prefixes the target name rather than the alias, so without EXPORT_NAME a consumer
 # writing praxis::rigid_motion is told about a target it never named.

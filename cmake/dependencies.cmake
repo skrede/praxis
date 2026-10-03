@@ -76,13 +76,6 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(cartan)
 
 FetchContent_Declare(
-    ctrlpp
-    GIT_REPOSITORY https://github.com/skrede/ctrlpp.git
-    GIT_TAG 91b0d3f282c89c36ad50abd10473d12f63c851c6  # milestone/v0.3.6
-)
-FetchContent_MakeAvailable(ctrlpp)
-
-FetchContent_Declare(
     meios
     GIT_REPOSITORY https://github.com/skrede/meios.git
     GIT_TAG 03ceab1392566f0e3d298468d4d0c967651764a9  # develop

@@ -40,5 +40,5 @@ add_subdirectory(two_pose)
 add_subdirectory(frame_workbench)
 add_subdirectory(arrangements)
 
-praxis_assert_no_include_leak(praxis_rigid_presets cartan ctrlpp spdlog)
-praxis_assert_no_include_leak(praxis_manipulator_presets cartan ctrlpp spdlog)
+praxis_assert_no_include_leak(praxis_rigid_presets cartan spdlog)
+praxis_assert_no_include_leak(praxis_manipulator_presets cartan spdlog)

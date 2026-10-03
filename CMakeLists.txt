@@ -73,7 +73,7 @@ add_subdirectory(presets)
 # travel on among them, because the dependencies' own interfaces name it. That file names nothing out
 # of the namespaced one, so a consumer reads it first and the namespaced one after.
 set(praxis_dependency_targets imgui implot threepp glfw spdlog pugixml pugixml-static praxis_eigen_headers
-    cartan_lie cartan_serial_chain cartan_analytical ctrlpp nucleus_core nucleus_xml
+    cartan_lie cartan_serial_chain cartan_analytical nucleus_core nucleus_xml
     meios_urdf meios_core meios_io meios_model meios_xacro meios_yaml yaml-cpp)
 
 # The formatting library enters a dependency's public link interface only on a toolchain whose

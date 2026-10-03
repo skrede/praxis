@@ -47,16 +47,15 @@ praxis_add_module(trajectory
     praxis::rigid_motion
     Eigen3::Eigen
     PRIVATE_LIBS
-    ctrlpp::ctrlpp
     spdlog::spdlog
 )
 
 # The renderer and the GUI library arrive with the scene this extension's preset composes against, so
-# both are published surface here and neither is on the list. ctrlpp is on it even though this module
-# links it: the assertion is not that the dependency is absent but that the private link never
-# reaches the published interface, and the same holds for the solver, which arrives privately through
-# the extension below, and for the model and logging dependencies.
-praxis_assert_no_include_leak(praxis_trajectory cartan ctrlpp meios spdlog)
+# both are published surface here and neither is on the list. The logging dependency is on it even
+# though this module links it: the assertion is that a private link never reaches the published
+# interface, and the same holds for the solver, which arrives privately through the rigid-motion
+# extension, and for the model library.
+praxis_assert_no_include_leak(praxis_trajectory cartan meios spdlog)
 
 set(PRAXIS_PUBLIC_DEPENDENCIES Eigen3)
 
