@@ -18,8 +18,7 @@ expected<scaling_sample, refusal> refused()
 }
 
 // Lynch & Park, Modern Robotics, sec. 9.2.2.2: T = (a + v^2)/(va), or a triangle peaking at sqrt(a)
-// where v^2/a > 1. Evaluated in the operand order of the manipulator's duration rule, which this
-// must match bit for bit.
+// where v^2/a > 1.
 double natural_duration(double rate, double rate_change)
 {
     const double peak = std::sqrt(rate_change);

@@ -48,15 +48,17 @@ double natural_trapezoid_duration(double rate, double rate_change)
     return ramp + (coast < 0.0 ? 0.0 : coast) + ramp;
 }
 
+// Under `near_singular` the draw lands a little below zero.
 snapped_instant snapped_among(evaluation::case_source &drawn, std::span<const snapped_instant> instants)
 {
     const double unit = over(drawn, 0.0, 1.0);
     if(!(unit < snap_fraction))
         return snapped_instant::drawn;
 
-    const auto which = static_cast<std::size_t>(unit / snap_fraction * static_cast<double>(instants.size()));
+    const double last  = static_cast<double>(instants.size() - 1u);
+    const double which = std::clamp(unit / snap_fraction * static_cast<double>(instants.size()), 0.0, last);
 
-    return instants[std::min(which, instants.size() - 1u)];
+    return instants[static_cast<std::size_t>(which)];
 }
 
 double snapped_time(snapped_instant instant, double drawn_at, double duration, double ramp)

@@ -50,9 +50,7 @@ inline trajectory_sample at(const trajectory_generator &motion, double t)
     return *sampled;
 }
 
-// The apportionment the reference is held to, written out here rather than taken from it, so a
-// change to either is a failure rather than a silent agreement. Every segment carries the same share
-// of whatever the run was stretched to.
+// Every segment carries the same share of whatever the run was stretched to.
 inline std::vector<double> knots(std::span<const configuration> via, double stretched_to)
 {
     const configuration velocity = bounds().velocity;

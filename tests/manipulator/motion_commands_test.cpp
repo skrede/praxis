@@ -235,8 +235,6 @@ TEST_CASE("the_trapezoidal_choice_hands_the_profile_a_duration_it_accepts_over_b
     }
 }
 
-// A duration merely long enough would pass the case above, so on each branch the reference accepts
-// the handed duration and refuses 0.999 of it.
 TEST_CASE("the_trapezoidal_duration_stands_within_a_small_fraction_of_the_shortest_the_reference_accepts")
 {
     const trajectory::time_scaling_ops reference = trajectory::baseline().time_scaling;
