@@ -18,11 +18,12 @@ inline constexpr double scaling_sample_tolerance = 1.0e-12;
 // The same sample, where the scaling carrying it is a quintic.
 inline constexpr double quintic_scaling_tolerance = 1.0e-11;
 
-// A driven configuration and both its derivatives, in radians and per second and per second squared.
+// A driven configuration in radians, its rate in radians per second, and its acceleration as a
+// fraction of the larger of one and either side's magnitude.
 inline constexpr double driven_configuration_tolerance = 1.0e-4;
 
 // The run the bound above was measured over. It is not known to hold over a longer one: the shortest
-// segment a run draws has no floor, and the residual carries the inverse square of its duration.
+// segment a run draws has no floor.
 inline constexpr std::size_t driven_configuration_measured_to_cases = 1000;
 
 // A driven pose and both its twists: the rotation and the two angular parts in radians, per second

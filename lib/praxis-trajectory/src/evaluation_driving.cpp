@@ -41,22 +41,10 @@ double worst_element(const configuration &held, const configuration &against)
     return evaluation::element_wise_residual(held, against).magnitude;
 }
 
-// Three configurations, in radians and in radians per second and per second squared. The residual
-// carries one number for the three, so they fold to whichever of them is loosest.
-evaluation::residual folded(const trajectory_sample &held, const trajectory_sample &against)
-{
-    if(!widths_agree(held, against))
-        return differing(evaluation::residual_kind::element_wise).difference;
-
-    const double worst =
-            std::max({worst_element(held.position, against.position), worst_element(held.velocity, against.velocity), worst_element(held.acceleration, against.acceleration)});
-
-    return evaluation::residual{evaluation::residual_kind::element_wise, worst, 0.0};
-}
-
-// At an end of the run a degree of freedom's acceleration agrees where the two sides agree or where
-// either side reports rest there; an acceleration that is not finite agrees with nothing.
-double worst_end_acceleration(const configuration &held, const configuration &against)
+// Each acceleration is divided by the larger of one and either side's magnitude. At an end a
+// degree of freedom agrees where the two sides agree or either reports rest; a value that is not
+// finite agrees with nothing.
+double worst_acceleration(const configuration &held, const configuration &against, bool at_an_end)
 {
     double worst = 0.0;
     for(Eigen::Index i = 0; i < held.size(); ++i)
@@ -64,21 +52,35 @@ double worst_end_acceleration(const configuration &held, const configuration &ag
         if(!std::isfinite(held[i]) || !std::isfinite(against[i]))
             return std::numeric_limits<double>::infinity();
 
-        worst = std::max(worst, std::min({std::abs(held[i] - against[i]), std::abs(held[i]), std::abs(against[i])}));
+        const double apart = std::abs(held[i] - against[i]);
+        const double owed  = at_an_end ? std::min({apart, std::abs(held[i]), std::abs(against[i])}) : apart;
+        worst              = std::max(worst, owed / std::max({1.0, std::abs(held[i]), std::abs(against[i])}));
     }
 
     return worst;
 }
 
-evaluation::residual folded_at_an_end(const trajectory_sample &held, const trajectory_sample &against)
+// Position in radians, velocity in radians per second and acceleration as a fraction of its own size,
+// folded to whichever of the three is loosest.
+evaluation::residual folded_configurations(const trajectory_sample &held, const trajectory_sample &against, bool at_an_end)
 {
     if(!widths_agree(held, against))
         return differing(evaluation::residual_kind::element_wise).difference;
 
-    const double worst =
-            std::max({worst_element(held.position, against.position), worst_element(held.velocity, against.velocity), worst_end_acceleration(held.acceleration, against.acceleration)});
+    const double worst = std::max(
+            {worst_element(held.position, against.position), worst_element(held.velocity, against.velocity), worst_acceleration(held.acceleration, against.acceleration, at_an_end)});
 
     return evaluation::residual{evaluation::residual_kind::element_wise, worst, 0.0};
+}
+
+evaluation::residual folded(const trajectory_sample &held, const trajectory_sample &against)
+{
+    return folded_configurations(held, against, false);
+}
+
+evaluation::residual folded_at_an_end(const trajectory_sample &held, const trajectory_sample &against)
+{
+    return folded_configurations(held, against, true);
 }
 
 // The two units stay apart. Every angle among them -- the transform's geodesic distance and the two

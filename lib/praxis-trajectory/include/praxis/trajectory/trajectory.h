@@ -63,11 +63,12 @@ namespace praxis::trajectory {
 // whose bound is not positive skipped, and every knot time of a cubic run is then stretched by one
 // factor, the largest ratio of a joint's peak speed on any segment to its bound where that exceeds
 // one. A run is judged by its duration, to 1e-12 relative and to 1e-12 s below one second, and by
-// samples at evenly spaced times from 0 to the duration inclusive; at the first and last of them a
-// degree of freedom's acceleration is accepted where the two sides agree or where either reports
-// rest. Rows of differing width and an empty run are refused as unsupported_input, and so, in a run
-// of three or more, are a row repeating the configuration before it and a coordinate that is not
-// finite.
+// samples at evenly spaced times from 0 to the duration inclusive. At each, position and velocity
+// are judged by their difference, and a degree of freedom's acceleration by its difference over
+// the larger of one and the two sides' magnitudes; at the first and last sample that acceleration
+// is accepted where the two sides agree or where either reports rest. Rows of differing width and
+// an empty run are refused as unsupported_input, and so, in a run of three or more, are a row
+// repeating the configuration before it and a coordinate that is not finite.
 struct trajectory_ops
 {
     expected<std::unique_ptr<trajectory_generator>, refusal> (*joint_space_waypoints)(std::span<const configuration> waypoints, const configuration &j0,

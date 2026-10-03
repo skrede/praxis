@@ -155,7 +155,8 @@ praxis_add_test(manipulator_bend_ledger_test.cpp HEADERS bent_manipulator.h bent
 praxis_add_test(motion_rows_test.cpp HEADERS bent_manipulator.h bent_motions.h bend_kinds.h described_slots.h LIBS praxis::manipulator praxis::evaluation praxis::trajectory)
 target_include_directories(motion_rows_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-manipulator/src)
 
-praxis_add_test(task_trajectory_row_test.cpp HEADERS bent_manipulator.h bent_motions.h bend_kinds.h LIBS praxis::manipulator praxis::evaluation praxis::trajectory praxis_test_support)
+praxis_add_test(task_trajectory_row_test.cpp HEADERS bent_manipulator.h bent_motions.h bend_kinds.h LIBS praxis::manipulator praxis::evaluation praxis::trajectory)
+praxis_add_test(book_task_waypoint_test.cpp LIBS praxis::manipulator praxis::evaluation praxis::trajectory praxis_test_support)
 
 # The descriptions are deployed beside the demonstration executable, which a configure without the
 # demonstration never creates; a test reading them skips when the directory it is pointed at is not

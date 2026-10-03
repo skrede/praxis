@@ -34,12 +34,12 @@ inline constexpr double solved_pose_tolerance_metres  = 1.0e-6;
 
 // The bound the row whose answer is a prepared task-space motion is judged at, in the dimensionless
 // unit an element-wise difference carries. One sample holds a configuration, a rate and an
-// acceleration, which fold to whichever of the three stands loosest, and an acceleration carries the
-// square of the segment duration beneath it.
+// acceleration, which fold to whichever of the three stands loosest, the acceleration taken as a
+// fraction of the larger of one and either side's magnitude.
 inline constexpr double prepared_motion_element_wise_tolerance = 1.0e-7;
 
 // The run the bound above was measured over. It is not known to hold over a longer one: the shortest
-// segment a run draws has no floor, and the duration the acceleration carries shrinks with it.
+// segment a run draws has no floor.
 inline constexpr std::size_t prepared_motion_measured_to_cases = 1000;
 
 const evaluation::capability_evaluations<robot_ops> &robot_evaluations();

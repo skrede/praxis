@@ -1,4 +1,3 @@
-#include "book_via_points.h"
 #include "bent_manipulator.h"
 
 #include "praxis/manipulator/evaluation.h"
@@ -17,7 +16,6 @@
 #include <span>
 #include <cmath>
 #include <memory>
-#include <vector>
 #include <cstddef>
 #include <cstdint>
 #include <utility>
@@ -71,36 +69,6 @@ expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> stretched_t
 expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> no_motion_at_all(const kinematics &, std::span<const transform>, const joint_vector &, const joint_limits &)
 {
     return std::unique_ptr<trajectory::trajectory_generator>();
-}
-
-// Each pose is resolved from the previous resolution through the solver the slot is handed.
-expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> literal_task_space_waypoints(const kinematics &solver, std::span<const transform> waypoints, const joint_vector &j0,
-                                                                                                  const joint_limits &limits)
-{
-    std::vector<joint_vector> rows;
-    if(waypoints.size() == 1u)
-        rows.push_back(j0);
-
-    joint_vector seed = j0;
-    for(const transform &pose : waypoints)
-    {
-        const expected<joint_vector, refusal> reached = baseline().motion.task_space_pose(solver, pose, seed);
-        if(!reached)
-            return unexpected(reached.error());
-
-        seed = *reached;
-        rows.push_back(seed);
-    }
-
-    return tests::book_via_points<tests::via_forms, 0>(rows, j0, limits);
-}
-
-// The task trajectory view is the last the aggregate lists.
-slot_report default_run_of(const capabilities &reference, const capabilities &other)
-{
-    const auto views = evaluation_views(reference, other);
-
-    return evaluate(std::span(views).last(1), default_seed, default_cases_per_slot).slots.at(0);
 }
 
 slot_report row_of(const capabilities &reference, const capabilities &other)
@@ -177,16 +145,4 @@ TEST_CASE("two_generators_whose_durations_differ_are_reported_with_an_unbounded_
     REQUIRE(row.slot == the_row);
     REQUIRE(row.verdict == agreement::differed);
     REQUIRE(std::isinf(row.worst.magnitude));
-}
-
-TEST_CASE("a_literal_task_space_waypoint_run_is_judged_agreeing_by_the_task_space_waypoint_row_over_the_default_run")
-{
-    fixture::bend_every_row_by({});
-
-    const slot_report row = default_run_of(baseline(), factories_bound_to(&literal_task_space_waypoints));
-
-    REQUIRE(row.slot == the_row);
-    REQUIRE(row.verdict == agreement::agreed);
-    REQUIRE(row.outcomes.differed == 0u);
-    REQUIRE(row.outcomes.agreed + row.outcomes.both_refused == default_cases_per_slot);
 }

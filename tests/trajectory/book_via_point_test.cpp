@@ -13,6 +13,7 @@
 #include <span>
 #include <vector>
 #include <cstddef>
+#include <cstdint>
 
 using namespace praxis;
 using namespace praxis::tests;
@@ -21,23 +22,35 @@ using namespace praxis::evaluation;
 namespace {
 
 constexpr std::size_t fewest_held_runs = 50u;
+constexpr std::size_t seeds_walked     = 40u;
 
 // Only the joint-space trajectory view is evaluated: it is the last the aggregate lists.
-slot_report judged(via_point_slot slot)
+slot_report judged(via_point_slot slot, std::uint64_t seed)
 {
     trajectory::capabilities literal         = trajectory::baseline();
     literal.trajectory.joint_space_waypoints = slot;
     const trajectory::capabilities reference = trajectory::baseline();
     const auto views                         = trajectory::evaluation_views(literal, reference);
 
-    return evaluate(std::span(views).last(1), default_seed, default_cases_per_slot).slots.at(0);
+    return evaluate(std::span(views).last(1), seed, default_cases_per_slot).slots.at(0);
 }
 
-void require_agreed(const slot_report &row)
+void check_agreed_at_each_seed(via_ends ends)
 {
-    REQUIRE(row.slot == "trajectory.joint_space_waypoints");
-    REQUIRE(row.verdict == agreement::agreed);
-    REQUIRE(row.outcomes.agreed == default_cases_per_slot);
+    const auto slots = book_via_point_slots<via_forms>();
+    for(std::size_t offset = 0; offset < seeds_walked; ++offset)
+        for(std::size_t form = 0; form < slots.size(); ++form)
+        {
+            if(via_forms.at(form).ends != ends)
+                continue;
+
+            const slot_report row = judged(slots.at(form), default_seed + offset);
+
+            INFO("seed offset " << offset << ", form " << form);
+            CHECK(row.slot == "trajectory.joint_space_waypoints");
+            CHECK(row.verdict == agreement::agreed);
+            CHECK(row.outcomes.agreed == default_cases_per_slot);
+        }
 }
 
 // Some coordinate of a row after the first equals the row before it exactly, while the row itself
@@ -53,34 +66,14 @@ bool holds_a_joint_still(const std::vector<trajectory::configuration> &rows)
 
 }
 
-TEST_CASE("every_literal_via_point_run_held_at_its_ends_is_judged_agreeing_by_the_joint_space_waypoint_row")
+TEST_CASE("every_literal_via_point_run_held_at_its_ends_is_judged_agreeing_by_the_joint_space_waypoint_row_at_each_of_forty_seeds")
 {
-    const auto slots = book_via_point_slots<via_forms>();
-    for(std::size_t form = 0; form < slots.size(); ++form)
-    {
-        if(via_forms.at(form).ends != via_ends::held)
-            continue;
-
-        const slot_report row = judged(slots.at(form));
-
-        INFO("form " << form);
-        require_agreed(row);
-    }
+    check_agreed_at_each_seed(via_ends::held);
 }
 
-TEST_CASE("every_literal_via_point_run_at_rest_beyond_its_ends_is_judged_agreeing_by_the_joint_space_waypoint_row")
+TEST_CASE("every_literal_via_point_run_at_rest_beyond_its_ends_is_judged_agreeing_by_the_joint_space_waypoint_row_at_each_of_forty_seeds")
 {
-    const auto slots = book_via_point_slots<via_forms>();
-    for(std::size_t form = 0; form < slots.size(); ++form)
-    {
-        if(via_forms.at(form).ends != via_ends::at_rest)
-            continue;
-
-        const slot_report row = judged(slots.at(form));
-
-        INFO("form " << form);
-        require_agreed(row);
-    }
+    check_agreed_at_each_seed(via_ends::at_rest);
 }
 
 TEST_CASE("a_via_point_run_whose_sign_test_gives_a_zero_slope_the_sign_of_a_neighbour_is_judged_differing_by_the_joint_space_waypoint_row")
@@ -88,7 +81,7 @@ TEST_CASE("a_via_point_run_whose_sign_test_gives_a_zero_slope_the_sign_of_a_neig
     const auto slots = book_via_point_slots<via_sign_controls>();
     for(std::size_t control = 0; control < slots.size(); ++control)
     {
-        const slot_report row = judged(slots.at(control));
+        const slot_report row = judged(slots.at(control), default_seed);
 
         INFO("control " << control);
         REQUIRE(row.verdict != agreement::agreed);

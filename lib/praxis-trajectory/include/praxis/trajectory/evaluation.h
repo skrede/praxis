@@ -14,9 +14,12 @@ namespace praxis::trajectory {
 
 // Two prepared motions compared by what they compute: their durations first, then their samples at a
 // fixed set of times over the span both answer. Two spans that differ share no interval to sample
-// over and are a difference on their own. A time either side declines is carried through the
-// facility's refusal policy rather than turned into a number. Published here because the generator a
-// factory answers is this extension's own type, whichever extension's slot the factory fills.
+// over and are a difference on their own. A configuration's position and velocity are compared by
+// their difference, and its acceleration, per degree of freedom, by its difference over
+// the larger of one and either side's magnitude. A time either side declines is carried through
+// the facility's refusal policy rather than turned into a number. Published here because the
+// generator a factory answers is this extension's own type, whichever extension's slot the factory
+// fills.
 evaluation::case_result driven(const trajectory_generator &held, const trajectory_generator &against, evaluation::residual_kind kind, const evaluation::tolerance_pair &allowed);
 evaluation::case_result driven(const pose_trajectory_generator &held, const pose_trajectory_generator &against, evaluation::residual_kind kind,
                                const evaluation::tolerance_pair &allowed);
