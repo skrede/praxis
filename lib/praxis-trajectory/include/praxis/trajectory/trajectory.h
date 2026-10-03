@@ -66,9 +66,10 @@ namespace praxis::trajectory {
 // samples at evenly spaced times from 0 to the duration inclusive. At each, position and velocity
 // are judged by their difference, and a degree of freedom's acceleration by its difference over
 // the larger of one and the two sides' magnitudes; at the first and last sample that acceleration
-// is accepted where the two sides agree or where either reports rest. Rows of differing width and
-// an empty run are refused as unsupported_input, and so, in a run of three or more, are a row
-// repeating the configuration before it and a coordinate that is not finite.
+// is accepted where the two sides agree or where either reports rest. A sample carrying a value that
+// is not finite, on either side, agrees with nothing. Rows of differing width and an empty run are
+// refused as unsupported_input, and so, in a run of three or more, are a row repeating the
+// configuration before it and a coordinate that is not finite.
 struct trajectory_ops
 {
     expected<std::unique_ptr<trajectory_generator>, refusal> (*joint_space_waypoints)(std::span<const configuration> waypoints, const configuration &j0,

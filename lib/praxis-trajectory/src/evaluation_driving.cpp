@@ -5,7 +5,6 @@
 #include "praxis/rigid_motion/types.h"
 
 #include <cmath>
-#include <limits>
 #include <cstddef>
 #include <algorithm>
 
@@ -29,11 +28,18 @@ struct run_tally
     evaluation::agreement parted;
 };
 
-// A sample of another width stands in another configuration space, so no element of one corresponds
-// to an element of the other.
-bool widths_agree(const trajectory_sample &held, const trajectory_sample &against)
+// A configuration of another width, or a configuration or pose holding a value that is not finite,
+// agrees with nothing.
+template<typename Sample>
+bool finite(const Sample &point)
 {
-    return held.position.size() == against.position.size() && held.velocity.size() == against.velocity.size() && held.acceleration.size() == against.acceleration.size();
+    return point.position.allFinite() && point.velocity.allFinite() && point.acceleration.allFinite();
+}
+
+bool comparable(const trajectory_sample &held, const trajectory_sample &against)
+{
+    return finite(held) && finite(against) && held.position.size() == against.position.size() && held.velocity.size() == against.velocity.size() &&
+            held.acceleration.size() == against.acceleration.size();
 }
 
 double worst_element(const configuration &held, const configuration &against)
@@ -42,16 +48,12 @@ double worst_element(const configuration &held, const configuration &against)
 }
 
 // Each acceleration is divided by the larger of one and either side's magnitude. At an end a
-// degree of freedom agrees where the two sides agree or either reports rest; a value that is not
-// finite agrees with nothing.
+// degree of freedom agrees where the two sides agree or either reports rest.
 double worst_acceleration(const configuration &held, const configuration &against, bool at_an_end)
 {
     double worst = 0.0;
     for(Eigen::Index i = 0; i < held.size(); ++i)
     {
-        if(!std::isfinite(held[i]) || !std::isfinite(against[i]))
-            return std::numeric_limits<double>::infinity();
-
         const double apart = std::abs(held[i] - against[i]);
         const double owed  = at_an_end ? std::min({apart, std::abs(held[i]), std::abs(against[i])}) : apart;
         worst              = std::max(worst, owed / std::max({1.0, std::abs(held[i]), std::abs(against[i])}));
@@ -64,7 +66,7 @@ double worst_acceleration(const configuration &held, const configuration &agains
 // folded to whichever of the three is loosest.
 evaluation::residual folded_configurations(const trajectory_sample &held, const trajectory_sample &against, bool at_an_end)
 {
-    if(!widths_agree(held, against))
+    if(!comparable(held, against))
         return differing(evaluation::residual_kind::element_wise).difference;
 
     const double worst = std::max(
@@ -89,6 +91,9 @@ evaluation::residual folded_at_an_end(const trajectory_sample &held, const traje
 // is ever added to the other.
 evaluation::residual folded(const pose_sample &held, const pose_sample &against)
 {
+    if(!finite(held) || !finite(against))
+        return differing(evaluation::residual_kind::pose).difference;
+
     const evaluation::residual placed = evaluation::pose_residual(held.position, against.position);
     const twist moving                = held.velocity - against.velocity;
     const twist speeding              = held.acceleration - against.acceleration;

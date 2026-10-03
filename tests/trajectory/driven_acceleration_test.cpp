@@ -11,7 +11,6 @@
 
 #include <span>
 #include <cmath>
-#include <limits>
 #include <memory>
 #include <utility>
 #include <algorithm>
@@ -28,14 +27,6 @@ using answering = trajectory::trajectory_sample (*)(trajectory::trajectory_sampl
 trajectory::trajectory_sample displaced(trajectory::trajectory_sample point, double, double)
 {
     point.acceleration[0] += moved_by * std::max(1.0, std::abs(point.acceleration[0]));
-
-    return point;
-}
-
-trajectory::trajectory_sample not_finite_inside(trajectory::trajectory_sample point, double t, double duration)
-{
-    if(t > 0.0 && t < duration)
-        point.acceleration[0] = std::numeric_limits<double>::quiet_NaN();
 
     return point;
 }
@@ -116,12 +107,4 @@ TEST_CASE("an_acceleration_moved_by_a_fraction_of_its_own_size_a_decade_beneath_
     REQUIRE(row.slot == "trajectory.joint_space_waypoints");
     REQUIRE(row.verdict == agreement::agreed);
     REQUIRE(row.outcomes.agreed == default_cases_per_slot);
-}
-
-TEST_CASE("an_acceleration_that_is_not_finite_at_interior_samples_only_is_judged_differing_on_every_case_by_the_joint_space_waypoint_row")
-{
-    const slot_report row = judged<&not_finite_inside>();
-
-    REQUIRE(row.slot == "trajectory.joint_space_waypoints");
-    REQUIRE(row.outcomes.differed == default_cases_per_slot);
 }

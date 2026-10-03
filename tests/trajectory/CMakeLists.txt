@@ -20,6 +20,7 @@ target_include_directories(book_time_scaling_test PRIVATE ${PROJECT_SOURCE_DIR}/
 praxis_add_test(book_via_point_test.cpp LIBS praxis::evaluation praxis::trajectory praxis_test_support)
 target_include_directories(book_via_point_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-trajectory/src)
 praxis_add_test(driven_acceleration_test.cpp LIBS praxis::evaluation praxis::trajectory)
+praxis_add_test(driven_non_finite_test.cpp HEADERS non_finite_generators.h LIBS praxis::evaluation praxis::trajectory)
 praxis_add_test(trajectory_ledger_test.cpp LIBS praxis::evaluation praxis::trajectory)
 praxis_add_test(trajectory_bend_ledger_test.cpp HEADERS bent_trajectory.h bent_generators.h end_bent_trajectory.h LIBS praxis::evaluation praxis::trajectory)
 praxis_add_test(trajectory_generator_ledger_test.cpp HEADERS driven_generators.h LIBS praxis::evaluation praxis::trajectory)
