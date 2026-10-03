@@ -5,6 +5,7 @@
 #include "praxis/rigid_motion/types.h"
 
 #include <cmath>
+#include <limits>
 #include <cstddef>
 #include <algorithm>
 
@@ -53,6 +54,33 @@ evaluation::residual folded(const trajectory_sample &held, const trajectory_samp
     return evaluation::residual{evaluation::residual_kind::element_wise, worst, 0.0};
 }
 
+// At an end of the run a degree of freedom's acceleration agrees where the two sides agree or where
+// either side reports rest there; an acceleration that is not finite agrees with nothing.
+double worst_end_acceleration(const configuration &held, const configuration &against)
+{
+    double worst = 0.0;
+    for(Eigen::Index i = 0; i < held.size(); ++i)
+    {
+        if(!std::isfinite(held[i]) || !std::isfinite(against[i]))
+            return std::numeric_limits<double>::infinity();
+
+        worst = std::max(worst, std::min({std::abs(held[i] - against[i]), std::abs(held[i]), std::abs(against[i])}));
+    }
+
+    return worst;
+}
+
+evaluation::residual folded_at_an_end(const trajectory_sample &held, const trajectory_sample &against)
+{
+    if(!widths_agree(held, against))
+        return differing(evaluation::residual_kind::element_wise).difference;
+
+    const double worst =
+            std::max({worst_element(held.position, against.position), worst_element(held.velocity, against.velocity), worst_end_acceleration(held.acceleration, against.acceleration)});
+
+    return evaluation::residual{evaluation::residual_kind::element_wise, worst, 0.0};
+}
+
 // The two units stay apart. Every angle among them -- the transform's geodesic distance and the two
 // twists' angular parts -- goes in the magnitude half in radians, and every length -- the transform's
 // origin distance and the two twists' linear parts -- goes in the linear half in metres. Neither half
@@ -65,6 +93,11 @@ evaluation::residual folded(const pose_sample &held, const pose_sample &against)
 
     return evaluation::residual{evaluation::residual_kind::pose, std::max({placed.magnitude, moving.head<3>().norm(), speeding.head<3>().norm()}),
                                 std::max({placed.linear_error_metres, moving.tail<3>().norm(), speeding.tail<3>().norm()})};
+}
+
+evaluation::residual folded_at_an_end(const pose_sample &held, const pose_sample &against)
+{
+    return folded(held, against);
 }
 
 bool durations_agree(double held, double against)
@@ -116,9 +149,11 @@ evaluation::case_result over_the_shared_span(const Generator &held, const Genera
 
     for(std::size_t index = 0; index < samples_per_case; ++index)
     {
-        const double at = span * static_cast<double>(index) / static_cast<double>(samples_per_case - 1u);
+        const bool at_an_end = index == 0u || index + 1u == samples_per_case;
+        const double at      = std::min(span, span * static_cast<double>(index) / static_cast<double>(samples_per_case - 1u));
+        const auto compared  = [at_an_end](const Sample &first, const Sample &second) { return at_an_end ? folded_at_an_end(first, second) : folded(first, second); };
 
-        record(run, evaluation::agreed_or_refused(held.sample(at), against.sample(at), [](const Sample &first, const Sample &second) { return folded(first, second); }, allowed));
+        record(run, evaluation::agreed_or_refused(held.sample(at), against.sample(at), compared, allowed));
     }
 
     return verdict_over(run, allowed);

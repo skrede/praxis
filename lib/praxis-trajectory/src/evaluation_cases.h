@@ -102,7 +102,8 @@ struct pose_waypoint_case
 // Drawn from one source in this order and no other: the degree-of-freedom count, one coordinate per
 // degree of freedom for the starting configuration, the row count, then per row a step length and
 // one coordinate per degree of freedom for its direction, then one velocity bound and one
-// acceleration bound per degree of freedom, then the row a run stands still at. The step lengths are
+// acceleration bound per degree of freedom, then the row a run stands still at, then whether a joint
+// is held still, the row it is held still at and the degree of freedom held. The step lengths are
 // log-uniform, so the segment durations of one run span decades.
 joint_waypoint_case drawn_joint_waypoint_case(evaluation::case_source &drawn);
 
@@ -115,7 +116,9 @@ pose_waypoint_case drawn_pose_waypoint_case(evaluation::case_source &drawn);
 // Both runs above stand still at one row under `near_singular` and at none under `bulk`: a segment
 // traversed in no time is the neighbourhood in which the duration rule and the fit through the run
 // degenerate, and that is the neighbourhood the spread names. The row index is drawn under both
-// spreads, so the two consume the same values in the same order.
+// spreads, so the two consume the same values in the same order. Under `bulk` alone, a joint run of
+// at least three rows and two degrees of freedom holds one degree of freedom of one row after the
+// first exactly at the row before's; the three values deciding it are drawn under both spreads.
 
 // The uniform scalar every case here is built from. `angle_radians` is uniform over a full turn and
 // is the only uniform scalar a source draws, so an affine map of it is uniform over the range that

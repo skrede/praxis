@@ -53,6 +53,21 @@ namespace praxis::trajectory {
 // Only a via-point factory is here: its coefficients are solved once and sampled many times. A
 // point-to-point motion is a path composed with a time scaling and needs no prepared object. The
 // kinematic limits enter at construction, since the duration is derived from them.
+//
+// A single configuration is reached from j0 in a straight line at constant speed, and two are joined
+// by one. Three or more are joined by one cubic per segment, Lynch & Park, Modern Robotics,
+// sec. 9.3, eq. (9.26)-(9.29), at rest at both ends, with each interior velocity by Biagiotti &
+// Melchiorri, Trajectory Planning for Automatic Machines and Robots, sec. 2.1.4, eq. (2.3): zero
+// where the slopes on its two sides differ in sign, a zero slope having a sign of its own, and their
+// mean otherwise. Each segment takes the time its slowest joint needs at its velocity bound, joints
+// whose bound is not positive skipped, and every knot time of a cubic run is then stretched by one
+// factor, the largest ratio of a joint's peak speed on any segment to its bound where that exceeds
+// one. A run is judged by its duration, to 1e-12 relative and to 1e-12 s below one second, and by
+// samples at evenly spaced times from 0 to the duration inclusive; at the first and last of them a
+// degree of freedom's acceleration is accepted where the two sides agree or where either reports
+// rest. Rows of differing width and an empty run are refused as unsupported_input, and so, in a run
+// of three or more, are a row repeating the configuration before it and a coordinate that is not
+// finite.
 struct trajectory_ops
 {
     expected<std::unique_ptr<trajectory_generator>, refusal> (*joint_space_waypoints)(std::span<const configuration> waypoints, const configuration &j0,

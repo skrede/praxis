@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstddef>
 #include <utility>
+#include <algorithm>
 
 namespace praxis::trajectory {
 
@@ -26,6 +27,10 @@ constexpr double slowest_linear_speed  = 0.4;
 constexpr double fastest_linear_speed  = 6.0;
 constexpr double slowest_angular_speed = 0.4;
 constexpr double fastest_angular_speed = 6.0;
+
+// The share of runs under `bulk`, of at least three rows and two degrees of freedom, in which one
+// joint is held still across one segment.
+constexpr double held_fraction = 0.125;
 
 double log_over(evaluation::case_source &drawn, double from, double to)
 {
@@ -68,6 +73,28 @@ void standing_still(evaluation::case_source &drawn, const Row &seed, std::vector
     waypoints[at] = at == 0u ? seed : waypoints[at - 1u];
 }
 
+// Held to [from, count) at both ends: under `near_singular` a draw lands a little past either end.
+std::size_t index_below(evaluation::case_source &drawn, std::size_t from, std::size_t count)
+{
+    const double at = std::max(static_cast<double>(from), over(drawn, static_cast<double>(from), static_cast<double>(count)));
+
+    return std::min(static_cast<std::size_t>(at), count - 1u);
+}
+
+void holding_a_joint(evaluation::case_source &drawn, std::vector<configuration> &waypoints)
+{
+    const double share      = over(drawn, 0.0, 1.0);
+    const std::size_t rows  = waypoints.size();
+    const std::size_t width = static_cast<std::size_t>(waypoints.front().size());
+    const std::size_t row   = index_below(drawn, 1u, rows);
+    const auto axis         = static_cast<Eigen::Index>(index_below(drawn, 0u, width));
+
+    if(drawn.drawn_from() != evaluation::spread::bulk || !(share < held_fraction) || rows < 3u || width < 2u)
+        return;
+
+    waypoints[row][axis] = waypoints[row - 1u][axis];
+}
+
 std::vector<configuration> reached_from(evaluation::case_source &drawn, const configuration &seed, std::size_t rows, std::size_t coordinates)
 {
     std::vector<configuration> waypoints;
@@ -96,6 +123,7 @@ joint_waypoint_case drawn_joint_waypoint_case(evaluation::case_source &drawn)
     configuration acceleration = per_joint(drawn, coordinates, gentlest_joint_acceleration, harshest_joint_acceleration);
 
     standing_still(drawn, seed, reached);
+    holding_a_joint(drawn, reached);
 
     std::pair<configuration, configuration> held = spanned_by(seed, reached);
     configuration_limits limits{std::move(velocity), std::move(acceleration), std::move(held.first), std::move(held.second)};
