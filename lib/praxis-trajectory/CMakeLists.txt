@@ -38,6 +38,8 @@ praxis_add_module(trajectory
     src/baseline/straight_line.h
     src/baseline/straight_line.cpp
     src/baseline/pose_trajectory.cpp
+    src/baseline/via_point_cubics.h
+    src/baseline/via_point_cubics.cpp
     PUBLIC_LIBS
     praxis::extension
     praxis::evaluation

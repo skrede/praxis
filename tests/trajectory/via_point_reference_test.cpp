@@ -23,34 +23,25 @@ namespace {
 constexpr double one_sided_step        = 1.0e-9;
 constexpr double via_point_tolerance   = 1.0e-9;
 constexpr double continuity_tolerance  = 1.0e-6;
+constexpr double acceleration_step     = 1.0e-3;
 constexpr double apportioned_traversal = 4.5;
-
-// The apportionment the reference is held to, written out here rather than taken from it, so a
-// change to either is a failure rather than a silent agreement. Every segment carries the same share
-// of whatever the run was stretched to.
-std::vector<double> knots(std::span<const configuration> via, double stretched_to)
-{
-    const configuration velocity = bounds().velocity;
-    std::vector<double> times    = {0.0};
-
-    for(std::size_t k = 1u; k < via.size(); ++k)
-    {
-        double span = 0.0;
-        for(Eigen::Index i = 0; i < via[k].size(); ++i)
-            span = std::max(span, std::abs(via[k][i] - via[k - 1u][i]) / velocity[i]);
-
-        times.push_back(times.back() + span);
-    }
-
-    for(double &knot : times)
-        knot *= stretched_to / times.back();
-
-    return times;
-}
 
 std::vector<configuration> four_via_points()
 {
     return {pair_of(0.0, 0.0), pair_of(1.0, 0.5), pair_of(0.5, 1.5), pair_of(2.0, 1.0)};
+}
+
+// Lynch & Park, Modern Robotics, sec. 9.3, eq. (9.28)-(9.29): segment j's cubic leaves its first knot
+// at an acceleration of 2 a2 and reaches its last at 2 a2 + 6 a3 dT.
+configuration segment_acceleration(std::span<const configuration> via, const std::vector<double> &times, std::size_t j, bool at_end)
+{
+    const double span            = times[j + 1u] - times[j];
+    const configuration leaving  = book_velocity(via, times, j);
+    const configuration arriving = book_velocity(via, times, j + 1u);
+    const configuration a2       = (3.0 * via[j + 1u] - 3.0 * via[j] - 2.0 * leaving * span - arriving * span) / (span * span);
+    const configuration a3       = (2.0 * via[j] + (leaving + arriving) * span - 2.0 * via[j + 1u]) / (span * span * span);
+
+    return at_end ? configuration(2.0 * a2 + 6.0 * a3 * span) : configuration(2.0 * a2);
 }
 
 double fastest_reached(const trajectory_generator &motion, std::size_t steps)
@@ -104,14 +95,21 @@ TEST_CASE("the_velocity_a_run_of_via_points_reports_is_continuous_across_every_i
         CHECK(is_approx_equal(at(*motion, times[k] - one_sided_step).velocity, at(*motion, times[k] + one_sided_step).velocity, continuity_tolerance));
 }
 
-TEST_CASE("the_acceleration_a_run_of_via_points_reports_is_continuous_across_every_interior_via_point")
+TEST_CASE("the_acceleration_a_run_of_via_points_reports_steps_at_an_interior_via_point_where_the_segments_curve_differently")
 {
     const std::vector<configuration> via = four_via_points();
     const auto motion                    = commanded(via, pair_of(-5.0, -5.0));
     const std::vector<double> times      = knots(via, motion->duration());
 
     for(std::size_t k = 1u; k + 1u < times.size(); ++k)
-        CHECK(is_approx_equal(at(*motion, times[k] - one_sided_step).acceleration, at(*motion, times[k] + one_sided_step).acceleration, continuity_tolerance));
+    {
+        const configuration arriving = segment_acceleration(via, times, k - 1u, true);
+        const configuration leaving  = segment_acceleration(via, times, k, false);
+
+        REQUIRE(!is_approx_equal(arriving, leaving, acceleration_step));
+        CHECK(is_approx_equal(at(*motion, times[k] - one_sided_step).acceleration, arriving, continuity_tolerance));
+        CHECK(is_approx_equal(at(*motion, times[k] + one_sided_step).acceleration, leaving, continuity_tolerance));
+    }
 }
 
 TEST_CASE("a_run_of_via_points_begins_and_ends_at_rest_in_every_degree_of_freedom")

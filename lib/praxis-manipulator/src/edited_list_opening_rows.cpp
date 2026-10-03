@@ -9,6 +9,7 @@
 #include <vector>
 #include <cstddef>
 #include <numbers>
+#include <algorithm>
 
 namespace praxis::manipulator {
 
@@ -43,13 +44,14 @@ constexpr std::array shipped_poses{
 // joint beyond the second stands at its home value.
 joint_vector opening_row(std::size_t joints, std::size_t row, std::size_t count)
 {
-    const double along = count < 2u ? 0.0 : static_cast<double>(row) / static_cast<double>(count - 1u);
+    const double along    = count < 2u ? 0.0 : static_cast<double>(row) / static_cast<double>(count - 1u);
+    const double mirrored = count < 2u ? 0.0 : static_cast<double>(std::min(row, count - 1u - row)) / static_cast<double>(count - 1u);
 
     joint_vector taken = joint_vector::Zero(static_cast<Eigen::Index>(joints));
     if(joints > 0u)
         taken[0] = (2.0 * along - 1.0) * sweep_degrees * radians_per_degree;
     if(joints > 1u)
-        taken[1] = -std::sin(along * std::numbers::pi) * dip_degrees * radians_per_degree;
+        taken[1] = 0.0 - std::sin(mirrored * std::numbers::pi) * dip_degrees * radians_per_degree;
 
     return taken;
 }

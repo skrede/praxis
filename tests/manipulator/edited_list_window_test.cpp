@@ -240,6 +240,27 @@ TEST_CASE("a list opened with no row at all opens at the rows its own kind ships
         stands_at(posed.rows[row], opened_at[row]);
 }
 
+TEST_CASE("the second joint of the rows a configuration list opens at returns along its own dip bit for bit", "[manipulator][waypoints]")
+{
+    for(const std::size_t joints : {std::size_t{2}, std::size_t{6}})
+    {
+        const std::vector<joint_vector> opened = joint_waypoint_list::opening_rows(joints);
+        const std::size_t count                = opened.size();
+        const double middle_slope              = opened[count / 2u][1] - opened[count / 2u - 1u][1];
+
+        INFO("the joints the list opens for: " << joints);
+        REQUIRE(count >= 3u);
+        for(std::size_t row = 0; row < count; ++row)
+        {
+            CHECK(opened[row][1] == opened[count - 1u - row][1]);
+            CHECK(std::signbit(opened[row][1]) == std::signbit(opened[count - 1u - row][1]));
+        }
+        CHECK((opened.front()[1] == 0.0 && !std::signbit(opened.front()[1])));
+        CHECK((opened.back()[1] == 0.0 && !std::signbit(opened.back()[1])));
+        CHECK((middle_slope == 0.0 && !std::signbit(middle_slope)));
+    }
+}
+
 TEST_CASE("appending to a configuration list puts the joints the publication reports at the end of it", "[manipulator][waypoints]")
 {
     const std::shared_ptr<arm_publisher> published = publishing(at_rest(configuration(0.25, -0.5), reached, upright));

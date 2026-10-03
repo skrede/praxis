@@ -401,12 +401,12 @@ TEST_CASE("the realized parameter of a composed motion is the very scaling it wa
     }
 }
 
-// The difference between coming to rest at every row and flowing through them, read off one quantity:
-// a spline through the rows keeps moving at each of them and only the two ends are at rest.
+// A via-point run keeps moving at a row where any joint keeps its direction, and only the two ends
+// are at rest; the first joint here rises through every row.
 TEST_CASE("the realized parameter of a via-point run does not come to rest at an interior waypoint", "[manipulator][trajectory]")
 {
     const previewed_arm arm                   = arm_at(configuration(0.0, 0.0));
-    const std::vector<joint_vector> waypoints = {configuration(0.2, 0.3), configuration(-0.1, 0.5), configuration(0.5, 0.1), configuration(0.4, -0.2)};
+    const std::vector<joint_vector> waypoints = {configuration(0.2, 0.3), configuration(0.3, 0.5), configuration(0.5, 0.1), configuration(0.6, -0.2)};
 
     arm.control->preview_trajectory(std::span<const joint_vector>(waypoints));
 

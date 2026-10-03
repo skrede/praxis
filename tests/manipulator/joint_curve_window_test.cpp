@@ -44,10 +44,11 @@ constexpr double at_rest_radians = 1.0e-9;
 constexpr double passing_through = 0.5;
 
 // Four rows inside the fixture's position bounds, no two of them alike and no two of them a
-// degenerate segment apart.
+// degenerate segment apart. The first joint rises through every row, so it keeps its direction at
+// each interior one.
 std::vector<joint_vector> authored_rows()
 {
-    return {configuration(-1.0, 0.5), configuration(0.0, -0.8), configuration(1.0, 0.6), configuration(0.2, -0.4)};
+    return {configuration(-1.0, 0.5), configuration(0.0, -0.8), configuration(0.6, 0.6), configuration(1.0, -0.4)};
 }
 
 // One arm behind one publication and one plot over it. Every command is posted onto the arm's own
