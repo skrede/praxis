@@ -29,8 +29,8 @@ expected<transform, refusal> body_forward_kinematics(const rigid_motion::screw_o
                                                      std::span<const screw_axis> space_screws, const joint_vector &theta);
 
 // A chain held against the bindings the caller hands over, so the choice of them is made where this
-// is called. A chain the solver library cannot represent -- no joints, a home pose that is not a
-// rigid motion, or a screw axis that is not unit-normalized -- is refused rather than held.
+// is called. A chain with no joints, a value that is not finite, a home pose that is not a rigid
+// motion, or a screw axis that is not of unit length is refused rather than held.
 expected<kinematics, refusal> make_kinematics(const screw_chain &chain, forward_kinematics_ops forward, differential_kinematics_ops differential, inverse_kinematics_ops inverse,
                                               const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames);
 

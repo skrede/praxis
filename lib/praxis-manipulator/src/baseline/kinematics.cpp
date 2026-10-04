@@ -1,15 +1,13 @@
+#include "chain_maps.h"
 #include "opw_geometry.h"
 #include "chain_translation.h"
 #include "praxis/manipulator/baseline/kinematics.h"
-
-#include "praxis/evaluation/tolerance.h"
 
 #include <cartan/serial/fk.h>
 #include <cartan/serial/ik/solver/lm.h>
 
 #include <spdlog/spdlog.h>
 
-#include <span>
 #include <cmath>
 #include <limits>
 #include <vector>
@@ -20,29 +18,6 @@
 namespace praxis::manipulator {
 
 namespace {
-
-// The dependency's Jacobian entry points take a chain together with a forward solve over it, so the
-// two travel as one value.
-struct chain_reach
-{
-    chain_type chain;
-    cartan::fk_result<double, cartan::dynamic> reached;
-};
-
-// The dependency's chain constructor validates at run time and throws, so the chain is built through
-// the translation that refuses first and that constructor is never reached with anything it rejects.
-expected<chain_reach, refusal> forward_over(const transform &m, std::span<const screw_axis> screws, const joint_vector &theta)
-{
-    const std::optional<chain_type> chain = to_cartan_chain(screw_chain(m, std::vector<screw_axis>(screws.begin(), screws.end()), joint_limits{}));
-    if(!chain.has_value())
-        return unexpected(refusal::degenerate);
-
-    const auto reached = cartan::forward_kinematics(chain.value(), theta);
-    if(!reached)
-        return unexpected(refusal_from(reached.error()));
-
-    return chain_reach{chain.value(), reached.value()};
-}
 
 // The dependency takes its budgets as a signed count, so one beyond that range is clamped rather than
 // wrapped: an unclamped conversion turns a request for more effort into a negative limit meaning none.
@@ -65,21 +40,6 @@ twist body_error(const chain_type &chain, const cartan::se3<double> &target, con
         return twist::Zero();
 
     return (reached->end_effector.inverse() * target).log();
-}
-
-bool is_a_rigid_motion(const transform &tf)
-{
-    const rotation r = tf.block<3, 3>(0, 0);
-
-    return is_approx_equal(rotation(r.transpose() * r), rotation::Identity()) && is_approx_equal(r.determinant(), 1.0) &&
-            is_approx_equal((tf.row(3) - Eigen::RowVector4d::UnitW()).cwiseAbs().maxCoeff(), 0.0);
-}
-
-bool is_a_rigid_motion(const rigid_motion::frame_ops &frames, const transform &tf)
-{
-    const rotation seen = frames.rotation_matrix_from_transform(tf);
-
-    return is_a_rigid_motion(tf) && is_approx_equal(rotation(seen.transpose() * seen), rotation::Identity()) && is_approx_equal(seen.determinant(), 1.0);
 }
 
 void record(ik_result &answer, const joint_vector &solution, const twist &error, const joint_vector &previous)
@@ -171,106 +131,6 @@ expected<cartan::opw_parameters<double>, refusal> admitted_geometry(const rigid_
 
 }
 
-// The exponentials are taken by the solver library, which the handed screw operations do not
-// enter. Lynch & Park, Modern Robotics, chapter 4.
-expected<transform, refusal> forward_kinematics(const rigid_motion::screw_ops &, const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta)
-{
-    if(theta.size() != static_cast<Eigen::Index>(space_screws.size()))
-        return unexpected(refusal::unsupported_input);
-    if(!is_a_rigid_motion(m))
-        return unexpected(refusal::degenerate);
-    if(space_screws.empty())
-        return transform(m);
-
-    const expected<chain_reach, refusal> solved = forward_over(m, space_screws, theta);
-    if(!solved)
-        return unexpected(solved.error());
-
-    return transform(solved->reached.end_effector.matrix());
-}
-
-// The home pose does not enter, so the chain the columns are taken over carries none, and neither do
-// the handed screw operations: the columns are the solver library's. Lynch & Park, Modern Robotics,
-// chapter 5.
-expected<jacobian, refusal> space_jacobian(const rigid_motion::screw_ops &, std::span<const screw_axis> space_screws, const joint_vector &theta)
-{
-    if(theta.size() != static_cast<Eigen::Index>(space_screws.size()))
-        return unexpected(refusal::unsupported_input);
-    if(space_screws.empty())
-        return jacobian(jacobian::Zero(6, 0));
-
-    const expected<chain_reach, refusal> solved = forward_over(transform::Identity(), space_screws, theta);
-    if(!solved)
-        return unexpected(solved.error());
-
-    const auto columns = cartan::space_jacobian(solved->chain, solved->reached);
-    if(!columns)
-        return unexpected(refusal_from(columns.error()));
-
-    return jacobian(columns.value());
-}
-
-// Lynch & Park, Modern Robotics, chapter 5. The columns are taken in the body frame, so the screws
-// are seen through the inverse adjoint of the home pose first.
-expected<jacobian, refusal> body_jacobian(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward, const transform &m,
-                                          std::span<const screw_axis> space_screws, const joint_vector &theta)
-{
-    if(theta.size() != static_cast<Eigen::Index>(space_screws.size()))
-        return unexpected(refusal::unsupported_input);
-    if(!is_a_rigid_motion(frames, m))
-        return unexpected(refusal::degenerate);
-    if(space_screws.empty())
-        return jacobian(jacobian::Zero(6, 0));
-
-    const expected<std::vector<screw_axis>, refusal> body_screws = forward.body_screws_from_space(screw, frames, m, space_screws);
-    if(!body_screws)
-        return unexpected(body_screws.error());
-
-    const expected<chain_reach, refusal> solved = forward_over(transform::Identity(), *body_screws, theta);
-    if(!solved)
-        return unexpected(solved.error());
-
-    const auto columns = cartan::body_jacobian(solved->chain, solved->reached);
-    if(!columns)
-        return unexpected(refusal_from(columns.error()));
-
-    return jacobian(columns.value());
-}
-
-// The body form composes the home pose first, so the product the dependency accumulates is taken over
-// a chain carrying no home and the home is applied here. Lynch & Park, Modern Robotics, chapter 4.
-expected<transform, refusal> body_forward_kinematics(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
-                                                     std::span<const screw_axis> space_screws, const joint_vector &theta)
-{
-    if(theta.size() != static_cast<Eigen::Index>(space_screws.size()))
-        return unexpected(refusal::unsupported_input);
-    if(!is_a_rigid_motion(frames, m))
-        return unexpected(refusal::degenerate);
-    if(space_screws.empty())
-        return transform(m);
-
-    const expected<std::vector<screw_axis>, refusal> body_screws = to_body_screws(screw, m, space_screws);
-    if(!body_screws)
-        return unexpected(body_screws.error());
-
-    const expected<chain_reach, refusal> solved = forward_over(transform::Identity(), *body_screws, theta);
-    if(!solved)
-        return unexpected(solved.error());
-
-    return transform(m * solved->reached.end_effector.matrix());
-}
-
-// The body screws are the space screws seen from the home pose, so a home pose that is not a rigid
-// motion has no inverse adjoint to see them through.
-expected<std::vector<screw_axis>, refusal> body_screws_from_space(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
-                                                                  std::span<const screw_axis> space_screws)
-{
-    if(!is_a_rigid_motion(frames, m))
-        return unexpected(refusal::degenerate);
-
-    return to_body_screws(screw, m, space_screws);
-}
-
 // The iterate sequence is taken from the solve policy one work unit at a time. The solve is the
 // solver library's, so neither the handed screw operations nor either kinematics aggregate enters it.
 expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &chain,
@@ -327,9 +187,11 @@ expected<void, refusal> analytic_inverse_kinematics(const rigid_motion::screw_op
 expected<kinematics, refusal> make_kinematics(const screw_chain &chain, forward_kinematics_ops forward, differential_kinematics_ops differential, inverse_kinematics_ops inverse,
                                               const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames)
 {
-    if(!to_cartan_chain(chain).has_value())
+    if(!is_admitted(chain))
     {
-        spdlog::error("praxis: 'manipulator.make_kinematics' was given a chain of {} joints the solver library cannot represent, so no solver is composed", chain.joint_count());
+        spdlog::error("praxis: 'manipulator.make_kinematics' was given a chain of {} joints that is empty or carries a value that is not finite, a home pose that is not a "
+                      "rigid motion or a screw axis that is not of unit length, so no solver is composed",
+                      chain.joint_count());
 
         return unexpected(refusal::degenerate);
     }

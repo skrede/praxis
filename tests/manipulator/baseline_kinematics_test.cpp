@@ -186,9 +186,7 @@ TEST_CASE("a_configuration_the_chain_does_not_have_is_refused_by_every_shape_gua
     CHECK(body_frame.error() == refusal::unsupported_input);
 }
 
-// The four answers below are guarded before the solver library is reached at all: its chain rejects a
-// joint count, an empty axis list and a nonfinite input by throwing, and a slot answers on the refusal
-// channel instead.
+// Each answer reads the joint count against the screw span before it reads any value.
 TEST_CASE("a_joint_vector_the_screw_span_does_not_cover_is_refused_by_every_delegating_answer")
 {
     const screw_chain chain  = planar_arm();
@@ -349,8 +347,7 @@ TEST_CASE("a_home_pose_that_is_not_a_rigid_motion_is_refused_by_both_answers_tha
     REQUIRE_FALSE(unread.has_value());
     CHECK(unread.error() == refusal::degenerate);
 
-    // The body form composes the home pose itself rather than handing it to the solver library, so the
-    // frame it is given is read here or nowhere.
+    // The body form composes the home pose itself, so the frame it is given is read as a frame.
     const expected<transform, refusal> composed = manipulator::body_forward_kinematics(reference_screw, reference_frames, skewed, planar_arm().space_screws, configuration(0.2, -0.4));
     REQUIRE_FALSE(composed.has_value());
     CHECK(composed.error() == refusal::degenerate);
@@ -361,9 +358,8 @@ TEST_CASE("a_home_pose_that_is_not_a_rigid_motion_is_refused_whatever_frame_oper
     const screw_chain chain = planar_arm();
     const joint_vector q    = configuration(0.2, -0.4);
 
-    // The rotation block departs from orthonormality by less than the solver library's own validation
-    // tolerance, so the adjoint construction the body screws are derived through accepts it and this
-    // repository's own membership test is the only thing that reads it.
+    // The rotation block departs from orthonormality by far less than the shear above, and the
+    // membership test at the repository's default tolerance still reads it as no rigid motion.
     transform skewed = transform::Identity();
     skewed(0, 1)     = 1.0e-9;
 
@@ -399,9 +395,7 @@ TEST_CASE("a_home_pose_that_is_not_a_rigid_motion_is_refused_over_a_span_of_no_s
     CHECK(body_frame.error() == refusal::degenerate);
     CHECK(pose.error() == refusal::degenerate);
 
-    // The solver library admits a home pose departing from SE(3) by up to the square root of the
-    // machine epsilon, so a departure this small reaches an answer through the space form unless the
-    // space form reads the pose itself.
+    // A departure from SE(3) this small is read by the space form as well, before any screw is.
     transform narrowly = transform::Identity();
     narrowly(0, 1)     = 1.0e-9;
 
@@ -477,9 +471,9 @@ TEST_CASE("the_iteration_sequence_is_the_one_the_solve_passed_through")
     }
 }
 
-// A chain the solver library cannot represent is one every solve through the holder would fail on, so
-// the factory refuses it rather than handing back a holder that reads as bound.
-TEST_CASE("a_chain_the_solver_library_cannot_represent_is_refused_rather_than_held")
+// A chain every solve through the holder would fail on is refused rather than handed back as a
+// holder that reads as bound.
+TEST_CASE("a_chain_with_no_joints_or_a_screw_off_unit_length_is_refused_rather_than_held")
 {
     screw_axis degenerate;
     degenerate << 0.0, 0.0, 0.5, 0.0, 0.0, 0.0;
@@ -494,6 +488,38 @@ TEST_CASE("a_chain_the_solver_library_cannot_represent_is_refused_rather_than_he
     REQUIRE_FALSE(empty.has_value());
     CHECK(blunted.error() == refusal::degenerate);
     CHECK(empty.error() == refusal::degenerate);
+}
+
+TEST_CASE("a_screw_whose_angular_half_is_off_unit_length_by_more_than_the_default_tolerance_is_refused")
+{
+    const capabilities bindings = manipulator::baseline();
+
+    screw_axis stretched;
+    stretched << 0.0, 0.0, 1.0 + 1.0e-9, 0.0, -upper_arm, 0.0;
+    const screw_axis normalized = stretched / stretched.head<3>().norm();
+
+    screw_chain off_unit                         = planar_arm();
+    off_unit.space_screws[1]                     = stretched;
+    screw_chain on_unit                          = planar_arm();
+    on_unit.space_screws[1]                      = normalized;
+    const expected<kinematics, refusal> refused  = manipulator::make_kinematics(off_unit, bindings.fk, bindings.dk, bindings.ik, reference_screw, reference_frames);
+    const expected<kinematics, refusal> admitted = manipulator::make_kinematics(on_unit, bindings.fk, bindings.dk, bindings.ik, reference_screw, reference_frames);
+
+    REQUIRE_FALSE(refused.has_value());
+    CHECK(refused.error() == refusal::degenerate);
+    CHECK(admitted.has_value());
+}
+
+TEST_CASE("a_chain_whose_home_pose_every_forward_map_refuses_is_refused_rather_than_held")
+{
+    screw_chain sheared = planar_arm();
+    sheared.home(0, 1)  = 1.0e-9;
+
+    const capabilities bindings              = manipulator::baseline();
+    const expected<kinematics, refusal> held = manipulator::make_kinematics(sheared, bindings.fk, bindings.dk, bindings.ik, reference_screw, reference_frames);
+
+    REQUIRE_FALSE(held.has_value());
+    CHECK(held.error() == refusal::degenerate);
 }
 
 // The refusal a chain of uncovered limits earns is fatal, so a caller that receives it bare is told a

@@ -66,7 +66,7 @@ TEST_CASE("a substituted inverse changes the flange pose, which is handed the ag
     REQUIRE((under_substitution - under_the_reference).norm() > 1.0);
 }
 
-TEST_CASE("forward kinematics answers from the solver library whatever a composition binds for the screw exponential", "[seam][routing]")
+TEST_CASE("forward kinematics answers from its own screw exponential whatever a composition binds for it", "[seam][routing]")
 {
     const rigid_motion::capabilities reference = rigid_motion::baseline();
     const rigid_motion::capabilities perturbed = only_the_exponential();

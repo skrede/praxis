@@ -1,6 +1,5 @@
 #include "chain_translation.h"
 
-#include <span>
 #include <limits>
 #include <vector>
 #include <cstddef>
@@ -53,21 +52,6 @@ std::optional<chain_type> to_cartan_chain(const screw_chain &chain)
     auto bounds = to_cartan_bounds(chain.limits, axes.size());
 
     return chain_type(home.value(), std::move(axes), std::move(bounds));
-}
-
-expected<std::vector<screw_axis>, refusal> to_body_screws(const rigid_motion::screw_ops &screw, const transform &m, std::span<const screw_axis> space_screws)
-{
-    const rotation transposed                     = m.block<3, 3>(0, 0).transpose();
-    const expected<adjoint, refusal> inverse_home = screw.adjoint_matrix_from_rotation_position(transposed, -(transposed * m.block<3, 1>(0, 3)));
-    if(!inverse_home)
-        return unexpected(inverse_home.error());
-
-    std::vector<screw_axis> body;
-    body.reserve(space_screws.size());
-    for(const screw_axis &s : space_screws)
-        body.push_back(*inverse_home * s);
-
-    return body;
 }
 
 refusal refusal_from(cartan::chain_failure failure)

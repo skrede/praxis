@@ -69,6 +69,8 @@ praxis_add_module(manipulator
     include/praxis/manipulator/waypoints_configuration.h
     include/praxis/manipulator/world_object_window.h
     src/arm_state.cpp
+    src/baseline/chain_maps.h
+    src/baseline/chain_maps.cpp
     src/baseline/chain_translation.h
     src/baseline/chain_translation.cpp
     src/baseline/capabilities.cpp
