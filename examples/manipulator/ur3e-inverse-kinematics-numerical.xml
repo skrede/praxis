@@ -26,7 +26,7 @@
 
     <!-- No start is named, so the list opens at the spread the joint count answers. A start written
          here is one this document adds to that spread rather than a change to it. -->
-    <ik_branch mode="simulation" figures="true"/>
+    <ik_solutions mode="simulation" figures="true"/>
 
     <ik_iterates start="1" mode="simulation"/>
 

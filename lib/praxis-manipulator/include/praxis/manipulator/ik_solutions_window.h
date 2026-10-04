@@ -1,5 +1,5 @@
-#ifndef HPP_GUARD_PRAXIS_MANIPULATOR_IK_BRANCH_WINDOW_H
-#define HPP_GUARD_PRAXIS_MANIPULATOR_IK_BRANCH_WINDOW_H
+#ifndef HPP_GUARD_PRAXIS_MANIPULATOR_IK_SOLUTIONS_WINDOW_H
+#define HPP_GUARD_PRAXIS_MANIPULATOR_IK_SOLUTIONS_WINDOW_H
 
 #include "praxis/manipulator/types.h"
 #include "praxis/manipulator/arm_state.h"
@@ -29,7 +29,7 @@ namespace praxis::manipulator {
 // The answers one solve found, as a list to pick from rather than as a picture, and the control the
 // solve is asked for through. A solve happens where the learner asks for one and at no other time:
 // moving the target pose or a start changes nothing here until the ask is made.
-class ik_branch_window : public scene::imgui_window, public config::configurable
+class ik_solutions_window : public scene::imgui_window, public config::configurable
 {
 public:
     // What one ask does to the arm, run on the arm's own strand.
@@ -49,10 +49,10 @@ public:
         settings(control_mode chosen = control_mode::simulation, bool chosen_figures = true);
     };
 
-    ik_branch_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, const rigid_motion::frame_ops &injected, std::shared_ptr<edited_pose> edited,
-                     loadable_robot_stencil &target, solve_route asked);
-    ik_branch_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, const rigid_motion::frame_ops &injected, std::shared_ptr<edited_pose> edited,
-                     loadable_robot_stencil &target, solve_route asked, const settings &state, std::string at = std::string());
+    ik_solutions_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, const rigid_motion::frame_ops &injected, std::shared_ptr<edited_pose> edited,
+                        loadable_robot_stencil &target, solve_route asked);
+    ik_solutions_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, const rigid_motion::frame_ops &injected, std::shared_ptr<edited_pose> edited,
+                        loadable_robot_stencil &target, solve_route asked, const settings &state, std::string at = std::string());
 
     settings state() const;
 
@@ -95,7 +95,7 @@ private:
     void relist(const arm_snapshot &seen);
     void tell_figures(const arm_snapshot &seen);
     void move_to(const joint_vector &commanded);
-    void render_branches(const arm_snapshot &seen);
+    void render_solutions(const arm_snapshot &seen);
 };
 
 }

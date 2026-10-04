@@ -23,7 +23,7 @@ void declare_arm_windows(config::declaration &shape)
     manipulator::declare_recording(shape, window_paths::recording);
     manipulator::declare_robot_view(shape, window_paths::robot_view);
     manipulator::declare_ik_seeds(shape, window_paths::ik_seeds);
-    manipulator::declare_ik_branch(shape, window_paths::ik_branch);
+    manipulator::declare_ik_solutions(shape, window_paths::ik_solutions);
     manipulator::declare_ik_iterates(shape, window_paths::ik_iterates);
     manipulator::declare_ik_convergence(shape, window_paths::ik_convergence);
     manipulator::declare_joint_curves(shape, window_paths::joint_curves);
@@ -47,7 +47,7 @@ void read_arm_windows(arm_scenario &read, const config::document &values, std::s
     read.joint_control       = manipulator::read_joint_control(values, window_paths::joint_control);
     read.parameters          = manipulator::read_control_parameters(values, window_paths::parameters);
     read.ik_seeds            = manipulator::read_ik_seeds(values, window_paths::ik_seeds, joints);
-    read.ik_branch           = manipulator::read_ik_branch(values, window_paths::ik_branch);
+    read.ik_solutions        = manipulator::read_ik_solutions(values, window_paths::ik_solutions);
     read.ik_iterates         = manipulator::read_ik_iterates(values, window_paths::ik_iterates);
     read.ik_convergence      = manipulator::read_ik_convergence(values, window_paths::ik_convergence);
     read.joint_curves        = manipulator::read_joint_curves(values, window_paths::joint_curves);

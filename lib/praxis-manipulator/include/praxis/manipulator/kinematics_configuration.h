@@ -2,8 +2,8 @@
 #define HPP_GUARD_PRAXIS_MANIPULATOR_KINEMATICS_CONFIGURATION_H
 
 #include "praxis/manipulator/ik_seed_window.h"
-#include "praxis/manipulator/ik_branch_window.h"
 #include "praxis/manipulator/ik_iterate_window.h"
+#include "praxis/manipulator/ik_solutions_window.h"
 #include "praxis/manipulator/ik_convergence_window.h"
 
 #include "praxis/config/writer.h"
@@ -30,9 +30,9 @@ void declare_ik_seeds(config::declaration &shape, std::string_view at);
 ik_seed_window::settings read_ik_seeds(const config::document &values, std::string_view at, std::size_t joints);
 std::vector<config::edit> write_ik_seeds(const config::document &values, const ik_seed_window::settings &state, std::string_view at);
 
-void declare_ik_branch(config::declaration &shape, std::string_view at);
-ik_branch_window::settings read_ik_branch(const config::document &values, std::string_view at);
-std::vector<config::edit> write_ik_branch(const ik_branch_window::settings &state, std::string_view at);
+void declare_ik_solutions(config::declaration &shape, std::string_view at);
+ik_solutions_window::settings read_ik_solutions(const config::document &values, std::string_view at);
+std::vector<config::edit> write_ik_solutions(const ik_solutions_window::settings &state, std::string_view at);
 
 // The start the table is about is carried counted from one, as the list of starts is, so a document
 // and a reader of it name the same start. A value naming no row leaves the choice where the

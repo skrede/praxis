@@ -9,15 +9,15 @@
 #include "praxis/manipulator/tool_window.h"
 #include "praxis/manipulator/capabilities.h"
 #include "praxis/manipulator/ik_seed_window.h"
-#include "praxis/manipulator/joint_curve_window.h"
 #include "praxis/manipulator/tool_jog_window.h"
-#include "praxis/manipulator/ik_branch_window.h"
 #include "praxis/manipulator/robot_controller.h"
 #include "praxis/manipulator/screw_jog_window.h"
 #include "praxis/manipulator/ik_iterate_window.h"
 #include "praxis/manipulator/robot_view_window.h"
 #include "praxis/manipulator/task_space_window.h"
 #include "praxis/manipulator/edited_list_window.h"
+#include "praxis/manipulator/joint_curve_window.h"
+#include "praxis/manipulator/ik_solutions_window.h"
 #include "praxis/manipulator/world_object_window.h"
 #include "praxis/manipulator/joint_control_window.h"
 #include "praxis/manipulator/ik_convergence_window.h"
@@ -52,13 +52,13 @@ struct window_paths
     static constexpr const char *tool                = "tool";
     static constexpr const char *ik_seeds            = "ik_seeds";
     static constexpr const char *tool_jog            = "tool_jog";
-    static constexpr const char *ik_branch           = "ik_branch";
     static constexpr const char *recording           = "recording";
     static constexpr const char *screw_jog           = "screw_jog";
     static constexpr const char *parameters          = "parameters";
     static constexpr const char *robot_view          = "robot_view";
     static constexpr const char *task_space          = "task_space";
     static constexpr const char *ik_iterates         = "ik_iterates";
+    static constexpr const char *ik_solutions        = "ik_solutions";
     static constexpr const char *joint_curves        = "joint_curves";
     static constexpr const char *world_object        = "world_object";
     static constexpr const char *joint_control       = "joint_control";
@@ -75,8 +75,8 @@ struct window_paths
 
     // Every path above, in the order they stand, so a caller checking that each of them is declared
     // and read walks a table instead of a list somebody kept in their head.
-    static constexpr std::array every{tool,           ik_seeds,        tool_jog,        ik_branch,       recording,          screw_jog,          parameters,
-                                      robot_view,     task_space,      ik_iterates,     world_object,    joint_curves,       joint_control,      ik_convergence,
+    static constexpr std::array every{tool,           ik_seeds,        tool_jog,        recording,       screw_jog,          parameters,         robot_view,
+                                      task_space,     ik_iterates,     ik_solutions,    world_object,    joint_curves,       joint_control,      ik_convergence,
                                       pose_waypoints, joint_waypoints, path_comparison, render_controls, trajectory_preview, velocity_kinematics};
 };
 
@@ -101,9 +101,9 @@ struct arm_scenario
     manipulator::tool_jog_window::settings tool_jog;
     manipulator::ik_seed_window::settings ik_seeds;
     manipulator::screw_jog_window::settings screw_jog;
-    manipulator::ik_branch_window::settings ik_branch;
     manipulator::robot_view_window::settings robot_view;
     manipulator::task_space_window::settings task_space;
+    manipulator::ik_solutions_window::settings ik_solutions;
     manipulator::world_object_window::settings world_object;
     manipulator::ik_iterate_window::settings ik_iterates;
     manipulator::joint_curve_window::settings joint_curves;

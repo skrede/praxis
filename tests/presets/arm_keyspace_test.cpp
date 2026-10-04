@@ -7,6 +7,7 @@
 #include "praxis/manipulator/control_mode.h"
 #include "praxis/manipulator/path_comparison_window.h"
 
+#include "praxis/config/error.h"
 #include "praxis/config/store.h"
 #include "praxis/config/document.h"
 #include "praxis/config/declaration.h"
@@ -31,12 +32,18 @@ namespace {
 constexpr std::string_view a_solving_arm = "<arm>\n"
                                            "    <initial><joint index=\"0\" degrees=\"0\"/><joint index=\"1\" degrees=\"0\"/><joint index=\"2\" degrees=\"0\"/></initial>\n"
                                            "    <ik_seeds><start index=\"1\" joints=\"0.25 -0.5 0.75\"/></ik_seeds>\n"
-                                           "    <ik_branch mode=\"preview\" figures=\"false\"/><ik_iterates start=\"3\" mode=\"preview\"/>\n"
+                                           "    <ik_solutions mode=\"preview\" figures=\"false\"/><ik_iterates start=\"3\" mode=\"preview\"/>\n"
                                            "    <ik_convergence angular=\"false\" linear=\"false\"/><joint_curves hidden=\"1 3\"/>\n"
                                            "    <trajectory_preview parameter=\"false\" rate=\"false\" rate_change=\"false\"/>\n"
                                            "    <path_comparison first=\"0.25 -0.5 0.75\" second=\"-0.25 0.5 -0.75\" joint_space=\"false\" "
                                            "decoupled=\"false\" screw=\"false\" played=\"decoupled\"/>\n"
                                            "</arm>\n";
+
+// The Solutions window's values under an element the keyspace does not declare, and none under the
+// one it does.
+constexpr std::string_view an_undeclared_element = "<arm>\n"
+                                                   "    <ik_branch mode=\"preview\" figures=\"false\"/>\n"
+                                                   "</arm>\n";
 
 std::filesystem::path scratch(const char *named)
 {
@@ -104,12 +111,23 @@ TEST_CASE("an arm's list of starts is read back out from under the path the seed
     CHECK(read.ik_seeds.seeds.front()[2] == 0.75);
 }
 
-TEST_CASE("an arm's branch list is read back out from under the path that window keeps it at", "[presets][documents]")
+TEST_CASE("an arm's solutions window is read back out from under the path that window keeps it at", "[presets][documents]")
 {
-    const presets::arm_scenario read = opened("a-branch-list", a_solving_arm);
+    const presets::arm_scenario read = opened("a-solutions-window", a_solving_arm);
 
-    CHECK(read.ik_branch.mode == manipulator::control_mode::preview);
-    CHECK_FALSE(read.ik_branch.figures);
+    CHECK(read.ik_solutions.mode == manipulator::control_mode::preview);
+    CHECK_FALSE(read.ik_solutions.figures);
+}
+
+TEST_CASE("a document carrying an element the arm keyspace does not declare is refused whole, and every window opens at its fallbacks", "[presets][documents]")
+{
+    const config::outcome answered = loaded(scratch("an-undeclared-element"), an_undeclared_element);
+    REQUIRE(answered.failure.has_value());
+    CHECK(answered.failure->code == config::error_code::rejected_content);
+
+    const presets::arm_scenario read = presets::read_arm(answered.values, {});
+    CHECK(read.ik_solutions.mode == manipulator::control_mode::simulation);
+    CHECK(read.ik_solutions.figures);
 }
 
 TEST_CASE("an arm's iterate table is read back out from under the path that window keeps it at", "[presets][documents]")

@@ -12,7 +12,7 @@ namespace praxis::manipulator {
 
 namespace {
 
-struct branch_names
+struct solution_names
 {
     static constexpr std::string_view figures = "figures";
 };
@@ -39,26 +39,26 @@ std::size_t counted_start(const config::document &values, const std::string &key
 
 }
 
-void declare_ik_branch(config::declaration &shape, std::string_view at)
+void declare_ik_solutions(config::declaration &shape, std::string_view at)
 {
-    const ik_branch_window::settings was;
+    const ik_solutions_window::settings was;
 
     shape.group(std::string(at));
-    shape.field(keys::under(at, branch_names::figures), config::field_kind::flag, was.figures ? "true" : "false");
+    shape.field(keys::under(at, solution_names::figures), config::field_kind::flag, was.figures ? "true" : "false");
     keys::declare_mode(shape, at, was.mode);
 }
 
-ik_branch_window::settings read_ik_branch(const config::document &values, std::string_view at)
+ik_solutions_window::settings read_ik_solutions(const config::document &values, std::string_view at)
 {
-    const ik_branch_window::settings was;
+    const ik_solutions_window::settings was;
 
-    return ik_branch_window::settings{keys::read_mode(values, at, was.mode), keys::flag_at(values, keys::under(at, branch_names::figures), was.figures)};
+    return ik_solutions_window::settings{keys::read_mode(values, at, was.mode), keys::flag_at(values, keys::under(at, solution_names::figures), was.figures)};
 }
 
-std::vector<config::edit> write_ik_branch(const ik_branch_window::settings &state, std::string_view at)
+std::vector<config::edit> write_ik_solutions(const ik_solutions_window::settings &state, std::string_view at)
 {
     return std::vector<config::edit>{
-            config::edit{keys::under(at, branch_names::figures), state.figures ? "true" : "false"},
+            config::edit{keys::under(at, solution_names::figures), state.figures ? "true" : "false"},
             keys::written_mode(state.mode, at),
     };
 }

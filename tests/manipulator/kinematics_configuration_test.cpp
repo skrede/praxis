@@ -31,7 +31,7 @@ namespace {
 constexpr std::size_t joints = 2u;
 
 constexpr std::string_view seeds_at       = "machine/ik_seeds";
-constexpr std::string_view branch_at      = "machine/ik_branch";
+constexpr std::string_view solutions_at   = "machine/ik_solutions";
 constexpr std::string_view iterates_at    = "machine/ik_iterates";
 constexpr std::string_view convergence_at = "machine/ik_convergence";
 
@@ -44,7 +44,7 @@ config::declaration described()
     config::declaration shape("probe");
     shape.group("machine");
     declare_ik_seeds(shape, seeds_at);
-    declare_ik_branch(shape, branch_at);
+    declare_ik_solutions(shape, solutions_at);
     declare_ik_iterates(shape, iterates_at);
     declare_ik_convergence(shape, convergence_at);
 
@@ -149,9 +149,9 @@ TEST_CASE("a document declaring nothing yields both windows at the values their 
 {
     const config::document carried = nothing_carried("absent.xml");
 
-    const ik_seed_window::settings starts  = read_ik_seeds(carried, seeds_at, joints);
-    const ik_branch_window::settings shown = read_ik_branch(carried, branch_at);
-    const ik_branch_window::settings was;
+    const ik_seed_window::settings starts     = read_ik_seeds(carried, seeds_at, joints);
+    const ik_solutions_window::settings shown = read_ik_solutions(carried, solutions_at);
+    const ik_solutions_window::settings was;
 
     CHECK(starts.seeds.empty());
     CHECK(shown.mode == was.mode);
@@ -186,13 +186,13 @@ TEST_CASE("a list of starts written through the declared keys reads back as it w
         stands_at(read.seeds[start], written.seeds[start]);
 }
 
-TEST_CASE("every branch list field written through the declared keys reads back as it was set", "[manipulator][configuration]")
+TEST_CASE("every solutions window field written through the declared keys reads back as it was set", "[manipulator][configuration]")
 {
-    const config::location at                = cleared("branch.xml");
-    const ik_branch_window::settings written = ik_branch_window::settings{control_mode::preview, false};
-    const config::document carried           = saved_and_reloaded(at, write_ik_branch(written, branch_at));
+    const config::location at                   = cleared("solutions.xml");
+    const ik_solutions_window::settings written = ik_solutions_window::settings{control_mode::preview, false};
+    const config::document carried              = saved_and_reloaded(at, write_ik_solutions(written, solutions_at));
 
-    const ik_branch_window::settings read = read_ik_branch(carried, branch_at);
+    const ik_solutions_window::settings read = read_ik_solutions(carried, solutions_at);
 
     CHECK(read.mode == control_mode::preview);
     CHECK(read.figures == false);
@@ -200,18 +200,18 @@ TEST_CASE("every branch list field written through the declared keys reads back 
 
 TEST_CASE("settings equal to what a document already carries offer no edit at all", "[manipulator][configuration]")
 {
-    const config::location at              = cleared("unmoved.xml");
-    const ik_seed_window::settings starts  = three_starts();
-    const ik_branch_window::settings shown = ik_branch_window::settings{control_mode::preview, false};
+    const config::location at                 = cleared("unmoved.xml");
+    const ik_seed_window::settings starts     = three_starts();
+    const ik_solutions_window::settings shown = ik_solutions_window::settings{control_mode::preview, false};
 
     std::vector<config::edit> both = write_ik_seeds(loaded(at), starts, seeds_at);
-    for(const config::edit &change : write_ik_branch(shown, branch_at))
+    for(const config::edit &change : write_ik_solutions(shown, solutions_at))
         both.push_back(change);
 
     const config::document carried = saved_and_reloaded(at, both);
 
     CHECK(config::unsaved_edits(carried, write_ik_seeds(carried, starts, seeds_at)).empty());
-    CHECK(config::unsaved_edits(carried, write_ik_branch(shown, branch_at)).empty());
+    CHECK(config::unsaved_edits(carried, write_ik_solutions(shown, solutions_at)).empty());
 }
 
 TEST_CASE("a collection written twice appends once, keyed by the leaf naming the row", "[manipulator][configuration]")
@@ -335,7 +335,7 @@ TEST_CASE("settings equal to what a document carries offer no edit for the itera
 
 TEST_CASE("the four key groups declare under distinct keys, so none of them reads a key another declares", "[manipulator][configuration]")
 {
-    const std::vector<std::vector<std::string>> groups{declared_by(&declare_ik_seeds, seeds_at), declared_by(&declare_ik_branch, branch_at),
+    const std::vector<std::vector<std::string>> groups{declared_by(&declare_ik_seeds, seeds_at), declared_by(&declare_ik_solutions, solutions_at),
                                                        declared_by(&declare_ik_iterates, iterates_at), declared_by(&declare_ik_convergence, convergence_at)};
 
     for(const std::vector<std::string> &group : groups)

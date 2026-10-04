@@ -1,5 +1,5 @@
 #include "praxis/manipulator/option_widgets.h"
-#include "praxis/manipulator/ik_branch_window.h"
+#include "praxis/manipulator/ik_solutions_window.h"
 #include "praxis/manipulator/kinematics_configuration.h"
 
 #include "praxis/extension/held_handle.h"
@@ -38,20 +38,20 @@ bool same_configurations(const std::vector<joint_vector> &held, const std::vecto
 
 }
 
-ik_branch_window::settings::settings(control_mode chosen, bool chosen_figures)
+ik_solutions_window::settings::settings(control_mode chosen, bool chosen_figures)
         : mode(chosen)
         , figures(chosen_figures)
 {
 }
 
-ik_branch_window::ik_branch_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, const rigid_motion::frame_ops &injected, std::shared_ptr<edited_pose> edited,
-                                   loadable_robot_stencil &target, solve_route asked)
-        : ik_branch_window(std::move(name), std::move(seen), std::move(arm), injected, std::move(edited), target, std::move(asked), settings{})
+ik_solutions_window::ik_solutions_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, const rigid_motion::frame_ops &injected, std::shared_ptr<edited_pose> edited,
+                                         loadable_robot_stencil &target, solve_route asked)
+        : ik_solutions_window(std::move(name), std::move(seen), std::move(arm), injected, std::move(edited), target, std::move(asked), settings{})
 {
 }
 
-ik_branch_window::ik_branch_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, const rigid_motion::frame_ops &injected, std::shared_ptr<edited_pose> edited,
-                                   loadable_robot_stencil &target, solve_route asked, const settings &state, std::string at)
+ik_solutions_window::ik_solutions_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, const rigid_motion::frame_ops &injected, std::shared_ptr<edited_pose> edited,
+                                         loadable_robot_stencil &target, solve_route asked, const settings &state, std::string at)
         : imgui_window(std::move(name))
         , m_figures(state.figures)
         , m_seen(seen)
@@ -64,31 +64,31 @@ ik_branch_window::ik_branch_window(std::string name, arm_reader seen, std::weak_
         , m_edited(std::move(edited))
         , m_control_mode(state.mode, mode_options, control_mode_labels())
 {
-    static_cast<void>(held(seen.read(), "the branch list window", "published arm state"));
-    static_cast<void>(held(m_edited, "the branch list window", "shared pose"));
+    static_cast<void>(held(seen.read(), "the solutions window", "published arm state"));
+    static_cast<void>(held(m_edited, "the solutions window", "shared pose"));
 }
 
-ik_branch_window::settings ik_branch_window::state() const
+ik_solutions_window::settings ik_solutions_window::state() const
 {
     return settings{m_control_mode.value(), m_figures};
 }
 
-std::optional<std::size_t> ik_branch_window::selected() const
+std::optional<std::size_t> ik_solutions_window::selected() const
 {
     return m_entries.empty() ? std::optional<std::size_t>() : std::optional<std::size_t>(m_selected);
 }
 
-std::vector<config::edit> ik_branch_window::settings_edits(const config::document &carried) const
+std::vector<config::edit> ik_solutions_window::settings_edits(const config::document &carried) const
 {
-    return config::unsaved_edits(carried, write_ik_branch(state(), m_settings_at));
+    return config::unsaved_edits(carried, write_ik_solutions(state(), m_settings_at));
 }
 
-void ik_branch_window::initialize()
+void ik_solutions_window::initialize()
 {
     m_stencil.set_solution_figures_shown(m_figures);
 }
 
-void ik_branch_window::render()
+void ik_solutions_window::render()
 {
     const std::shared_ptr<const arm_snapshot> published = m_seen.read();
 
@@ -96,11 +96,11 @@ void ik_branch_window::render()
     if(published == nullptr)
         ImGui::TextUnformatted(unpublished_arm);
     else
-        render_branches(*published);
+        render_solutions(*published);
     ImGui::End();
 }
 
-void ik_branch_window::render_branches(const arm_snapshot &seen)
+void ik_solutions_window::render_solutions(const arm_snapshot &seen)
 {
     relist(seen);
     tell_figures(seen);
@@ -118,7 +118,7 @@ void ik_branch_window::render_branches(const arm_snapshot &seen)
         ask();
 }
 
-void ik_branch_window::relist(const arm_snapshot &seen)
+void ik_solutions_window::relist(const arm_snapshot &seen)
 {
     if(same_configurations(m_listed, seen.solutions))
         return;
@@ -126,12 +126,12 @@ void ik_branch_window::relist(const arm_snapshot &seen)
     m_listed = seen.solutions;
     m_entries.clear();
     for(std::size_t which = 0; which < m_listed.size(); ++which)
-        m_entries.push_back("b" + std::to_string(which + 1u));
+        m_entries.push_back("s" + std::to_string(which + 1u));
 
     m_selected = solution_at(seen).value_or(0u);
 }
 
-void ik_branch_window::tell_figures(const arm_snapshot &seen)
+void ik_solutions_window::tell_figures(const arm_snapshot &seen)
 {
     const std::optional<std::size_t> standing = solution_at(seen);
 
@@ -147,7 +147,7 @@ void ik_branch_window::tell_figures(const arm_snapshot &seen)
     static_cast<void>(m_stencil.set_solution_figures(m_beside));
 }
 
-void ik_branch_window::ask()
+void ik_solutions_window::ask()
 {
     if(!m_asked)
         return;
@@ -159,7 +159,7 @@ void ik_branch_window::ask()
     command(m_arm, [asking = std::move(asking)](robot_controller &control, scene_robot &) { asking(control); });
 }
 
-void ik_branch_window::move_to(const joint_vector &commanded)
+void ik_solutions_window::move_to(const joint_vector &commanded)
 {
     const bool previewing = m_control_mode == control_mode::preview;
 

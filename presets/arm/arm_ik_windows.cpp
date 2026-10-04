@@ -47,11 +47,11 @@ opened_target open_target(const manipulator::arm_window_inputs &built, const arm
              std::make_shared<manipulator::task_space_window>("Target pose", built.seen, built.arm, built.frames, pose, state.task_space, window_paths::task_space, tool_pose_path)}};
 }
 
-std::shared_ptr<scene::imgui_window> open_branches(const manipulator::arm_window_inputs &built, const arm_scenario &state, std::shared_ptr<manipulator::edited_pose> pose,
-                                                   manipulator::ik_branch_window::solve_route asked)
+std::shared_ptr<scene::imgui_window> open_solutions(const manipulator::arm_window_inputs &built, const arm_scenario &state, std::shared_ptr<manipulator::edited_pose> pose,
+                                                    manipulator::ik_solutions_window::solve_route asked)
 {
-    return std::make_shared<manipulator::ik_branch_window>("Solutions", built.seen, built.arm, built.frames, std::move(pose), built.stencil, std::move(asked), state.ik_branch,
-                                                           window_paths::ik_branch);
+    return std::make_shared<manipulator::ik_solutions_window>("Solutions", built.seen, built.arm, built.frames, std::move(pose), built.stencil, std::move(asked), state.ik_solutions,
+                                                              window_paths::ik_solutions);
 }
 
 std::shared_ptr<scene::imgui_window> open_view(const manipulator::arm_window_inputs &built, const arm_scenario &state)

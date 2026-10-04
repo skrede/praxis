@@ -1,7 +1,7 @@
 #include "window_stage.h"
 #include "drawn_chain.h"
 
-#include "praxis/manipulator/ik_branch_window.h"
+#include "praxis/manipulator/ik_solutions_window.h"
 
 #include "praxis/scheduler/scheduler.h"
 
@@ -120,29 +120,29 @@ struct stage
 
 // A route that says what it was asked and what the command it answered did, and nothing else: no
 // solver is named here, which is the composition's part and not the window's.
-ik_branch_window::solve_route counting(asked_of &into)
+ik_solutions_window::solve_route counting(asked_of &into)
 {
     return [&into](const transform &target)
     {
         into.routed += 1u;
         into.target = target;
 
-        return ik_branch_window::solve_command([&into](robot_controller &) { into.ran += 1u; });
+        return ik_solutions_window::solve_command([&into](robot_controller &) { into.ran += 1u; });
     };
 }
 
 // A route the composition wired to nothing, which is a slot no binding was given.
-ik_branch_window::solve_route refusing(asked_of &into)
+ik_solutions_window::solve_route refusing(asked_of &into)
 {
     return [&into](const transform &)
     {
         into.routed += 1u;
 
-        return ik_branch_window::solve_command();
+        return ik_solutions_window::solve_command();
     };
 }
 
-drawing over_alone(ik_branch_window &panel)
+drawing over_alone(ik_solutions_window &panel)
 {
     return [&panel] { panel.render(); };
 }
@@ -166,22 +166,23 @@ void take_entry(imgui_frame &frames, const drawing &draw, std::size_t below)
 
 }
 
-TEST_CASE("a branch list window built over an arm that has published nothing, or over no pose, refuses and names both ends", "[manipulator][branches]")
+TEST_CASE("a solutions window built over an arm that has published nothing, or over no pose, refuses and names both ends", "[manipulator][solutions]")
 {
     stage headless;
     arm_publisher unheld;
 
-    REQUIRE_THROWS_MATCHES(ik_branch_window(panel_title, unheld.reader(), std::weak_ptr<owned_arm>(), reference, headless.held, headless.shown, ik_branch_window::solve_route()),
-                           std::invalid_argument, Message("praxis: the branch list window was given no published arm state to hold"));
-    REQUIRE_THROWS_MATCHES(ik_branch_window(panel_title, headless.published->reader(), std::weak_ptr<owned_arm>(), reference, nullptr, headless.shown, ik_branch_window::solve_route()),
-                           std::invalid_argument, Message("praxis: the branch list window was given no shared pose to hold"));
+    REQUIRE_THROWS_MATCHES(ik_solutions_window(panel_title, unheld.reader(), std::weak_ptr<owned_arm>(), reference, headless.held, headless.shown, ik_solutions_window::solve_route()),
+                           std::invalid_argument, Message("praxis: the solutions window was given no published arm state to hold"));
+    REQUIRE_THROWS_MATCHES(
+            ik_solutions_window(panel_title, headless.published->reader(), std::weak_ptr<owned_arm>(), reference, nullptr, headless.shown, ik_solutions_window::solve_route()),
+            std::invalid_argument, Message("praxis: the solutions window was given no shared pose to hold"));
 }
 
-TEST_CASE("asking for a solve runs one command on the arm's strand and the window makes no solve of its own", "[manipulator][branches]")
+TEST_CASE("asking for a solve runs one command on the arm's strand and the window makes no solve of its own", "[manipulator][solutions]")
 {
     stage headless;
     asked_of seen;
-    ik_branch_window panel(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(seen));
+    ik_solutions_window panel(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(seen));
 
     imgui_frame frames;
     const drawing draw = over(panel);
@@ -193,11 +194,11 @@ TEST_CASE("asking for a solve runs one command on the arm's strand and the windo
     CHECK(seen.ran == 1u);
 }
 
-TEST_CASE("moving the target pose or drawing the panel again sends no command at all", "[manipulator][branches]")
+TEST_CASE("moving the target pose or drawing the panel again sends no command at all", "[manipulator][solutions]")
 {
     stage headless;
     asked_of seen;
-    ik_branch_window panel(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(seen));
+    ik_solutions_window panel(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(seen));
 
     imgui_frame frames;
     const drawing draw = over(panel);
@@ -212,12 +213,12 @@ TEST_CASE("moving the target pose or drawing the panel again sends no command at
     CHECK(seen.ran == 0u);
 }
 
-TEST_CASE("the pose an ask carries is the pose the shared target composes", "[manipulator][branches]")
+TEST_CASE("the pose an ask carries is the pose the shared target composes", "[manipulator][solutions]")
 {
     stage headless;
     asked_of seen;
     headless.held->position = Eigen::Vector3f(0.2f, -0.3f, 0.4f);
-    ik_branch_window panel(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(seen));
+    ik_solutions_window panel(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(seen));
 
     imgui_frame frames;
     const drawing draw = over(panel);
@@ -229,11 +230,11 @@ TEST_CASE("the pose an ask carries is the pose the shared target composes", "[ma
     CHECK(seen.target.isApprox(pose_matrix(*headless.held, reference)));
 }
 
-TEST_CASE("after a solve the list names one entry per distinct configuration and opens on the one the arm stands at", "[manipulator][branches]")
+TEST_CASE("after a solve the list names one entry per distinct configuration and opens on the one the arm stands at", "[manipulator][solutions]")
 {
     stage headless;
     asked_of seen;
-    ik_branch_window panel(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(seen));
+    ik_solutions_window panel(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(seen));
 
     headless.publish(standing_at(configuration(0.0, 0.0), three_postures()));
     imgui_frame frames;
@@ -243,11 +244,11 @@ TEST_CASE("after a solve the list names one entry per distinct configuration and
     CHECK(*panel.selected() == 1u);
 }
 
-TEST_CASE("the figures told are every distinct configuration but the one the arm stands at", "[manipulator][branches]")
+TEST_CASE("the figures told are every distinct configuration but the one the arm stands at", "[manipulator][solutions]")
 {
     stage headless;
     asked_of seen;
-    ik_branch_window panel(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(seen));
+    ik_solutions_window panel(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(seen));
 
     headless.publish(standing_at(configuration(0.0, 0.0), three_postures()));
     imgui_frame frames;
@@ -259,12 +260,12 @@ TEST_CASE("the figures told are every distinct configuration but the one the arm
     CHECK(headless.figure(2) == nullptr);
 }
 
-TEST_CASE("picking another entry moves the arm to that configuration and leaves the list as it stood", "[manipulator][branches]")
+TEST_CASE("picking another entry moves the arm to that configuration and leaves the list as it stood", "[manipulator][solutions]")
 {
     stage headless;
     asked_of seen;
-    ik_branch_window panel(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(seen),
-                           ik_branch_window::settings{control_mode::preview, true});
+    ik_solutions_window panel(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(seen),
+                              ik_solutions_window::settings{control_mode::preview, true});
 
     headless.publish(standing_at(configuration(0.0, 0.0), three_postures()));
     imgui_frame frames;
@@ -283,11 +284,11 @@ TEST_CASE("picking another entry moves the arm to that configuration and leaves 
     CHECK(after->joints.isApprox(configuration(2.0, 0.0)));
 }
 
-TEST_CASE("a publication carrying no configuration leaves the list empty and says so in place of a list", "[manipulator][branches]")
+TEST_CASE("a publication carrying no configuration leaves the list empty and says so in place of a list", "[manipulator][solutions]")
 {
     stage headless;
     asked_of seen;
-    ik_branch_window panel(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(seen));
+    ik_solutions_window panel(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(seen));
 
     imgui_frame frames;
     frames.draw(over(panel));
@@ -296,11 +297,11 @@ TEST_CASE("a publication carrying no configuration leaves the list empty and say
     CHECK(headless.figure(0) == nullptr);
 }
 
-TEST_CASE("a slot the composition wired to nothing leaves the window open and the arm where it was", "[manipulator][branches]")
+TEST_CASE("a slot the composition wired to nothing leaves the window open and the arm where it was", "[manipulator][solutions]")
 {
     stage headless;
     asked_of seen;
-    ik_branch_window panel(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, refusing(seen));
+    ik_solutions_window panel(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, refusing(seen));
 
     imgui_frame frames;
     const drawing draw = over(panel);
@@ -317,13 +318,13 @@ TEST_CASE("a slot the composition wired to nothing leaves the window open and th
     CHECK_FALSE(panel.selected().has_value());
 }
 
-TEST_CASE("an ask goes through the route the window was handed and reaches no other window's", "[manipulator][branches]")
+TEST_CASE("an ask goes through the route the window was handed and reaches no other window's", "[manipulator][solutions]")
 {
     stage headless;
     asked_of over_starts;
     asked_of beside;
-    ik_branch_window standing_beside(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(beside));
-    ik_branch_window asked(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(over_starts));
+    ik_solutions_window standing_beside(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(beside));
+    ik_solutions_window asked(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(over_starts));
 
     imgui_frame frames;
     const drawing draw = over(asked);
@@ -336,15 +337,15 @@ TEST_CASE("an ask goes through the route the window was handed and reaches no ot
     CHECK(over_starts.ran == 1u);
 }
 
-TEST_CASE("a branch list window no key path was named for offers nothing", "[manipulator][branches]")
+TEST_CASE("a solutions window no key path was named for offers nothing", "[manipulator][solutions]")
 {
     stage headless;
     asked_of seen;
-    ik_branch_window unnamed(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(seen));
-    ik_branch_window named(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(seen), ik_branch_window::settings{},
-                           "machine/ik_branch");
+    ik_solutions_window unnamed(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(seen));
+    ik_solutions_window named(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(seen), ik_solutions_window::settings{},
+                              "machine/ik_solutions");
 
     CHECK(unnamed.as_configurable() == nullptr);
     CHECK(named.as_configurable() == &named);
-    CHECK(named.settings_path() == "machine/ik_branch");
+    CHECK(named.settings_path() == "machine/ik_solutions");
 }

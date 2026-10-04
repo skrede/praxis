@@ -620,42 +620,6 @@ lib/praxis-manipulator/include/praxis/manipulator/evaluation.h	evaluation_views	
 lib/praxis-manipulator/include/praxis/manipulator/evaluation.h	evaluation_views	prototype	(capabilities &&,const capabilities &)	typename:std::array<evaluation::evaluation_view,7>
 lib/praxis-manipulator/include/praxis/manipulator/evaluation.h	evaluation_views	prototype	(const capabilities &,capabilities &&)	typename:std::array<evaluation::evaluation_view,7>
 lib/praxis-manipulator/include/praxis/manipulator/evaluation.h	evaluation_views	prototype	(capabilities &&,capabilities &&)	typename:std::array<evaluation::evaluation_view,7>
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	manipulator	namespace	-	-
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	praxis	namespace	-	-
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	ik_branch_window	class	-	-
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	solve_command	typedef	-	-
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	solve_route	typedef	-	-
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	settings	struct	-	-
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	mode	member	-	typename:control_mode
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	figures	member	-	typename:bool
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	settings	prototype	(control_mode chosen=control_mode::simulation,bool chosen_figures=true)	-
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	ik_branch_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,const rigid_motion::frame_ops & injected,std::shared_ptr<edited_pose> edited,loadable_robot_stencil & target,solve_route asked)	-
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	ik_branch_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,const rigid_motion::frame_ops & injected,std::shared_ptr<edited_pose> edited,loadable_robot_stencil & target,solve_route asked,const settings & state,std::string at=std::string ())	-
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	state	prototype	() const	typename:settings
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	selected	prototype	() const	typename:std::optional<std::size_t>
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	render	prototype	()	typename:void
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	initialize	prototype	()	typename:void
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	settings_path	function	() const	typename:std::string_view
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	settings_edits	prototype	(const config::document & carried) const	typename:std::vector<config::edit>
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	as_configurable	function	() const	typename:const config::configurable *
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	m_figures	member	-	typename:bool
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	m_seen	member	-	typename:arm_reader
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	m_asked	member	-	typename:solve_route
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	m_selected	member	-	typename:std::size_t
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	m_settings_at	member	-	typename:std::string
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	m_arm	member	-	typename:std::weak_ptr<owned_arm>
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	m_frame	member	-	typename:rigid_motion::frame_ops
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	m_stencil	member	-	typename:loadable_robot_stencil &
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	m_beside	member	-	typename:std::vector<joint_vector>
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	m_listed	member	-	typename:std::vector<joint_vector>
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	m_entries	member	-	typename:std::vector<std::string>
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	m_edited	member	-	typename:std::shared_ptr<edited_pose>
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	m_control_mode	member	-	typename:option_cycle<control_mode,2>
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	ask	prototype	()	typename:void
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	relist	prototype	(const arm_snapshot & seen)	typename:void
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	tell_figures	prototype	(const arm_snapshot & seen)	typename:void
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	move_to	prototype	(const joint_vector & commanded)	typename:void
-lib/praxis-manipulator/include/praxis/manipulator/ik_branch_window.h	render_branches	prototype	(const arm_snapshot & seen)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/ik_convergence_window.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/ik_convergence_window.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/ik_convergence_window.h	ik_convergence_window	class	-	-
@@ -729,6 +693,42 @@ lib/praxis-manipulator/include/praxis/manipulator/ik_seed_window.h	append	protot
 lib/praxis-manipulator/include/praxis/manipulator/ik_seed_window.h	render_seeds	prototype	(std::size_t joints)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/ik_seed_window.h	render_row	prototype	(std::size_t row)	typename:row_edit
 lib/praxis-manipulator/include/praxis/manipulator/ik_seed_window.h	accept	prototype	(const joint_vector & seed,std::size_t row,std::size_t joints)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	manipulator	namespace	-	-
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	praxis	namespace	-	-
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	ik_solutions_window	class	-	-
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	solve_command	typedef	-	-
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	solve_route	typedef	-	-
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	settings	struct	-	-
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	mode	member	-	typename:control_mode
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	figures	member	-	typename:bool
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	settings	prototype	(control_mode chosen=control_mode::simulation,bool chosen_figures=true)	-
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	ik_solutions_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,const rigid_motion::frame_ops & injected,std::shared_ptr<edited_pose> edited,loadable_robot_stencil & target,solve_route asked)	-
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	ik_solutions_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,const rigid_motion::frame_ops & injected,std::shared_ptr<edited_pose> edited,loadable_robot_stencil & target,solve_route asked,const settings & state,std::string at=std::string ())	-
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	state	prototype	() const	typename:settings
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	selected	prototype	() const	typename:std::optional<std::size_t>
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	render	prototype	()	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	initialize	prototype	()	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	settings_path	function	() const	typename:std::string_view
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	settings_edits	prototype	(const config::document & carried) const	typename:std::vector<config::edit>
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	as_configurable	function	() const	typename:const config::configurable *
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	m_figures	member	-	typename:bool
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	m_seen	member	-	typename:arm_reader
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	m_asked	member	-	typename:solve_route
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	m_selected	member	-	typename:std::size_t
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	m_settings_at	member	-	typename:std::string
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	m_arm	member	-	typename:std::weak_ptr<owned_arm>
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	m_frame	member	-	typename:rigid_motion::frame_ops
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	m_stencil	member	-	typename:loadable_robot_stencil &
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	m_beside	member	-	typename:std::vector<joint_vector>
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	m_listed	member	-	typename:std::vector<joint_vector>
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	m_entries	member	-	typename:std::vector<std::string>
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	m_edited	member	-	typename:std::shared_ptr<edited_pose>
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	m_control_mode	member	-	typename:option_cycle<control_mode,2>
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	ask	prototype	()	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	relist	prototype	(const arm_snapshot & seen)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	tell_figures	prototype	(const arm_snapshot & seen)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	move_to	prototype	(const joint_vector & commanded)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/ik_solutions_window.h	render_solutions	prototype	(const arm_snapshot & seen)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/joint_control_window.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/joint_control_window.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/joint_control_window.h	joint_control_window	class	-	-
@@ -855,9 +855,9 @@ lib/praxis-manipulator/include/praxis/manipulator/kinematics_configuration.h	pra
 lib/praxis-manipulator/include/praxis/manipulator/kinematics_configuration.h	declare_ik_seeds	prototype	(config::declaration & shape,std::string_view at)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/kinematics_configuration.h	read_ik_seeds	prototype	(const config::document & values,std::string_view at,std::size_t joints)	typename:ik_seed_window::settings
 lib/praxis-manipulator/include/praxis/manipulator/kinematics_configuration.h	write_ik_seeds	prototype	(const config::document & values,const ik_seed_window::settings & state,std::string_view at)	typename:std::vector<config::edit>
-lib/praxis-manipulator/include/praxis/manipulator/kinematics_configuration.h	declare_ik_branch	prototype	(config::declaration & shape,std::string_view at)	typename:void
-lib/praxis-manipulator/include/praxis/manipulator/kinematics_configuration.h	read_ik_branch	prototype	(const config::document & values,std::string_view at)	typename:ik_branch_window::settings
-lib/praxis-manipulator/include/praxis/manipulator/kinematics_configuration.h	write_ik_branch	prototype	(const ik_branch_window::settings & state,std::string_view at)	typename:std::vector<config::edit>
+lib/praxis-manipulator/include/praxis/manipulator/kinematics_configuration.h	declare_ik_solutions	prototype	(config::declaration & shape,std::string_view at)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/kinematics_configuration.h	read_ik_solutions	prototype	(const config::document & values,std::string_view at)	typename:ik_solutions_window::settings
+lib/praxis-manipulator/include/praxis/manipulator/kinematics_configuration.h	write_ik_solutions	prototype	(const ik_solutions_window::settings & state,std::string_view at)	typename:std::vector<config::edit>
 lib/praxis-manipulator/include/praxis/manipulator/kinematics_configuration.h	declare_ik_iterates	prototype	(config::declaration & shape,std::string_view at)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/kinematics_configuration.h	read_ik_iterates	prototype	(const config::document & values,std::string_view at)	typename:ik_iterate_window::settings
 lib/praxis-manipulator/include/praxis/manipulator/kinematics_configuration.h	write_ik_iterates	prototype	(const ik_iterate_window::settings & state,std::string_view at)	typename:std::vector<config::edit>
@@ -3235,13 +3235,13 @@ presets/include/praxis/presets/arm.h	window_paths	struct	-	-
 presets/include/praxis/presets/arm.h	tool	member	-	typename:const char *
 presets/include/praxis/presets/arm.h	ik_seeds	member	-	typename:const char *
 presets/include/praxis/presets/arm.h	tool_jog	member	-	typename:const char *
-presets/include/praxis/presets/arm.h	ik_branch	member	-	typename:const char *
 presets/include/praxis/presets/arm.h	recording	member	-	typename:const char *
 presets/include/praxis/presets/arm.h	screw_jog	member	-	typename:const char *
 presets/include/praxis/presets/arm.h	parameters	member	-	typename:const char *
 presets/include/praxis/presets/arm.h	robot_view	member	-	typename:const char *
 presets/include/praxis/presets/arm.h	task_space	member	-	typename:const char *
 presets/include/praxis/presets/arm.h	ik_iterates	member	-	typename:const char *
+presets/include/praxis/presets/arm.h	ik_solutions	member	-	typename:const char *
 presets/include/praxis/presets/arm.h	joint_curves	member	-	typename:const char *
 presets/include/praxis/presets/arm.h	world_object	member	-	typename:const char *
 presets/include/praxis/presets/arm.h	joint_control	member	-	typename:const char *
@@ -3266,9 +3266,9 @@ presets/include/praxis/presets/arm.h	model_roots	member	-	typename:std::vector<s
 presets/include/praxis/presets/arm.h	tool_jog	member	-	typename:manipulator::tool_jog_window::settings
 presets/include/praxis/presets/arm.h	ik_seeds	member	-	typename:manipulator::ik_seed_window::settings
 presets/include/praxis/presets/arm.h	screw_jog	member	-	typename:manipulator::screw_jog_window::settings
-presets/include/praxis/presets/arm.h	ik_branch	member	-	typename:manipulator::ik_branch_window::settings
 presets/include/praxis/presets/arm.h	robot_view	member	-	typename:manipulator::robot_view_window::settings
 presets/include/praxis/presets/arm.h	task_space	member	-	typename:manipulator::task_space_window::settings
+presets/include/praxis/presets/arm.h	ik_solutions	member	-	typename:manipulator::ik_solutions_window::settings
 presets/include/praxis/presets/arm.h	world_object	member	-	typename:manipulator::world_object_window::settings
 presets/include/praxis/presets/arm.h	ik_iterates	member	-	typename:manipulator::ik_iterate_window::settings
 presets/include/praxis/presets/arm.h	joint_curves	member	-	typename:manipulator::joint_curve_window::settings

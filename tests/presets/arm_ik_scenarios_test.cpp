@@ -121,7 +121,7 @@ TEST_CASE("the table of window key paths carries every path once", "[presets][wi
 
     REQUIRE(listed.size() == presets::window_paths::counted);
     REQUIRE(listed.contains(presets::window_paths::ik_seeds));
-    REQUIRE(listed.contains(presets::window_paths::ik_branch));
+    REQUIRE(listed.contains(presets::window_paths::ik_solutions));
     REQUIRE(listed.contains(presets::window_paths::ik_iterates));
     REQUIRE(listed.contains(presets::window_paths::ik_convergence));
 }

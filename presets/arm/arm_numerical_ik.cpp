@@ -37,7 +37,7 @@ composed_windows declined(const std::string &unbound)
 
 // The list is read where the ask is made, on the strand it is edited on, and only the solve the
 // route answers crosses onto the arm's own strand.
-manipulator::ik_branch_window::solve_route from_the_starts(std::shared_ptr<manipulator::ik_seed_window> listed)
+manipulator::ik_solutions_window::solve_route from_the_starts(std::shared_ptr<manipulator::ik_seed_window> listed)
 {
     return [listed = std::move(listed)](const transform &target)
     { return [target, seeds = listed->state().seeds](manipulator::robot_controller &control) { control.solve_from_seeds(target, seeds); }; };
@@ -59,7 +59,7 @@ manipulator::arm_composition arm_windows_numerical_ik(arm_scenario chosen)
         auto steps  = std::make_shared<manipulator::ik_iterate_window>("Iterations", built.seen, built.arm, state.ik_iterates, window_paths::ik_iterates);
 
         around.opened.push_back(starts);
-        around.opened.push_back(ik::open_branches(built, state, around.pose, from_the_starts(starts)));
+        around.opened.push_back(ik::open_solutions(built, state, around.pose, from_the_starts(starts)));
         around.opened.push_back(steps);
         around.opened.push_back(std::make_shared<manipulator::ik_convergence_window>("Convergence", *steps, state.ik_convergence, window_paths::ik_convergence));
         around.opened.push_back(ik::open_view(built, state));

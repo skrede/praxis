@@ -4,12 +4,12 @@
 #include "praxis/manipulator/control_mode.h"
 #include "praxis/manipulator/ik_seed_window.h"
 #include "praxis/manipulator/tool_jog_window.h"
-#include "praxis/manipulator/ik_branch_window.h"
 #include "praxis/manipulator/robot_controller.h"
 #include "praxis/manipulator/screw_jog_window.h"
 #include "praxis/manipulator/ik_iterate_window.h"
 #include "praxis/manipulator/robot_view_window.h"
 #include "praxis/manipulator/task_space_window.h"
+#include "praxis/manipulator/ik_solutions_window.h"
 #include "praxis/manipulator/world_object_window.h"
 #include "praxis/manipulator/joint_control_window.h"
 #include "praxis/manipulator/ik_convergence_window.h"
@@ -84,9 +84,9 @@ TEST_CASE("each inverse-kinematics window's settings defaults to the state the s
     REQUIRE(manipulator::ik_seed_window::opening_seeds(6u).size() == 8u);
     REQUIRE(manipulator::ik_seed_window::opening_seeds(6u).front().isZero());
 
-    const manipulator::ik_branch_window::settings branches;
-    REQUIRE(branches.mode == manipulator::control_mode::simulation);
-    REQUIRE(branches.figures);
+    const manipulator::ik_solutions_window::settings solutions;
+    REQUIRE(solutions.mode == manipulator::control_mode::simulation);
+    REQUIRE(solutions.figures);
 
     const manipulator::ik_iterate_window::settings steps;
     REQUIRE(steps.start == 0u);
@@ -140,8 +140,8 @@ TEST_CASE("an arm scenario written with no initializer holds a default in every 
     REQUIRE(chosen.parameters.velocity == Catch::Approx(0.3f));
 
     REQUIRE(chosen.ik_seeds.seeds.empty());
-    REQUIRE(chosen.ik_branch.mode == manipulator::control_mode::simulation);
-    REQUIRE(chosen.ik_branch.figures);
+    REQUIRE(chosen.ik_solutions.mode == manipulator::control_mode::simulation);
+    REQUIRE(chosen.ik_solutions.figures);
     REQUIRE(chosen.ik_iterates.start == 0u);
     REQUIRE(chosen.ik_iterates.mode == manipulator::control_mode::simulation);
     REQUIRE(chosen.ik_convergence.angular);

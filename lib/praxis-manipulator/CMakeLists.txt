@@ -20,10 +20,10 @@ praxis_add_module(manipulator
     include/praxis/manipulator/edited_list_window.h
     include/praxis/manipulator/edited_pose.h
     include/praxis/manipulator/evaluation.h
-    include/praxis/manipulator/ik_branch_window.h
     include/praxis/manipulator/ik_convergence_window.h
     include/praxis/manipulator/ik_iterate_window.h
     include/praxis/manipulator/ik_seed_window.h
+    include/praxis/manipulator/ik_solutions_window.h
     include/praxis/manipulator/joint_control_window.h
     include/praxis/manipulator/joint_curve_window.h
     include/praxis/manipulator/kinematics.h
@@ -103,11 +103,11 @@ praxis_add_module(manipulator
     src/fatality.h
     src/fatality.cpp
     src/flange_attachment.cpp
-    src/ik_branch_window.cpp
     src/ik_convergence_window.cpp
     src/ik_iterate_table.cpp
     src/ik_iterate_window.cpp
     src/ik_seed_window.cpp
+    src/ik_solutions_window.cpp
     src/inert_screw_report.h
     src/inert_screw_report.cpp
     src/inert_differential_kinematics.cpp
