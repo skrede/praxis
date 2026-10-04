@@ -37,7 +37,6 @@ enum class differential_kinematics_slot : std::uint32_t
 enum class inverse_kinematics_slot : std::uint32_t
 {
     inverse_kinematics,
-    analytic_inverse_kinematics,
     count,
 };
 

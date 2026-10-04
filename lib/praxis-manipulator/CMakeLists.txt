@@ -71,14 +71,10 @@ praxis_add_module(manipulator
     src/arm_state.cpp
     src/baseline/chain_maps.h
     src/baseline/chain_maps.cpp
-    src/baseline/chain_translation.h
-    src/baseline/chain_translation.cpp
     src/baseline/capabilities.cpp
     src/baseline/kinematics.cpp
     src/baseline/modeling.cpp
     src/baseline/motion.cpp
-    src/baseline/opw_geometry.h
-    src/baseline/opw_geometry.cpp
     src/baseline/robot.cpp
     src/baseline/task_trajectory.cpp
     src/compose_arm.cpp

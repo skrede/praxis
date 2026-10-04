@@ -123,16 +123,6 @@ inline expected<void, refusal> two_solution_inverse_kinematics(const rigid_motio
     return {};
 }
 
-// Answers one configuration and records nothing, which is the shape of a closed form: what a case
-// reads off it is which of the two routes the holder took rather than what any mathematics found.
-inline expected<void, refusal> one_answer_analytic_inverse_kinematics(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const screw_chain &chain, const transform &,
-                                                                      ik_result &answer)
-{
-    answer.solutions.emplace_back(joint_vector::Constant(static_cast<Eigen::Index>(chain.joint_count()), 3.0));
-
-    return {};
-}
-
 inline expected<void, refusal> converging_on_nothing(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &,
                                                      const transform &, const joint_vector &, const solver_parameters &, ik_result &)
 {

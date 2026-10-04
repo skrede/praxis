@@ -8,9 +8,4 @@ expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &, cons
     return unexpected(refusal::not_implemented);
 }
 
-expected<void, refusal> analytic_inverse_kinematics(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const screw_chain &, const transform &, ik_result &)
-{
-    return unexpected(refusal::not_implemented);
-}
-
 }

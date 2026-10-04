@@ -23,8 +23,7 @@ constexpr differential_kinematics_ops bound_differential_kinematics{
 };
 
 constexpr inverse_kinematics_ops bound_inverse_kinematics{
-        .inverse_kinematics          = &inverse_kinematics,
-        .analytic_inverse_kinematics = &analytic_inverse_kinematics,
+        .inverse_kinematics = &inverse_kinematics,
 };
 
 constexpr robot_ops bound_robot{

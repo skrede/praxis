@@ -168,32 +168,6 @@ void robot_controller::solve_from_seeds(const transform &tool_pose, std::span<co
     static_cast<void>(run_to_nearest("ik.inverse_kinematics"));
 }
 
-void robot_controller::solve_in_closed_form(const transform &tool_pose)
-{
-    if(executing())
-        return;
-
-    const command_extent extent(*this);
-    asking();
-
-    const transform reaching                                        = m_robot.flange_pose_from_tool_pose(tool_pose);
-    const std::uint64_t before                                      = m_robot.solver().solve_count();
-    const expected<std::span<const joint_vector>, refusal> answered = m_robot.solver().configurations_reaching(reaching);
-    keep(before);
-    if(!answered)
-    {
-        m_reached.resize(m_solves.size(), m_solutions.size());
-        report_refusal("ik.analytic_inverse_kinematics", answered.error());
-        return;
-    }
-
-    for(const joint_vector &one : *answered)
-        static_cast<void>(fold_solution(m_solutions, one));
-
-    const std::optional<std::size_t> nearest = run_to_nearest("ik.analytic_inverse_kinematics");
-    m_reached.push_back(nearest.value_or(m_solutions.size()));
-}
-
 void robot_controller::task_space_lin(const transform &tool_pose)
 {
     if(executing())

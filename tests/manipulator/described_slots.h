@@ -16,10 +16,8 @@ inline constexpr std::size_t described_slots = slots_of<manipulator::forward_kin
         slots_of<manipulator::inverse_kinematics_slot> + slots_of<manipulator::robot_slot> + slots_of<manipulator::motion_slot> + slots_of<manipulator::modeling_slot> +
         slots_of<manipulator::task_trajectory_slot>;
 
-// The analytic solve is described and reached by no comparator, which is the whole of the difference
-// between what the tables describe and what they compare.
-inline constexpr std::size_t uncompared_slots = 1u;
-inline constexpr std::size_t compared_slots   = described_slots - uncompared_slots;
+// Every described slot has a row in the tables.
+inline constexpr std::size_t compared_slots = described_slots;
 
 }
 

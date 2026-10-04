@@ -317,23 +317,23 @@ TEST_CASE("a slot the composition wired to nothing leaves the window open and th
     CHECK_FALSE(panel.selected().has_value());
 }
 
-TEST_CASE("one window serves either slot, because which one is asked is carried in the route", "[manipulator][branches]")
+TEST_CASE("an ask goes through the route the window was handed and reaches no other window's", "[manipulator][branches]")
 {
     stage headless;
-    asked_of numerical;
-    asked_of analytic;
-    ik_branch_window over_starts(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(numerical));
-    ik_branch_window in_one_go(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(analytic));
+    asked_of over_starts;
+    asked_of beside;
+    ik_branch_window standing_beside(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(beside));
+    ik_branch_window asked(panel_title, headless.published->reader(), headless.arm(), reference, headless.held, headless.shown, counting(over_starts));
 
     imgui_frame frames;
-    const drawing draw = over(in_one_go);
+    const drawing draw = over(asked);
     start_navigating(frames, draw);
     press_solve(frames, draw);
     static_cast<void>(headless.loop.drain());
 
-    CHECK(numerical.routed == 0u);
-    CHECK(analytic.routed == 1u);
-    CHECK(analytic.ran == 1u);
+    CHECK(beside.routed == 0u);
+    CHECK(over_starts.routed == 1u);
+    CHECK(over_starts.ran == 1u);
 }
 
 TEST_CASE("a branch list window no key path was named for offers nothing", "[manipulator][branches]")

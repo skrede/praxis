@@ -194,10 +194,6 @@ public:
     // A seed of the wrong width is declined and the seeds beside it are still solved from.
     void solve_from_seeds(const transform &tool_pose, std::span<const joint_vector> seeds);
 
-    // Asks the solver for every configuration that reaches the target in one go, which takes no
-    // seed, and moves to whichever of them stands nearest by the same distance.
-    void solve_in_closed_form(const transform &tool_pose);
-
     // One sequence per request the most recent requesting command handed the solver and the solver
     // entered, in the order the requests were made. A command that hands the solver no request leaves
     // what stands here alone. The span stays valid until the next request is made, so what leaves the

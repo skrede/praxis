@@ -164,19 +164,6 @@ expected<joint_vector, refusal> kinematics::ik_solve(const transform &desired_po
     return m_last.solutions[*chosen];
 }
 
-expected<std::span<const joint_vector>, refusal> kinematics::configurations_reaching(const transform &desired_pose) const
-{
-    m_last.solutions.clear();
-    m_last.iterations.clear();
-    ++m_solve_tally;
-
-    const expected<void, refusal> answered = m_ik.analytic_inverse_kinematics(m_screw, m_fk, m_space, desired_pose, m_last);
-    if(!answered)
-        return unexpected(answered.error());
-
-    return std::span<const joint_vector>(m_last.solutions);
-}
-
 std::span<const joint_vector> kinematics::solutions() const
 {
     return m_last.solutions;

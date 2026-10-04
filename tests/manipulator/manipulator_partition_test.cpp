@@ -48,7 +48,6 @@ constexpr std::array differential_kinematics_partition{
 
 constexpr std::array inverse_kinematics_partition{
         pairing{static_cast<std::size_t>(inverse_kinematics_slot::inverse_kinematics), returns_refusal_v<decltype(inverse_kinematics_ops::inverse_kinematics)>},
-        pairing{static_cast<std::size_t>(inverse_kinematics_slot::analytic_inverse_kinematics), returns_refusal_v<decltype(inverse_kinematics_ops::analytic_inverse_kinematics)>},
 };
 
 constexpr std::array robot_partition{
@@ -97,7 +96,6 @@ static_assert(differential_kinematics_partition[static_cast<std::size_t>(differe
 static_assert(differential_kinematics_partition[static_cast<std::size_t>(differential_kinematics_slot::body_jacobian)].carries_the_channel);
 
 static_assert(inverse_kinematics_partition[static_cast<std::size_t>(inverse_kinematics_slot::inverse_kinematics)].carries_the_channel);
-static_assert(inverse_kinematics_partition[static_cast<std::size_t>(inverse_kinematics_slot::analytic_inverse_kinematics)].carries_the_channel);
 
 // The four pose conversions and accessors are total: each answers for every rigid motion it can be
 // handed, so it has nothing to refuse and no channel to refuse through.
@@ -135,6 +133,6 @@ TEST_CASE("every_slot_of_this_extension_is_paired_with_its_enumerator_on_the_sid
     const std::size_t fallible = counted(forward_kinematics_partition) + counted(differential_kinematics_partition) + counted(inverse_kinematics_partition) + counted(robot_partition) +
             counted(motion_partition) + counted(task_trajectory_partition) + counted(modeling_partition);
 
-    CHECK(paired == 17u);
-    CHECK(fallible == 13u);
+    CHECK(paired == 16u);
+    CHECK(fallible == 12u);
 }

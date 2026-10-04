@@ -31,7 +31,6 @@ constexpr std::size_t cases_per_row   = 24u;
 
 using fixture::compared_slots;
 using fixture::described_slots;
-using fixture::uncompared_slots;
 
 std::vector<std::string_view> described_in_order(std::span<const capability_view> described)
 {
@@ -166,16 +165,14 @@ TEST_CASE("the_residual_kinds_are_distributed_over_the_rows_as_the_tables_assign
     REQUIRE(poses + elements + angles == compared_slots);
 }
 
-TEST_CASE("every_described_slot_but_the_analytic_solve_carries_a_comparator_and_that_one_is_named")
+TEST_CASE("every_described_slot_carries_a_comparator")
 {
-    const manipulator::capabilities reference                = manipulator::baseline();
-    const auto described                                     = manipulator::capability_views(reference);
-    const auto compared                                      = manipulator::evaluation_views(reference, reference);
-    const std::vector<std::string_view> without_a_comparison = unevaluated_slots(described, compared);
+    const manipulator::capabilities reference = manipulator::baseline();
+    const auto described                      = manipulator::capability_views(reference);
+    const auto compared                       = manipulator::evaluation_views(reference, reference);
 
     REQUIRE(described_in_order(described).size() == described_slots);
-    REQUIRE(without_a_comparison.size() == uncompared_slots);
-    REQUIRE(without_a_comparison.front() == "ik.analytic_inverse_kinematics");
+    REQUIRE(unevaluated_slots(described, compared).empty());
     REQUIRE(unnamed_evaluations(described, compared).empty());
 }
 

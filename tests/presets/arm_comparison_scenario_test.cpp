@@ -91,18 +91,10 @@ expected<void, refusal> recorded_search(const rigid_motion::screw_ops &, const m
     return praxis::unexpected(refusal::not_implemented);
 }
 
-expected<void, refusal> recorded_closed_form(const rigid_motion::screw_ops &, const manipulator::forward_kinematics_ops &, const manipulator::screw_chain &, const transform &,
-                                             manipulator::ik_result &)
-{
-    ++solves_entered;
-
-    return praxis::unexpected(refusal::not_implemented);
-}
-
 manipulator::capabilities recording_solves()
 {
     manipulator::capabilities held = manipulator::baseline();
-    held.ik                        = manipulator::inverse_kinematics_ops{&recorded_search, &recorded_closed_form};
+    held.ik                        = manipulator::inverse_kinematics_ops{&recorded_search};
 
     return held;
 }

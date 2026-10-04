@@ -101,10 +101,9 @@ if (TARGET praxis_manipulator)
     praxis_add_failing_compile(kinematics_differential_capability.cpp DIAGNOSTIC "deleted function" LIBS praxis::manipulator)
     praxis_add_failing_compile(kinematics_inverse_capability.cpp DIAGNOSTIC "deleted function" LIBS praxis::manipulator)
 
-    # One probe per solve. A bound solve is handed the maps its own mathematics reads and the chain it
-    # solves over, and none of those carries a solve, so a slot body asking one of them for one names
-    # a member that is not there. The families word an absent member differently, and the call is the
-    # only expression in each unit, so that wording is the one text no other failure there composes.
+    # A bound solve is handed the maps its own mathematics reads and the chain it solves over, and
+    # none of those carries a solve, so a slot body asking one of them for one names a member that is
+    # not there. The families word an absent member differently, and the call is the only expression
+    # in the unit, so that wording is the one text no other failure there composes.
     praxis_add_failing_compile(manipulator_solver_reentry.cpp DIAGNOSTIC "no member named|is not a member" LIBS praxis::manipulator)
-    praxis_add_failing_compile(manipulator_analytic_solver_reentry.cpp DIAGNOSTIC "no member named|is not a member" LIBS praxis::manipulator)
 endif ()

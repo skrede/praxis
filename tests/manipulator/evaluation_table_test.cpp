@@ -97,9 +97,7 @@ TEST_CASE("every_compared_slot_is_described")
     REQUIRE(without_a_name.empty());
 }
 
-// A described slot no table compares is named rather than passing unseen, which is the whole of what
-// the tables are allowed to be narrower than the descriptions for.
-TEST_CASE("the_closed_form_slot_is_described_and_no_table_compares_it")
+TEST_CASE("every_described_slot_has_a_row_in_the_tables")
 {
     const manipulator::capabilities reference = manipulator::baseline();
     const auto described                      = manipulator::capability_views(reference);
@@ -108,8 +106,7 @@ TEST_CASE("the_closed_form_slot_is_described_and_no_table_compares_it")
     const std::vector<std::string_view> without_a_row = unevaluated_slots(described, compared);
 
     INFO("described but never compared: " << joined(without_a_row));
-    REQUIRE(without_a_row.size() == 1u);
-    REQUIRE(without_a_row.front() == "ik.analytic_inverse_kinematics");
+    REQUIRE(without_a_row.empty());
 }
 
 TEST_CASE("the_reference_answers_every_row_as_it_answers_it_and_the_run_repeats")

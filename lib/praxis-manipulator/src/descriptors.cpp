@@ -28,8 +28,6 @@ constexpr std::array differential_kinematics_descriptors{
 constexpr std::array inverse_kinematics_descriptors{
         slot_descriptor{"ik.inverse_kinematics",
                         [](const void *value) -> bool { return static_cast<const inverse_kinematics_ops *>(value)->inverse_kinematics == &inert::inverse_kinematics; }},
-        slot_descriptor{"ik.analytic_inverse_kinematics", [](const void *value) -> bool
-                        { return static_cast<const inverse_kinematics_ops *>(value)->analytic_inverse_kinematics == &inert::analytic_inverse_kinematics; }},
 };
 
 constexpr std::array robot_descriptors{

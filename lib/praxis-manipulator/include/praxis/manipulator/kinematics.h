@@ -107,8 +107,6 @@ namespace praxis::manipulator::inert {
 
 expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const differential_kinematics_ops &differential,
                                            const screw_chain &chain, const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer);
-expected<void, refusal> analytic_inverse_kinematics(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const screw_chain &chain, const transform &desired,
-                                                    ik_result &answer);
 
 }
 
@@ -116,16 +114,14 @@ namespace praxis::manipulator {
 
 // Declaration order is frozen: a designated initializer must name members in declaration order, so
 // reordering a slot breaks every project that already composes this aggregate. Appending is safe.
-// The solves are here, and each receives what its own mathematics consumes and nothing else: the
-// chain it is to solve over, the pose it is to reach, and the operations and maps it reads along the
-// way. Nothing any of them is handed carries a way to ask for a solve.
+// The solve is here, and it receives what its own mathematics consumes and nothing else: the chain
+// it is to solve over, the pose it is to reach, and the operations and maps it reads along the way.
+// Nothing it is handed carries a way to ask for a solve.
 struct inverse_kinematics_ops
 {
     expected<void, refusal> (*inverse_kinematics)(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const differential_kinematics_ops &differential,
                                                   const screw_chain &chain, const transform &desired, const joint_vector &j0, const solver_parameters &parameters,
-                                                  ik_result &answer)                                    = &inert::inverse_kinematics;
-    expected<void, refusal> (*analytic_inverse_kinematics)(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const screw_chain &chain,
-                                                           const transform &desired, ik_result &answer) = &inert::analytic_inverse_kinematics;
+                                                  ik_result &answer) = &inert::inverse_kinematics;
 };
 
 // Holds the chain the bound implementations are asked about and routes every question to them. It is
@@ -177,11 +173,6 @@ public:
     expected<joint_vector, refusal> ik_solve(const transform &desired_pose, const joint_vector &j0, const solver_parameters &parameters) const;
     expected<joint_vector, refusal> ik_solve(const transform &desired_pose, const joint_vector &j0, const solver_parameters &parameters,
                                              const std::function<std::optional<std::size_t>(std::span<const joint_vector>)> &solution_selector) const;
-
-    // Every configuration that reaches the pose, answered in one go rather than searched for, so
-    // neither a seed nor a stopping test enters. The span is the one solutions() reads and lasts
-    // until the next solve on the same object.
-    expected<std::span<const joint_vector>, refusal> configurations_reaching(const transform &desired_pose) const;
 
     // Every configuration the bound solver answered for the target of the last solve, in the order
     // it named them. The span stays valid until the next solve on the same object, and is empty

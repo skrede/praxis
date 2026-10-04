@@ -216,34 +216,6 @@ double previewed_path_strays(const transform &tool_offset)
     return apart(placed.tool_pose(), target);
 }
 
-joint_vector answered_configuration()
-{
-    return arm_configuration(0.5, -1.7, 1.0);
-}
-
-transform &pose_the_closed_form_was_asked_at()
-{
-    static transform asked = transform::Identity();
-
-    return asked;
-}
-
-expected<void, refusal> recorded_closed_form(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const screw_chain &, const transform &desired, ik_result &answer)
-{
-    pose_the_closed_form_was_asked_at() = desired;
-    answer.solutions.push_back(answered_configuration());
-
-    return {};
-}
-
-inverse_kinematics_ops recording_the_closed_form()
-{
-    inverse_kinematics_ops injected      = manipulator::baseline().ik;
-    injected.analytic_inverse_kinematics = &recorded_closed_form;
-
-    return injected;
-}
-
 commanded_outcome seeded_solve_outcome(const transform &tool_offset)
 {
     commanded_arm placed(tool_offset);
@@ -253,18 +225,6 @@ commanded_outcome seeded_solve_outcome(const transform &tool_offset)
     placed.control().solve_from_seeds(target, std::span<const joint_vector>(from));
 
     return played_to(placed, target);
-}
-
-double closed_form_asked_at_strays(const transform &tool_offset)
-{
-    commanded_arm placed(tool_offset, manipulator::baseline().robot, recording_the_closed_form());
-    const transform target   = nudged(placed.tool_pose());
-    const transform reaching = placed.driven().flange_pose_from_tool_pose(target);
-
-    pose_the_closed_form_was_asked_at() = transform::Identity();
-    placed.control().solve_in_closed_form(target);
-
-    return apart(pose_the_closed_form_was_asked_at(), reaching);
 }
 
 double the_two_routes_apart(const transform &tool_offset)
@@ -452,16 +412,6 @@ TEST_CASE("a solve from a set of starts ends with an arm wearing no tool at the 
 
     CHECK(outcome.composed);
     CHECK(outcome.strays < solved_tolerance);
-}
-
-TEST_CASE("a closed-form solve is asked at the flange pose a bent tool's commanded pose converts to", "[manipulator]")
-{
-    CHECK(closed_form_asked_at_strays(bent_tool()) < recorded_exactly);
-}
-
-TEST_CASE("a closed-form solve is asked at the flange pose the commanded pose of an arm wearing no tool converts to", "[manipulator]")
-{
-    CHECK(closed_form_asked_at_strays(no_tool()) < recorded_exactly);
 }
 
 TEST_CASE("the tool-pose solve and the conversion ahead of a flange-pose solve answer one configuration on a bent tool", "[manipulator]")

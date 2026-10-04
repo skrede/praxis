@@ -121,9 +121,6 @@ target_include_directories(highlighted_column_test PRIVATE ${PROJECT_SOURCE_DIR}
 praxis_add_test(column_arrow_drawing_test.cpp HEADERS fixtures.h drawn_columns.h drawn_ellipsoids.h ../presets/drawn_lines.h ../support/drawn_chain.h LIBS praxis::manipulator spdlog::spdlog praxis_test_support)
 target_include_directories(column_arrow_drawing_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-manipulator/src)
 
-praxis_add_test(opw_geometry_test.cpp HEADERS recorded_chain.h LIBS praxis::manipulator cartan::analytical)
-target_include_directories(opw_geometry_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-manipulator/src)
-
 praxis_add_test(evaluation_table_test.cpp HEADERS bent_manipulator.h bent_motions.h bend_kinds.h described_slots.h LIBS praxis::manipulator praxis::evaluation)
 target_include_directories(evaluation_table_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-manipulator/src)
 

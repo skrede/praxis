@@ -76,25 +76,9 @@ expected<void, refusal> the_posture_the_seed_names(const rigid_motion::screw_ops
     return {};
 }
 
-// Three postures answered in one go and no iterates, which is the shape an answer taken in closed
-// form leaves.
-expected<void, refusal> three_postures_at_once(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const screw_chain &, const transform &, ik_result &answer)
-{
-    answer.solutions.push_back(configuration(1.0, 1.0));
-    answer.solutions.push_back(configuration(0.5, -0.25));
-    answer.solutions.push_back(configuration(-1.0, 1.25));
-
-    return {};
-}
-
 inverse_kinematics_ops searching()
 {
     return inverse_kinematics_ops{.inverse_kinematics = &the_posture_the_seed_names};
-}
-
-inverse_kinematics_ops in_closed_form()
-{
-    return inverse_kinematics_ops{.analytic_inverse_kinematics = &three_postures_at_once};
 }
 
 // The arm, the controller that commands it and the one command extent an arm state would open
@@ -280,33 +264,6 @@ TEST_CASE("a command whose every seed is declined starts no solve and leaves not
     CHECK(arm.control.solutions().empty());
     CHECK(arm.control.reached().empty());
     CHECK_FALSE(arm.control.executing());
-}
-
-TEST_CASE("an answer taken in one go publishes the postures it found and one empty sequence", "[manipulator][multi-start]")
-{
-    standing_arm arm(in_closed_form());
-
-    arm.control.solve_in_closed_form(target_at(0.5));
-
-    REQUIRE(arm.control.solutions().size() == 3u);
-    REQUIRE(arm.control.solves().size() == 1u);
-    CHECK(arm.control.solves()[0].empty());
-    REQUIRE(arm.control.reached().size() == 1u);
-    CHECK(arm.control.reached()[0] == 1u);
-}
-
-TEST_CASE("an answer taken in one go that is refused publishes its sequence and an index naming no posture", "[manipulator][multi-start]")
-{
-    const captured_log recorded;
-    standing_arm arm(searching());
-
-    arm.control.solve_in_closed_form(target_at(0.5));
-
-    CHECK_THAT(recorded.text(), Catch::Matchers::ContainsSubstring("ik.analytic_inverse_kinematics"));
-    CHECK(arm.control.solutions().empty());
-    REQUIRE(arm.control.solves().size() == 1u);
-    REQUIRE(arm.control.reached().size() == 1u);
-    CHECK(arm.control.reached()[0] == arm.control.solutions().size());
 }
 
 TEST_CASE("the arm ends the command at the distinct posture nearest where it stood", "[manipulator][multi-start]")
