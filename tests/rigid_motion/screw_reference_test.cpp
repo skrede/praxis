@@ -11,6 +11,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <cmath>
+#include <limits>
 #include <utility>
 
 using namespace praxis;
@@ -357,6 +358,22 @@ TEST_CASE("a_matrix_outside_the_group_it_is_read_from_is_refused_by_every_operat
     CHECK(from_tf.error() == refusal::degenerate);
     CHECK(so3.error() == refusal::degenerate);
     CHECK(se3_rp.error() == refusal::degenerate);
+    CHECK(se3.error() == refusal::degenerate);
+}
+
+TEST_CASE("a_pose_whose_translation_is_not_finite_is_refused_by_every_operation_that_reads_one")
+{
+    const transform unbounded                                  = assembled(rotation::Identity(), {std::numeric_limits<double>::infinity(), 0.0, 0.0});
+    const expected<adjoint, refusal> from_tf                   = ops.adjoint_matrix_from_transform(unbounded);
+    const expected<twist, refusal> mapped                      = ops.adjoint_map(adjoint_probe(), unbounded);
+    const expected<std::pair<screw_axis, double>, refusal> se3 = ops.matrix_logarithm_se3(unbounded);
+
+    REQUIRE_FALSE(from_tf.has_value());
+    REQUIRE_FALSE(mapped.has_value());
+    REQUIRE_FALSE(se3.has_value());
+
+    CHECK(from_tf.error() == refusal::degenerate);
+    CHECK(mapped.error() == refusal::degenerate);
     CHECK(se3.error() == refusal::degenerate);
 }
 

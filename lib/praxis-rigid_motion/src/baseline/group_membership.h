@@ -16,7 +16,7 @@ inline bool is_a_rigid_motion(const transform &tf)
 {
     const Eigen::VectorXd bottom = tf.row(3).transpose();
 
-    return is_a_rotation(tf.block<3, 3>(0, 0)) && is_approx_equal(bottom, Eigen::VectorXd(Eigen::Vector4d::UnitW()));
+    return tf.allFinite() && is_a_rotation(tf.block<3, 3>(0, 0)) && is_approx_equal(bottom, Eigen::VectorXd(Eigen::Vector4d::UnitW()));
 }
 
 }
