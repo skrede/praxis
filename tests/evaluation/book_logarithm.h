@@ -99,9 +99,9 @@ inline constexpr auto angle_doubled = [](auto read)
     read.second *= 2.0;
     return read;
 };
-inline constexpr auto angular_doubled = [](auto read)
+inline constexpr auto unit_half_doubled = [](auto read)
 {
-    read.first.template head<3>() *= 2.0;
+    read.first.head(read.first.template head<3>().isZero(0.0) ? read.first.size() : 3) *= 2.0;
     return read;
 };
 inline constexpr auto axis_undefined = [](auto read)

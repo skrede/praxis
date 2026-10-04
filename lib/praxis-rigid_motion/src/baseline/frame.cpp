@@ -1,8 +1,7 @@
 #include "praxis/rigid_motion/baseline/frame.h"
+#include "praxis/rigid_motion/baseline/screw.h"
 
 #include <Eigen/Geometry>
-
-#include <cartan/lie/axis_angle.h>
 
 #include <array>
 #include <cstdint>
@@ -10,8 +9,6 @@
 namespace praxis::rigid_motion {
 
 namespace {
-
-using lie_axis_angle = cartan::axis_angle<double>;
 
 rotation axis_rotation(std::uint8_t axis, double radians)
 {
@@ -59,9 +56,10 @@ rotation rotation_matrix_from_euler(const Eigen::Vector3d &e, axis_order order)
     return axis_rotation(axes[0], e[0]) * axis_rotation(axes[1], e[1]) * axis_rotation(axes[2], e[2]);
 }
 
+// Lynch & Park, Modern Robotics, Prop. 3.11, eq. (3.51).
 rotation rotation_matrix_from_axis_angle(const Eigen::Vector3d &axis, double radians)
 {
-    return cartan::from_axis_angle(lie_axis_angle{axis, radians}).matrix();
+    return matrix_exponential_so3(axis, radians);
 }
 
 rotation rotation_matrix_from_transform(const transform &tf)
@@ -87,7 +85,7 @@ transform transformation_matrix_from_rotation_position(const rotation &r, const 
     return tf;
 }
 
-// Lynch & Park, Modern Robotics, Prop. 3.13: the inverse of (R, p) is (R^T, -R^T p), which is not
+// Lynch & Park, Modern Robotics, Prop. 3.15, eq. (3.64): the inverse of (R, p) is (R^T, -R^T p), which is not
 // the transpose of the 4x4 and agrees with a general matrix inverse only up to rounding.
 transform inverse(const transform &tf)
 {

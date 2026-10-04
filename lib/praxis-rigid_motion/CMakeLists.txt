@@ -53,9 +53,12 @@ praxis_add_module(rigid_motion
     src/evaluation_screw.cpp
     src/configuration_keys.cpp
     src/evaluation_screw_exponential.cpp
+    src/baseline/book_logarithm.h
+    src/baseline/group_membership.h
     src/baseline/frame.cpp
     src/baseline/screw.cpp
     src/baseline/capabilities.cpp
+    src/baseline/screw_logarithm.cpp
     PUBLIC_LIBS
     praxis::extension
     praxis::evaluation

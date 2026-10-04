@@ -110,6 +110,6 @@ TEST_CASE("a_screw_logarithm_reading_the_position_as_its_linear_half_differs_on_
 
 TEST_CASE("an_axis_off_unit_length_or_undefined_differs_on_every_case_of_both_spreads")
 {
-    every_case_of_both_spreads_differs(fixture::changed_logarithms<fixture::angular_doubled>());
+    every_case_of_both_spreads_differs(fixture::changed_logarithms<fixture::unit_half_doubled>());
     every_case_of_both_spreads_differs(fixture::changed_logarithms<fixture::axis_undefined>());
 }

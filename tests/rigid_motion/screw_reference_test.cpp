@@ -10,6 +10,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <cmath>
 #include <utility>
 
 using namespace praxis;
@@ -177,6 +178,41 @@ TEST_CASE("matrix_logarithm_r_rotz")
     CHECK(logged.first.isApprox(Eigen::Vector3d::UnitZ(), default_tolerance));
 }
 
+// An axis nearly orthogonal to z leaves 1 + r_33 near zero, so a half-turn formula dividing by it
+// loses the axis that one dividing by the largest diagonal entry keeps.
+TEST_CASE("a_half_turn_about_an_axis_nearly_orthogonal_to_z_logs_to_that_axis")
+{
+    const Eigen::Vector3d axis = Eigen::Vector3d{1.0, 0.3, 1.0e-7}.normalized();
+    const rotation r           = 2.0 * axis * axis.transpose() - rotation::Identity();
+
+    REQUIRE((r.trace() - 1.0) / 2.0 <= -1.0);
+    REQUIRE(1.0 + r(2, 2) > 0.0);
+    REQUIRE(1.0 + r(2, 2) < 1.0e-12);
+
+    const std::pair<Eigen::Vector3d, double> logged = answered(ops.matrix_logarithm_so3(r));
+
+    CHECK(is_approx_equal(logged.second, to_radians(180.0)));
+    CHECK(logged.first.cwiseAbs().isApprox(axis.cwiseAbs(), default_tolerance));
+    CHECK(std::abs(logged.first.dot(axis)) > 1.0 - default_tolerance);
+}
+
+TEST_CASE("a_rotation_whose_computed_trace_reads_as_the_identity_logs_to_a_zero_turn")
+{
+    const rotation r = ops.matrix_exponential_so3(direction, 1.0e-8);
+
+    REQUIRE((r.trace() - 1.0) / 2.0 >= 1.0);
+
+    const std::pair<Eigen::Vector3d, double> logged = answered(ops.matrix_logarithm_so3(r));
+
+    CHECK(logged.second == 0.0);
+    CHECK(logged.first.allFinite());
+}
+
+TEST_CASE("the_rotation_exponential_of_a_scaled_axis_is_the_unit_axis_turned_through_the_scaled_angle")
+{
+    CHECK(ops.matrix_exponential_so3(2.5 * direction, angle / 2.5).isApprox(ops.matrix_exponential_so3(direction, angle), default_tolerance));
+}
+
 TEST_CASE("matrix_logarithm_rp_ident")
 {
     const std::pair<screw_axis, double> logged = answered(ops.matrix_logarithm_se3_rp(rotation::Identity(), point));
@@ -211,6 +247,32 @@ TEST_CASE("matrix_logarithm_t_arbitrary")
     CHECK(logged.first.isApprox(reference_screw(), default_tolerance));
 }
 
+TEST_CASE("the_logarithm_of_the_identity_rotation_is_a_zero_turn_about_the_x_axis")
+{
+    const std::pair<Eigen::Vector3d, double> logged = answered(ops.matrix_logarithm_so3(rotation::Identity()));
+
+    CHECK(logged.first == Eigen::Vector3d::UnitX());
+    CHECK(logged.second == 0.0);
+}
+
+TEST_CASE("the_logarithm_of_the_identity_pose_is_a_zero_translation_along_the_x_axis")
+{
+    const std::pair<screw_axis, double> logged = answered(ops.matrix_logarithm_se3(transform::Identity()));
+    screw_axis expected;
+    expected << Eigen::Vector3d::Zero(), Eigen::Vector3d::UnitX();
+
+    CHECK(logged.first == expected);
+    CHECK(logged.second == 0.0);
+}
+
+TEST_CASE("the_screw_axis_of_the_zero_twist_is_a_translation_along_the_x_axis")
+{
+    screw_axis expected;
+    expected << Eigen::Vector3d::Zero(), Eigen::Vector3d::UnitX();
+
+    CHECK(ops.screw_axis_from_angular_linear(Eigen::Vector3d::Zero(), Eigen::Vector3d::Zero()) == expected);
+}
+
 TEST_CASE("matrix_exponential_twt")
 {
     CHECK(is_approx_equal(ops.matrix_exponential_screw(reference_screw(), angle), assembled(reference_rotation(), reference_position())));
@@ -228,6 +290,13 @@ TEST_CASE("the_pose_exponential_of_a_scaled_screw_axis_is_the_unit_axis_turned_t
     const transform scaled     = ops.matrix_exponential_se3(2.5 * reference.head<3>(), 2.5 * reference.tail<3>(), angle / 2.5);
 
     CHECK(is_approx_equal(scaled, ops.matrix_exponential_se3(reference.head<3>(), reference.tail<3>(), angle)));
+}
+
+TEST_CASE("the_pose_exponential_of_a_screw_axis_without_rotation_is_the_translation_along_it")
+{
+    const Eigen::Vector3d v = reference_screw().tail<3>();
+
+    CHECK(is_approx_equal(ops.matrix_exponential_se3(Eigen::Vector3d::Zero(), v, angle), assembled(rotation::Identity(), Eigen::Vector3d(v * angle))));
 }
 
 TEST_CASE("matrix_exponential_st")
