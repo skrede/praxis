@@ -154,6 +154,7 @@ target_include_directories(motion_rows_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/pr
 
 praxis_add_test(task_trajectory_row_test.cpp HEADERS bent_manipulator.h bent_motions.h bend_kinds.h LIBS praxis::manipulator praxis::evaluation praxis::trajectory)
 praxis_add_test(book_task_waypoint_test.cpp LIBS praxis::manipulator praxis::evaluation praxis::trajectory praxis_test_support)
+praxis_add_test(book_chain_rows_test.cpp LIBS praxis::manipulator praxis::evaluation praxis_test_support)
 praxis_add_test(task_waypoint_non_finite_test.cpp LIBS praxis::manipulator praxis::evaluation praxis::trajectory)
 
 # The descriptions are deployed beside the demonstration executable, which a configure without the

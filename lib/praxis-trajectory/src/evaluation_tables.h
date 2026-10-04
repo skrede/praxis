@@ -18,6 +18,18 @@ inline constexpr double scaling_sample_tolerance = 1.0e-12;
 // The same sample, where the scaling carrying it is a quintic.
 inline constexpr double quintic_scaling_tolerance = 1.0e-11;
 
+// The bounds the screw path row is judged at: a rotation in radians and a distance in metres.
+inline constexpr double screw_path_tolerance_radians = 1.0e-6;
+inline constexpr double screw_path_tolerance_metres  = 1.0e-5;
+
+// The bounds the decoupled path row is judged at: a rotation in radians and a distance in metres.
+inline constexpr double decoupled_path_tolerance_radians = 1.0e-6;
+inline constexpr double decoupled_path_tolerance_metres  = 1.0e-12;
+
+// The dimensionless bound, element by element, at which the two path rows hold the rotation between
+// their answers to orthonormality and its determinant to one.
+inline constexpr double path_rotation_membership_tolerance = 1.0e-6;
+
 // A driven configuration in radians, its rate in radians per second, and its acceleration as a
 // fraction of the larger of one and either side's magnitude.
 inline constexpr double driven_configuration_tolerance = 1.0e-8;

@@ -19,6 +19,8 @@ praxis_add_test(book_time_scaling_test.cpp LIBS praxis::evaluation praxis::traje
 target_include_directories(book_time_scaling_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-trajectory/src)
 praxis_add_test(book_via_point_test.cpp LIBS praxis::evaluation praxis::trajectory praxis_test_support)
 target_include_directories(book_via_point_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-trajectory/src)
+praxis_add_test(book_path_rows_test.cpp LIBS praxis::evaluation praxis::trajectory praxis::manipulator praxis_test_support)
+target_include_directories(book_path_rows_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-trajectory/src)
 praxis_add_test(driven_acceleration_test.cpp LIBS praxis::evaluation praxis::trajectory)
 praxis_add_test(driven_non_finite_test.cpp HEADERS non_finite_generators.h LIBS praxis::evaluation praxis::trajectory)
 praxis_add_test(trajectory_ledger_test.cpp LIBS praxis::evaluation praxis::trajectory)

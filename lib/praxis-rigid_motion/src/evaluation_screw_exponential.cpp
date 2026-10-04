@@ -19,10 +19,11 @@ namespace {
 using rotation_logarithm = std::pair<Eigen::Vector3d, double>;
 using pose_logarithm     = std::pair<screw_axis, double>;
 
-constexpr double turn_widening_cap        = 5.0e-2; // radians
-constexpr double offset_widening_cap      = 2.0;    // metres per metre of position
-constexpr double turn_roundoff_multiple   = 50.0;   // radians
-constexpr double offset_roundoff_multiple = 50.0;   // metres per metre of position
+constexpr double turn_widening_cap          = 5.0e-2; // radians
+constexpr double offset_widening_cap        = 2.0;    // metres per metre of position
+constexpr double turn_roundoff_multiple     = 50.0;   // radians
+constexpr double turn_conditioning_multiple = 100.0;  // radians
+constexpr double offset_roundoff_multiple   = 50.0;   // metres per metre of position
 
 const screw_ops &screw_of(const void *value)
 {
@@ -70,8 +71,9 @@ evaluation::tolerance_pair widened(const evaluation::tolerance_pair &allowed, co
     const double unit_roundoff = std::numeric_limits<double>::epsilon();
     const double theta_radians = Eigen::AngleAxisd(turned).angle();
     const double sine          = std::sin(theta_radians);
-    const double turn          = std::fmin(turn_roundoff_multiple * unit_roundoff / sine, turn_widening_cap);
-    const double lever         = std::fmin(offset_roundoff_multiple * unit_roundoff * (1.0 / sine + 1.0 / (1.0 + std::cos(theta_radians))), offset_widening_cap);
+    const double half_turn_gap = 1.0 + std::cos(theta_radians);
+    const double turn          = std::fmin(turn_roundoff_multiple * unit_roundoff / sine + turn_conditioning_multiple * unit_roundoff / half_turn_gap, turn_widening_cap);
+    const double lever         = std::fmin(offset_roundoff_multiple * unit_roundoff * (1.0 / sine + 1.0 / half_turn_gap), offset_widening_cap);
 
     return evaluation::tolerance_pair{allowed.magnitude + turn, allowed.linear_metres + position_metres * lever};
 }

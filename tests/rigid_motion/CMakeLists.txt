@@ -16,6 +16,7 @@ praxis_add_test(frame_reference_test.cpp HEADERS fixtures.h LIBS praxis::rigid_m
 praxis_add_test(screw_reference_test.cpp HEADERS fixtures.h LIBS praxis::rigid_motion praxis_test_support)
 praxis_add_test(book_logarithm_test.cpp HEADERS fixtures.h LIBS praxis::rigid_motion)
 target_include_directories(book_logarithm_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-rigid_motion/src)
+praxis_add_test(book_screw_rows_test.cpp LIBS praxis::evaluation praxis::rigid_motion praxis_test_support)
 praxis_add_test(matrix_readout_test.cpp LIBS praxis::rigid_motion praxis::scene praxis_test_support)
 praxis_add_test(frame_window_controls_test.cpp HEADERS frame_panel.h LIBS praxis::rigid_motion praxis::config spdlog::spdlog praxis_test_support)
 praxis_add_test(frame_window_resync_test.cpp HEADERS frame_window_stage.h LIBS praxis::rigid_motion praxis_test_support)

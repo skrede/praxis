@@ -22,6 +22,7 @@ namespace {
 
 constexpr std::array<std::string_view, 3> logarithm_rows{"screw.matrix_logarithm_so3", "screw.matrix_logarithm_se3_rp", "screw.matrix_logarithm_se3"};
 constexpr std::array<std::string_view, 2> pose_logarithm_rows{"screw.matrix_logarithm_se3_rp", "screw.matrix_logarithm_se3"};
+constexpr std::array<std::uint64_t, 5> seeds{0x5EEDu, 0xC0FFEEu, 0xA11CEu, 0xBEEFu, 0xD1CEu};
 
 std::size_t differed_in_the_run(const evaluation_report &reported, std::string_view row)
 {
@@ -76,13 +77,13 @@ void every_case_of_both_spreads_differs(const rigid_motion::capabilities &wrong)
 
 }
 
-TEST_CASE("a_literal_transcription_of_the_modern_robotics_logarithms_agrees_at_the_shipped_seed_and_the_three_after_it")
+TEST_CASE("a_literal_transcription_of_the_modern_robotics_logarithms_agrees_at_five_seeds")
 {
     const rigid_motion::capabilities reference    = rigid_motion::baseline();
     const rigid_motion::capabilities book         = fixture::book_logarithms();
     const std::array<evaluation_view, 2> compared = rigid_motion::evaluation_views(reference, book);
 
-    for(std::uint64_t seed = default_seed; seed <= default_seed + 3; ++seed)
+    for(const std::uint64_t seed : seeds)
     {
         const evaluation_report reported = evaluate(compared, seed);
 

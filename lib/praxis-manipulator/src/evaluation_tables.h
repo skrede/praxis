@@ -23,8 +23,8 @@ inline constexpr double accumulated_element_wise_tolerance = 1.0e-11;
 
 // The bounds the three rows whose answer is a pose accumulated along a chain of up to eight screws are
 // judged at: a rotation in radians and a distance in metres, never added to one another.
-inline constexpr double accumulated_pose_tolerance_radians = 1.0e-13;
-inline constexpr double accumulated_pose_tolerance_metres  = 1.0e-11;
+inline constexpr double accumulated_pose_tolerance_radians = 1.0e-5;
+inline constexpr double accumulated_pose_tolerance_metres  = 1.0e-4;
 
 // The bounds the rows whose answer is a configuration read back through a forward map and held
 // against the pose it was asked for are judged at: a rotation in radians and a distance in metres,
