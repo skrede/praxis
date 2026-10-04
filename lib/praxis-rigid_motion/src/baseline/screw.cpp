@@ -38,7 +38,7 @@ Eigen::Vector3d from_skew_symmetric(const matrix3 &m)
 
 expected<adjoint, refusal> adjoint_matrix_from_rotation_position(const rotation &r, const Eigen::Vector3d &p)
 {
-    if(!is_a_rotation(r))
+    if(!is_a_rigid_motion(r, p))
         return unexpected(refusal::degenerate);
 
     return adjoint_representation(r, p);

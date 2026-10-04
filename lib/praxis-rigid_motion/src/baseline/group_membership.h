@@ -12,6 +12,11 @@ inline bool is_a_rotation(const rotation &r)
     return is_approx_equal(rotation(r.transpose() * r), rotation::Identity()) && is_approx_equal(r.determinant(), 1.0);
 }
 
+inline bool is_a_rigid_motion(const rotation &r, const Eigen::Vector3d &p)
+{
+    return p.allFinite() && is_a_rotation(r);
+}
+
 inline bool is_a_rigid_motion(const transform &tf)
 {
     const Eigen::VectorXd bottom = tf.row(3).transpose();

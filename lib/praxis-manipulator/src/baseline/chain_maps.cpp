@@ -60,7 +60,7 @@ bool is_a_rigid_motion(const transform &tf)
 {
     const rotation r = tf.block<3, 3>(0, 0);
 
-    return is_approx_equal(rotation(r.transpose() * r), rotation::Identity()) && is_approx_equal(r.determinant(), 1.0) &&
+    return tf.allFinite() && is_approx_equal(rotation(r.transpose() * r), rotation::Identity()) && is_approx_equal(r.determinant(), 1.0) &&
             is_approx_equal((tf.row(3) - Eigen::RowVector4d::UnitW()).cwiseAbs().maxCoeff(), 0.0);
 }
 
@@ -73,7 +73,7 @@ bool is_a_rigid_motion(const rigid_motion::frame_ops &frames, const transform &t
 
 bool is_admitted(const screw_chain &chain)
 {
-    return !chain.space_screws.empty() && chain.home.allFinite() && is_a_rigid_motion(chain.home) && std::ranges::all_of(chain.space_screws, &is_unit_screw);
+    return !chain.space_screws.empty() && is_a_rigid_motion(chain.home) && std::ranges::all_of(chain.space_screws, &is_unit_screw);
 }
 
 expected<std::vector<screw_axis>, refusal> to_body_screws(const rigid_motion::screw_ops &screw, const transform &m, std::span<const screw_axis> space_screws)
@@ -133,7 +133,7 @@ expected<transform, refusal> forward_kinematics(const rigid_motion::screw_ops &,
         return unexpected(refusal::degenerate);
     if(space_screws.empty())
         return transform(m);
-    if(!m.allFinite() || !is_admissible(space_screws, theta))
+    if(!is_admissible(space_screws, theta))
         return unexpected(refusal::degenerate);
 
     return transform(exponential_product(space_screws, theta) * m);
@@ -153,7 +153,7 @@ expected<transform, refusal> body_forward_kinematics(const rigid_motion::screw_o
     const expected<std::vector<screw_axis>, refusal> body_screws = to_body_screws(screw, m, space_screws);
     if(!body_screws)
         return unexpected(body_screws.error());
-    if(!m.allFinite() || !is_admissible(*body_screws, theta))
+    if(!is_admissible(*body_screws, theta))
         return unexpected(refusal::degenerate);
 
     return transform(m * exponential_product(*body_screws, theta));

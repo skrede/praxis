@@ -363,17 +363,24 @@ TEST_CASE("a_matrix_outside_the_group_it_is_read_from_is_refused_by_every_operat
 
 TEST_CASE("a_pose_whose_translation_is_not_finite_is_refused_by_every_operation_that_reads_one")
 {
-    const transform unbounded                                  = assembled(rotation::Identity(), {std::numeric_limits<double>::infinity(), 0.0, 0.0});
-    const expected<adjoint, refusal> from_tf                   = ops.adjoint_matrix_from_transform(unbounded);
-    const expected<twist, refusal> mapped                      = ops.adjoint_map(adjoint_probe(), unbounded);
-    const expected<std::pair<screw_axis, double>, refusal> se3 = ops.matrix_logarithm_se3(unbounded);
+    const Eigen::Vector3d far{std::numeric_limits<double>::infinity(), 0.0, 0.0};
+    const transform unbounded                                     = assembled(rotation::Identity(), far);
+    const expected<adjoint, refusal> from_rp                      = ops.adjoint_matrix_from_rotation_position(rotation::Identity(), far);
+    const expected<adjoint, refusal> from_tf                      = ops.adjoint_matrix_from_transform(unbounded);
+    const expected<twist, refusal> mapped                         = ops.adjoint_map(adjoint_probe(), unbounded);
+    const expected<std::pair<screw_axis, double>, refusal> se3_rp = ops.matrix_logarithm_se3_rp(rotation::Identity(), far);
+    const expected<std::pair<screw_axis, double>, refusal> se3    = ops.matrix_logarithm_se3(unbounded);
 
+    REQUIRE_FALSE(from_rp.has_value());
     REQUIRE_FALSE(from_tf.has_value());
     REQUIRE_FALSE(mapped.has_value());
+    REQUIRE_FALSE(se3_rp.has_value());
     REQUIRE_FALSE(se3.has_value());
 
+    CHECK(from_rp.error() == refusal::degenerate);
     CHECK(from_tf.error() == refusal::degenerate);
     CHECK(mapped.error() == refusal::degenerate);
+    CHECK(se3_rp.error() == refusal::degenerate);
     CHECK(se3.error() == refusal::degenerate);
 }
 

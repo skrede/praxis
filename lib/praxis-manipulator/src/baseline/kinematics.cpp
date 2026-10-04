@@ -185,8 +185,10 @@ expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &, cons
 {
     if(j0.size() != static_cast<Eigen::Index>(chain.joint_count()))
         return unexpected(refusal::unsupported_input);
-    if(!is_admitted(chain) || !is_a_rigid_motion(desired) || !j0.allFinite())
+    if(!is_admitted(chain) || !is_a_rigid_motion(desired))
         return unexpected(refusal::degenerate);
+    if(!j0.allFinite())
+        return unexpected(refusal::no_solution);
 
     const expected<std::vector<screw_axis>, refusal> body = to_body_screws(rigid_motion::baseline().screw, chain.home, chain.space_screws);
     if(!body)

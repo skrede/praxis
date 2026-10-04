@@ -254,15 +254,18 @@ TEST_CASE("a_chain_carrying_a_nonfinite_value_is_refused_rather_than_thrown_over
     blunted[1]                      = screw_axis::Constant(std::numeric_limits<double>::quiet_NaN());
 
     const expected<transform, refusal> pose       = manipulator::forward_kinematics(reference_screw, unbounded, chain.space_screws, q);
+    const expected<transform, refusal> bare_pose  = manipulator::forward_kinematics(reference_screw, unbounded, {}, joint_vector::Zero(0));
     const expected<transform, refusal> body_pose  = manipulator::body_forward_kinematics(reference_screw, reference_frames, chain.home, blunted, q);
     const expected<jacobian, refusal> space_frame = manipulator::space_jacobian(reference_screw, blunted, q);
     const expected<jacobian, refusal> body_frame  = manipulator::body_jacobian(reference_screw, reference_frames, reference_forward, chain.home, blunted, q);
 
     REQUIRE_FALSE(pose.has_value());
+    REQUIRE_FALSE(bare_pose.has_value());
     REQUIRE_FALSE(body_pose.has_value());
     REQUIRE_FALSE(space_frame.has_value());
     REQUIRE_FALSE(body_frame.has_value());
     CHECK(pose.error() == refusal::degenerate);
+    CHECK(bare_pose.error() == refusal::degenerate);
     CHECK(body_pose.error() == refusal::degenerate);
     CHECK(space_frame.error() == refusal::degenerate);
     CHECK(body_frame.error() == refusal::degenerate);
@@ -561,6 +564,30 @@ TEST_CASE("a_seed_of_the_wrong_width_is_refused_before_any_of_its_values_is_read
 
     REQUIRE_FALSE(solution.has_value());
     CHECK(solution.error() == refusal::unsupported_input);
+    CHECK(solver.iterations().empty());
+}
+
+TEST_CASE("a_target_that_is_not_finite_is_refused_as_degenerate_and_a_seed_that_is_not_finite_finds_nothing")
+{
+    const kinematics solver = reference(planar_arm());
+    const transform target  = reached(solver, configuration(0.4, -0.7));
+
+    transform unbounded = target;
+    unbounded(0, 3)     = std::numeric_limits<double>::infinity();
+    transform unread    = target;
+    unread(0, 3)        = std::numeric_limits<double>::quiet_NaN();
+
+    const expected<joint_vector, refusal> far       = solver.ik_solve(unbounded, configuration(0.1, -0.1), tight_parameters);
+    const expected<joint_vector, refusal> undefined = solver.ik_solve(unread, configuration(0.1, -0.1), tight_parameters);
+    const expected<joint_vector, refusal> unseeded =
+            solver.ik_solve(target, configuration(std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::infinity()), tight_parameters);
+
+    REQUIRE_FALSE(far.has_value());
+    REQUIRE_FALSE(undefined.has_value());
+    REQUIRE_FALSE(unseeded.has_value());
+    CHECK(far.error() == refusal::degenerate);
+    CHECK(undefined.error() == refusal::degenerate);
+    CHECK(unseeded.error() == refusal::no_solution);
     CHECK(solver.iterations().empty());
 }
 

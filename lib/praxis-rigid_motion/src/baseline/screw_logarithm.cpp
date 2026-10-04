@@ -89,7 +89,7 @@ expected<std::pair<Eigen::Vector3d, double>, refusal> matrix_logarithm_so3(const
 
 expected<std::pair<screw_axis, double>, refusal> matrix_logarithm_se3_rp(const rotation &r, const Eigen::Vector3d &p)
 {
-    if(!is_a_rotation(r))
+    if(!is_a_rigid_motion(r, p))
         return unexpected(refusal::degenerate);
 
     return screw_logarithm(r, p, &rotation_logarithm);
@@ -113,7 +113,7 @@ expected<std::pair<Eigen::Vector3d, double>, refusal> book::matrix_logarithm_so3
 
 expected<std::pair<screw_axis, double>, refusal> book::matrix_logarithm_se3_rp(const rotation &r, const Eigen::Vector3d &p)
 {
-    if(!is_a_rotation(r))
+    if(!is_a_rigid_motion(r, p))
         return unexpected(refusal::degenerate);
 
     return screw_logarithm(r, p, &book_rotation_logarithm);
