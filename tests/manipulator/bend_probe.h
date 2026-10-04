@@ -24,6 +24,7 @@
 #include <memory>
 #include <cstddef>
 #include <cstdint>
+#include <numbers>
 
 // One drawn case put through every compared slot on two aggregates, asking of each row whether the
 // two answered differently at all. Nothing here reads a tolerance: what a bend has to clear is the
@@ -39,6 +40,9 @@ constexpr std::size_t every_row       = compared_slots;
 // A step short enough that the solve the via-point factory chains from the run's own start
 // configuration reaches the pose one step on from it.
 constexpr double waypoint_step_radians = 0.05;
+
+// The screw row's own displacement: a turn within this many radians either way of the start pose.
+constexpr double displacement_turn_radians = 0.1;
 
 bool apart(const Eigen::Ref<const Eigen::MatrixXd> &held, const Eigen::Ref<const Eigen::MatrixXd> &against)
 {
@@ -151,7 +155,7 @@ void note_answers_apart(const manipulator::capabilities &held, const manipulator
     const transform tool                = *reached * offset;
     const Eigen::Vector3d direction     = drawn.unit_direction();
     const Eigen::Vector3d point         = drawn.position_metres();
-    const double turn                   = drawn.angle_radians();
+    const double turn                   = displacement_turn_radians * drawn.angle_radians() / std::numbers::pi;
     const double travel                 = drawn.pitch();
     const rigid_motion::screw_ops screw = rigid_motion::baseline().screw;
 
@@ -161,8 +165,8 @@ void note_answers_apart(const manipulator::capabilities &held, const manipulator
     seen[11] = seen[11] || answers_apart(held.robot.ik_solve_flange_pose(*composed, *reached, start), bent.robot.ik_solve_flange_pose(*composed, *reached, start));
     seen[12] = seen[12] || answers_apart(held.motion.task_space_pose(*composed, *reached, start), bent.motion.task_space_pose(*composed, *reached, start));
     seen[13] = seen[13] ||
-            answers_apart(held.motion.task_space_screw(screw, *composed, *reached, direction, point, turn, travel, start),
-                          bent.motion.task_space_screw(screw, *composed, *reached, direction, point, turn, travel, start));
+            answers_apart(held.motion.task_space_screw(screw, *composed, *reached, direction, point, turn, travel, example.joints),
+                          bent.motion.task_space_screw(screw, *composed, *reached, direction, point, turn, travel, example.joints));
 
     const expected<transform, refusal> stepped = composed->fk_solve(manipulator::joint_vector(start + manipulator::joint_vector::Constant(start.size(), waypoint_step_radians)));
     if(!stepped)

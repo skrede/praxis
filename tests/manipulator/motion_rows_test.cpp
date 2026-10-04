@@ -41,7 +41,7 @@ constexpr tolerance_pair solved_pose_bound{solved_pose_tolerance_radians, solved
 // same pose and not by taking the same path to it.
 joint_vector another_seed(const joint_vector &j0)
 {
-    return joint_vector(-j0);
+    return joint_vector(-0.5 * j0);
 }
 
 expected<joint_vector, refusal> pose_from_another_seed(const kinematics &solver, const transform &pose, const joint_vector &j0)

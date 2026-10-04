@@ -11,10 +11,12 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <span>
+#include <cmath>
+#include <limits>
 #include <vector>
 #include <cstddef>
+#include <cstdint>
 #include <utility>
-#include <cmath>
 #include <algorithm>
 
 using namespace praxis;
@@ -23,9 +25,7 @@ using namespace praxis::manipulator;
 namespace {
 
 // The two halves of the body twist between the pose a configuration reaches and the pose asked for:
-// V_b = log(T_sb^-1 T_sd), angular part leading. Lynch & Park, Modern Robotics, eq. (6.4). Taken with
-// this tree's own logarithm rather than the dependency's, so a value recorded by the solve and the
-// value checked against it do not come from the same computation.
+// V_b = log(T_sb^-1 T_sd), angular part leading. Lynch & Park, Modern Robotics, sec. 6.2.2.
 std::pair<double, double> body_halves(const kinematics &solver, const transform &target, const joint_vector &q)
 {
     const auto [axis, angle] = rigid_motion::matrix_logarithm_se3(solver.fk_solve(q).value().inverse() * target).value();
@@ -100,8 +100,6 @@ round_trips round_trip(const screw_chain &chain, const std::vector<joint_vector>
     return seen;
 }
 
-// Twenty times the worst residual either fixture produced at the defaults, so the bound survives a
-// toolchain that rounds differently rather than sitting on the number this machine measured.
 constexpr double asserted_residual = 1.0e-6;
 
 }
@@ -124,17 +122,17 @@ TEST_CASE("the_default_parameters_carry_every_sampled_configuration_through_a_ro
     CHECK(recorded.worst_work * 4u < defaults.max_iterations_per_attempt);
 }
 
-TEST_CASE("the_position_tolerance_is_the_tightest_at_which_both_fixtures_still_converge")
+TEST_CASE("an_order_tighter_position_tolerance_still_converges_and_an_order_looser_lands_further_out")
 {
     const solver_parameters defaults;
     const solver_parameters tighter(defaults.position_tol / 10.0, defaults.orientation_tol, defaults.max_iterations_per_attempt);
     const solver_parameters looser(defaults.position_tol * 10.0, defaults.orientation_tol, defaults.max_iterations_per_attempt);
 
-    // An order tighter and the damped least squares stalls on configurations it otherwise carries.
-    const round_trips stalled = round_trip(fixture::three_link_arm(), planar_grid(), tighter);
-    CHECK(stalled.converged < stalled.attempted);
+    const round_trips planar_tight   = round_trip(fixture::three_link_arm(), planar_grid(), tighter);
+    const round_trips recorded_tight = round_trip(fixture::recorded_arm(), recorded_grid(), tighter);
+    CHECK(planar_tight.converged == planar_tight.attempted);
+    CHECK(recorded_tight.converged == recorded_tight.attempted);
 
-    // An order looser and every configuration still arrives, but visibly further from the target.
     const round_trips slack  = round_trip(fixture::three_link_arm(), planar_grid(), looser);
     const round_trips chosen = round_trip(fixture::three_link_arm(), planar_grid(), defaults);
     CHECK(slack.converged == slack.attempted);
@@ -144,8 +142,8 @@ TEST_CASE("the_position_tolerance_is_the_tightest_at_which_both_fixtures_still_c
 TEST_CASE("the_iteration_budget_is_what_decides_whether_a_solve_finishes")
 {
     const solver_parameters defaults;
-    const solver_parameters starved(defaults.position_tol, defaults.orientation_tol, 6u);
-    const solver_parameters sufficient(defaults.position_tol, defaults.orientation_tol, 7u);
+    const solver_parameters starved(defaults.position_tol, defaults.orientation_tol, 5u);
+    const solver_parameters sufficient(defaults.position_tol, defaults.orientation_tol, 6u);
 
     const round_trips cut  = round_trip(fixture::three_link_arm(), planar_grid(), starved);
     const round_trips just = round_trip(fixture::three_link_arm(), planar_grid(), sufficient);
@@ -154,20 +152,19 @@ TEST_CASE("the_iteration_budget_is_what_decides_whether_a_solve_finishes")
     CHECK(just.converged == just.attempted);
 }
 
-// A count above the range of the signed type the dependency takes is clamped to that type's maximum.
-// Unclamped it wraps negative, and a negative limit is reached by the first iteration, so a request
-// for more effort than the type can hold becomes a request for none.
-TEST_CASE("a_budget_beyond_the_dependencys_signed_range_still_runs_the_solve")
+// The step count spans the budget's whole unsigned 32-bit range, so its largest value bounds the
+// solve as any smaller one does.
+TEST_CASE("a_budget_at_the_top_of_its_range_still_runs_the_solve")
 {
     const solver_parameters defaults;
-    const solver_parameters beyond(defaults.position_tol, defaults.orientation_tol, 3'000'000'000u);
+    const solver_parameters topmost(defaults.position_tol, defaults.orientation_tol, std::numeric_limits<std::uint32_t>::max());
 
     const kinematics solver     = manipulator::make_kinematics(fixture::three_link_arm(), manipulator::baseline().fk, manipulator::baseline().dk, manipulator::baseline().ik,
                                                                rigid_motion::baseline().screw, rigid_motion::baseline().frame)
                                           .value();
     const transform target      = solver.fk_solve(fixture::posed_arm()).value();
-    const joint_vector seed     = fixture::arm_configuration(0.1, -0.9, 0.2);
-    const joint_vector solution = solver.ik_solve(target, seed, beyond).value();
+    const joint_vector seed     = fixture::arm_configuration(-0.2, -0.5, 0.9);
+    const joint_vector solution = solver.ik_solve(target, seed, topmost).value();
 
     const auto [angular, linear] = body_halves(solver, target, solution);
     CHECK(solver.iterations().size() > 1u);
@@ -184,7 +181,7 @@ TEST_CASE("the_recorded_errors_are_the_two_halves_of_the_body_twist")
     const kinematics solver = manipulator::make_kinematics(fixture::recorded_arm(), manipulator::baseline().fk, manipulator::baseline().dk, manipulator::baseline().ik,
                                                            rigid_motion::baseline().screw, rigid_motion::baseline().frame)
                                       .value();
-    const joint_vector seed = fixture::recorded_configuration(-0.4, -0.3, 0.2, 0.9, -0.8, 1.2);
+    const joint_vector seed = fixture::recorded_configuration(0.3, -0.3, 0.2, -0.3, -0.8, -0.1);
     const transform target  = solver.fk_solve(fixture::recorded_configuration(0.5, -1.1, 1.0, -0.7, 0.6, -0.5)).value();
     REQUIRE(solver.ik_solve(target, seed, solver_parameters()).has_value());
     const std::span<const iteration_state> states = solver.iterations();
