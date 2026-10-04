@@ -24,8 +24,20 @@
 
     <joint_control mode="simulation"/>
 
-    <!-- No start is named, so the list opens at the spread the joint count answers. A start written
-         here is one this document adds to that spread rather than a change to it. -->
+    <!-- The starts the solve runs from, in order and in radians. The first is the initial
+         configuration above; the eight after it are the spread a document naming no start opens at. -->
+    <ik_seeds>
+        <start index="1" joints="0 -1.5707963267948966 1.5707963267948966 -1.5707963267948966 -1.5707963267948966 0"/>
+        <start index="2" joints="0 0 0 0 0 0"/>
+        <start index="3" joints="0 -1.0471975511965976 -1.8849555921538759 -2.2439947145189794 -2.570393868247963 -2.658270727369526"/>
+        <start index="4" joints="-1.5707963267948966 1.0471975511965976 -0.6283185307179586 -1.3463969086062204 -1.9991953492222418 -2.174948801149258"/>
+        <start index="5" joints="1.5707963267948966 -2.443460952792061 0.6283185307179586 -0.4487989362458932 -1.4279966970384663 -1.6916268749289907"/>
+        <start index="6" joints="-2.356194490192345 -0.3490658503988659 1.8849555921538759 0.4487989362458932 -0.8567979782756634 -1.2083048155506688"/>
+        <start index="7" joints="0.7853981633974483 1.7453292519943295 -2.8902653478290534 1.3463969086062204 -0.2855993260918878 -0.7249828893304012"/>
+        <start index="8" joints="-0.7853981633974483 -1.7453292519943295 -1.6336281532350816 2.2439947145189794 0.2855993260918878 -0.24166097975489056"/>
+        <start index="9" joints="2.356194490192345 0.3490658503988659 -0.3769911250886779 -3.013364376579677 0.8567979782756634 0.24166097975489056"/>
+    </ik_seeds>
+
     <ik_solutions mode="simulation" figures="true"/>
 
     <ik_iterates start="1" mode="simulation"/>
