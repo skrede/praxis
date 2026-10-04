@@ -12,8 +12,8 @@
 #include <string>
 #include <vector>
 #include <cstddef>
-#include <optional>
 #include <utility>
+#include <optional>
 
 namespace praxis::manipulator {
 

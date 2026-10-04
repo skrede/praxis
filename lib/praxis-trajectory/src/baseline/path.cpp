@@ -9,14 +9,14 @@ namespace praxis::trajectory {
 
 namespace {
 
-// Membership of SE(3): an orthonormal rotation of unit determinant over an affine bottom row. Both
+// Membership of SE(3): a finite matrix, an orthonormal rotation of unit determinant over an affine bottom row. Both
 // task-space paths premultiply by the start frame, so an endpoint outside the set produces an
 // interpolated pose outside it even where the relative motion between the two endpoints is inside.
 bool is_a_rigid_motion(const transform &tf)
 {
     const rotation r = rigid_motion::rotation_matrix_from_transform(tf);
 
-    return is_approx_equal(rotation(r.transpose() * r), rotation::Identity()) && is_approx_equal(r.determinant(), 1.0) &&
+    return tf.allFinite() && is_approx_equal(rotation(r.transpose() * r), rotation::Identity()) && is_approx_equal(r.determinant(), 1.0) &&
             is_approx_equal((tf.row(3) - Eigen::RowVector4d::UnitW()).cwiseAbs().maxCoeff(), 0.0);
 }
 

@@ -11,6 +11,7 @@
 #include <Eigen/Geometry>
 
 #include <cmath>
+#include <limits>
 #include <numbers>
 
 using namespace praxis;
@@ -112,6 +113,19 @@ TEST_CASE("an_endpoint_whose_bottom_row_is_not_affine_is_refused_even_though_the
     const auto refused_decoupled = decoupled(unscaled, end_frame(), 0.5);
 
     REQUIRE(is_a_rigid_motion(rigid_motion::inverse(unscaled) * end_frame()));
+    REQUIRE(!refused_screw);
+    CHECK(refused_screw.error() == refusal::degenerate);
+    REQUIRE(!refused_decoupled);
+    CHECK(refused_decoupled.error() == refusal::degenerate);
+}
+
+TEST_CASE("an_endpoint_whose_translation_is_not_finite_is_refused_by_both_task_space_paths")
+{
+    const transform far = assembled(rotation::Identity(), Eigen::Vector3d{std::numeric_limits<double>::infinity(), 0.0, 0.25});
+
+    const auto refused_screw     = screw(start_frame(), far, 0.5);
+    const auto refused_decoupled = decoupled(start_frame(), far, 0.5);
+
     REQUIRE(!refused_screw);
     CHECK(refused_screw.error() == refusal::degenerate);
     REQUIRE(!refused_decoupled);

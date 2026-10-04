@@ -118,10 +118,24 @@ std::optional<joint_vector> named_inside_bounds(const screw_chain &chain, const 
     return named;
 }
 
+// A converged configuration is answered at its naming inside the chain's joint bounds.
+expected<void, refusal> answered_inside_bounds(const screw_chain &chain, const expected<joint_vector, refusal> &converged, ik_result &answer)
+{
+    if(!converged)
+        return unexpected(converged.error());
+
+    const std::optional<joint_vector> named = named_inside_bounds(chain, *converged);
+    if(!named.has_value())
+        return unexpected(refusal::no_solution);
+
+    answer.solutions.push_back(*named);
+
+    return {};
 }
 
-// Lynch & Park, Modern Robotics, sec. 6.2.2; the step is eq. (6.6) in the body frame. A converged
-// configuration is answered at its naming inside the chain's joint bounds.
+}
+
+// Lynch & Park, Modern Robotics, sec. 6.2.2; the step is eq. (6.6) in the body frame.
 expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &chain,
                                            const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer)
 {
@@ -136,17 +150,7 @@ expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &, cons
     if(!body)
         return unexpected(refusal::degenerate);
 
-    const expected<joint_vector, refusal> converged = iterated(chain.home, *body, desired, j0, parameters, answer);
-    if(!converged)
-        return unexpected(converged.error());
-
-    const std::optional<joint_vector> named = named_inside_bounds(chain, *converged);
-    if(!named.has_value())
-        return unexpected(refusal::no_solution);
-
-    answer.solutions.push_back(*named);
-
-    return {};
+    return answered_inside_bounds(chain, iterated(chain.home, *body, desired, j0, parameters, answer), answer);
 }
 
 expected<kinematics, refusal> make_kinematics(const screw_chain &chain, forward_kinematics_ops forward, differential_kinematics_ops differential, inverse_kinematics_ops inverse,
