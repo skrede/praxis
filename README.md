@@ -18,8 +18,8 @@ evaluation harness — none of which names any robotics, plus three **extensions
 An extension is a single
 target that carries its own vocabulary, its contracts, the inert defaults behind them, its reference
 implementation and its scene contribution together; the reference sits under a `baseline/` path
-rather than in a target of its own. A solver or a logging dependency it needs is linked privately
-and reaches none of its published headers, while the renderer and the GUI library
+rather than in a target of its own. A logging dependency it needs is linked privately and reaches
+none of its published headers, while the renderer and the GUI library
 are public surface on an extension that contributes to the scene, as is the model library on one
 that reads a robot description. An extension
 can be authored outside this repository: adding a domain means adding an extension, not editing a
@@ -35,9 +35,9 @@ build and the gates both read.
 | `praxis::scheduler` | core | the strand model everything else runs on: clocks, tasks, strands, the snapshot a strand publishes, the ownership gate that is the only route to a value a strand owns, and the rejection and overrun reports a refused or late task lands in |
 | `praxis::scene` | core | the renderer, the window framework, the preset registry and the reusable widgets — general enough that a second domain reuses them unchanged |
 | `praxis::evaluation` | core | what an implementation bound to a slot is measured with: the project tolerance, the residual kinds a discrepancy is reported in, the comparators over them, the seeded case source that draws a slot's inputs from the bulk of its range or from the neighbourhood where its mathematics degenerates, and the per-slot report they assemble into. It names no domain — what it measures is whatever a capability published |
-| `praxis::rigid_motion` | extension | the rigid-motion seam whole: the pose vocabulary every extension speaks — transforms, screw axes, angle conversions, Euler axis orders, the project tolerance — the frame and screw slots with their descriptors and an inert default behind each, and the reference implementations behind them, written by delegating to a Lie-group library; and the scene contribution: a stencil rendering one object with its coordinate frame, the window whose Euler controls drive that frame, and the preset composing the two |
+| `praxis::rigid_motion` | extension | the rigid-motion seam whole: the pose vocabulary every extension speaks — transforms, screw axes, angle conversions, Euler axis orders, the project tolerance — the frame and screw slots with their descriptors and an inert default behind each, and the reference implementations behind them, written from Lynch & Park, Modern Robotics, ch. 3; and the scene contribution: a stencil rendering one object with its coordinate frame, the window whose Euler controls drive that frame, and the preset composing the two |
 | `praxis::trajectory` | extension | the trajectory seam whole: its own N-DOF vocabulary — a configuration vector and the bounds on it — the time-scaling, path, SE(3) pose-trajectory and via-point slots with their descriptors and an inert default behind each, and the reference implementations behind them, written from Lynch & Park, Modern Robotics, ch. 9, from Biagiotti & Melchiorri, Trajectory Planning for Automatic Machines and Robots, eq. (2.3), and built on the rigid-motion reference; and the scene contribution: a preset sweeping the rigid-motion extension's stencil along a screw motion under a time scaling |
-| `praxis::manipulator` | extension | everything specific to serial arms: its own joint vocabulary — joint vectors, Jacobians, the screw chain and the joint bounds, the last two of them names it gives the trajectory extension's types — the forward-kinematics, differential-kinematics, inverse-kinematics, robot, motion, modeling and task-space via-point slots with their descriptors and an inert default behind each, and the reference implementations behind them, written by delegating to a solver library, to the rigid-motion reference and to this extension's own screw-chain derivation; and the scene contribution: that derivation from a robot description, the scene adapter, the controller and playback, and the operator windows |
+| `praxis::manipulator` | extension | everything specific to serial arms: its own joint vocabulary — joint vectors, Jacobians, the screw chain and the joint bounds, the last two of them names it gives the trajectory extension's types — the forward-kinematics, differential-kinematics, inverse-kinematics, robot, motion, modeling and task-space via-point slots with their descriptors and an inert default behind each, and the reference implementations behind them, written from Lynch & Park, Modern Robotics, ch. 4-6, alongside this extension's own screw-chain derivation, and built on the rigid-motion reference; and the scene contribution: that derivation from a robot description, the scene adapter, the controller and playback, and the operator windows |
 
 `praxis::praxis` is a convenience target over the Foundation, and `praxis::extensions` one over every
 extension shipped here. Each extension ships one preset, so linking `praxis::extensions` compiles all of
@@ -175,7 +175,7 @@ configuring on different days get the same sources.
 Ask the remote what a branch or tag currently points at:
 
 ```shell
-git ls-remote https://github.com/skrede/cartan.git milestone/v0.4.3
+git ls-remote https://github.com/skrede/meios.git develop
 ```
 
 Then replace that dependency's reference in `cmake/dependencies.cmake` with the hash it prints. The

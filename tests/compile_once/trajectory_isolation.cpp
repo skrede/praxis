@@ -1,12 +1,12 @@
 #include "praxis/trajectory.h"
 
-#if defined(HPP_GUARD_CARTAN_TYPES_H) || defined(HPP_GUARD_MEIOS_URDF_LOAD_H) || defined(SPDLOG_VER_MAJOR)
-    #error "the trajectory umbrella pulled in a cartan, meios or spdlog header"
+#if defined(HPP_GUARD_MEIOS_URDF_LOAD_H) || defined(SPDLOG_VER_MAJOR)
+    #error "the trajectory umbrella pulled in a meios or spdlog header"
 #endif
 // Logging is covered by the guard-macro form alone: spdlog is commonly installed as a system
 // package, so its availability reports the machine rather than this target's link line.
-#if __has_include(<cartan/lie.h>) || __has_include(<meios/urdf/load.h>)
-    #error "a cartan or meios include directory reached a translation unit linking only the trajectory module"
+#if __has_include(<meios/urdf/load.h>)
+    #error "a meios include directory reached a translation unit linking only the trajectory module"
 #endif
 
 #include <array>

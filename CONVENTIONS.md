@@ -78,8 +78,8 @@ the include-leak assertion is applied to each target directly.
   the next run. Which of them a module may publish through its own headers is subject matter again,
   so each names those as `PRAXIS_PUBLIC_DEPENDENCIES`, writes `NONE` where it publishes none, and a
   public link to a name that list omits stops the gate. The include-leak gate
-  asserts at configure, per target, that the solver and the logging dependency are linked privately
-  and reach no published header. The renderer and the GUI library are public
+  asserts at configure, per target, that the logging dependency is linked privately and reaches no
+  published header. The renderer and the GUI library are public
   surface on an extension that contributes to the scene, as is the model library on one that reads a
   robot description.
 - An extension is authorable **outside this repository**: it declares its own capability, ships its

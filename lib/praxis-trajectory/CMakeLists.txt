@@ -53,9 +53,8 @@ praxis_add_module(trajectory
 # The renderer and the GUI library arrive with the scene this extension's preset composes against, so
 # both are published surface here and neither is on the list. The logging dependency is on it even
 # though this module links it: the assertion is that a private link never reaches the published
-# interface, and the same holds for the solver, which arrives privately through the rigid-motion
-# extension, and for the model library.
-praxis_assert_no_include_leak(praxis_trajectory cartan meios spdlog)
+# interface, and the same holds for the model library.
+praxis_assert_no_include_leak(praxis_trajectory meios spdlog)
 
 set(PRAXIS_PUBLIC_DEPENDENCIES Eigen3)
 

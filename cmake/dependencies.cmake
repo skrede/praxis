@@ -42,9 +42,9 @@ else ()
     target_compile_definitions(Eigen3::Eigen INTERFACE $<BUILD_INTERFACE:EIGEN_MPL2_ONLY>)
 endif ()
 
-# The revision and the install setting are decided here because meios, nucleus and cartan each
-# acquire pugixml themselves at differing revisions and with differing install settings, leaving the
-# outcome to whichever of them happens to be declared first. Install rules stay enabled because
+# The revision and the install setting are decided here because meios and nucleus each acquire
+# pugixml themselves at differing revisions and with differing install settings, leaving the outcome
+# to whichever of them happens to be declared first. Install rules stay enabled because
 # nucleus link-references pugixml from an export set it does not gate, and an export set cannot
 # generate against a dependency that installs nothing.
 set(PUGIXML_BUILD_TESTS OFF)
@@ -67,13 +67,6 @@ if (PRAXIS_BUILD_TESTS)
     )
     FetchContent_MakeAvailable(Catch2)
 endif ()
-
-FetchContent_Declare(
-    cartan
-    GIT_REPOSITORY https://github.com/skrede/cartan.git
-    GIT_TAG 7c69e82c885f56ed694dbba13b9a199e061b3745  # milestone/v0.4.3
-)
-FetchContent_MakeAvailable(cartan)
 
 FetchContent_Declare(
     meios

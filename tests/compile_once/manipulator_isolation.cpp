@@ -1,11 +1,8 @@
 #include "praxis/extension.h"
 #include "praxis/manipulator.h"
 
-#if defined(HPP_GUARD_CARTAN_TYPES_H) || defined(SPDLOG_VER_MAJOR)
-    #error "the manipulator umbrella pulled in a cartan or spdlog header"
-#endif
-#if __has_include(<cartan/lie.h>)
-    #error "a cartan include directory reached a translation unit linking only the manipulator module"
+#if defined(SPDLOG_VER_MAJOR)
+    #error "the manipulator umbrella pulled in a logging header"
 #endif
 
 #include <array>

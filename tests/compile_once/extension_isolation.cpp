@@ -1,7 +1,7 @@
 #include "praxis/extension.h"
 
-#if defined(HPP_GUARD_CARTAN_LIE_H) || defined(HPP_GUARD_MEIOS_URDF_LOAD_H)
-    #error "the extension machinery umbrella pulled in a solver or model-library header"
+#if defined(HPP_GUARD_MEIOS_URDF_LOAD_H)
+    #error "the extension machinery umbrella pulled in a model-library header"
 #endif
 #if defined(THREEPP_OBJECT3D_HPP) || defined(IMGUI_VERSION) || defined(SPDLOG_VER_MAJOR)
     #error "the extension machinery umbrella pulled in a renderer, GUI or logging header"
@@ -19,8 +19,8 @@
 // The guard-macro form above only fires once a header is actually included. A dependency whose
 // include directories reach the target while none of its headers happens to be included is invisible
 // to it, so the availability form below is what asserts the dependency footprint itself.
-#if __has_include(<cartan/lie.h>) || __has_include(<meios/urdf/load.h>)
-    #error "a solver or model-library include directory reached a translation unit linking only the extension machinery"
+#if __has_include(<meios/urdf/load.h>)
+    #error "a model-library include directory reached a translation unit linking only the extension machinery"
 #endif
 // Logging is covered by the guard-macro form alone: spdlog is commonly installed as a system
 // package, so its availability reports the machine rather than this target's link line.

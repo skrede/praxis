@@ -66,16 +66,15 @@ praxis_add_module(rigid_motion
     praxis::scene
     Eigen3::Eigen
     PRIVATE_LIBS
-    cartan::lie
     spdlog::spdlog
 )
 
 # The renderer and the GUI library arrive with the scene this extension's stencil and window build
-# on, so both are published surface here and neither is on the list. cartan and the logging library
-# are on it even though this module links them: the assertion is not that the dependency is absent
-# but that the private link never reaches the published interface, and the same holds for the model
-# library, which this module never links at all.
-praxis_assert_no_include_leak(praxis_rigid_motion cartan meios spdlog)
+# on, so both are published surface here and neither is on the list. The logging library is on it
+# even though this module links it: the assertion is not that the dependency is absent but that the
+# private link never reaches the published interface, and the same holds for the model library,
+# which this module never links at all.
+praxis_assert_no_include_leak(praxis_rigid_motion meios spdlog)
 
 set(PRAXIS_PUBLIC_DEPENDENCIES Eigen3)
 

@@ -45,13 +45,13 @@ praxis_add_module(scene
 )
 
 # The renderer and the GUI library are published surface here and are therefore absent from the list.
-praxis_assert_no_include_leak(praxis_scene cartan spdlog meios)
+praxis_assert_no_include_leak(praxis_scene spdlog meios)
 
 set(PRAXIS_PUBLIC_DEPENDENCIES imgui threepp Eigen3)
 
-# The core names no domain, so the solver and the model library stay out of this closure entirely;
-# the link-isolation gate reads the list and fails on either reaching it.
-set(PRAXIS_CLOSURE_ABSENT cartan meios)
+# The core names no domain, so the model library stays out of this closure entirely; the
+# link-isolation gate reads the list and fails if it reaches it.
+set(PRAXIS_CLOSURE_ABSENT meios)
 
 # NAMESPACE prefixes the target name rather than the alias, so without EXPORT_NAME a consumer
 # writing praxis::scene is told about a target it never named.

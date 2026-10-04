@@ -84,8 +84,8 @@ function(praxis_declared_libraries MODULE OUT_MODULES OUT_DEPENDENCIES OUT_LINKE
         elseif (token MATCHES "^praxis::([a-z_]+)$")
             list(APPEND modules "praxis_${CMAKE_MATCH_1}")
         else ()
-            # A dependency is policed under the namespace its targets come from, so cartan::lie and
-            # cartan::serial_chain are one name and a target carrying no namespace is its own.
+            # A dependency is policed under the namespace its targets come from, so meios::urdf and
+            # meios::core are one name and a target carrying no namespace is its own.
             string(REGEX REPLACE "::.*$" "" name "${token}")
             list(APPEND dependencies "${name}")
             if (scope STREQUAL "PUBLIC")

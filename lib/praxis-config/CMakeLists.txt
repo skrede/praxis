@@ -51,13 +51,13 @@ target_include_directories(praxis_config PRIVATE $<TARGET_PROPERTY:pugixml::pugi
 
 # The configuration engine, the parser behind it and the logging dependency are all linked privately
 # and reach no published header, which is what this asserts over the whole interface closure.
-praxis_assert_no_include_leak(praxis_config cartan meios threepp imgui spdlog nucleus pugixml)
+praxis_assert_no_include_leak(praxis_config meios threepp imgui spdlog nucleus pugixml)
 
 set(PRAXIS_PUBLIC_DEPENDENCIES NONE)
 
 # Linking a library costs this module the gate's widest branch, which asserted every dependency and
 # every other target of the repository absent on its own. What is left is named here.
-set(PRAXIS_CLOSURE_ABSENT cartan meios threepp imgui
+set(PRAXIS_CLOSURE_ABSENT meios threepp imgui
     praxis_extension praxis_scheduler praxis_scene)
 
 # NAMESPACE prefixes the target name rather than the alias, so without EXPORT_NAME a consumer

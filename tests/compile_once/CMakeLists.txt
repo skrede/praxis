@@ -36,9 +36,9 @@ if (TARGET praxis_rigid_motion)
     target_link_libraries(praxis_compile_once_rigid_motion_probe PRIVATE praxis::rigid_motion)
 endif ()
 
-# The same assertion for the trajectory extension. The solver reaches that module privately through
-# the rigid-motion extension, so its include directory must not reach here either: that is the live
-# proof the private link stops at the implementation.
+# The same assertion for the trajectory extension. That module links the logging dependency
+# privately and the model library not at all, so no header of either may reach here: that is the
+# live proof the private link stops at the implementation.
 if (TARGET praxis_trajectory)
     add_library(praxis_compile_once_trajectory_probe OBJECT
         trajectory_isolation.cpp

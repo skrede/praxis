@@ -18,14 +18,13 @@ praxis_add_module(evaluation
     Eigen3::Eigen
 )
 
-praxis_assert_no_include_leak(praxis_evaluation cartan meios spdlog)
+praxis_assert_no_include_leak(praxis_evaluation meios spdlog)
 
 set(PRAXIS_PUBLIC_DEPENDENCIES Eigen3)
 
-# A comparator is built from linear algebra and nothing else, so the solver the reference bindings
-# delegate to and the model library stay out of this closure entirely; the link-isolation gate reads
-# the list and fails on either reaching it.
-set(PRAXIS_CLOSURE_ABSENT cartan meios)
+# A comparator is built from linear algebra and nothing else, so the model library stays out of this
+# closure entirely; the link-isolation gate reads the list and fails if it reaches it.
+set(PRAXIS_CLOSURE_ABSENT meios)
 
 # NAMESPACE prefixes the target name rather than the alias, so without EXPORT_NAME a consumer
 # writing praxis::evaluation is told about a target it never named.
