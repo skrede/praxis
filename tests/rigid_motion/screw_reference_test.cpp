@@ -197,6 +197,26 @@ TEST_CASE("a_half_turn_about_an_axis_nearly_orthogonal_to_z_logs_to_that_axis")
     CHECK(std::abs(logged.first.dot(axis)) > 1.0 - default_tolerance);
 }
 
+// A half turn read back out of a product of rotations often rounds its computed trace just above -1,
+// where vee(R - R^T) is rounding noise rather than an axis.
+TEST_CASE("a_half_turn_composed_from_two_rotations_logs_to_a_turn_that_rebuilds_it")
+{
+    std::size_t missed = 0;
+    for(std::size_t k = 0; k < 200; ++k)
+    {
+        const double s             = static_cast<double>(k);
+        const rotation start       = axis_angle_rotation(Eigen::Vector3d{std::sin(1.3 * s), std::cos(0.7 * s), std::sin(2.1 * s + 0.5)}.normalized(), 0.1 + 0.031 * s);
+        const Eigen::Vector3d axis = Eigen::Vector3d{std::cos(0.9 * s), std::sin(1.7 * s), std::cos(2.3 * s + 1.0)}.normalized();
+        const rotation r           = start.transpose() * rotation(start * ops.matrix_exponential_so3(axis, to_radians(180.0)));
+
+        const std::pair<Eigen::Vector3d, double> logged = answered(ops.matrix_logarithm_so3(r));
+        if((ops.matrix_exponential_so3(logged.first, logged.second) - r).cwiseAbs().maxCoeff() > 1.0e-12)
+            ++missed;
+    }
+
+    CHECK(missed == 0);
+}
+
 TEST_CASE("a_rotation_whose_computed_trace_reads_as_the_identity_logs_to_its_true_turn")
 {
     const rotation r = ops.matrix_exponential_so3(direction, 1.0e-8);

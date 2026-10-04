@@ -39,8 +39,20 @@ rotation_reading book_rotation_logarithm(const rotation &r)
     return {axis.normalized(), theta};
 }
 
+// Beyond sec. 3.2.3.3: by eq. (3.51), (R + R^T)/2 - cI = (1 - c) w w^T, so its largest column is the
+// axis up to sign, and vee(R - R^T) = 2 sin(theta) w decides the sign. Accurate up to theta = pi.
+Eigen::Vector3d symmetric_part_axis(const rotation &r, double cosine, const Eigen::Vector3d &twice_sine_axis)
+{
+    const matrix3 outer = (r + r.transpose()) / 2.0 - cosine * matrix3::Identity();
+    Eigen::Index i      = 0;
+    outer.colwise().norm().maxCoeff(&i);
+
+    const Eigen::Vector3d axis = outer.col(i).normalized();
+    return axis.dot(twice_sine_axis) < 0.0 ? Eigen::Vector3d(-axis) : axis;
+}
+
 // Cases (a) and (b) of sec. 3.2.3.3, with case (c) beyond eq. (3.61): theta = atan2(||vee(R - R^T)||/2,
-// (tr R - 1)/2), the axis that vector's direction. Only a symmetric R is case (a) or (b) when c > -1.
+// (tr R - 1)/2), the axis that vector's direction for c >= 0, where only a symmetric R is case (a) or (b).
 rotation_reading rotation_logarithm(const rotation &r)
 {
     const double cosine = (r.trace() - 1.0) / 2.0;
@@ -49,6 +61,8 @@ rotation_reading rotation_logarithm(const rotation &r)
 
     const Eigen::Vector3d twice_sine_axis = from_skew_symmetric(r - r.transpose());
     const double twice_sine               = twice_sine_axis.norm();
+    if(cosine < 0.0)
+        return {symmetric_part_axis(r, cosine, twice_sine_axis), std::atan2(twice_sine / 2.0, cosine)};
     if(twice_sine == 0.0)
         return cosine > 0.0 ? rotation_reading{Eigen::Vector3d::UnitX(), 0.0} : rotation_reading{half_turn_axis(r), std::numbers::pi};
 
