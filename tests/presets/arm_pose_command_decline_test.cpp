@@ -53,9 +53,8 @@ struct commanding_scenario
     const char *composer;
 };
 
-const std::array<commanding_scenario, 4> commanding{commanding_scenario{&presets::arm_windows, "presets.arm_windows"},
+const std::array<commanding_scenario, 3> commanding{commanding_scenario{&presets::arm_windows, "presets.arm_windows"},
                                                     commanding_scenario{&presets::arm_windows_numerical_ik, "presets.arm_windows_numerical_ik"},
-                                                    commanding_scenario{&presets::arm_windows_analytic_ik, "presets.arm_windows_analytic_ik"},
                                                     commanding_scenario{&presets::arm_windows_path_comparison, "presets.arm_windows_path_comparison"}};
 
 manipulator::capabilities without(manipulator::capabilities composed, manipulator::robot_slot slot)
@@ -186,7 +185,7 @@ TEST_CASE("every pose transformation bound composes the windows each scenario na
     }
 }
 
-// A capability refuses where it is asked for, and none of these four asks for a solve while it is
+// A capability refuses where it is asked for, and none of these three asks for a solve while it is
 // being composed: the solve is asked for through a window, after the composition stands.
 TEST_CASE("an unbound solve declines no scenario that commands a pose", "[presets][windows]")
 {

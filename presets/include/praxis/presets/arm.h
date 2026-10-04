@@ -173,11 +173,6 @@ manipulator::arm_composition arm_windows_via_point(arm_scenario chosen);
 // three can be run with the path the tool traversed drawn beside the one it was commanded along.
 manipulator::arm_composition arm_windows_path_comparison(arm_scenario chosen);
 
-// The same target pose and the same list of answers, filled in one call rather than searched. There
-// is no list of starts, no table of steps and no curve, because a closed form takes no start and
-// records no step.
-manipulator::arm_composition arm_windows_analytic_ik(arm_scenario chosen);
-
 // Both Jacobians read as an aligned matrix and drawn as the twists their columns stand for, with the
 // two manipulability ellipsoids at the tool beside them and the force reading reachable in place of
 // the velocity one. The singular values of each block, its manipulability measure and its condition

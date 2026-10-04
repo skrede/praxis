@@ -91,7 +91,7 @@ config::document demonstration()
     return answered.values;
 }
 
-// The scenarios that need the arm somewhere in particular. The two that solve open away from the
+// The scenarios that need the arm somewhere in particular. The one that solves opens away from the
 // configuration where the wrist axes stand collinear, since a target taken there has a continuum of
 // answers rather than several; the velocity one opens where both blocks of its Jacobian are well
 // conditioned, so the two drawn bodies have an extent to be seen at. Every other scenario opens at
@@ -103,7 +103,7 @@ bool opens_placed(const config::document &values)
 
     const std::string_view scenario = presets::arm_scenario_labels()[static_cast<std::size_t>(*named)];
 
-    return scenario == "numerical inverse kinematics" || scenario == "analytic inverse kinematics" || scenario == "velocity kinematics";
+    return scenario == "numerical inverse kinematics" || scenario == "velocity kinematics";
 }
 
 std::vector<std::string> named_documents(const config::document &values)
@@ -126,20 +126,20 @@ std::vector<std::string> named_documents(const config::document &values)
 
 TEST_CASE("every shipped preset document loads against the declaration the application reads it with", "[examples][documents]")
 {
-    CHECK(shipped_presets().size() == 12u);
+    CHECK(shipped_presets().size() == 11u);
 }
 
 TEST_CASE("the names the shipped preset documents state are the ones the demonstration offers", "[examples][documents]")
 {
     std::vector<std::string> stated = offered_names(demonstration());
 
-    REQUIRE(stated.size() == 12u);
+    REQUIRE(stated.size() == 11u);
     std::ranges::sort(stated);
 
     CHECK(stated ==
-          std::vector<std::string>{"kr6r", "kr6r: analytic inverse kinematics", "kr6r: forward kinematics", "kr6r: numerical inverse kinematics", "kr6r: path comparison",
-                                   "kr6r: point to point motion", "kr6r: screw chain preview", "kr6r: velocity kinematics", "kr6r: via point motion", "ur3e: forward kinematics",
-                                   "ur3e: numerical inverse kinematics", "ur3e: screw chain preview"});
+          std::vector<std::string>{"kr6r", "kr6r: forward kinematics", "kr6r: numerical inverse kinematics", "kr6r: path comparison", "kr6r: point to point motion",
+                                   "kr6r: screw chain preview", "kr6r: velocity kinematics", "kr6r: via point motion", "ur3e: forward kinematics", "ur3e: numerical inverse kinematics",
+                                   "ur3e: screw chain preview"});
 }
 
 TEST_CASE("every shipped preset document names a description of its own", "[examples][documents]")

@@ -154,7 +154,6 @@ std::vector<std::pair<const char *, manipulator::arm_composition>> marking_scena
     standing.emplace_back("screw modeling", presets::arm_windows_modeling(chosen, presets::screw_table_source{}));
     standing.emplace_back("tooling", presets::arm_windows_tooling(chosen));
     standing.emplace_back("numerical inverse kinematics", presets::arm_windows_numerical_ik(chosen));
-    standing.emplace_back("analytic inverse kinematics", presets::arm_windows_analytic_ik(chosen));
     standing.emplace_back("velocity kinematics", presets::arm_windows_velocity_kinematics(chosen));
 
     return standing;

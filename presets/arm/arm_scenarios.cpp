@@ -26,9 +26,8 @@ namespace {
 
 // In the enumeration's own order, which is what reading a spelling back as a position and casting
 // relies on.
-constexpr std::array scenario_spellings{
-        "every window",          "forward kinematics", "supplied chain",  "tool and world object", "numerical inverse kinematics", "analytic inverse kinematics",
-        "point to point motion", "via point motion",   "path comparison", "velocity kinematics",   "supplied chain and tool"};
+constexpr std::array scenario_spellings{"every window",          "forward kinematics", "supplied chain",  "tool and world object", "numerical inverse kinematics",
+                                        "point to point motion", "via point motion",   "path comparison", "velocity kinematics",   "supplied chain and tool"};
 
 constexpr std::size_t scenario_count = static_cast<std::size_t>(arm_scenario_kind::supplied_chain_and_tool) + 1u;
 
@@ -61,7 +60,6 @@ constexpr std::array offered_scenarios{&windows_over<&arm_windows>,
                                        &modeling_windows<modeling_beside::pose>,
                                        &windows_over<&arm_windows_tooling>,
                                        &windows_over<&arm_windows_numerical_ik>,
-                                       &windows_over<&arm_windows_analytic_ik>,
                                        &windows_over<&arm_windows_point_to_point>,
                                        &windows_over<&arm_windows_via_point>,
                                        &windows_over<&arm_windows_path_comparison>,

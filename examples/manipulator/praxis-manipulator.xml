@@ -14,7 +14,6 @@
         <preset name="forward-ur3e" document="ur3e-forward-kinematics.xml"/>
         <preset name="chain-ur3e" document="ur3e-screw-chain-preview.xml"/>
         <preset name="numerical-kr6r" document="kr6r-inverse-kinematics-numerical.xml"/>
-        <preset name="analytic-kr6r" document="kr6r-inverse-kinematics-analytic.xml"/>
         <preset name="numerical-ur3e" document="ur3e-inverse-kinematics-numerical.xml"/>
         <preset name="point-to-point-kr6r" document="kr6r-point-to-point.xml"/>
         <preset name="via-point-kr6r" document="kr6r-via-point.xml"/>

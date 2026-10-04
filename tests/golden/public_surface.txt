@@ -3298,7 +3298,6 @@ presets/include/praxis/presets/arm.h	arm_windows_numerical_ik	prototype	(arm_sce
 presets/include/praxis/presets/arm.h	arm_windows_point_to_point	prototype	(arm_scenario chosen)	typename:manipulator::arm_composition
 presets/include/praxis/presets/arm.h	arm_windows_via_point	prototype	(arm_scenario chosen)	typename:manipulator::arm_composition
 presets/include/praxis/presets/arm.h	arm_windows_path_comparison	prototype	(arm_scenario chosen)	typename:manipulator::arm_composition
-presets/include/praxis/presets/arm.h	arm_windows_analytic_ik	prototype	(arm_scenario chosen)	typename:manipulator::arm_composition
 presets/include/praxis/presets/arm.h	arm_windows_velocity_kinematics	prototype	(arm_scenario chosen)	typename:manipulator::arm_composition
 presets/include/praxis/presets/arm.h	arm_preset	prototype	(const scene::preset_site & site,const manipulator::capabilities & arm,const trajectory::capabilities & shapes,const rigid_motion::capabilities & motions,const arm_scenario & chosen,const manipulator::arm_composition & composed)	typename:std::shared_ptr<scene::preset>
 presets/include/praxis/presets/arm_registration.h	praxis	namespace	-	-
@@ -3317,7 +3316,6 @@ presets/include/praxis/presets/arm_scenarios.h	forward_kinematics	enumerator	-	-
 presets/include/praxis/presets/arm_scenarios.h	supplied_chain	enumerator	-	-
 presets/include/praxis/presets/arm_scenarios.h	tooling	enumerator	-	-
 presets/include/praxis/presets/arm_scenarios.h	numerical_ik	enumerator	-	-
-presets/include/praxis/presets/arm_scenarios.h	analytic_ik	enumerator	-	-
 presets/include/praxis/presets/arm_scenarios.h	point_to_point	enumerator	-	-
 presets/include/praxis/presets/arm_scenarios.h	via_point	enumerator	-	-
 presets/include/praxis/presets/arm_scenarios.h	path_comparison	enumerator	-	-

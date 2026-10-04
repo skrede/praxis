@@ -182,13 +182,12 @@ TEST_CASE("each shipped document opens the windows its own scenario names", "[ex
     const scratch where("shipped-scenarios");
     offered demonstration(where);
 
-    REQUIRE(demonstration.names.size() == 12u);
+    REQUIRE(demonstration.names.size() == 11u);
 
     CHECK(demonstration.windows_of("kr6r: forward kinematics") == std::vector<std::string>{"Joint control", "Pose", "View"});
     CHECK(demonstration.windows_of("kr6r: screw chain preview") == std::vector<std::string>{"Joint control", "Chain", "Pose", "Tool", "View"});
     CHECK(demonstration.windows_of("kr6r: numerical inverse kinematics") ==
           std::vector<std::string>{"Joint control", "Target pose", "Starts", "Solutions", "Iterations", "Convergence", "View"});
-    CHECK(demonstration.windows_of("kr6r: analytic inverse kinematics") == std::vector<std::string>{"Joint control", "Target pose", "Solutions", "View"});
     CHECK(demonstration.windows_of("ur3e: numerical inverse kinematics") ==
           std::vector<std::string>{"Joint control", "Target pose", "Starts", "Solutions", "Iterations", "Convergence", "View"});
     CHECK(demonstration.windows_of("kr6r: point to point motion") == std::vector<std::string>{"Joint control", "Waypoints", "Control parameters", "Preview"});

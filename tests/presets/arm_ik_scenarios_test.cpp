@@ -39,13 +39,6 @@ const std::vector<std::string> &numerical_windows()
     return shown;
 }
 
-const std::vector<std::string> &analytic_windows()
-{
-    static const std::vector<std::string> shown{"Joint control", "Target pose", "Solutions", "View"};
-
-    return shown;
-}
-
 // Every capability the reference implementation binds, with whichever of them a case names left at
 // its inert default.
 manipulator::capabilities bound_except(bool solves)
@@ -89,42 +82,27 @@ TEST_CASE("the numerical scenario composes the seven windows its own solve needs
     REQUIRE(composed_windows(composed_arm(unwired(target), chosen, presets::arm_windows_numerical_ik(chosen))) == numerical_windows());
 }
 
-TEST_CASE("the analytic scenario opens neither the starts, the steps nor the curve", "[presets][windows]")
-{
-    const described_arm described(6, "six");
-    const presets::arm_scenario chosen = described_by(described.where);
-
-    threepp::Scene target;
-    REQUIRE(composed_windows(composed_arm(unwired(target), chosen, presets::arm_windows_analytic_ik(chosen))) == analytic_windows());
-}
-
-// An unbound slot is said out loud where a solve is asked for, so the scene a learner who has bound
-// neither of them opens is the scene they will have once they bind one.
-TEST_CASE("both scenarios open their windows over an arm nothing can solve for", "[presets][windows]")
+// An unbound slot is said out loud where a solve is asked for, so the scene opened over an arm with
+// no solve bound is the scene it will have once one is.
+TEST_CASE("the numerical scenario opens its windows over an arm nothing can solve for", "[presets][windows]")
 {
     const described_arm described(6, "six");
     const presets::arm_scenario chosen = described_by(described.where);
 
     threepp::Scene searched;
     REQUIRE(composed_windows(composed_arm(unwired(searched), chosen, presets::arm_windows_numerical_ik(chosen), false)) == numerical_windows());
-
-    threepp::Scene closed;
-    REQUIRE(composed_windows(composed_arm(unwired(closed), chosen, presets::arm_windows_analytic_ik(chosen), false)) == analytic_windows());
 }
 
-TEST_CASE("every window the two scenarios compose opens exactly one panel under its own title", "[presets][windows]")
+TEST_CASE("every window the numerical scenario composes opens exactly one panel under its own title", "[presets][windows]")
 {
     const described_arm described(6, "six");
     const presets::arm_scenario chosen = described_by(described.where);
 
     threepp::Scene searched;
     each_window_opens_one_panel(composed_arm(unwired(searched), chosen, presets::arm_windows_numerical_ik(chosen)));
-
-    threepp::Scene closed;
-    each_window_opens_one_panel(composed_arm(unwired(closed), chosen, presets::arm_windows_analytic_ik(chosen)));
 }
 
-TEST_CASE("no two windows of one scenario keep their settings under the same key path", "[presets][windows]")
+TEST_CASE("no two windows of the numerical scenario keep their settings under the same key path", "[presets][windows]")
 {
     const described_arm described(6, "six");
     const presets::arm_scenario chosen = described_by(described.where);
@@ -133,11 +111,6 @@ TEST_CASE("no two windows of one scenario keep their settings under the same key
     const std::vector<std::string> numerical = settings_paths(composed_arm(unwired(searched), chosen, presets::arm_windows_numerical_ik(chosen)));
     REQUIRE(numerical.size() == numerical_windows().size());
     REQUIRE(std::set<std::string_view>(numerical.begin(), numerical.end()).size() == numerical.size());
-
-    threepp::Scene closed;
-    const std::vector<std::string> analytic = settings_paths(composed_arm(unwired(closed), chosen, presets::arm_windows_analytic_ik(chosen)));
-    REQUIRE(analytic.size() == analytic_windows().size());
-    REQUIRE(std::set<std::string_view>(analytic.begin(), analytic.end()).size() == analytic.size());
 }
 
 // A path the struct names and the table does not is a path nothing walks, and a path listed twice is

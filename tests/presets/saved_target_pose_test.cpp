@@ -33,7 +33,10 @@ using namespace praxis;
 
 namespace {
 
-constexpr const char *analytic = "analytic inverse kinematics";
+constexpr const char *numerical = "numerical inverse kinematics";
+
+// A document naming its own starts leaves the target pose the only window with anything to offer.
+constexpr const char *named_starts = "<ik_seeds><start index=\"1\" joints=\"0 0 0 0 0 0\"/></ik_seeds>";
 
 // The Target pose window draws its control mode and its trajectory above the position, whose
 // components stand one to a row.
@@ -44,13 +47,13 @@ config::location target_document(const char *named)
     const std::filesystem::path directory = fixture::shared_scratch_directory() / named;
     std::filesystem::create_directories(directory);
 
-    return fixture::arm_document(directory, "target.xml", fixture::arm_body(analytic, ""));
+    return fixture::arm_document(directory, "target.xml", fixture::arm_body(numerical, named_starts));
 }
 
 std::shared_ptr<scene::preset> opened(fixture::opened_arm &stage, const config::document &carried, const std::vector<std::filesystem::path> &roots)
 {
     const presets::arm_scenario chosen      = presets::read_arm(carried, roots);
-    std::shared_ptr<scene::preset> composed = stage.open(chosen, presets::arm_windows_analytic_ik(chosen));
+    std::shared_ptr<scene::preset> composed = stage.open(chosen, presets::arm_windows_numerical_ik(chosen));
     REQUIRE(composed != nullptr);
     REQUIRE(stage.loop.drain().has_value());
 

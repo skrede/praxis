@@ -17,7 +17,6 @@ enum class arm_scenario_kind : std::uint8_t
     supplied_chain,
     tooling,
     numerical_ik,
-    analytic_ik,
     point_to_point,
     via_point,
     path_comparison,
