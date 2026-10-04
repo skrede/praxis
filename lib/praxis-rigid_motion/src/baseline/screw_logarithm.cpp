@@ -9,8 +9,8 @@ namespace praxis::rigid_motion {
 
 namespace {
 
-using rotation_reading = std::pair<Eigen::Vector3d, double>;
-using turn_reading     = rotation_reading (*)(const rotation &r, double cosine);
+using rotation_reading  = std::pair<Eigen::Vector3d, double>;
+using logarithm_reading = rotation_reading (*)(const rotation &r);
 
 // Lynch & Park, Modern Robotics, sec. 3.2.3.3, eqs. (3.58)-(3.60): each is column i of R + I over
 // sqrt(2(1 + r_ii)); i is the largest diagonal entry.
@@ -22,20 +22,31 @@ Eigen::Vector3d half_turn_axis(const rotation &r)
     return (r + rotation::Identity()).col(i) / std::sqrt(2.0 * (1.0 + r(i, i)));
 }
 
-// Lynch & Park, Modern Robotics, sec. 3.2.3.3, eq. (3.61), its axis held to the unit length the
-// section states for it.
-rotation_reading book_turn(const rotation &r, double cosine)
+// Lynch & Park, Modern Robotics, sec. 3.2.3.3, eqs. (3.58)-(3.61): the cases are read from the
+// computed (tr R - 1)/2, case (a) leaves the axis undefined, answered here as x, and the eq. (3.61)
+// axis is held to the unit length the section states for it.
+rotation_reading book_rotation_logarithm(const rotation &r)
 {
+    const double cosine = (r.trace() - 1.0) / 2.0;
+    if(cosine >= 1.0)
+        return {Eigen::Vector3d::UnitX(), 0.0};
+    if(cosine <= -1.0)
+        return {half_turn_axis(r), std::numbers::pi};
+
     const double theta         = std::acos(cosine);
     const Eigen::Vector3d axis = from_skew_symmetric((r - r.transpose()) / (2.0 * std::sin(theta)));
 
     return {axis.normalized(), theta};
 }
 
-// Beyond eq. (3.61): theta = atan2(||vee(R - R^T)||/2, (tr R - 1)/2), the axis that vector's
-// direction. A symmetric R names no direction and is read as case (a) or (b).
-rotation_reading two_argument_turn(const rotation &r, double cosine)
+// Cases (a) and (b) of sec. 3.2.3.3, with case (c) beyond eq. (3.61): theta = atan2(||vee(R - R^T)||/2,
+// (tr R - 1)/2), the axis that vector's direction. Only a symmetric R is case (a) or (b) when c > -1.
+rotation_reading rotation_logarithm(const rotation &r)
 {
+    const double cosine = (r.trace() - 1.0) / 2.0;
+    if(cosine <= -1.0)
+        return {half_turn_axis(r), std::numbers::pi};
+
     const Eigen::Vector3d twice_sine_axis = from_skew_symmetric(r - r.transpose());
     const double twice_sine               = twice_sine_axis.norm();
     if(twice_sine == 0.0)
@@ -44,25 +55,12 @@ rotation_reading two_argument_turn(const rotation &r, double cosine)
     return {twice_sine_axis / twice_sine, std::atan2(twice_sine / 2.0, cosine)};
 }
 
-// Lynch & Park, Modern Robotics, sec. 3.2.3.3, eqs. (3.58)-(3.61): the cases are read from the
-// computed (tr R - 1)/2, and case (a) leaves the axis undefined, answered here as x.
-rotation_reading rotation_logarithm(const rotation &r, turn_reading turn)
-{
-    const double cosine = (r.trace() - 1.0) / 2.0;
-    if(cosine >= 1.0)
-        return {Eigen::Vector3d::UnitX(), 0.0};
-    if(cosine <= -1.0)
-        return {half_turn_axis(r), std::numbers::pi};
-
-    return turn(r, cosine);
-}
-
 // Lynch & Park, Modern Robotics, sec. 3.3.3.2: case (a) is a rotation logarithm of no turn, and p = 0
 // there names no axis, answered as a translation along x; case (b) is eqs. (3.91)-(3.92).
-std::pair<screw_axis, double> screw_logarithm(const rotation &r, const Eigen::Vector3d &p, turn_reading turn)
+std::pair<screw_axis, double> screw_logarithm(const rotation &r, const Eigen::Vector3d &p, logarithm_reading logarithm)
 {
     screw_axis s;
-    const auto [w, theta] = rotation_logarithm(r, turn);
+    const auto [w, theta] = logarithm(r);
     if(theta == 0.0)
     {
         const double distance = p.norm();
@@ -86,7 +84,7 @@ expected<std::pair<Eigen::Vector3d, double>, refusal> matrix_logarithm_so3(const
     if(!is_a_rotation(r))
         return unexpected(refusal::degenerate);
 
-    return rotation_logarithm(r, &two_argument_turn);
+    return rotation_logarithm(r);
 }
 
 expected<std::pair<screw_axis, double>, refusal> matrix_logarithm_se3_rp(const rotation &r, const Eigen::Vector3d &p)
@@ -94,7 +92,7 @@ expected<std::pair<screw_axis, double>, refusal> matrix_logarithm_se3_rp(const r
     if(!is_a_rotation(r))
         return unexpected(refusal::degenerate);
 
-    return screw_logarithm(r, p, &two_argument_turn);
+    return screw_logarithm(r, p, &rotation_logarithm);
 }
 
 expected<std::pair<screw_axis, double>, refusal> matrix_logarithm_se3(const transform &tf)
@@ -102,7 +100,7 @@ expected<std::pair<screw_axis, double>, refusal> matrix_logarithm_se3(const tran
     if(!is_a_rigid_motion(tf))
         return unexpected(refusal::degenerate);
 
-    return screw_logarithm(tf.block<3, 3>(0, 0), tf.block<3, 1>(0, 3), &two_argument_turn);
+    return screw_logarithm(tf.block<3, 3>(0, 0), tf.block<3, 1>(0, 3), &rotation_logarithm);
 }
 
 expected<std::pair<Eigen::Vector3d, double>, refusal> book::matrix_logarithm_so3(const rotation &r)
@@ -110,7 +108,7 @@ expected<std::pair<Eigen::Vector3d, double>, refusal> book::matrix_logarithm_so3
     if(!is_a_rotation(r))
         return unexpected(refusal::degenerate);
 
-    return rotation_logarithm(r, &book_turn);
+    return book_rotation_logarithm(r);
 }
 
 expected<std::pair<screw_axis, double>, refusal> book::matrix_logarithm_se3_rp(const rotation &r, const Eigen::Vector3d &p)
@@ -118,7 +116,7 @@ expected<std::pair<screw_axis, double>, refusal> book::matrix_logarithm_se3_rp(c
     if(!is_a_rotation(r))
         return unexpected(refusal::degenerate);
 
-    return screw_logarithm(r, p, &book_turn);
+    return screw_logarithm(r, p, &book_rotation_logarithm);
 }
 
 expected<std::pair<screw_axis, double>, refusal> book::matrix_logarithm_se3(const transform &tf)
@@ -126,7 +124,7 @@ expected<std::pair<screw_axis, double>, refusal> book::matrix_logarithm_se3(cons
     if(!is_a_rigid_motion(tf))
         return unexpected(refusal::degenerate);
 
-    return screw_logarithm(tf.block<3, 3>(0, 0), tf.block<3, 1>(0, 3), &book_turn);
+    return screw_logarithm(tf.block<3, 3>(0, 0), tf.block<3, 1>(0, 3), &book_rotation_logarithm);
 }
 
 }

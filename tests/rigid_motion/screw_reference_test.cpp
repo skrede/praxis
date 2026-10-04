@@ -196,7 +196,7 @@ TEST_CASE("a_half_turn_about_an_axis_nearly_orthogonal_to_z_logs_to_that_axis")
     CHECK(std::abs(logged.first.dot(axis)) > 1.0 - default_tolerance);
 }
 
-TEST_CASE("a_rotation_whose_computed_trace_reads_as_the_identity_logs_to_a_zero_turn")
+TEST_CASE("a_rotation_whose_computed_trace_reads_as_the_identity_logs_to_its_true_turn")
 {
     const rotation r = ops.matrix_exponential_so3(direction, 1.0e-8);
 
@@ -204,8 +204,8 @@ TEST_CASE("a_rotation_whose_computed_trace_reads_as_the_identity_logs_to_a_zero_
 
     const std::pair<Eigen::Vector3d, double> logged = answered(ops.matrix_logarithm_so3(r));
 
-    CHECK(logged.second == 0.0);
-    CHECK(logged.first.allFinite());
+    CHECK(is_approx_equal(logged.second, 1.0e-8));
+    CHECK(logged.first.isApprox(direction, default_tolerance));
 }
 
 TEST_CASE("the_rotation_exponential_of_a_scaled_axis_is_the_unit_axis_turned_through_the_scaled_angle")
