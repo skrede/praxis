@@ -40,6 +40,7 @@ praxis_add_module(manipulator
     include/praxis/manipulator/path_comparison_window.h
     include/praxis/manipulator/pose_configuration.h
     include/praxis/manipulator/pose_readout.h
+    include/praxis/manipulator/projected/kinematics.h
     include/praxis/manipulator/render_configuration.h
     include/praxis/manipulator/render_controls_window.h
     include/praxis/manipulator/robot.h
@@ -147,6 +148,8 @@ praxis_add_module(manipulator
     src/pose_readout.cpp
     src/pose_waypoints_configuration.cpp
     src/prepared_time_scaling.cpp
+    src/projected/kinematics.cpp
+    src/projected/step_constants.h
     src/render_configuration.cpp
     src/render_controls_settings.cpp
     src/render_controls_window.cpp

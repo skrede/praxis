@@ -16,6 +16,8 @@ praxis_add_test(baseline_kinematics_test.cpp LIBS praxis::manipulator spdlog::sp
 praxis_add_test(solver_convergence_test.cpp HEADERS recorded_chain.h LIBS praxis::manipulator praxis_test_support)
 praxis_add_test(iterated_solve_test.cpp LIBS praxis::manipulator)
 target_include_directories(iterated_solve_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-manipulator/src)
+praxis_add_test(projected_kinematics_test.cpp LIBS praxis::manipulator praxis_test_support)
+target_include_directories(projected_kinematics_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-manipulator/src)
 praxis_add_test(baseline_trajectory_test.cpp LIBS praxis::manipulator)
 praxis_add_test(task_space_chain_test.cpp LIBS praxis::manipulator spdlog::spdlog praxis_test_support)
 praxis_add_test(baseline_robot_test.cpp LIBS praxis::manipulator praxis_test_support)

@@ -1251,6 +1251,10 @@ lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	m_drawn	member	
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	supplied_reading	prototype	(const arm_snapshot & seen,frame_view frame) const	typename:scene::readout
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	compose_pose_readout	prototype	(std::string name,arm_reader seen,const rigid_motion::frame_ops & injected,robot_slot_set inert,pose_readout::offered_frames offered=pose_readout::offered_frames::both)	typename:std::shared_ptr<scene::labeled_value_window>
 lib/praxis-manipulator/include/praxis/manipulator/pose_readout.h	compose_pose_readout	prototype	(std::string name,arm_reader seen,const rigid_motion::frame_ops & injected,robot_slot_set inert,const loadable_robot_stencil & drawn,pose_readout::offered_frames offered=pose_readout::offered_frames::both)	typename:std::shared_ptr<scene::labeled_value_window>
+lib/praxis-manipulator/include/praxis/manipulator/projected/kinematics.h	manipulator	namespace	-	-
+lib/praxis-manipulator/include/praxis/manipulator/projected/kinematics.h	praxis	namespace	-	-
+lib/praxis-manipulator/include/praxis/manipulator/projected/kinematics.h	projected	namespace	-	-
+lib/praxis-manipulator/include/praxis/manipulator/projected/kinematics.h	inverse_kinematics	prototype	(const rigid_motion::screw_ops & screw,const forward_kinematics_ops & forward,const differential_kinematics_ops & differential,const screw_chain & chain,const transform & desired,const joint_vector & j0,const solver_parameters & parameters,ik_result & answer)	typename:expected<void,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/render_configuration.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/render_configuration.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/render_configuration.h	declare_render_controls	prototype	(config::declaration & shape,std::string_view at)	typename:void

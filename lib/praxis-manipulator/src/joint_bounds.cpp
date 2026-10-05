@@ -33,6 +33,23 @@ std::optional<double> named_between(double value, double lower, double upper, do
     return value + turn * std::clamp(0.0, fewest, most);
 }
 
+double projected_between(double value, double lower, double upper, double turn)
+{
+    if(const std::optional<double> inside = named_between(value, lower, upper, turn))
+        return *inside;
+
+    const double crossed = std::min(std::max(value, lower), upper);
+    if(turn == 0.0)
+        return crossed;
+
+    const double past_lower = std::abs(std::remainder(value - lower, turn));
+    const double past_upper = std::abs(std::remainder(value - upper, turn));
+    if(past_lower == past_upper)
+        return crossed;
+
+    return past_lower < past_upper ? lower : upper;
+}
+
 }
 
 std::optional<joint_vector> named_inside_bounds(const screw_chain &chain, const joint_vector &candidate)
@@ -54,6 +71,23 @@ std::optional<joint_vector> named_inside_bounds(const screw_chain &chain, const 
     }
 
     return named;
+}
+
+joint_vector projected_inside_bounds(const screw_chain &chain, const joint_vector &raw)
+{
+    const joint_limits &bounds = chain.limits;
+
+    joint_vector projected = raw;
+    for(Eigen::Index joint = 0; joint < projected.size(); ++joint)
+    {
+        if(joint >= bounds.lower_position.size() || joint >= bounds.upper_position.size())
+            continue;
+
+        const double turn = turns_whole(chain.space_screws[static_cast<std::size_t>(joint)]) ? 2.0 * std::numbers::pi : 0.0;
+        projected[joint]  = projected_between(projected[joint], bounds.lower_position[joint], bounds.upper_position[joint], turn);
+    }
+
+    return projected;
 }
 
 }
