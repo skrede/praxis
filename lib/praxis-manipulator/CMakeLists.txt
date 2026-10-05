@@ -71,6 +71,8 @@ praxis_add_module(manipulator
     src/arm_state.cpp
     src/baseline/chain_maps.h
     src/baseline/chain_maps.cpp
+    src/baseline/iterated_solve.h
+    src/baseline/iterated_solve.cpp
     src/baseline/capabilities.cpp
     src/baseline/kinematics.cpp
     src/baseline/modeling.cpp
