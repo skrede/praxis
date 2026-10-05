@@ -3,6 +3,8 @@
 #include "composed_panels.h"
 
 #include "praxis/presets/arm.h"
+#include "praxis/presets/arm_scenarios.h"
+#include "praxis/presets/arm_registration.h"
 
 #include "praxis/manipulator/capabilities.h"
 #include "praxis/manipulator/motion_drawings.h"
@@ -16,9 +18,12 @@
 #include "praxis/scene/preset.h"
 #include "praxis/scene/preset_site.h"
 #include "praxis/scene/imgui_window.h"
+#include "praxis/scene/preset_registry.h"
 
 #include "praxis/scheduler/clock.h"
 #include "praxis/scheduler/scheduler.h"
+
+#include "praxis/config/store.h"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -26,6 +31,7 @@
 
 #include <Eigen/Core>
 
+#include <array>
 #include <chrono>
 #include <limits>
 #include <string>
@@ -33,6 +39,7 @@
 #include <vector>
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
 #include <utility>
 #include <algorithm>
 #include <filesystem>
@@ -137,6 +144,22 @@ bool description_deployed()
     return !root.empty() && std::filesystem::exists(shipped_description());
 }
 
+// A comparison document over the described arm, written beside its description so that directory is
+// the one root it resolves against.
+config::location comparison_document(const described_arm &described)
+{
+    std::string starts;
+    for(std::size_t axis = 0; axis < 6u; ++axis)
+        starts += "<joint index=\"" + std::to_string(axis) + "\" degrees=\"0\"/>";
+
+    const char *scenario = presets::arm_scenario_labels()[static_cast<std::size_t>(presets::arm_scenario_kind::path_comparison)];
+    std::ofstream out(described.directory / "compared.xml", std::ios::binary | std::ios::trunc);
+    out << "<arm><preset name=\"Compared\" scenario=\"" << scenario << "\"/><description path=\"six.urdf\"/><initial>" << starts << "</initial></arm>\n";
+    out.close();
+
+    return config::resolve("compared.xml", described.directory);
+}
+
 // The machine the shipped comparison document opens, composed from the deployed description rather
 // than through that document, so a case reads the pair the library itself opens at.
 presets::arm_scenario shipped_machine()
@@ -166,10 +189,16 @@ struct opened_comparison
 
     std::shared_ptr<scene::preset> open(const presets::arm_scenario &chosen, const manipulator::capabilities &arm)
     {
-        const scene::window_route nowhere = [](const std::shared_ptr<scene::imgui_window> &) {};
-        const scene::preset_site site{*scene, loop.main_strand(), *loop.make_strand(), [this](std::string) { unloaded = true; }, opening_route(), nowhere, {}};
+        return open([&](const scene::preset_site &site)
+                    { return presets::arm_preset(site, arm, trajectory::baseline(), rigid_motion::baseline(), chosen, presets::arm_windows_path_comparison(chosen)); });
+    }
 
-        composed = presets::arm_preset(site, arm, trajectory::baseline(), rigid_motion::baseline(), chosen, presets::arm_windows_path_comparison(chosen));
+    std::shared_ptr<scene::preset> open(const scene::preset_registry::factory &compose)
+    {
+        REQUIRE(compose != nullptr);
+
+        const scene::window_route nowhere = [](const std::shared_ptr<scene::imgui_window> &) {};
+        composed = compose(scene::preset_site{*scene, loop.main_strand(), *loop.make_strand(), [this](std::string) { unloaded = true; }, opening_route(), nowhere, {}});
         if(composed != nullptr)
             REQUIRE(composed->initialize().has_value());
 
@@ -378,4 +407,46 @@ TEST_CASE("each of the three shapes plays and leaves a traversed path", "[preset
         CHECK(stage.played_out().size() > 1u);
         CHECK_FALSE(stage.unloaded);
     }
+}
+
+// A pair read against each other: the same document, played the same way, through a registration
+// handed capabilities and through one that binds the library's own.
+TEST_CASE("a play through an arm registered with capabilities of its own enters the solve it was handed", "[presets][comparison]")
+{
+    const described_arm described(6, "six");
+    const std::array<config::location, 1> documents{comparison_document(described)};
+    const std::array<std::filesystem::path, 1> roots{described.directory};
+
+    const auto registry = std::make_shared<scene::preset_registry>();
+    REQUIRE(presets::register_arms(registry, documents, roots, {}, {}, recording_solves(), trajectory::baseline(), rigid_motion::baseline()).size() == 1u);
+
+    opened_comparison stage;
+    REQUIRE(stage.open(registry->load_preset("Compared")) != nullptr);
+
+    choose(comparison_of(stage), manipulator::compared_path::screw);
+    press_at(*stage.panel("Comparison"), play_control);
+    REQUIRE(stage.loop.drain().has_value());
+
+    CHECK(solves_entered > 0u);
+    CHECK_FALSE(stage.unloaded);
+}
+
+TEST_CASE("a play through an arm registered without capabilities enters none of a recording solve", "[presets][comparison]")
+{
+    const described_arm described(6, "six");
+    const std::array<config::location, 1> documents{comparison_document(described)};
+    const std::array<std::filesystem::path, 1> roots{described.directory};
+
+    const auto registry = std::make_shared<scene::preset_registry>();
+    REQUIRE(presets::register_arms(registry, documents, roots, {}, {}).size() == 1u);
+
+    opened_comparison stage;
+    REQUIRE(stage.open(registry->load_preset("Compared")) != nullptr);
+
+    choose(comparison_of(stage), manipulator::compared_path::screw);
+    press_at(*stage.panel("Comparison"), play_control);
+    REQUIRE(stage.loop.drain().has_value());
+
+    CHECK(solves_entered == 0u);
+    CHECK_FALSE(stage.unloaded);
 }

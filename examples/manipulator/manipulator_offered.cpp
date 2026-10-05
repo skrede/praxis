@@ -4,6 +4,7 @@
 #include "praxis/presets/arm_registration.h"
 
 #include "praxis/manipulator/capabilities.h"
+#include "praxis/manipulator/projected/kinematics.h"
 
 #include "praxis/scene/coverage_report.h"
 
@@ -57,14 +58,10 @@ std::array<capability_view, 13> composed_views(composed_capabilities &&) = delet
 
 composed_capabilities bound_capabilities()
 {
-    return composed_capabilities{manipulator::baseline(), trajectory::baseline(), rigid_motion::baseline()};
-}
+    manipulator::capabilities arm = manipulator::baseline();
+    arm.ik.inverse_kinematics     = &manipulator::projected::inverse_kinematics;
 
-void report_composed_capabilities()
-{
-    const composed_capabilities composed = bound_capabilities();
-
-    scene::report_default_slots(composed_views(composed));
+    return composed_capabilities{arm, trajectory::baseline(), rigid_motion::baseline()};
 }
 
 }
@@ -72,14 +69,15 @@ void report_composed_capabilities()
 std::vector<std::string> register_offered(const std::shared_ptr<scene::preset_registry> &registry, const documents &mine, const config::document &values,
                                           const std::filesystem::path &packages, const std::shared_ptr<write_back> &writing)
 {
-    report_composed_capabilities();
+    const composed_capabilities composed = bound_capabilities();
+    scene::report_default_slots(composed_views(composed));
 
     const std::vector<config::location> reading = preset_locations(values, mine);
     const std::array<std::filesystem::path, 1> roots{packages};
 
     return presets::register_arms(
             registry, reading, roots, [mine](const std::filesystem::path &named) { return mine.composing(named); },
-            [writing](const config::binding &at, const config::document &carried) { writing->composing(at, carried); });
+            [writing](const config::binding &at, const config::document &carried) { writing->composing(at, carried); }, composed.arm, composed.shapes, composed.motions);
 }
 
 }
