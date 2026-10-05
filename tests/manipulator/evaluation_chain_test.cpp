@@ -8,6 +8,7 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/evaluation/report.h"
 #include "praxis/evaluation/residual.h"
 #include "praxis/evaluation/generation.h"
 #include "praxis/evaluation/comparators.h"
@@ -17,6 +18,7 @@
 
 #include <meios/model.h>
 
+#include <array>
 #include <cmath>
 #include <vector>
 #include <cstddef>
@@ -118,19 +120,52 @@ TEST_CASE("a_solve_that_declines_is_reported_apart_from_one_that_answers_and_fro
     }
 }
 
-TEST_CASE("a_solve_that_answers_without_naming_a_configuration_differs_rather_than_refusing")
+TEST_CASE("a_solve_that_answers_without_naming_a_configuration_refuses_with_no_solution")
 {
-    const capabilities reference          = baseline();
-    const inverse_kinematics_ops silently = solving(&answers_without_naming_a_configuration);
+    const capabilities reference           = baseline();
+    const inverse_kinematics_ops silently  = solving(&answers_without_naming_a_configuration);
+    const inverse_kinematics_ops declines  = solving(&never_solves);
+    const inverse_kinematics_ops otherwise = solving(&never_solves_for_another_reason);
 
     for(std::size_t index = 0; index < cases_per_row; ++index)
     {
         INFO("case " << index);
         const case_result seen = one_case(&manipulator::compare_inverse_kinematics, "ik.inverse_kinematics", &reference.ik, &silently, solved_bound, index);
 
-        REQUIRE((seen.verdict == agreement::differed || seen.verdict == agreement::one_refused));
+        REQUIRE((seen.verdict == agreement::one_refused || seen.verdict == agreement::both_refused));
+        REQUIRE(std::isfinite(seen.difference.magnitude));
+        REQUIRE(std::isfinite(seen.difference.linear_error_metres));
+        REQUIRE(one_case(&manipulator::compare_inverse_kinematics, "ik.inverse_kinematics", &silently, &silently, solved_bound, index).verdict == agreement::both_refused);
+        REQUIRE(one_case(&manipulator::compare_inverse_kinematics, "ik.inverse_kinematics", &silently, &declines, solved_bound, index).verdict == agreement::both_refused);
+        REQUIRE(one_case(&manipulator::compare_inverse_kinematics, "ik.inverse_kinematics", &silently, &otherwise, solved_bound, index).verdict == agreement::refused_differently);
     }
-    REQUIRE(one_case(&manipulator::compare_inverse_kinematics, "ik.inverse_kinematics", &silently, &silently, solved_bound, 0u).verdict == agreement::differed);
+}
+
+TEST_CASE("the_inverse_kinematics_row_reports_a_solve_naming_no_configuration_without_an_infinite_residual")
+{
+    const capabilities reference          = baseline();
+    const inverse_kinematics_ops silently = solving(&answers_without_naming_a_configuration);
+    const std::array views{evaluation_view::of(reference.ik, silently, manipulator::inverse_kinematics_evaluations())};
+    const slot_report row = evaluate(views, recorded_seed, cases_per_row).slots.at(0);
+
+    REQUIRE(row.slot == "ik.inverse_kinematics");
+    REQUIRE(row.cases == cases_per_row);
+    REQUIRE(row.outcomes.differed == 0u);
+    REQUIRE(row.outcomes.one_refused + row.outcomes.both_refused == row.cases);
+    REQUIRE(row.verdict != agreement::differed);
+    REQUIRE(std::isfinite(row.worst.magnitude));
+    REQUIRE(std::isfinite(row.worst.linear_error_metres));
+
+    case_source drawn             = case_source::at_case(recorded_seed, "ik.inverse_kinematics", spread::bulk, 0u);
+    const evaluation_case example = drawn_case(drawn);
+    const expected<kinematics, refusal> composed =
+            kinematics::compose(example.chain, reference.fk, reference.dk, silently, rigid_motion::baseline().screw, rigid_motion::baseline().frame);
+    REQUIRE(composed.has_value());
+    const expected<transform, refusal> target = composed->fk_solve(example.joints);
+    REQUIRE(target.has_value());
+    const expected<joint_vector, refusal> solved = composed->ik_solve(*target, example.joints, solver_parameters());
+    REQUIRE_FALSE(solved.has_value());
+    REQUIRE(solved.error() == refusal::no_solution);
 }
 
 TEST_CASE("the_comparison_enters_the_solve_under_test_exactly_once_per_case")

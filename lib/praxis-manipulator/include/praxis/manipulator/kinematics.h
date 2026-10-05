@@ -116,7 +116,8 @@ namespace praxis::manipulator {
 // reordering a slot breaks every project that already composes this aggregate. Appending is safe.
 // The solve is here, and it receives what its own mathematics consumes and nothing else: the chain
 // it is to solve over, the pose it is to reach, and the operations and maps it reads along the way.
-// Nothing it is handed carries a way to ask for a solve.
+// Nothing it is handed carries a way to ask for a solve. A solve that does not converge refuses with
+// `no_solution` and names no configuration.
 struct inverse_kinematics_ops
 {
     expected<void, refusal> (*inverse_kinematics)(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const differential_kinematics_ops &differential,

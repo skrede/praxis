@@ -87,6 +87,14 @@ expected<void, refusal> solved_by(const inverse_kinematics_ops &bound, const scr
     return bound.inverse_kinematics(shared_screw(), asked.forward, asked.differential, chain, asked.target, asked.seed, solver_parameters(), answer);
 }
 
+expected<void, refusal> answered_with_a_configuration(const expected<void, refusal> &solved, const ik_result &answer)
+{
+    if(solved && answer.solutions.empty())
+        return unexpected(refusal::no_solution);
+
+    return solved;
+}
+
 // A pose a chain can reach is reached by more than one configuration, so an answer is read back
 // through one shared forward map before it is held against anything.
 std::optional<transform> reached_by(const kinematics &reference, const ik_result &answer)
@@ -144,13 +152,10 @@ evaluation::case_result compare_inverse_kinematics(const void *first, const void
 
     ik_result here;
     ik_result there;
-    const expected<void, refusal> held  = solved_by(inverse_kinematics_of(first), example.chain, *asked, here);
-    const expected<void, refusal> other = solved_by(inverse_kinematics_of(second), example.chain, *asked, there);
+    const expected<void, refusal> held  = answered_with_a_configuration(solved_by(inverse_kinematics_of(first), example.chain, *asked, here), here);
+    const expected<void, refusal> other = answered_with_a_configuration(solved_by(inverse_kinematics_of(second), example.chain, *asked, there), there);
     if(const std::optional<evaluation::case_result> refused = refusal_outcome(held, other))
         return *refused;
-
-    if(here.solutions.empty() || there.solutions.empty())
-        return categorically_differed(evaluation::residual_kind::pose);
 
     return reaching_what_was_asked(reached_by(asked->reference, here), reached_by(asked->reference, there), asked->target, allowed);
 }

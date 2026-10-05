@@ -17,10 +17,12 @@
 #include <Eigen/Core>
 
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <string_view>
+#include <initializer_list>
 
 using namespace praxis;
 using namespace praxis::evaluation;
@@ -179,14 +181,18 @@ TEST_CASE("two_answers_alike_and_both_standing_at_another_pose_are_reported_as_a
     REQUIRE(motion_rows > 0u);
 }
 
-// A case whose shared inputs could not be built is the harness's own outcome and is attributed to
-// neither side: an answer's pose is read through the harness's own forward map, and a map that
-// declined leaves nothing to hold against what was asked for.
-TEST_CASE("a_case_whose_forward_map_declined_an_answer_is_unusable_and_names_neither_side")
+// Each side's answer is read through the harness's forward map, and one it cannot read is that side's
+// difference.
+TEST_CASE("an_answer_the_forward_map_cannot_read_back_differs_beyond_every_bound")
 {
     const transform asked_for = transform::Identity();
 
-    REQUIRE(reaching_what_was_asked(std::nullopt, asked_for, asked_for, solved_pose_bound).verdict == agreement::unusable);
-    REQUIRE(reaching_what_was_asked(asked_for, std::nullopt, asked_for, solved_pose_bound).verdict == agreement::unusable);
+    for(const case_result &seen :
+        {reaching_what_was_asked(std::nullopt, asked_for, asked_for, solved_pose_bound), reaching_what_was_asked(asked_for, std::nullopt, asked_for, solved_pose_bound)})
+    {
+        REQUIRE(seen.verdict == agreement::differed);
+        REQUIRE(std::isinf(seen.difference.magnitude));
+        REQUIRE(std::isinf(seen.difference.linear_error_metres));
+    }
     REQUIRE(reaching_what_was_asked(asked_for, asked_for, asked_for, solved_pose_bound).verdict == agreement::agreed);
 }

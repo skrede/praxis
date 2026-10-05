@@ -69,7 +69,7 @@ inline evaluation::case_result unusable(evaluation::residual_kind kind)
 }
 
 // A difference no residual measures: two sequences of different length, two chains of different
-// width, an answer naming no configuration at all. Its magnitude is unbounded in the kind's own unit.
+// width, an answer the forward map cannot read back. Its magnitude is unbounded in the kind's own unit.
 inline evaluation::case_result categorically_differed(evaluation::residual_kind kind)
 {
     constexpr double unbounded = std::numeric_limits<double>::infinity();
@@ -94,12 +94,12 @@ std::optional<evaluation::case_result> refusal_outcome(const expected<T, refusal
 
 // Each side's answer, already read forward through the map both were handed, held against the pose
 // that was asked for; the case takes the worse of the two halves and never holds one answer against
-// the other. The map is the harness's own, so an answer it declined at leaves the case unusable.
+// the other. An answer the map cannot read back differs by more than any bound.
 inline evaluation::case_result reaching_what_was_asked(const std::optional<transform> &here, const std::optional<transform> &there, const transform &asked_for,
                                                        const evaluation::tolerance_pair &allowed)
 {
     if(!here || !there)
-        return unusable(evaluation::residual_kind::pose);
+        return categorically_differed(evaluation::residual_kind::pose);
 
     const evaluation::residual from_here  = evaluation::pose_residual(*here, asked_for);
     const evaluation::residual from_there = evaluation::pose_residual(*there, asked_for);

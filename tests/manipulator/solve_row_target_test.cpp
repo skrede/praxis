@@ -101,7 +101,7 @@ TEST_CASE("a_reflected_seed_reaches_the_requested_pose_from_a_configuration_that
     REQUIRE(apart > 0u);
 }
 
-TEST_CASE("an_answer_the_shared_forward_map_cannot_be_taken_over_leaves_the_case_unusable_and_names_neither_side")
+TEST_CASE("an_answer_the_shared_forward_map_cannot_read_back_differs_beyond_every_bound")
 {
     const capabilities reference       = baseline();
     const inverse_kinematics_ops wide  = chain_bound_to(&answers_one_joint_too_many);
@@ -112,8 +112,8 @@ TEST_CASE("an_answer_the_shared_forward_map_cannot_be_taken_over_leaves_the_case
         INFO("row " << under_test.row.name);
         const std::vector<agreement> seen = over_the_run(under_test.row, under_test.first, under_test.second);
 
-        REQUIRE(how_many(seen, agreement::unusable) > 0u);
-        REQUIRE(how_many(seen, agreement::differed) == 0u);
+        REQUIRE(how_many(seen, agreement::differed) > 0u);
+        REQUIRE(how_many(seen, agreement::unusable) == 0u);
         REQUIRE(how_many(seen, agreement::agreed) == 0u);
     }
 }

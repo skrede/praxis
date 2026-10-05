@@ -107,7 +107,7 @@ TEST_CASE("no_manipulator_row_reports_a_difference_with_nothing_in_it_at_any_cas
                                             with_the_derivation_shortened(),
                                             with_the_chain_bound_to(&one_joint_short),
                                             with_the_chain_bound_to(&a_home_that_is_no_rigid_motion),
-                                            with_the_solve_bound_to(&answers_without_naming_a_configuration),
+                                            with_the_solve_bound_to(&answers_one_joint_too_many),
                                             with_the_solve_bound_to(&solves_for_a_displaced_target),
                                             bent_everywhere()};
 
@@ -130,16 +130,16 @@ TEST_CASE("no_manipulator_row_reports_a_difference_with_nothing_in_it_at_any_cas
 // measures, which is what each row below stands for.
 TEST_CASE("each_site_whose_difference_no_residual_measures_is_reached_and_answers_beyond_every_bound")
 {
-    const capabilities reference     = baseline();
-    const capabilities shortened     = with_the_derivation_shortened();
-    const capabilities narrower      = with_the_chain_bound_to(&one_joint_short);
-    const capabilities unmappable    = with_the_chain_bound_to(&a_home_that_is_no_rigid_motion);
-    const capabilities naming_no_one = with_the_solve_bound_to(&answers_without_naming_a_configuration);
+    const capabilities reference  = baseline();
+    const capabilities shortened  = with_the_derivation_shortened();
+    const capabilities narrower   = with_the_chain_bound_to(&one_joint_short);
+    const capabilities unmappable = with_the_chain_bound_to(&a_home_that_is_no_rigid_motion);
+    const capabilities too_wide   = with_the_solve_bound_to(&answers_one_joint_too_many);
 
     const case_result derived = the_first_answered_case_of("fk.body_screws_from_space", forward_kinematics_evaluations().slots, &reference.fk, &shortened.fk);
     const case_result built   = the_first_answered_case_of("modeling.build_chain", modeling_evaluations().slots, &reference.modeling, &narrower.modeling);
     const case_result mapped  = the_first_answered_case_of("modeling.build_chain", modeling_evaluations().slots, &reference.modeling, &unmappable.modeling);
-    const case_result solved  = the_first_answered_case_of("ik.inverse_kinematics", inverse_kinematics_evaluations().slots, &reference.ik, &naming_no_one.ik);
+    const case_result solved  = the_first_answered_case_of("ik.inverse_kinematics", inverse_kinematics_evaluations().slots, &reference.ik, &too_wide.ik);
 
     REQUIRE(derived.verdict == agreement::differed);
     REQUIRE(std::isinf(derived.difference.magnitude));
