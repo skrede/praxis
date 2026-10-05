@@ -102,8 +102,8 @@ constexpr evaluation::capability_evaluations<differential_kinematics_ops> evalua
 // which is what the assertion below it holds, and every described slot no row here compares is named
 // by `unevaluated_slots`.
 constexpr std::array inverse_kinematics_table{
-        evaluation::slot_evaluation{"ik.inverse_kinematics", evaluation::residual_kind::pose, evaluation::tolerance_pair{solved_pose_tolerance_radians, solved_pose_tolerance_metres},
-                                    &compare_inverse_kinematics},
+        evaluation::slot_evaluation{"ik.inverse_kinematics", evaluation::residual_kind::pose,
+                                    evaluation::tolerance_pair{inverse_kinematics_tolerance_radians, inverse_kinematics_tolerance_metres}, &compare_inverse_kinematics},
 };
 
 static_assert(inverse_kinematics_table.size() <= static_cast<std::size_t>(inverse_kinematics_slot::count));

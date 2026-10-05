@@ -26,11 +26,16 @@ inline constexpr double accumulated_element_wise_tolerance = 1.0e-11;
 inline constexpr double accumulated_pose_tolerance_radians = 1.0e-5;
 inline constexpr double accumulated_pose_tolerance_metres  = 1.0e-4;
 
-// The bounds the rows whose answer is a configuration read back through a forward map and held
-// against the pose it was asked for are judged at: a rotation in radians and a distance in metres,
-// never added to one another. Each stands above the stopping criterion `solver_parameters` publishes.
+// The bounds the robot and motion rows whose answer is a configuration read back through a forward
+// map and held against the pose it was asked for are judged at: a rotation in radians and a distance
+// in metres, never added to one another. Each stands above the stopping criterion `solver_parameters`
+// publishes.
 inline constexpr double solved_pose_tolerance_radians = 1.0e-6;
 inline constexpr double solved_pose_tolerance_metres  = 1.0e-6;
+
+// The bounds the inverse kinematics row is judged at: a rotation in radians and a distance in metres.
+inline constexpr double inverse_kinematics_tolerance_radians = 1.0e-6;
+inline constexpr double inverse_kinematics_tolerance_metres  = 1.0e-5;
 
 // The bound the row whose answer is a prepared task-space motion is judged at, in the dimensionless
 // unit an element-wise difference carries. One sample holds a configuration, a rate and an

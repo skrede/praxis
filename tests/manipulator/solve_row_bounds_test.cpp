@@ -103,8 +103,20 @@ TEST_CASE("the_reference_solve_lands_within_the_criterion_the_solver_publishes_a
 // derived from the bounds, so a bound raised onto the first or lowered onto the second fails here.
 // Every case the two sides both answered is reported as a difference at the first and as agreement
 // at the second, the solve's own convergence residual standing a further decade beneath the bound.
+// The inverse kinematics row's distance bound stands a decade above the others', and so its pair.
 constexpr double above_the_bound   = 1.0e-5;
 constexpr double beneath_the_bound = 1.0e-7;
+
+constexpr double above_the_inverse_kinematics_distance_bound   = 1.0e-4;
+constexpr double beneath_the_inverse_kinematics_distance_bound = 1.0e-6;
+
+double displacement_for(const solve_row &under_test, bool angular, bool above)
+{
+    if(!angular && under_test.row.name == "ik.inverse_kinematics")
+        return above ? above_the_inverse_kinematics_distance_bound : beneath_the_inverse_kinematics_distance_bound;
+
+    return above ? above_the_bound : beneath_the_bound;
+}
 
 TEST_CASE("each_solve_row_reports_a_pose_a_decade_above_the_bound_it_carries_and_leaves_one_a_decade_beneath")
 {
@@ -114,20 +126,18 @@ TEST_CASE("each_solve_row_reports_a_pose_a_decade_above_the_bound_it_carries_and
 
     for(const bool angular : {true, false})
         for(const bool above : {true, false})
-        {
-            const double displaced = above ? above_the_bound : beneath_the_bound;
-            off_target_radians     = angular ? displaced : 0.0;
-            off_target_metres      = angular ? 0.0 : displaced;
-
             for(const solve_row &under_test : the_solve_rows(reference.ik, astray, reference.robot, astray_at_both_poses))
             {
+                const double displaced = displacement_for(under_test, angular, above);
+                off_target_radians     = angular ? displaced : 0.0;
+                off_target_metres      = angular ? 0.0 : displaced;
+
                 INFO("row " << under_test.row.name << ", angular " << angular << ", above " << above);
                 const std::vector<agreement> seen = over_the_run(under_test.row, under_test.first, under_test.second);
 
                 REQUIRE(how_many(seen, above ? agreement::differed : agreement::agreed) > 0u);
                 REQUIRE(how_many(seen, above ? agreement::agreed : agreement::differed) == 0u);
             }
-        }
 
     off_target_radians = 0.0;
     off_target_metres  = 0.0;
