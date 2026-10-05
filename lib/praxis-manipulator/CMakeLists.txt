@@ -71,8 +71,6 @@ praxis_add_module(manipulator
     src/arm_state.cpp
     src/baseline/chain_maps.h
     src/baseline/chain_maps.cpp
-    src/baseline/iterated_solve.h
-    src/baseline/iterated_solve.cpp
     src/baseline/capabilities.cpp
     src/baseline/kinematics.cpp
     src/baseline/modeling.cpp
@@ -119,6 +117,10 @@ praxis_add_module(manipulator
     src/inert_motion.cpp
     src/inert_robot.cpp
     src/inert_task_trajectory.cpp
+    src/iterated_solve.h
+    src/iterated_solve.cpp
+    src/joint_bounds.h
+    src/joint_bounds.cpp
     src/joint_control_window.cpp
     src/joint_curve_configuration.cpp
     src/joint_curve_window.cpp

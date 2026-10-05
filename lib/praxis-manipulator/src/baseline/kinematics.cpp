@@ -6,16 +6,14 @@
 
 #include <spdlog/spdlog.h>
 
-#include <vector>
-
 namespace praxis::manipulator {
 
 namespace {
 
 // Lynch & Park, Modern Robotics, sec. 6.2.2; the step is eq. (6.6) in the body frame.
-joint_vector newton_step(const jacobian &jb, const twist &error)
+expected<joint_vector, refusal> newton_step(const body_target &, const joint_vector &theta, const jacobian &jb, const twist &error)
 {
-    return Eigen::CompleteOrthogonalDecomposition<Eigen::MatrixXd>(jb).solve(error);
+    return joint_vector(theta + Eigen::CompleteOrthogonalDecomposition<Eigen::MatrixXd>(jb).solve(error));
 }
 
 }
@@ -23,11 +21,7 @@ joint_vector newton_step(const jacobian &jb, const twist &error)
 expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &chain,
                                            const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer)
 {
-    const expected<std::vector<screw_axis>, refusal> body = admitted_body(chain, desired, j0);
-    if(!body)
-        return unexpected(body.error());
-
-    return solved_inside_bounds(chain, *body, desired, j0, parameters, &newton_step, answer);
+    return iterated(chain, desired, j0, parameters, &newton_step, answer);
 }
 
 expected<kinematics, refusal> make_kinematics(const screw_chain &chain, forward_kinematics_ops forward, differential_kinematics_ops differential, inverse_kinematics_ops inverse,
