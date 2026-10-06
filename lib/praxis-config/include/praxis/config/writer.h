@@ -47,37 +47,37 @@ enum class write_policy : std::uint8_t
     file_backed_only,
 };
 
-// The shortest text that reads back as the same value, which is what a real leaf has to carry for a
-// save and the load after it to agree bit for bit.
+// The shortest text from which a finite value reads back bit for bit.
 std::string exact_text(double value);
 
 // The values in `changes` written into the document at `at`, in place: only the bytes carrying an
-// edited value are replaced, so every comment, blank line, ordering and indentation the author
-// wrote survives. A value the document has no place for is written as an attribute of the element
-// it hangs under, and that element is created where the document does not carry it. A key whose
-// path the declaration does not name, and a key addressing an instance of a collection the document
-// does not carry that the same save names no identity for, or names one as an empty value, are
-// reported by name and nothing at all is written; where the save does name that identity as a value
-// that is not empty, the instance is created at the end of the collection and the rest of its values
-// are written into it. Where there is no document at `at`, one is written from the declaration
-// first, each declared field carrying the fallback the declaration named, and the values are written
-// into that. Every instance carrying the identity an edit takes out goes whole from under the
-// parent its key addresses, with everything hanging under it and, where only blanks share its line,
-// with that line and the line break in front of it, whether lines end LF or CRLF; an instance
-// sharing its line with anything else takes only its own bytes, and an identity the document does
-// not carry takes nothing out. A collection the declaration does not name, and a key naming one
-// instance rather than a collection, are reported by name like any other key nothing can be written
-// at. A key a value is written at spells the ordinal of every instance it passes through; a
-// removal's key may leave an ancestor's ordinal out to name its first instance. Every key addresses
-// the document as it stands, so an instance taken out moves nothing the same save names. A save
-// writing into an instance it also takes out, or taking an instance out of a collection and
-// naming a removal from a collection standing under that one, is reported by name and nothing at
-// all is written. What would replace the document is staged beside it, loaded back through this
-// module's own load and required to read what was written and to carry no instance a removal named
-// under the parent its key addresses, and renamed onto the document only then. One message reports
-// the resolved path, how many values were written and how many instances were taken out. A save
-// handed a refused edit reads nothing, writes nothing and creates no document, and refuses as
-// rejected content with that edit's value as the message.
+// edited value are replaced, so every comment, blank line, ordering and indentation the author wrote
+// survives. Each value is written as it is spelled, except that a negative zero for a leaf declared
+// real is written as `0`. A value the document has no place for is written as an attribute of the
+// element it hangs under, and that element is created where the document does not carry it. A key
+// whose path the declaration does not name, and a key addressing an instance of a collection the
+// document does not carry that the same save names no identity for, or names one as an empty value,
+// are reported by name and nothing at all is written; where the save does name that identity as a
+// value that is not empty, the instance is created at the end of the collection and the rest of its
+// values are written into it. Where there is no document at `at`, one is written from the
+// declaration first, each declared field carrying the fallback the declaration named, and the values
+// are written into that. Every instance carrying the identity an edit takes out goes whole from
+// under the parent its key addresses, with everything hanging under it and, where only blanks share
+// its line, with that line and the line break in front of it, whether lines end LF or CRLF; an
+// instance sharing its line with anything else takes only its own bytes, and an identity the
+// document does not carry takes nothing out. A collection the declaration does not name, and a key
+// naming one instance rather than a collection, are reported by name like any other key nothing can
+// be written at. A key a value is written at spells the ordinal of every instance it passes through;
+// a removal's key may leave an ancestor's ordinal out to name its first instance. Every key
+// addresses the document as it stands, so an instance taken out moves nothing the same save names. A
+// save writing into an instance it also takes out, or taking an instance out of a collection and
+// naming a removal from a collection standing under that one, is reported by name and nothing at all
+// is written. What would replace the document is staged beside it, loaded back through this module's
+// own load and required to read what was written and to carry no instance a removal named under the
+// parent its key addresses, and renamed onto the document only then. One message reports the
+// resolved path, how many values were written and how many instances were taken out. A save handed a
+// refused edit reads nothing, writes nothing and creates no document, and refuses as rejected
+// content with that edit's value as the message.
 expected<void, error> save(const declaration &shape, const location &at, std::span<const edit> changes, write_policy policy = write_policy::every_edit);
 
 }

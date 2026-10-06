@@ -10,6 +10,7 @@
 
 #include <span>
 #include <string>
+#include <vector>
 #include <optional>
 #include <filesystem>
 #include <string_view>
@@ -28,6 +29,9 @@ std::optional<std::string> reading(const document &reloaded, field_kind kind, co
 // however close stay two, a text and a choice compare as written, and a text that does not read as
 // its kind is one value with nothing, itself included.
 bool one_value(field_kind kind, std::string_view one, std::string_view other);
+
+// `changes` as a save writes them: a negative zero for a leaf declared real is spelled `0`.
+std::vector<edit> as_written(const declaration &shape, std::span<const edit> changes);
 
 // The document at `candidate` loaded through this module's own load, with every one of `keys`
 // required to read as the matching entry of `values` does, and its bytes required to carry no

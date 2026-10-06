@@ -189,7 +189,7 @@ expected<void, error> save(const declaration &shape, const location &at, std::sp
     if(!authored)
         return unexpected(authored.error());
 
-    const std::vector<edit> wanted        = admitted(shape, at, changes, policy);
+    const std::vector<edit> wanted        = admitted(shape, at, as_written(shape, changes), policy);
     const expected<remainder, error> left = taken_out_of(shape, at, authored.value(), wanted);
     if(!left)
         return unexpected(left.error());

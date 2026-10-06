@@ -7,6 +7,7 @@
 #include "praxis/config/document.h"
 
 #include <span>
+#include <cmath>
 #include <string>
 #include <vector>
 #include <cstddef>
@@ -136,6 +137,19 @@ bool one_value(field_kind kind, std::string_view one, std::string_view other)
     if(kind == field_kind::integer)
         return alike(as_integer(one), as_integer(other));
     return one == other;
+}
+
+std::vector<edit> as_written(const declaration &shape, std::span<const edit> changes)
+{
+    std::vector<edit> spelled(changes.begin(), changes.end());
+    for(edit &one : spelled)
+    {
+        if(one.kind != edit_kind::bound || declared_kind(shape, one.key) != field_kind::real)
+            continue;
+        if(const std::optional<double> read = as_real(one.value); read && *read == 0.0 && std::signbit(*read))
+            one.value = "0";
+    }
+    return spelled;
 }
 
 expected<void, error> reads_as_written(const declaration &shape, const std::filesystem::path &candidate, std::span<const std::string> keys, std::span<const std::string> values,

@@ -12,6 +12,8 @@
 #include <array>
 #include <cmath>
 #include <string>
+#include <vector>
+#include <cstddef>
 #include <fstream>
 #include <filesystem>
 #include <string_view>
@@ -129,4 +131,24 @@ TEST_CASE("a read-back agrees with a value that reads back as one value however 
     REQUIRE_FALSE(neighbor.has_value());
     CHECK(neighbor.error().code == error_code::rejected_content);
     CHECK(neighbor.error().message.find("panel/scale") != std::string::npos);
+}
+
+TEST_CASE("a save spells a negative zero for a real leaf as 0 and keeps every other edit as offered", "[config]")
+{
+    declaration shape("probe");
+    shape.group("panel").field("panel/scale", field_kind::real, "1.0").field("panel/label", field_kind::text, "");
+
+    const std::vector<edit> offered{edit{"panel/scale", "-0"},  edit{"panel/scale", "-0.0"}, edit{"panel/scale", "-0e3"}, edit{"panel/scale", " -0 "},
+                                    edit{"panel/scale", "0.0"}, edit{"panel/scale", "-1"},   edit{"panel/label", "-0"},   edit{"panel/scale", "-0", edit_kind::taken_out}};
+    const std::array<std::string, 8> spelled{"0", "0", "0", "0", "0.0", "-1", "-0", "-0"};
+
+    const std::vector<edit> written = as_written(shape, offered);
+    REQUIRE(written.size() == offered.size());
+    for(std::size_t which = 0; which < offered.size(); ++which)
+    {
+        INFO("'" << offered[which].key << "' offered as '" << offered[which].value << "'");
+        CHECK(written[which].key == offered[which].key);
+        CHECK(written[which].kind == offered[which].kind);
+        CHECK(written[which].value == spelled[which]);
+    }
 }
