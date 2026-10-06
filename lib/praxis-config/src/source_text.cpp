@@ -4,9 +4,12 @@
 #include <string>
 #include <vector>
 #include <cstddef>
+#include <fstream>
 #include <utility>
+#include <iterator>
 #include <optional>
 #include <algorithm>
+#include <filesystem>
 #include <string_view>
 
 namespace praxis::config {
@@ -184,6 +187,14 @@ std::string spliced(std::string source, std::span<const placement> where, std::s
     for(const std::size_t which : order)
         source.replace(where[which].begin, where[which].length, where[which].opening + escaped(values[which], where[which].form) + where[which].closing);
     return source;
+}
+
+std::optional<std::string> slurped(const std::filesystem::path &from)
+{
+    std::ifstream in(from, std::ios::binary);
+    if(!in)
+        return std::nullopt;
+    return std::string(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
 }
 
 }

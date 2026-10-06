@@ -1,16 +1,10 @@
+#include "fold.h"
+#include "check.h"
 #include "engine.h"
 #include "announce.h"
+#include "source_text.h"
 
 #include "praxis/config/store.h"
-
-#include <nucleus/log_sink.h>
-#include <nucleus/config_space.h>
-
-#include <nucleus/xml/xml_source.h>
-
-#include <nucleus/config_source/source_stack.h>
-
-#include <spdlog/spdlog.h>
 
 #include <string>
 #include <memory>
@@ -18,7 +12,6 @@
 #include <fstream>
 #include <utility>
 #include <optional>
-#include <exception>
 #include <filesystem>
 #include <system_error>
 
@@ -43,22 +36,19 @@ detail::identity_map identities_of(const declaration &shape)
     return keyed;
 }
 
-// A document folded from nothing at all: every read misses the keyspace and lands on the fallback
-// the declaration named, which is what makes a refused file still answerable.
+document held(const declaration &shape, detail::entry_map values, const std::filesystem::path &from)
+{
+    return document(std::make_shared<const detail::held_document>(std::move(values), from, fallbacks_of(shape), identities_of(shape)));
+}
+
+// A document holding no value at all: every read lands on the fallback the declaration named, which
+// is what makes a refused file still answerable.
 document fallbacks_only(const declaration &shape, const std::filesystem::path &from)
 {
-    return document(std::make_shared<const detail::held_document>(nucleus::config(), from, fallbacks_of(shape), identities_of(shape)));
+    return held(shape, detail::entry_map(), from);
 }
 
-// The engine reports a document whose root is not the declared one and a document that does not
-// parse at all with the same code, and only a pull that does not require the root separates them.
-bool parses_without_the_declared_root(const location &at)
-{
-    nucleus::xml_source reader = nucleus::xml_source::from(nucleus::xml_source_options::of_file(at.resolved.string()));
-    return reader.pull().has_value();
-}
-
-// Everything the file's own state decides, before the engine is handed a path at all.
+// Everything the file's own state decides, before a byte of it is read.
 std::optional<error> unusable_before_reading(const std::filesystem::path &resolved)
 {
     std::error_code probing;
@@ -82,40 +72,7 @@ std::optional<error> unusable_before_reading(const std::filesystem::path &resolv
     return std::nullopt;
 }
 
-nucleus::source_stack sourced(const declaration &shape, const location &at)
-{
-    nucleus::xml_source reader = nucleus::xml_source::from(nucleus::xml_source_options::of_file(at.resolved.string()));
-    reader.with_space_name(shape.space());
-    return nucleus::source_stack(std::move(reader));
-}
-
-// A null sink is the engine's own spelling of "say nothing", so a read that installs none is silent
-// whatever the engine has to remark on.
-expected<document, error> folded_through(const nucleus::config_space &space, const declaration &shape, const location &at, nucleus::log_sink *sink)
-{
-    try
-    {
-        nucleus::load_options options;
-        options.log = sink;
-
-        nucleus::source_stack stack = sourced(shape, at);
-        nucleus::load_result folded = nucleus::load_config(space, stack, options);
-        if(!folded)
-        {
-            if(folded.error().code == nucleus::errc::malformed_source && parses_without_the_declared_root(at))
-                return unexpected(error{error_code::mismatched_space, folded.error().message});
-            return unexpected(translated(folded.error()));
-        }
-
-        return document(std::make_shared<const detail::held_document>(std::move(folded).value(), at.resolved, fallbacks_of(shape), identities_of(shape)));
-    }
-    catch(const std::exception &thrown)
-    {
-        return unexpected(error{error_code::malformed_source, "the configuration at " + at.resolved.string() + " could not be read: " + thrown.what()});
-    }
-}
-
-expected<document, error> load_through(const declaration &shape, const location &at, nucleus::log_sink *sink)
+expected<document, error> load_through(const declaration &shape, const location &at)
 {
     const expected<nucleus::config_space, error> space = sealed_space(shape);
     if(!space)
@@ -124,23 +81,30 @@ expected<document, error> load_through(const declaration &shape, const location 
     if(const std::optional<error> refused = unusable_before_reading(at.resolved); refused)
         return unexpected(*refused);
 
-    return folded_through(space.value(), shape, at, sink);
+    const std::optional<std::string> source = slurped(at.resolved);
+    if(!source)
+        return unexpected(error{error_code::unreadable_source, "the configuration file at " + at.resolved.string() + " cannot be opened for reading"});
+
+    expected<folding, error> walked = folded(*source, shape, at.resolved);
+    if(!walked)
+        return unexpected(walked.error());
+    if(const std::optional<error> refused = refused_content(walked.value(), shape, at.resolved); refused)
+        return unexpected(*refused);
+    return held(shape, std::move(walked.value().entries), at.resolved);
 }
 
 }
 
 expected<document, error> load(const declaration &shape, const location &at)
 {
-    return load_through(shape, at, nullptr);
+    return load_through(shape, at);
 }
 
 outcome load_or_defaults(const declaration &shape, const location &at, expectation carries)
 {
     report(at);
 
-    nucleus::log_sink_f bridge([](nucleus::log_level, std::string_view message) { spdlog::debug("praxis: {}", message); });
-
-    expected<document, error> loaded = load_through(shape, at, &bridge);
+    const expected<document, error> loaded = load_through(shape, at);
     if(!loaded)
     {
         announce_refusal(at, loaded.error(), carries);
@@ -148,7 +112,7 @@ outcome load_or_defaults(const declaration &shape, const location &at, expectati
     }
 
     announce_substitutions(shape, loaded.value(), carries);
-    return outcome{std::move(loaded).value(), std::nullopt};
+    return outcome{loaded.value(), std::nullopt};
 }
 
 }

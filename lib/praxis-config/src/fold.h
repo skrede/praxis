@@ -1,0 +1,35 @@
+#ifndef HPP_GUARD_PRAXIS_CONFIG_FOLD_H
+#define HPP_GUARD_PRAXIS_CONFIG_FOLD_H
+
+#include "engine.h"
+
+#include "praxis/config/error.h"
+#include "praxis/config/declaration.h"
+
+#include "praxis/compat/expected.h"
+
+#include <string>
+#include <vector>
+#include <filesystem>
+#include <string_view>
+
+namespace praxis::config {
+
+// One document read into keys: `entries` holds every value at a declared path, keyed with each
+// instance's ordinal, the instances of a collection no collection encloses numbered over those that
+// carry a value; `undeclared` the key of every value at a path nothing declares; `malformed` every
+// fault in the document's structure.
+struct folding
+{
+    detail::entry_map entries;
+    std::vector<std::string> undeclared;
+    std::vector<std::string> malformed;
+};
+
+// `source` read as the document of `shape`'s space; a document that does not parse, does not have
+// exactly one root element, or has a root other than the space is refused here.
+expected<folding, error> folded(std::string_view source, const declaration &shape, const std::filesystem::path &from);
+
+}
+
+#endif

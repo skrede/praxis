@@ -28,9 +28,9 @@ enum class origin_kind : std::uint8_t
     undeclared,
 };
 
-// Where one key's value came from. `layer` is the name the source gave itself, and is empty unless
-// `kind` is `source`. `instance_required` is a key that crosses a populated collection without an
-// ordinal, which is answerable per instance and not from a fallback.
+// Where one key's value came from. `layer` names the file the value was read from, and is empty
+// unless `kind` is `source`. `instance_required` is a key that crosses a populated collection
+// without an ordinal, which is answerable per instance and not from a fallback.
 struct value_origin
 {
     origin_kind kind;

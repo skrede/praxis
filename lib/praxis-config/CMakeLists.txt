@@ -8,6 +8,8 @@ praxis_add_module(config
     include/praxis/config/document.h
     include/praxis/config/declaration.h
     include/praxis/config/configurable.h
+    src/fold.h
+    src/check.h
     src/engine.h
     src/locator.h
     src/removal.h
@@ -22,6 +24,9 @@ praxis_add_module(config
     src/space.cpp
     src/declaration.cpp
     src/document.cpp
+    src/held_document.cpp
+    src/fold.cpp
+    src/check.cpp
     src/store.cpp
     src/announce.cpp
     src/key_path.cpp

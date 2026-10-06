@@ -206,11 +206,11 @@ TEST_CASE("a plain load says nothing at all, and only the answering load reports
     CHECK(carries(answering, scene::severity::info, at.resolved.string()));
 }
 
-TEST_CASE("what the configuration engine remarks on arrives at the detail level or not at all", "[config]")
+TEST_CASE("what a load says key by key arrives at the detail level or not at all", "[config]")
 {
     const scene::severity held = scene::reporting_level();
     const declaration shape    = three_fields();
-    const location at          = resolve(written("engine.xml", "<probe>\n    <window width=\"1280\"/>\n</probe>\n"), scratch());
+    const location at          = resolve(written("key-by-key.xml", "<probe>\n    <window width=\"1280\"/>\n</probe>\n"), scratch());
 
     scene::set_reporting_level(scene::severity::info);
     const std::shared_ptr<scene::log_buffer> ordinary = ring_on_the_current_logger();
@@ -226,7 +226,7 @@ TEST_CASE("what the configuration engine remarks on arrives at the detail level 
     for(const scene::log_entry &entry : plainly)
         CHECK(entry.level <= scene::severity::info);
     CHECK(carries(plainly, scene::severity::info, "2 of 3 declared values"));
-    CHECK(carries(in_detail, scene::severity::debug, "degraded"));
+    CHECK(carries(in_detail, scene::severity::debug, "window/title"));
     for(const scene::log_entry &entry : in_detail)
         CHECK(entry.text.find(".staging") == std::string::npos);
 }
@@ -238,11 +238,12 @@ TEST_CASE("the count of substituted values is published at a level the logger ad
 
 TEST_CASE("a read answers whether its value came from the file, from a fallback, or from no declaration at all", "[config]")
 {
-    const outcome answered = answered_for(three_fields(), "origins.xml", "<probe>\n    <window width=\"1280\"/>\n</probe>\n");
+    const location at      = resolve(written("origins.xml", "<probe>\n    <window width=\"1280\"/>\n</probe>\n"), scratch());
+    const outcome answered = load_or_defaults(three_fields(), at);
 
     REQUIRE_FALSE(answered.failure.has_value());
     REQUIRE(answered.values.origin_of("window/width").kind == origin_kind::source);
-    REQUIRE_FALSE(answered.values.origin_of("window/width").layer.empty());
+    REQUIRE(answered.values.origin_of("window/width").layer == at.resolved.string());
     REQUIRE(answered.values.origin_of("window/title").kind == origin_kind::fallback);
     REQUIRE(answered.values.origin_of("window/title").layer.empty());
     REQUIRE(answered.values.origin_of("window/undeclared").kind == origin_kind::undeclared);

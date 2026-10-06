@@ -9,3 +9,4 @@ target_include_directories(value_identity_test PRIVATE ${PROJECT_SOURCE_DIR}/lib
 praxis_add_test(spelled_offers_test.cpp LIBS praxis::config)
 praxis_add_test(negative_zero_test.cpp LIBS praxis::config spdlog::spdlog praxis_test_support)
 praxis_add_test(non_finite_offers_test.cpp LIBS praxis::config spdlog::spdlog praxis_test_support)
+praxis_add_test(refused_documents_test.cpp LIBS praxis::config)

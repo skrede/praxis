@@ -6,9 +6,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <filesystem>
 #include <string_view>
 
 namespace praxis::config {
+
+// Every byte of the file at `from`, or nothing where it cannot be opened.
+std::optional<std::string> slurped(const std::filesystem::path &from);
 
 // How a document carries one leaf's value, which decides what a replacement has to escape.
 enum class carrier : std::uint8_t

@@ -39,17 +39,31 @@ std::optional<std::string> as_text(std::string_view text)
 }
 
 template<typename T>
+expected<T, error> stored_value(std::string_view text, std::optional<detail::leaf_default> declared, std::string_view key, field_kind wanted,
+                                std::optional<T> (*from_text)(std::string_view))
+{
+    if(!declared || !reads_as(declared->kind, wanted))
+        return unexpected(error{error_code::mismatched_kind, "the value at '" + std::string(key) + "' is not declared as that kind"});
+
+    const std::optional<T> value = from_text(text);
+    if(!value)
+        return unexpected(error{error_code::malformed_source, "the value at '" + std::string(key) + "' does not read as its kind: " + std::string(text)});
+    return *value;
+}
+
+template<typename T>
 expected<T, error> read(const detail::held_document &held, std::string_view key, field_kind wanted, std::optional<T> (*from_text)(std::string_view))
 {
-    const nucleus::expected<T, nucleus::error> found = held.folded().get_as<T>(key);
-    if(found)
-        return found.value();
-    if(found.error().code != nucleus::errc::absent_key)
-        return unexpected(translated(found.error()));
+    if(const std::optional<std::string_view> text = held.value_at(key); text)
+        return stored_value(*text, held.fallback(declared_path(key)), key, wanted, from_text);
+    if(const std::optional<detail::crossed> across = held.crossing(key); across)
+        return unexpected(
+                error{error_code::instance_required,
+                      "the key '" + std::string(key) + "' passes the collection '" + across->container + "' without naming one of its " + std::to_string(across->count) + " instances"});
 
     const std::optional<detail::leaf_default> named = held.fallback(declared_path(key));
     if(!named)
-        return unexpected(translated(found.error()));
+        return unexpected(error{error_code::absent_key, "the key '" + std::string(key) + "' carries no value and is not declared"});
     if(!reads_as(named->kind, wanted))
         return unexpected(error{error_code::mismatched_kind, "the leaf '" + std::string(key) + "' is not declared as that kind"});
 
@@ -88,15 +102,12 @@ expected<std::int64_t, error> document::integer(std::string_view key) const
 
 bool document::holds(std::string_view key) const
 {
-    return m_held->folded().contains(key) || m_held->fallback(declared_path(key)).has_value();
+    return m_held->stored(key) || m_held->fallback(declared_path(key)).has_value();
 }
 
 std::vector<std::string> document::identities(std::string_view collection_path) const
 {
-    const std::optional<std::string> keyed_by = m_held->identity_of(collection_path);
-    if(!keyed_by)
-        return {};
-    return m_held->folded().get_all(std::string(collection_path) + "/" + *keyed_by);
+    return m_held->identities_in(collection_path);
 }
 
 expected<std::string, error> document::key(std::string_view collection_path, std::string_view identity, std::string_view leaf) const
@@ -119,8 +130,8 @@ std::optional<field_kind> document::kind_of(std::string_view key) const
 
 value_origin document::origin_of(std::string_view key) const
 {
-    if(const nucleus::origin *winner = m_held->folded().provenance_of(key); winner != nullptr)
-        return value_origin{origin_kind::source, winner->layer};
+    if(m_held->stored(key))
+        return value_origin{origin_kind::source, m_held->from().string()};
 
     const std::string declared = declared_path(key);
     if(!m_held->fallback(declared))
@@ -136,48 +147,5 @@ value_origin document::origin_of(std::string_view key) const
 const std::filesystem::path &document::source() const noexcept
 {
     return m_held->from();
-}
-
-namespace detail {
-
-held_document::held_document(nucleus::config folded, std::filesystem::path from, defaults_map fallbacks, identity_map identities)
-        : m_folded(std::move(folded))
-        , m_from(std::move(from))
-        , m_fallbacks(std::move(fallbacks))
-        , m_identities(std::move(identities))
-{
-}
-
-const nucleus::config &held_document::folded() const noexcept
-{
-    return m_folded;
-}
-
-const std::filesystem::path &held_document::from() const noexcept
-{
-    return m_from;
-}
-
-std::optional<leaf_default> held_document::fallback(std::string_view declared) const
-{
-    const defaults_map::const_iterator found = m_fallbacks.find(declared);
-    if(found == m_fallbacks.end())
-        return std::nullopt;
-    return found->second;
-}
-
-std::optional<std::string> held_document::identity_of(std::string_view collection_path) const
-{
-    const identity_map::const_iterator found = m_identities.find(collection_path);
-    if(found == m_identities.end())
-        return std::nullopt;
-    return found->second;
-}
-
-const identity_map &held_document::keyed() const noexcept
-{
-    return m_identities;
-}
-
 }
 }
