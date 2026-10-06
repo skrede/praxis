@@ -31,11 +31,12 @@ outcome load_or_defaults(const binding &bound);
 // one value for one key, however each spells it, stand once as the text offered first, and two
 // values offered for one key stand as one refused edit naming the key, so a save refuses rather than
 // choose. An offer of NaN or an infinity for a real key stands nowhere and is reported in a warning
-// naming it, so the document keeps that key's value. A null entry contributes none.
+// naming it; the drop leaves the key to whatever else is offered for it, and the document keeps its
+// value where nothing is. A null entry contributes none.
 std::vector<edit> shown_edits(std::span<const configurable *const> shown, const document &carried);
 
 // Whether anything the shown implementors stand for still has to reach `carried` -- the question
-// a composition is asked when it is left.
+// a composition is asked when it is left. Asking logs nothing.
 bool anything_unsaved(std::span<const configurable *const> shown, const document &carried);
 
 expected<void, error> save(const binding &bound, std::span<const edit> changes);

@@ -96,9 +96,12 @@ std::vector<edit> shown_by(const configurable &window, const document &carried)
     return shown_edits(std::array<const configurable *, 1>{&window}, carried);
 }
 
+// Whether anything is left unsaved, checking that asking logged nothing.
 bool unsaved(const configurable &window, const document &carried)
 {
-    return anything_unsaved(std::array<const configurable *, 1>{&window}, carried);
+    bool left = false;
+    CHECK(praxis::tests::reported_by([&] { left = anything_unsaved(std::array<const configurable *, 1>{&window}, carried); }).empty());
+    return left;
 }
 
 }
@@ -132,6 +135,30 @@ TEST_CASE("a NaN or infinite offer for a real key is left unwritten with a warni
     CHECK_FALSE(unsaved(narrowed, reloaded));
     CHECK_FALSE(unsaved(narrowing({edit{"panel/scale", "-inf"}}), carried));
     CHECK_FALSE(unsaved(offering({edit{"panel/scale", "nan"}}), carried));
+}
+
+TEST_CASE("a NaN offered beside a finite value for one real key leaves the key to the finite value, which saves", "[config]")
+{
+    const offering not_a_number({edit{"panel/scale", "nan"}});
+    const offering finite({edit{"panel/scale", "2.5"}});
+    const std::array<std::array<const configurable *, 2>, 2> orders{{{&not_a_number, &finite}, {&finite, &not_a_number}}};
+    for(const std::array<const configurable *, 2> &shown : orders)
+    {
+        const std::filesystem::path where = scratch("beside-finite.xml");
+        const binding bound               = authored(where);
+        const document carried            = load_or_defaults(bound).values;
+
+        std::vector<edit> offered;
+        const std::string said = praxis::tests::reported_by([&] { offered = shown_edits(shown, carried); });
+        INFO(said);
+        REQUIRE(offered.size() == 1u);
+        CHECK((offered.front().key == "panel/scale" && offered.front().kind == edit_kind::bound && offered.front().value == "2.5"));
+        CHECK(said.find("'panel/scale' is offered as 'nan'") != std::string::npos);
+
+        REQUIRE(save(bound, offered).has_value());
+        CHECK(text_of(where).find("scale=\"2.5\"") != std::string::npos);
+        CHECK(load_or_defaults(bound).values.real("panel/scale").value_or(0.0) == 2.5);
+    }
 }
 
 TEST_CASE("every spelling of NaN or an infinity is dropped, and a text that is not a number is offered as before", "[config]")

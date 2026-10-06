@@ -180,7 +180,15 @@ TEST_CASE("a document carrying 0 and 1 is not left unsaved by an offered -0 and 
 
     const std::vector<edit> unreadable = gathered(offering({edit{"panel/scale", "abc"}}), offering({edit{"panel/scale", "abc"}}), carried);
     REQUIRE(unreadable.size() == 1u);
-    CHECK(unreadable.front().kind == edit_kind::refused);
+    CHECK((unreadable.front().kind == edit_kind::bound && unreadable.front().value == "abc"));
+
+    const std::filesystem::path unreadable_where = scratch("unreadable.xml");
+    const expected<void, error> refused          = save(authored(unreadable_where), unreadable);
+    REQUIRE_FALSE(refused.has_value());
+    CHECK(refused.error().code == error_code::rejected_content);
+    CHECK(refused.error().message.find("panel/scale") != std::string::npos);
+    CHECK(refused.error().message.find("abc") != std::string::npos);
+    CHECK(text_of(unreadable_where) == hand_written);
 }
 
 TEST_CASE("a save's read-back accepts a value spelled otherwise than it reads back and refuses one that reads back as nothing", "[config]")

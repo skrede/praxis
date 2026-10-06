@@ -40,6 +40,19 @@ void require_each(std::span<const pair_of> pairs, bool expected_one)
     }
 }
 
+void require_each_side_reads(std::span<const pair_of> pairs)
+{
+    for(const pair_of &pair : pairs)
+    {
+        if(pair.kind != field_kind::real)
+            continue;
+
+        INFO("'" << pair.one << "' against '" << pair.other << "'");
+        REQUIRE(one_value(pair.kind, pair.one, pair.one));
+        REQUIRE(one_value(pair.kind, pair.other, pair.other));
+    }
+}
+
 std::filesystem::path carrying_zero()
 {
     const std::filesystem::path directory = std::filesystem::temp_directory_path() / "praxis-config-value-identity";
@@ -65,12 +78,16 @@ expected<void, error> read_back(const std::string &scale, const std::string &sho
 
 TEST_CASE("a real is one value however it is spelled, and two reals however close stay two", "[config]")
 {
-    const std::array<pair_of, 5> one{{
+    const std::array<pair_of, 9> one{{
             {field_kind::real, "0.10", "0.1"},
             {field_kind::real, "-0", "0"},
             {field_kind::real, "1", "1.0"},
             {field_kind::real, "-0.0", "0e5"},
             {field_kind::real, "1.5", " 1.5 "},
+            {field_kind::real, "+1.5", "1.5"},
+            {field_kind::real, "4.9e-324", exact_text(std::nextafter(0.0, 1.0))},
+            {field_kind::real, ".5", "0.5"},
+            {field_kind::real, "5.", "5"},
     }};
     const std::array<pair_of, 3> two{{
             {field_kind::real, "0.1", "0.2"},
@@ -78,6 +95,8 @@ TEST_CASE("a real is one value however it is spelled, and two reals however clos
             {field_kind::real, "0", exact_text(std::nextafter(0.0, 1.0))},
     }};
 
+    require_each_side_reads(one);
+    require_each_side_reads(two);
     require_each(one, true);
     require_each(two, false);
 }
@@ -106,10 +125,17 @@ TEST_CASE("a flag, an integer, a text and a choice are each compared as their ow
 
 TEST_CASE("a text that does not read as its kind is one value with nothing, itself included", "[config]")
 {
-    const std::array<pair_of, 5> none{{
+    const std::array<pair_of, 12> none{{
             {field_kind::real, "abc", "abc"},
             {field_kind::real, "", ""},
             {field_kind::real, "abc", "0"},
+            {field_kind::real, "1e-400", "1e-400"},
+            {field_kind::real, "-1e-400", "-1e-400"},
+            {field_kind::real, "2e-324", "2e-324"},
+            {field_kind::real, "1e400", "1e400"},
+            {field_kind::real, "0x1p3", "0x1p3"},
+            {field_kind::real, "nan", "nan"},
+            {field_kind::real, "inf", "inf"},
             {field_kind::flag, "yes", "yes"},
             {field_kind::integer, "7.0", "7"},
     }};
@@ -127,7 +153,9 @@ TEST_CASE("a read-back agrees with a value that reads back as one value however 
     CHECK(other.error().message.find("panel/scale") != std::string::npos);
     CHECK(other.error().message.find("0.1") != std::string::npos);
 
-    const expected<void, error> neighbor = read_back(exact_text(std::nextafter(0.0, 1.0)), "false");
+    const std::string least = exact_text(std::nextafter(0.0, 1.0));
+    REQUIRE(one_value(field_kind::real, least, least));
+    const expected<void, error> neighbor = read_back(least, "false");
     REQUIRE_FALSE(neighbor.has_value());
     CHECK(neighbor.error().code == error_code::rejected_content);
     CHECK(neighbor.error().message.find("panel/scale") != std::string::npos);
