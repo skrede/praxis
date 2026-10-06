@@ -2,6 +2,7 @@
 #include "removal.h"
 #include "insertion.h"
 #include "read_back.h"
+#include "source_text.h"
 
 #include "praxis/config/store.h"
 #include "praxis/config/writer.h"
@@ -14,7 +15,6 @@
 #include <vector>
 #include <cstddef>
 #include <fstream>
-#include <sstream>
 #include <utility>
 #include <optional>
 #include <filesystem>
@@ -32,17 +32,6 @@ struct pending_write
     std::vector<std::string> values;
     std::vector<placement> places;
 };
-
-std::optional<std::string> slurped(const std::filesystem::path &from)
-{
-    std::ifstream in(from, std::ios::binary);
-    if(!in)
-        return std::nullopt;
-
-    std::ostringstream all;
-    all << in.rdbuf();
-    return all.str();
-}
 
 bool spilled(const std::filesystem::path &to, const std::string &text)
 {

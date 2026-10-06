@@ -1,6 +1,8 @@
 #include "engine.h"
 #include "removal.h"
+#include "key_path.h"
 #include "read_back.h"
+#include "source_text.h"
 
 #include "praxis/config/store.h"
 #include "praxis/config/writer.h"
@@ -11,33 +13,12 @@
 #include <string>
 #include <vector>
 #include <cstddef>
-#include <fstream>
-#include <sstream>
 #include <optional>
 #include <filesystem>
 #include <string_view>
 
 namespace praxis::config {
 namespace {
-
-// Addressing inside a collection is by ordinal, so a written key carries brackets the declaration
-// never had; dropping them is what turns it back into a declared one.
-std::string declared_path(std::string_view key)
-{
-    std::string plain;
-    plain.reserve(key.size());
-    bool inside = false;
-    for(const char letter : key)
-    {
-        if(letter == '[')
-            inside = true;
-        else if(letter == ']')
-            inside = false;
-        else if(!inside)
-            plain.push_back(letter);
-    }
-    return plain;
-}
 
 // The instance the segment before `key`'s leaf addresses, or nothing where it addresses none.
 std::optional<std::size_t> addressed_at(const std::string &key)
@@ -92,17 +73,6 @@ std::optional<error> disagreeing(const declaration &shape, const document &reloa
         return error{error_code::rejected_content, "'" + keys[which] + "' was written as '" + values[which] + "' and reads back as '" + read.value_or("nothing of its kind") + "'"};
     }
     return std::nullopt;
-}
-
-std::optional<std::string> bytes_of(const std::filesystem::path &from)
-{
-    std::ifstream in(from, std::ios::binary);
-    if(!in)
-        return std::nullopt;
-
-    std::ostringstream all;
-    all << in.rdbuf();
-    return all.str();
 }
 
 }
@@ -161,7 +131,7 @@ expected<void, error> reads_as_written(const declaration &shape, const std::file
 
     if(const std::optional<error> refused = disagreeing(shape, reloaded.value(), keys, values); refused)
         return unexpected(*refused);
-    const std::optional<std::string> staged = bytes_of(candidate);
+    const std::optional<std::string> staged = slurped(candidate);
     if(!staged)
         return unexpected(error{error_code::unreadable_source, "the configuration staged at " + candidate.string() + " could not be read back"});
     if(const std::string refused = still_carried(shape, *staged, gone); !refused.empty())

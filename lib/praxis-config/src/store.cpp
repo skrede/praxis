@@ -74,9 +74,8 @@ std::optional<error> unusable_before_reading(const std::filesystem::path &resolv
 
 expected<document, error> load_through(const declaration &shape, const location &at)
 {
-    const expected<nucleus::config_space, error> space = sealed_space(shape);
-    if(!space)
-        return unexpected(space.error());
+    if(const std::optional<error> refused = refused_as_declared(shape); refused)
+        return unexpected(*refused);
 
     if(const std::optional<error> refused = unusable_before_reading(at.resolved); refused)
         return unexpected(*refused);

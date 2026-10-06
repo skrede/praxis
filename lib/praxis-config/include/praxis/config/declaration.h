@@ -37,9 +37,8 @@ struct node
     std::vector<std::string> allowed;
 };
 
-// A keyspace described in the caller's own vocabulary and translated to the engine only where a
-// document is loaded against it. Paths are `/`-separated, and a node is declared after the node it
-// hangs under.
+// A keyspace described in the caller's own vocabulary, checked where a document is loaded against it
+// or written from it. Paths are `/`-separated, and a node is declared after the node it hangs under.
 class declaration
 {
 public:

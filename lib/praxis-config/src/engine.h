@@ -4,11 +4,6 @@
 #include "praxis/config/error.h"
 #include "praxis/config/declaration.h"
 
-#include "praxis/compat/expected.h"
-
-#include <nucleus/error.h>
-#include <nucleus/config_space.h>
-
 #include <map>
 #include <string>
 #include <vector>
@@ -21,8 +16,6 @@
 
 namespace praxis::config {
 
-error translated(const nucleus::error &reason);
-
 std::optional<bool> as_flag(std::string_view text);
 
 std::optional<double> as_real(std::string_view text);
@@ -32,7 +25,8 @@ bool non_finite(std::string_view text);
 
 std::optional<std::int64_t> as_integer(std::string_view text);
 
-expected<nucleus::config_space, error> sealed_space(const declaration &shape);
+// Every way `shape` fails to describe a keyspace, in one malformed-source refusal naming each path.
+std::optional<error> refused_as_declared(const declaration &shape);
 
 namespace detail {
 
