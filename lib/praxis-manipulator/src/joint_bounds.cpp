@@ -3,6 +3,7 @@
 #include "praxis/evaluation/tolerance.h"
 
 #include <cmath>
+#include <limits>
 #include <cstddef>
 #include <numbers>
 #include <optional>
@@ -19,14 +20,19 @@ bool turns_whole(const screw_axis &s)
     return is_approx_equal(s.head<3>().norm(), 1.0) && is_approx_equal(s.head<3>().dot(s.tail<3>()), 0.0);
 }
 
-// value + k turn inside [lower, upper], k nearest zero; a turn of zero admits the value alone.
+// In machine epsilons of the largest operand's magnitude.
+constexpr double turn_count_slack = 2.0;
+
+// value + k turn inside [lower, upper] up to the operands' rounding, k nearest zero, held inside; a turn of zero admits the value alone.
 std::optional<double> named_between(double value, double lower, double upper, double turn)
 {
     if(turn == 0.0)
         return lower <= value && value <= upper ? std::optional<double>(value) : std::nullopt;
 
-    const double fewest = std::ceil((lower - value) / turn);
-    const double most   = std::floor((upper - value) / turn);
+    const double widening = turn_count_slack * std::numeric_limits<double>::epsilon() * std::max({1.0, std::abs(value), std::abs(lower), std::abs(upper)}) / turn;
+    const double slack    = std::isfinite(widening) ? widening : 0.0;
+    const double fewest   = std::ceil((lower - value) / turn - slack);
+    const double most     = std::floor((upper - value) / turn + slack);
     if(fewest > most)
         return std::nullopt;
 

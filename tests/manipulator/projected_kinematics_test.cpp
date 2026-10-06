@@ -18,6 +18,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <span>
+#include <array>
 #include <cmath>
 #include <limits>
 #include <vector>
@@ -131,6 +132,19 @@ screw_chain one_joint_about_z(double lower, double upper)
 
     return screw_chain(home, {about_z}, bounds);
 }
+
+// {lower, upper, value} in degrees.
+constexpr std::array<std::array<double, 3>, 11> whole_turns_past_a_bound{{{-120.0, 120.0, 240.0},
+                                                                          {-120.0, 120.0, 840.0},
+                                                                          {-120.0, 120.0, -840.0},
+                                                                          {-135.0, 135.0, 495.0},
+                                                                          {-135.0, 135.0, -495.0},
+                                                                          {-99.0, 99.0, 459.0},
+                                                                          {-99.0, 99.0, -459.0},
+                                                                          {-93.0, 93.0, 1173.0},
+                                                                          {-93.0, 93.0, -1173.0},
+                                                                          {-100.0, 150.0, 510.0},
+                                                                          {-100.0, 150.0, -460.0}}};
 
 // Joint 1 turns whole about z, bounded [-170, 170] degrees; joint 2 slides along x, bounded [-0.2, 0.3];
 // joint 3 turns whole about z and carries no bound pair.
@@ -292,25 +306,28 @@ TEST_CASE("a_whole_turn_joint_is_named_inside_its_bounds_before_it_is_projected_
         CHECK(projected_joints(once[0], once[1], once[2]) == once);
 }
 
-TEST_CASE("a_seed_a_whole_turn_past_a_bound_is_named_inside_the_bounds_and_answered_by_both_solves")
+TEST_CASE("seeds_a_whole_number_of_turns_past_a_bound_are_named_inside_the_bounds_and_answered_by_both_solves")
 {
-    const screw_chain chain      = one_joint_about_z(-120.0 * radians_per_degree, 120.0 * radians_per_degree);
-    const joint_vector seed      = joint_vector::Constant(1, 240.0 * radians_per_degree);
-    const transform target       = pose_of(chain, seed);
-    const joint_vector projected = projected_inside_bounds(chain, seed);
-
-    CHECK(inside(chain, projected));
-    CHECK(projected_inside_bounds(chain, projected) == projected);
-    CHECK(named_inside_bounds(chain, projected) == projected);
-    for(const inverse_kinematics_ops inverse : {projected_operations, manipulator::baseline().ik})
+    for(const auto &[lower, upper, value] : whole_turns_past_a_bound)
     {
-        ik_result answer;
-        CHECK(solved_through(inverse, chain, target, seed, tight_parameters, answer));
-        CHECK(answer.solutions.size() == 1u);
-        for(const joint_vector &q : answer.solutions)
+        CAPTURE(lower, upper, value);
+        const screw_chain chain      = one_joint_about_z(lower * radians_per_degree, upper * radians_per_degree);
+        const joint_vector seed      = joint_vector::Constant(1, value * radians_per_degree);
+        const joint_vector projected = projected_inside_bounds(chain, seed);
+        CHECK(named_inside_bounds(chain, seed) == projected);
+        CHECK(inside(chain, projected));
+        CHECK(projected_inside_bounds(chain, projected) == projected);
+        CHECK(named_inside_bounds(chain, projected) == projected);
+        for(const inverse_kinematics_ops inverse : {projected_operations, manipulator::baseline().ik})
         {
-            CHECK(inside(chain, q));
-            CHECK(is_approx_equal(pose_of(chain, q), target, 1.0e-9));
+            ik_result answer;
+            CHECK(solved_through(inverse, chain, pose_of(chain, seed), seed, tight_parameters, answer));
+            CHECK(answer.solutions.size() == 1u);
+            for(const joint_vector &q : answer.solutions)
+            {
+                CHECK(inside(chain, q));
+                CHECK(is_approx_equal(pose_of(chain, q), pose_of(chain, seed), 1.0e-9));
+            }
         }
     }
 }
