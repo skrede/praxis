@@ -11,6 +11,7 @@
 #include <utility>
 #include <iterator>
 #include <optional>
+#include <algorithm>
 #include <functional>
 #include <string_view>
 
@@ -132,6 +133,14 @@ void walk_element(walk &state, pugi::xml_node element, const std::string &path, 
     walk_children(state, element, path, depth + 1);
 }
 
+std::string position_of(std::string_view source, std::ptrdiff_t offset)
+{
+    const std::string_view before = source.substr(0, static_cast<std::size_t>(std::max<std::ptrdiff_t>(offset, 0)));
+    const std::size_t last_break  = before.rfind('\n');
+    const std::size_t column      = last_break == std::string_view::npos ? before.size() + 1 : before.size() - last_break;
+    return "line " + std::to_string(std::ranges::count(before, '\n') + 1) + ", column " + std::to_string(column);
+}
+
 std::optional<std::string> beside_the_root(const pugi::xml_document &held)
 {
     const pugi::xml_node root = held.document_element();
@@ -177,7 +186,8 @@ expected<folding, error> folded(std::string_view source, const declaration &shap
     pugi::xml_document held;
     const pugi::xml_parse_result read = held.load_buffer(source.data(), source.size(), pugi::parse_default);
     if(!read)
-        return unexpected(error{error_code::malformed_source, "the configuration at " + from.string() + " does not parse: " + read.description()});
+        return unexpected(
+                error{error_code::malformed_source, "the configuration at " + from.string() + " does not parse at " + position_of(source, read.offset) + ": " + read.description()});
     if(const std::optional<std::string> beside = beside_the_root(held); beside)
         return unexpected(error{error_code::malformed_source, "the configuration at " + from.string() + " is not one document: " + *beside});
 

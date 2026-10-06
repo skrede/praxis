@@ -85,6 +85,19 @@ bool declared_under(const config::declaration &shape, std::string_view path)
     return false;
 }
 
+// Whether one line of `message` names both `first` and `second`.
+bool named_together(std::string_view message, std::string_view first, std::string_view second)
+{
+    for(std::size_t from = 0; from <= message.size();)
+    {
+        const std::string_view line = message.substr(from, message.find('\n', from) - from);
+        if(line.find(first) != std::string_view::npos && line.find(second) != std::string_view::npos)
+            return true;
+        from += line.size() + 1;
+    }
+    return false;
+}
+
 }
 
 // The table names every path a window keeps settings under; a path nothing declared has no key in
@@ -124,6 +137,8 @@ TEST_CASE("a document carrying an element the arm keyspace does not declare is r
     const config::outcome answered = loaded(scratch("an-undeclared-element"), an_undeclared_element);
     REQUIRE(answered.failure.has_value());
     CHECK(answered.failure->code == config::error_code::rejected_content);
+    CHECK(named_together(answered.failure->message, "ik_branch/figures", "ik_solutions/figures"));
+    CHECK(named_together(answered.failure->message, "ik_branch/mode", "ik_iterates/mode"));
 
     const presets::arm_scenario read = presets::read_arm(answered.values, {});
     CHECK(read.ik_solutions.mode == manipulator::control_mode::simulation);

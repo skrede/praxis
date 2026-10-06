@@ -12,6 +12,7 @@ praxis_add_module(config
     src/check.h
     src/engine.h
     src/locator.h
+    src/nearest.h
     src/removal.h
     src/announce.h
     src/key_path.h
@@ -27,6 +28,7 @@ praxis_add_module(config
     src/held_document.cpp
     src/fold.cpp
     src/check.cpp
+    src/nearest.cpp
     src/store.cpp
     src/announce.cpp
     src/key_path.cpp
