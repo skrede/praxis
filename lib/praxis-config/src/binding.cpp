@@ -20,12 +20,14 @@ namespace praxis::config {
 
 namespace {
 
-// An edit already gathered alike is not gathered again. A value differing from the one already
-// gathered for its key takes that edit's place as one refusal naming both, and a key already refused
-// gathers no value.
-void gather(std::vector<edit> &gathered, const edit &offered)
+// An offer that is one value with the edit gathered for its key is not gathered again, so the text
+// offered first stands. A different value takes that edit's place as one refusal naming both, and a
+// key already refused gathers no value.
+void gather(std::vector<edit> &gathered, const edit &offered, const document &carried)
 {
-    if(std::ranges::any_of(gathered, [&offered](const edit &one) { return one.key == offered.key && one.value == offered.value && one.kind == offered.kind; }))
+    const field_kind kind = offered.kind == edit_kind::bound ? carried.kind_of(offered.key).value_or(field_kind::text) : field_kind::text;
+    const auto alike      = [&](const edit &one) { return one.key == offered.key && one.kind == offered.kind && one_value(kind, one.value, offered.value); };
+    if(std::ranges::any_of(gathered, alike))
         return;
 
     const auto valued = [&offered](const edit &one) { return one.key == offered.key && one.kind != edit_kind::taken_out; };
@@ -59,9 +61,8 @@ std::vector<edit> unsaved_edits(const document &carried, std::span<const edit> c
             continue;
         }
 
-        const std::optional<std::string> read  = reading(carried, *kind, change.key);
-        const std::optional<std::string> meant = canonical(*kind, change.value);
-        if(!read || !meant || *read != *meant)
+        const std::optional<std::string> read = reading(carried, *kind, change.key);
+        if(!read || !one_value(*kind, *read, change.value))
             outstanding.push_back(change);
     }
     return outstanding;
@@ -76,7 +77,7 @@ std::vector<edit> shown_edits(std::span<const configurable *const> shown, const 
             continue;
 
         for(const edit &offered : one->settings_edits(carried))
-            gather(gathered, offered);
+            gather(gathered, offered, carried);
     }
     return gathered;
 }

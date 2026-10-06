@@ -4,3 +4,6 @@ praxis_add_test(write_back_test.cpp LIBS praxis::config spdlog::spdlog praxis_te
 praxis_add_test(defaults_test.cpp LIBS praxis::config praxis::scene)
 praxis_add_test(binding_test.cpp LIBS praxis::config spdlog::spdlog praxis_test_support)
 praxis_add_test(gathered_edits_test.cpp LIBS praxis::config spdlog::spdlog praxis_test_support)
+praxis_add_test(value_identity_test.cpp LIBS praxis::config)
+target_include_directories(value_identity_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-config/src)
+praxis_add_test(spelled_offers_test.cpp LIBS praxis::config)

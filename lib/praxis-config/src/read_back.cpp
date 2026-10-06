@@ -85,8 +85,7 @@ std::optional<error> disagreeing(const declaration &shape, const document &reloa
         const field_kind kind                    = declared_kind(shape, keys[which]);
         const std::optional<std::string> matched = carried_identity(shape, reloaded, keys[which]);
         const std::optional<std::string> read    = matched ? matched : reading(reloaded, kind, keys[which]);
-        const std::optional<std::string> meant   = canonical(kind, values[which]);
-        if(read && meant && *read == *meant)
+        if(read && one_value(kind, *read, values[which]))
             continue;
 
         return error{error_code::rejected_content, "'" + keys[which] + "' was written as '" + values[which] + "' and reads back as '" + read.value_or("nothing of its kind") + "'"};
@@ -127,15 +126,16 @@ std::optional<std::string> reading(const document &reloaded, field_kind kind, co
     return reloaded.text(key) ? std::optional<std::string>(reloaded.text(key).value()) : std::nullopt;
 }
 
-std::optional<std::string> canonical(field_kind kind, const std::string &value)
+bool one_value(field_kind kind, std::string_view one, std::string_view other)
 {
+    const auto alike = [](const auto &first, const auto &second) { return first.has_value() && first == second; };
     if(kind == field_kind::flag)
-        return as_flag(value) ? std::optional<std::string>(*as_flag(value) ? "true" : "false") : std::nullopt;
+        return alike(as_flag(one), as_flag(other));
     if(kind == field_kind::real)
-        return as_real(value) ? std::optional<std::string>(exact_text(*as_real(value))) : std::nullopt;
+        return alike(as_real(one), as_real(other));
     if(kind == field_kind::integer)
-        return as_integer(value) ? std::optional<std::string>(std::to_string(*as_integer(value))) : std::nullopt;
-    return value;
+        return alike(as_integer(one), as_integer(other));
+    return one == other;
 }
 
 expected<void, error> reads_as_written(const declaration &shape, const std::filesystem::path &candidate, std::span<const std::string> keys, std::span<const std::string> values,

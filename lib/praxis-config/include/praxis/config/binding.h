@@ -27,9 +27,10 @@ struct binding
 
 outcome load_or_defaults(const binding &bound);
 
-// The edits every shown implementor stands for, in the order they are first offered. An edit two of
-// them offer alike stands once, and two values offered for one key stand as one refused edit naming
-// the key, so a save refuses rather than choose. A null entry contributes none.
+// The edits every shown implementor stands for, in the order they are first offered. Two offers of
+// one value for one key, however each spells it, stand once as the text offered first, and two
+// values offered for one key stand as one refused edit naming the key, so a save refuses rather than
+// choose. A null entry contributes none.
 std::vector<edit> shown_edits(std::span<const configurable *const> shown, const document &carried);
 
 // Whether anything the shown implementors stand for still has to reach `carried` -- the question

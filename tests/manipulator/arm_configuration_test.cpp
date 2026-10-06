@@ -12,6 +12,7 @@
 #include "praxis/config/error.h"
 #include "praxis/config/store.h"
 #include "praxis/config/writer.h"
+#include "praxis/config/binding.h"
 #include "praxis/config/document.h"
 #include "praxis/config/declaration.h"
 #include "praxis/config/configurable.h"
@@ -27,6 +28,8 @@
 
 #include <threepp/materials/MeshBasicMaterial.hpp>
 
+#include <array>
+#include <cmath>
 #include <memory>
 #include <string>
 #include <vector>
@@ -752,6 +755,38 @@ TEST_CASE("a tool window holding no tool opens at the loader whatever view its d
 
     REQUIRE(moved.state().selected_view == tool_window::tool_view::graphics_transform);
     require_one_edit(moved.settings_edits(nothing), view_key, "graphics_transform");
+}
+
+TEST_CASE("a tool seat whose Euler angle is a negative zero opens against a document carrying zero with nothing unsaved", "[manipulator][configuration]")
+{
+    const std::filesystem::path where = authored("tool-negative-zero.xml", R"(<probe><machine><tool><kinematics><euler x="0" y="0" z="0"/></kinematics></tool></machine></probe>)");
+    const config::document carried    = config::load_or_defaults(described(), config::resolve(where, scratch()), config::expectation::partial).values;
+    const std::string y_key           = key_under(key_under(key_under(at, "kinematics"), "euler"), "y");
+
+    REQUIRE(carried.origin_of(y_key).kind == config::origin_kind::source);
+    REQUIRE(carried.real(y_key).value_or(1.0) == 0.0);
+
+    tool_window::settings seated          = read_tool(carried, at);
+    seated.kinematics_euler_degrees.y()   = -0.0f;
+    const std::vector<config::edit> offer = write_tool(seated, at);
+    const auto y_edit                     = std::ranges::find(offer, y_key, &config::edit::key);
+
+    REQUIRE(std::signbit(seated.kinematics_euler_degrees.y()));
+    REQUIRE(y_edit != offer.end());
+    REQUIRE(y_edit->value == "-0");
+    CHECK(config::unsaved_edits(carried, offer).empty());
+
+    scheduler::scheduler loop(scheduler::inline_workers);
+    standing_stencil bare = stand(loop, attachments{});
+    tool_window opened("Tool settings", *bare.shown, bare.published->reader(), std::weak_ptr<owned_arm>(), reference, seated, std::string(at));
+    opened.initialize();
+
+    REQUIRE(std::signbit(opened.state().kinematics_euler_degrees.y()));
+    CHECK(opened.settings_edits(carried).empty());
+
+    REQUIRE(opened.as_configurable() != nullptr);
+    const std::array<const config::configurable *, 1> shown{opened.as_configurable()};
+    CHECK_FALSE(config::anything_unsaved(shown, carried));
 }
 
 TEST_CASE("a world object window opens where its initializer puts it and offers nothing over the document it was read from, until its activation is pressed",
