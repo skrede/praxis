@@ -69,19 +69,13 @@ add_subdirectory(presets)
 # is fixed by the include-leak assertion. Each call writes its own file: export truncates rather than
 # appends, so a second call naming the same file erases the first. A target whose interface names one
 # outside every export set is refused, so the dependency file carries every target the modules link
-# that is not published under this repository's namespace -- the carrier the linear-algebra headers
-# travel on among them, because the dependencies' own interfaces name it. That file names nothing out
-# of the namespaced one, so a consumer reads it first and the namespaced one after.
+# that is not published under this repository's namespace -- the carriers the linear-algebra headers
+# and the XML parser travel on among them, because the modules' and the dependencies' own interfaces
+# name them. That file names nothing out of the namespaced one, so a consumer reads it first and the
+# namespaced one after.
 set(praxis_dependency_targets imgui implot threepp glfw spdlog pugixml pugixml-static praxis_eigen_headers
-    nucleus_core nucleus_xml
+    praxis_xml_parser
     meios_urdf meios_core meios_io meios_model meios_xacro meios_yaml yaml-cpp)
-
-# The formatting library enters a dependency's public link interface only on a toolchain whose
-# standard library does not supply the formatting header, so which set this target belongs to is
-# decided by the toolchain rather than by this file.
-if (TARGET fmt)
-    list(APPEND praxis_dependency_targets fmt)
-endif ()
 
 export(TARGETS ${praxis_dependency_targets}
     FILE ${CMAKE_BINARY_DIR}/praxis-dependency-targets.cmake)

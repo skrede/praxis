@@ -42,13 +42,8 @@ else ()
     target_compile_definitions(Eigen3::Eigen INTERFACE $<BUILD_INTERFACE:EIGEN_MPL2_ONLY>)
 endif ()
 
-# The revision and the install setting are decided here because meios and nucleus each acquire
-# pugixml themselves at differing revisions and with differing install settings, leaving the outcome
-# to whichever of them happens to be declared first. Install rules stay enabled because
-# nucleus link-references pugixml from an export set it does not gate, and an export set cannot
-# generate against a dependency that installs nothing.
 set(PUGIXML_BUILD_TESTS OFF)
-set(PUGIXML_INSTALL ON)
+set(PUGIXML_INSTALL OFF)
 
 FetchContent_Declare(
     pugixml
@@ -58,6 +53,12 @@ FetchContent_Declare(
     FIND_PACKAGE_ARGS 1.16 NAMES pugixml GLOBAL
 )
 FetchContent_MakeAvailable(pugixml)
+
+# The parser's own listfile exports its targets as well, and an exported target may not name one that
+# stands in two export sets, so the parser is linked through this carrier.
+add_library(praxis_xml_parser INTERFACE)
+target_link_libraries(praxis_xml_parser INTERFACE pugixml::pugixml)
+set_target_properties(praxis_xml_parser PROPERTIES EXPORT_NAME xml_parser)
 
 if (PRAXIS_BUILD_TESTS)
     FetchContent_Declare(
@@ -76,16 +77,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(meios)
 
-FetchContent_Declare(
-    nucleus
-    GIT_REPOSITORY https://github.com/skrede/nucleus.git
-    GIT_TAG 94d760cda2dba91baaec0789062f876f5d29c204  # milestone/v0.4.2
-)
-FetchContent_MakeAvailable(nucleus)
-
-# The scene stack is acquired after nucleus so that the formatting library nucleus fetches on a
-# toolchain whose standard library lacks the formatting header already exists when the log library
-# configures, and the log library can be pointed at that same copy rather than at its bundled one.
 include(${CMAKE_CURRENT_LIST_DIR}/scene_dependencies.cmake)
 
 # Declaring a resource resolves and downloads it on the spot, and only the demonstration deploys

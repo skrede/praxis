@@ -45,20 +45,13 @@ praxis_add_module(config
     PUBLIC_LIBS
     praxis::compat
     PRIVATE_LIBS
-    nucleus::core
-    nucleus::xml
+    praxis_xml_parser
     spdlog::spdlog
 )
 
-# The engine's XML module already carries the parser's objects into this target, so only its headers
-# are missing, and they are taken as a directory rather than as a link edge: the parser sits in two
-# export sets at once, and an exported target may not name one that does. A private include
-# directory reaches no interface, so nothing is exported and the assertion below still holds.
-target_include_directories(praxis_config PRIVATE $<TARGET_PROPERTY:pugixml::pugixml,INTERFACE_INCLUDE_DIRECTORIES>)
-
-# The configuration engine, the parser behind it and the logging dependency are all linked privately
-# and reach no published header, which is what this asserts over the whole interface closure.
-praxis_assert_no_include_leak(praxis_config meios threepp imgui spdlog nucleus pugixml)
+# The parser and the logging dependency are linked privately and reach no published header, which is
+# what this asserts over the whole interface closure.
+praxis_assert_no_include_leak(praxis_config meios threepp imgui spdlog pugixml)
 
 set(PRAXIS_PUBLIC_DEPENDENCIES NONE)
 
