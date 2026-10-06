@@ -133,18 +133,43 @@ screw_chain one_joint_about_z(double lower, double upper)
     return screw_chain(home, {about_z}, bounds);
 }
 
-// {lower, upper, value} in degrees.
-constexpr std::array<std::array<double, 3>, 11> whole_turns_past_a_bound{{{-120.0, 120.0, 240.0},
-                                                                          {-120.0, 120.0, 840.0},
-                                                                          {-120.0, 120.0, -840.0},
-                                                                          {-135.0, 135.0, 495.0},
-                                                                          {-135.0, 135.0, -495.0},
-                                                                          {-99.0, 99.0, 459.0},
-                                                                          {-99.0, 99.0, -459.0},
-                                                                          {-93.0, 93.0, 1173.0},
-                                                                          {-93.0, 93.0, -1173.0},
-                                                                          {-100.0, 150.0, 510.0},
-                                                                          {-100.0, 150.0, -460.0}}};
+void both_solves_answer_at(const screw_chain &chain, const joint_vector &seed, double named)
+{
+    for(const inverse_kinematics_ops inverse : {projected_operations, manipulator::baseline().ik})
+    {
+        ik_result answer;
+        CHECK(solved_through(inverse, chain, pose_of(chain, seed), seed, tight_parameters, answer));
+        CHECK(answer.solutions.size() == 1u);
+        for(const joint_vector &q : answer.solutions)
+        {
+            CHECK(inside(chain, q));
+            CHECK(is_approx_equal(q[0], named, 1.0e-12));
+            CHECK(is_approx_equal(pose_of(chain, q), pose_of(chain, seed), 1.0e-9));
+        }
+    }
+}
+
+constexpr double unbounded = std::numeric_limits<double>::infinity();
+
+// {lower, upper, value, named} in degrees.
+constexpr std::array<std::array<double, 4>, 18> whole_turns_past_a_bound{{{-120.0, 120.0, 240.0, -120.0},
+                                                                          {-120.0, 120.0, 840.0, 120.0},
+                                                                          {-120.0, 120.0, -840.0, -120.0},
+                                                                          {-135.0, 135.0, 495.0, 135.0},
+                                                                          {-135.0, 135.0, -495.0, -135.0},
+                                                                          {-99.0, 99.0, 459.0, 99.0},
+                                                                          {-99.0, 99.0, -459.0, -99.0},
+                                                                          {-93.0, 93.0, 1173.0, 93.0},
+                                                                          {-93.0, 93.0, -1173.0, -93.0},
+                                                                          {-100.0, 150.0, 510.0, 150.0},
+                                                                          {-100.0, 150.0, -460.0, -100.0},
+                                                                          {-183.0, 183.0, 1983.0, 183.0},
+                                                                          {-183.0, 183.0, -1983.0, -183.0},
+                                                                          {-unbounded, 135.0, 495.0, 135.0},
+                                                                          {-135.0, unbounded, -495.0, -135.0},
+                                                                          {-unbounded, 120.0, 840.0, 120.0},
+                                                                          {-120.0, unbounded, -840.0, -120.0},
+                                                                          {-unbounded, unbounded, 495.0, 495.0}}};
 
 // Joint 1 turns whole about z, bounded [-170, 170] degrees; joint 2 slides along x, bounded [-0.2, 0.3];
 // joint 3 turns whole about z and carries no bound pair.
@@ -308,27 +333,18 @@ TEST_CASE("a_whole_turn_joint_is_named_inside_its_bounds_before_it_is_projected_
 
 TEST_CASE("seeds_a_whole_number_of_turns_past_a_bound_are_named_inside_the_bounds_and_answered_by_both_solves")
 {
-    for(const auto &[lower, upper, value] : whole_turns_past_a_bound)
+    for(const auto &[lower, upper, value, named] : whole_turns_past_a_bound)
     {
-        CAPTURE(lower, upper, value);
+        CAPTURE(lower, upper, value, named);
         const screw_chain chain      = one_joint_about_z(lower * radians_per_degree, upper * radians_per_degree);
         const joint_vector seed      = joint_vector::Constant(1, value * radians_per_degree);
         const joint_vector projected = projected_inside_bounds(chain, seed);
+        CHECK(is_approx_equal(projected[0], named * radians_per_degree, 1.0e-12));
         CHECK(named_inside_bounds(chain, seed) == projected);
         CHECK(inside(chain, projected));
         CHECK(projected_inside_bounds(chain, projected) == projected);
         CHECK(named_inside_bounds(chain, projected) == projected);
-        for(const inverse_kinematics_ops inverse : {projected_operations, manipulator::baseline().ik})
-        {
-            ik_result answer;
-            CHECK(solved_through(inverse, chain, pose_of(chain, seed), seed, tight_parameters, answer));
-            CHECK(answer.solutions.size() == 1u);
-            for(const joint_vector &q : answer.solutions)
-            {
-                CHECK(inside(chain, q));
-                CHECK(is_approx_equal(pose_of(chain, q), pose_of(chain, seed), 1.0e-9));
-            }
-        }
+        both_solves_answer_at(chain, seed, named * radians_per_degree);
     }
 }
 
