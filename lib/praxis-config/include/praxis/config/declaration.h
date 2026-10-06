@@ -47,8 +47,7 @@ public:
     declaration &group(std::string path);
 
     // The instances of `path` are keyed and merged by the leaf named `identity`, which every
-    // instance must carry and which must be distinct among them. A collection hangs under a group
-    // rather than under the root, because the root carries nothing an identity can be pooled in.
+    // instance must carry and which must be distinct among them.
     declaration &collection(std::string path, std::string identity);
 
     // A typed leaf whose fallback is its value wherever the document supplies none; the document's

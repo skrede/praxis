@@ -11,3 +11,4 @@ praxis_add_test(negative_zero_test.cpp LIBS praxis::config spdlog::spdlog praxis
 praxis_add_test(non_finite_offers_test.cpp LIBS praxis::config spdlog::spdlog praxis_test_support)
 praxis_add_test(refused_documents_test.cpp LIBS praxis::config)
 praxis_add_test(starter_documents_test.cpp LIBS praxis::config)
+praxis_add_test(root_collection_test.cpp LIBS praxis::config)

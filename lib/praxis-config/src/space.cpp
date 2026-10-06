@@ -37,8 +37,6 @@ std::optional<std::string> finding(const node &declared, const declared_so_far &
         return "'" + declared.path + "' is the identity of the collection '" + parent + "' and is declared again";
     if(!parent.empty() && !holds_nodes(seen, parent))
         return "'" + declared.path + "' hangs under '" + parent + "', which is declared before it as neither a group nor a collection";
-    if(declared.shape == node_kind::collection && parent.empty())
-        return "the collection '" + declared.path + "' hangs directly under the root; declare it under a group";
     return std::nullopt;
 }
 

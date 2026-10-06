@@ -167,17 +167,23 @@ TEST_CASE("an identity two instances share is refused by name", "[config]")
     REQUIRE(present_document.error().message.find("name") != std::string::npos);
 }
 
-TEST_CASE("a collection hanging directly under the root is refused by name", "[config]")
+TEST_CASE("a collection declared directly under the root reads its instances by identity", "[config]")
 {
     declaration shape("probe");
-    shape.collection("station", "name");
+    shape.collection("station", "name").field("station/width", field_kind::integer, "0");
+    const std::filesystem::path directory = std::filesystem::temp_directory_path() / "praxis-config-scoped";
+    std::filesystem::create_directories(directory);
+    std::ofstream(directory / "root.xml", std::ios::trunc) << "<probe><station name=\"alpha\" width=\"10\"/><station/><station name=\"beta\" width=\"90\"/></probe>\n";
 
-    const location at                                = resolve(std::filesystem::path("unused.xml"), std::filesystem::temp_directory_path() / "praxis-config-scoped");
-    const expected<document, error> present_document = load(shape, at);
+    const expected<document, error> present_document = load(shape, resolve(directory / "root.xml", directory));
+    INFO(why(present_document));
+    REQUIRE(present_document.has_value());
 
-    REQUIRE_FALSE(present_document.has_value());
-    REQUIRE(present_document.error().code == error_code::malformed_source);
-    REQUIRE(present_document.error().message.find("station") != std::string::npos);
+    REQUIRE(present_document.value().identities("station") == std::vector<std::string>{"alpha", "beta"});
+    const expected<std::string, error> addressed = present_document.value().key("station", "beta", "width");
+    REQUIRE(addressed.has_value());
+    REQUIRE(addressed.value() == "station[1]/width");
+    REQUIRE(present_document.value().integer(addressed.value()).value() == 90);
 }
 
 TEST_CASE("an instance carrying no identity is refused by name", "[config]")
