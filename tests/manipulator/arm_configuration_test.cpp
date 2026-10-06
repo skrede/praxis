@@ -1,5 +1,6 @@
 #include "window_stage.h"
 
+#include "captured_log.h"
 #include "panel_labels.h"
 
 #include "praxis/manipulator/configuration.h"
@@ -35,6 +36,7 @@
 #include <vector>
 #include <cstddef>
 #include <fstream>
+#include <optional>
 #include <algorithm>
 #include <filesystem>
 #include <string_view>
@@ -362,21 +364,17 @@ TEST_CASE("a mode saved by one control window leaves the other three at what the
     REQUIRE(read_screw_jog(carried, screw_jog_at).mode == control_mode::simulation);
 }
 
-// The declaration is the whole authority over what a document may carry, so a group it does not name
-// refuses the document rather than being passed over -- and the refusal is over the whole document,
-// which leaves the values it does declare on their fallbacks. What a document is expected to carry
-// decides where a message about an absent value lands and nothing else, so a partial binding does
-// not soften this.
-TEST_CASE("a group the declaration does not name refuses the whole document by name", "[manipulator][configuration]")
+TEST_CASE("a group the declaration does not name is left out with a warning naming it, and the values beside it load", "[manipulator][configuration]")
 {
     const std::filesystem::path where = authored("retired-group.xml", "<probe><machine><parameters velocity_factor=\"0.75\"/><controls shape=\"lin\"/></machine></probe>\n");
 
-    const config::outcome answered = config::load_or_defaults(described(), config::resolve(where, scratch()), config::expectation::partial);
+    std::optional<config::outcome> answered;
+    const std::string warned = praxis::tests::reported_by([&] { answered = config::load_or_defaults(described(), config::resolve(where, scratch()), config::expectation::partial); });
 
-    REQUIRE(answered.failure.has_value());
-    REQUIRE(answered.failure->code == config::error_code::rejected_content);
-    REQUIRE(answered.failure->message.find("machine/controls/shape") != std::string::npos);
-    REQUIRE(read_control_parameters(answered.values, parameters_at).velocity == 0.3f);
+    REQUIRE(answered.has_value());
+    REQUIRE_FALSE(answered->failure.has_value());
+    REQUIRE(warned.find("machine/controls/shape") != std::string::npos);
+    REQUIRE(read_control_parameters(answered->values, parameters_at).velocity == 0.75f);
 }
 
 TEST_CASE("the control parameter written through the declared key reads back as it was set", "[manipulator][configuration]")

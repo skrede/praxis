@@ -1,3 +1,4 @@
+#include "captured_log.h"
 #include "scratch_directory.h"
 
 #include "praxis/presets/arm.h"
@@ -7,7 +8,6 @@
 #include "praxis/manipulator/control_mode.h"
 #include "praxis/manipulator/path_comparison_window.h"
 
-#include "praxis/config/error.h"
 #include "praxis/config/store.h"
 #include "praxis/config/document.h"
 #include "praxis/config/declaration.h"
@@ -44,6 +44,11 @@ constexpr std::string_view a_solving_arm = "<arm>\n"
 constexpr std::string_view an_undeclared_element = "<arm>\n"
                                                    "    <ik_branch mode=\"preview\" figures=\"false\"/>\n"
                                                    "</arm>\n";
+
+constexpr std::string_view beside_a_declared_element = "<arm>\n"
+                                                       "    <ik_branch mode=\"preview\" figures=\"false\"/>\n"
+                                                       "    <ik_solutions mode=\"preview\"/>\n"
+                                                       "</arm>\n";
 
 std::filesystem::path scratch(const char *named)
 {
@@ -132,17 +137,20 @@ TEST_CASE("an arm's solutions window is read back out from under the path that w
     CHECK_FALSE(read.ik_solutions.figures);
 }
 
-TEST_CASE("a document carrying an element the arm keyspace does not declare is refused whole, and every window opens at its fallbacks", "[presets][documents]")
+TEST_CASE("a document carrying an element the arm keyspace does not declare loads every declared value and names the element in a warning", "[presets][documents]")
 {
-    const config::outcome answered = loaded(scratch("an-undeclared-element"), an_undeclared_element);
-    REQUIRE(answered.failure.has_value());
-    CHECK(answered.failure->code == config::error_code::rejected_content);
-    CHECK(named_together(answered.failure->message, "ik_branch/figures", "ik_solutions/figures"));
-    CHECK(named_together(answered.failure->message, "ik_branch/mode", "ik_iterates/mode"));
+    std::optional<config::outcome> answered;
+    const std::string warned = tests::reported_by([&] { answered = loaded(scratch("an-undeclared-element"), an_undeclared_element); });
+    REQUIRE(answered.has_value());
+    REQUIRE_FALSE(answered->failure.has_value());
+    CHECK(named_together(warned, "ik_branch/figures", "ik_solutions/figures"));
+    CHECK(named_together(warned, "ik_branch/mode", "ik_iterates/mode"));
 
-    const presets::arm_scenario read = presets::read_arm(answered.values, {});
+    const presets::arm_scenario read = presets::read_arm(answered->values, {});
     CHECK(read.ik_solutions.mode == manipulator::control_mode::simulation);
     CHECK(read.ik_solutions.figures);
+
+    CHECK(opened("beside-a-declared-element", beside_a_declared_element).ik_solutions.mode == manipulator::control_mode::preview);
 }
 
 TEST_CASE("an arm's iterate table is read back out from under the path that window keeps it at", "[presets][documents]")

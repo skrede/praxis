@@ -80,10 +80,10 @@ std::vector<std::string> paths_in(const declaration &shape)
     return paths;
 }
 
-std::string nearest_of(std::string_view to, std::span<const std::string> among, std::string_view called)
+std::string nearest_of(std::string_view to, std::span<const std::string> among)
 {
     const std::string near = nearest(to, among);
-    return near.empty() ? std::string() : "; the nearest " + std::string(called) + " is '" + near + "'";
+    return near.empty() ? std::string() : "; the nearest allowed value is '" + near + "'";
 }
 
 // A choice is compared byte for byte, and one declared with no values to choose from reads as text.
@@ -91,7 +91,7 @@ std::optional<std::string> value_fault(const node &leaf, const std::string &key,
 {
     const std::string carried = "'" + key + "' is '" + text + "', which ";
     if(leaf.kind == field_kind::choice && !leaf.allowed.empty() && std::ranges::find(leaf.allowed, text) == leaf.allowed.end())
-        return carried + "is none of " + listed(leaf.allowed) + nearest_of(text, leaf.allowed, "allowed value");
+        return carried + "is none of " + listed(leaf.allowed) + nearest_of(text, leaf.allowed);
     if(!reads_as_its_kind(leaf.kind, text))
         return carried + "does not read as " + named_kind(leaf.kind);
     return std::nullopt;
@@ -151,9 +151,6 @@ std::optional<error> refused_content(const folding &walked, const declaration &s
     for(const node &declared : shape.nodes())
         if(declared.shape == node_kind::collection)
             check_identities(walked.entries, declared, found);
-    const std::vector<std::string> declared = paths_in(shape);
-    for(const std::string &key : walked.undeclared)
-        found.content.push_back("'" + key + "' is not declared" + nearest_of(declared_path(key), declared, "declared path"));
     check_values(walked.entries, shape, found);
     if(found.structural.empty() && found.content.empty())
         return std::nullopt;
@@ -163,6 +160,17 @@ std::optional<error> refused_content(const folding &walked, const declaration &s
         for(const std::string &one : *kept)
             message += "\n  - " + one;
     return error{found.structural.empty() ? error_code::rejected_content : error_code::malformed_source, std::move(message)};
+}
+
+std::vector<std::pair<std::string, std::string>> left_out(const folding &walked, const declaration &shape)
+{
+    const std::vector<std::string> declared = paths_in(shape);
+    std::set<std::string_view> named;
+    std::vector<std::pair<std::string, std::string>> out;
+    for(const std::string &key : walked.undeclared)
+        if(named.insert(key).second)
+            out.emplace_back(key, nearest(declared_path(key), declared));
+    return out;
 }
 
 }

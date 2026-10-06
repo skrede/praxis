@@ -8,6 +8,7 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 #include <cstdint>
 #include <fstream>
 #include <utility>
@@ -72,7 +73,15 @@ std::optional<error> unusable_before_reading(const std::filesystem::path &resolv
     return std::nullopt;
 }
 
-expected<document, error> load_through(const declaration &shape, const location &at)
+// A document read from the file, and each path it carries that the declaration does not, left out of
+// it, with the declared path nearest that one.
+struct read_document
+{
+    document values;
+    std::vector<std::pair<std::string, std::string>> left_out;
+};
+
+expected<read_document, error> load_through(const declaration &shape, const location &at)
 {
     if(const std::optional<error> refused = refused_as_declared(shape); refused)
         return unexpected(*refused);
@@ -89,29 +98,33 @@ expected<document, error> load_through(const declaration &shape, const location 
         return unexpected(walked.error());
     if(const std::optional<error> refused = refused_content(walked.value(), shape, at.resolved); refused)
         return unexpected(*refused);
-    return held(shape, std::move(walked.value().entries), at.resolved);
+    return read_document{held(shape, std::move(walked.value().entries), at.resolved), left_out(walked.value(), shape)};
 }
 
 }
 
 expected<document, error> load(const declaration &shape, const location &at)
 {
-    return load_through(shape, at);
+    const expected<read_document, error> read = load_through(shape, at);
+    if(!read)
+        return unexpected(read.error());
+    return read.value().values;
 }
 
 outcome load_or_defaults(const declaration &shape, const location &at, expectation carries)
 {
     report(at);
 
-    const expected<document, error> loaded = load_through(shape, at);
+    const expected<read_document, error> loaded = load_through(shape, at);
     if(!loaded)
     {
         announce_refusal(at, loaded.error(), carries);
         return outcome{fallbacks_only(shape, at.resolved), loaded.error()};
     }
 
-    announce_substitutions(shape, loaded.value(), carries);
-    return outcome{loaded.value(), std::nullopt};
+    announce_left_out(at, loaded.value().left_out);
+    announce_substitutions(shape, loaded.value().values, carries);
+    return outcome{loaded.value().values, std::nullopt};
 }
 
 }

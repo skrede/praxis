@@ -1,3 +1,5 @@
+#include "captured_log.h"
+
 #include "praxis/rigid_motion/configuration.h"
 
 #include "praxis/config/error.h"
@@ -237,7 +239,7 @@ TEST_CASE("a chain of parents that would close a cycle is refused by the names i
     REQUIRE(read.error().message.find("upper") != std::string::npos);
 }
 
-TEST_CASE("a document carrying a key the arrangement does not declare is refused, and every value falls back", "[rigid_motion][configuration]")
+TEST_CASE("a document carrying a key the arrangement does not declare loads its instances and names that key in a warning", "[rigid_motion][configuration]")
 {
     const std::filesystem::path where = scratch() / "undeclared-key.xml";
     {
@@ -245,14 +247,15 @@ TEST_CASE("a document carrying a key the arrangement does not declare is refused
         out << "<probe><arrangement world_frame=\"upper\">" << three("", "base", "") << "</arrangement></probe>\n";
     }
 
-    const expected<config::document, config::error> read = config::load(described(), config::resolve(where, scratch()));
-    REQUIRE_FALSE(read.has_value());
-    REQUIRE(read.error().code == config::error_code::rejected_content);
-    REQUIRE(read.error().message.find("world_frame") != std::string::npos);
+    const expected<frame_window::settings, config::error> read = read_back(where);
+    REQUIRE(read.has_value());
+    REQUIRE(read.value().objects[1].parent == std::optional<std::size_t>(std::size_t{0}));
 
-    // The refusal is of the whole document, so the instances it carries are not reached either.
-    const config::outcome answered = config::load_or_defaults(described(), config::resolve(where, scratch()), config::expectation::partial);
+    std::optional<config::outcome> answered;
+    const std::string warned = tests::reported_by([&] { answered = config::load_or_defaults(described(), config::resolve(where, scratch()), config::expectation::partial); });
 
-    REQUIRE(answered.failure.has_value());
-    REQUIRE(answered.values.identities(std::string(at) + "/object").empty());
+    REQUIRE(answered.has_value());
+    REQUIRE_FALSE(answered->failure.has_value());
+    REQUIRE_FALSE(answered->values.identities(std::string(at) + "/object").empty());
+    REQUIRE(warned.find("world_frame") != std::string::npos);
 }

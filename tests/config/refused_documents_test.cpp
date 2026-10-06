@@ -111,16 +111,6 @@ TEST_CASE("a root that is not the declared space is a mismatched space whatever 
     CHECK(plain.error().code == error_code::mismatched_space);
 }
 
-TEST_CASE("an undeclared path is named with the declared path nearest to it", "[config]")
-{
-    const expected<document, error> read = loaded("misspelled-path.xml", "<probe><window titel=\"b\"/><stations><station name=\"a\" nam=\"c\"/></stations></probe>\n");
-
-    REQUIRE_FALSE(read.has_value());
-    CHECK(read.error().code == error_code::rejected_content);
-    CHECK(names(read.error().message, "window/titel", "window/title"));
-    CHECK(names(read.error().message, "stations/station[0]/nam", "stations/station/name"));
-}
-
 TEST_CASE("a choice outside its list is named with the allowed value nearest to it", "[config]")
 {
     const expected<document, error> read = loaded("misspelled-choice.xml", "<probe><window mode=\"fsat\"/></probe>\n");

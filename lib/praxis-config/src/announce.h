@@ -6,11 +6,17 @@
 #include "praxis/config/document.h"
 #include "praxis/config/declaration.h"
 
+#include <span>
+#include <string>
+#include <utility>
+
 namespace praxis::config {
 
 void report(const location &at);
 
 void announce_refusal(const location &at, const error &refused, expectation carries);
+
+void announce_left_out(const location &at, std::span<const std::pair<std::string, std::string>> named);
 
 void announce_substitutions(const declaration &shape, const document &values, expectation carries);
 

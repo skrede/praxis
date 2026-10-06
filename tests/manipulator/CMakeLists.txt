@@ -78,7 +78,7 @@ praxis_add_test(malformed_topology_test.cpp LIBS praxis::manipulator spdlog::spd
 praxis_add_test(unwalkable_topology_test.cpp LIBS praxis::manipulator praxis_test_support)
 praxis_add_test(screw_chain_test.cpp HEADERS recorded_chain.h LIBS praxis::manipulator)
 praxis_add_test(baseline_modeling_test.cpp HEADERS recorded_chain.h LIBS praxis::manipulator)
-praxis_add_test(arm_configuration_test.cpp HEADERS fixtures.h window_stage.h LIBS praxis::manipulator praxis::config praxis_test_support)
+praxis_add_test(arm_configuration_test.cpp HEADERS fixtures.h window_stage.h LIBS praxis::manipulator praxis::config spdlog::spdlog praxis_test_support)
 praxis_add_test(kinematics_configuration_test.cpp LIBS praxis::manipulator praxis::config spdlog::spdlog praxis_test_support)
 praxis_add_test(waypoints_configuration_test.cpp HEADERS fixtures.h window_stage.h LIBS praxis::manipulator praxis::config spdlog::spdlog praxis_test_support)
 praxis_add_test(robot_view_window_test.cpp HEADERS fixtures.h window_stage.h ../presets/drawn_lines.h ../support/drawn_chain.h LIBS praxis::manipulator praxis::config praxis_test_support)

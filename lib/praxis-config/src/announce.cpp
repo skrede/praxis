@@ -3,6 +3,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <span>
 #include <string>
 #include <vector>
 #include <cstddef>
@@ -85,6 +86,18 @@ void announce_refusal(const location &at, const error &refused, expectation carr
     const spdlog::level::level_enum level = carries == expectation::partial ? spdlog::level::debug : spdlog::level::warn;
     if(spdlog::should_log(level))
         spdlog::log(level, "praxis: there is no configuration file at {}; every value comes from the declared fallbacks", at.resolved.string());
+}
+
+// Each path is named at warn level whatever the document is expected to carry.
+void announce_left_out(const location &at, std::span<const std::pair<std::string, std::string>> named)
+{
+    for(const auto &[path, nearest] : named)
+    {
+        if(nearest.empty())
+            spdlog::warn("praxis: '{}' in {} is not declared and is left out", path, at.resolved.string());
+        else
+            spdlog::warn("praxis: '{}' in {} is not declared and is left out; the nearest declared path is '{}'", path, at.resolved.string(), nearest);
+    }
 }
 
 // The count is published where an operator sees it without turning anything on; the per-key list

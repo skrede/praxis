@@ -1,3 +1,4 @@
+#include "captured_log.h"
 #include "velocity_kinematics_stage.h"
 
 #include "../presets/scratch_directory.h"
@@ -129,20 +130,21 @@ TEST_CASE("a frame or a reading the table does not spell is refused by name and 
     stands_at(read_velocity_kinematics(answered.values, velocity_at), opening{});
 }
 
-// A part's switch governs its ellipsoid and its arrows of every column together, which is not what a
-// key named for an ellipsoid alone said, so the older key is not declared under another meaning. A
-// document still carrying it is refused by name -- the refusal spells the key it does not know and the
-// one it does -- and everything that document said falls back, the frame it named included, rather
-// than half of it standing.
-TEST_CASE("a document carrying a key named for an ellipsoid alone is refused by name and every value it carries falls back", "[manipulator][configuration]")
+TEST_CASE("a document carrying a key named for an ellipsoid alone loads every other value and names that key in a warning", "[manipulator][configuration]")
 {
-    const config::outcome answered = answering("older.xml", "<velocity_kinematics frame=\"body\" angular_ellipsoid=\"false\" linear_ellipsoid=\"false\"/>");
+    std::optional<config::outcome> answered;
+    const std::string warned =
+            praxis::tests::reported_by([&] { answered = answering("older.xml", "<velocity_kinematics frame=\"body\" angular_ellipsoid=\"false\" linear_ellipsoid=\"false\"/>"); });
 
-    REQUIRE(answered.failure.has_value());
-    CHECK(answered.failure->code == config::error_code::rejected_content);
-    CHECK(answered.failure->message.find("angular_ellipsoid") != std::string::npos);
-    CHECK(answered.failure->message.find("linear_ellipsoid") != std::string::npos);
-    stands_at(read_velocity_kinematics(answered.values, velocity_at), opening{});
+    REQUIRE(answered.has_value());
+    REQUIRE_FALSE(answered->failure.has_value());
+    CHECK(warned.find("angular_ellipsoid") != std::string::npos);
+    CHECK(warned.find("linear_ellipsoid") != std::string::npos);
+
+    const opening read = read_velocity_kinematics(answered->values, velocity_at);
+    CHECK(read.frame == jacobian_frame::body);
+    CHECK(read.angular == opening{}.angular);
+    CHECK(read.linear == opening{}.linear);
 }
 
 TEST_CASE("every field written through the declared keys reads back as it was set", "[manipulator][configuration]")
