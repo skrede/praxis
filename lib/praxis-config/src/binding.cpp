@@ -1,3 +1,4 @@
+#include "engine.h"
 #include "read_back.h"
 
 #include "praxis/config/error.h"
@@ -9,6 +10,8 @@
 #include "praxis/config/configurable.h"
 
 #include "praxis/compat/expected.h"
+
+#include <spdlog/spdlog.h>
 
 #include <span>
 #include <string>
@@ -40,6 +43,15 @@ void gather(std::vector<edit> &gathered, const edit &offered, const document &ca
 
     if(held->kind == edit_kind::bound)
         *held = edit{offered.key, "'" + offered.key + "' is offered as '" + held->value + "' and as '" + offered.value + "', so neither is written", edit_kind::refused};
+}
+
+bool left_unwritten(const document &carried, const edit &offered)
+{
+    if(offered.kind != edit_kind::bound || carried.kind_of(offered.key) != field_kind::real || !non_finite(offered.value))
+        return false;
+
+    spdlog::warn("praxis: '{}' is offered as '{}', which no document can carry, so it is left unwritten", offered.key, offered.value);
+    return true;
 }
 
 }
@@ -77,7 +89,8 @@ std::vector<edit> shown_edits(std::span<const configurable *const> shown, const 
             continue;
 
         for(const edit &offered : one->settings_edits(carried))
-            gather(gathered, offered, carried);
+            if(!left_unwritten(carried, offered))
+                gather(gathered, offered, carried);
     }
     return gathered;
 }
