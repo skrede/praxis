@@ -30,7 +30,7 @@ std::optional<double> named_between(double value, double lower, double upper, do
     if(fewest > most)
         return std::nullopt;
 
-    return value + turn * std::clamp(0.0, fewest, most);
+    return std::min(std::max(value + turn * std::clamp(0.0, fewest, most), lower), upper);
 }
 
 double projected_between(double value, double lower, double upper, double turn)

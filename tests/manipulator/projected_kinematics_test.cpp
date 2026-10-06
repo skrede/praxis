@@ -119,6 +119,19 @@ bool all_inside(const screw_chain &chain, std::span<const iteration_state> state
     return std::ranges::all_of(states, [&](const iteration_state &state) { return inside(chain, state.joint_positions); });
 }
 
+screw_chain one_joint_about_z(double lower, double upper)
+{
+    screw_axis about_z;
+    about_z << 0.0, 0.0, 1.0, 0.0, 0.0, 0.0;
+    joint_limits bounds{};
+    bounds.lower_position = joint_vector::Constant(1, lower);
+    bounds.upper_position = joint_vector::Constant(1, upper);
+    transform home        = transform::Identity();
+    home(0, 3)            = 0.5;
+
+    return screw_chain(home, {about_z}, bounds);
+}
+
 // Joint 1 turns whole about z, bounded [-170, 170] degrees; joint 2 slides along x, bounded [-0.2, 0.3];
 // joint 3 turns whole about z and carries no bound pair.
 screw_chain projection_chain()
@@ -250,18 +263,11 @@ TEST_CASE("a_seed_outside_the_bounds_is_projected_before_the_first_step_and_not_
 // point is the seed itself.
 TEST_CASE("a_projected_iterate_equal_to_the_one_before_is_refused_with_nothing_recorded")
 {
-    screw_axis about_z;
-    about_z << 0.0, 0.0, 1.0, 0.0, 0.0, 0.0;
-    joint_limits bounds{};
-    bounds.lower_position = joint_vector::Constant(1, 0.0);
-    bounds.upper_position = joint_vector::Constant(1, 0.5);
-    transform home        = transform::Identity();
-    home(0, 3)            = 0.5;
-    const screw_chain chain(home, {about_z}, bounds);
+    const screw_chain chain = one_joint_about_z(0.0, 0.5);
+    const transform target  = rigid_motion::matrix_exponential_screw(chain.space_screws[0], 1.0) * chain.home;
 
     ik_result answer;
-    const expected<void, refusal> outcome =
-            solved_through(projected_operations, chain, rigid_motion::matrix_exponential_screw(about_z, 1.0) * home, joint_vector::Constant(1, 0.5), solver_parameters(), answer);
+    const expected<void, refusal> outcome = solved_through(projected_operations, chain, target, joint_vector::Constant(1, 0.5), solver_parameters(), answer);
 
     REQUIRE_FALSE(outcome.has_value());
     CHECK(outcome.error() == refusal::no_solution);
@@ -284,6 +290,29 @@ TEST_CASE("a_whole_turn_joint_is_named_inside_its_bounds_before_it_is_projected_
 
     for(const joint_vector &once : {projected_joints(200.0 * degree, 0.5, 9.0), projected_joints(185.0 * degree, -0.5, -9.0), projected_joints(180.0 * degree, 0.1, 0.0)})
         CHECK(projected_joints(once[0], once[1], once[2]) == once);
+}
+
+TEST_CASE("a_seed_a_whole_turn_past_a_bound_is_named_inside_the_bounds_and_answered_by_both_solves")
+{
+    const screw_chain chain      = one_joint_about_z(-120.0 * radians_per_degree, 120.0 * radians_per_degree);
+    const joint_vector seed      = joint_vector::Constant(1, 240.0 * radians_per_degree);
+    const transform target       = pose_of(chain, seed);
+    const joint_vector projected = projected_inside_bounds(chain, seed);
+
+    CHECK(inside(chain, projected));
+    CHECK(projected_inside_bounds(chain, projected) == projected);
+    CHECK(named_inside_bounds(chain, projected) == projected);
+    for(const inverse_kinematics_ops inverse : {projected_operations, manipulator::baseline().ik})
+    {
+        ik_result answer;
+        CHECK(solved_through(inverse, chain, target, seed, tight_parameters, answer));
+        CHECK(answer.solutions.size() == 1u);
+        for(const joint_vector &q : answer.solutions)
+        {
+            CHECK(inside(chain, q));
+            CHECK(is_approx_equal(pose_of(chain, q), target, 1.0e-9));
+        }
+    }
 }
 
 TEST_CASE("every_entry_refusal_is_the_one_the_book_solve_answers")
