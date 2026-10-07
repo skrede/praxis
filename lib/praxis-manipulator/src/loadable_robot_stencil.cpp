@@ -212,8 +212,8 @@ void loadable_robot_stencil::apply_published() const
 void loadable_robot_stencil::render() const
 {
     apply_published();
-    place_joint_decoration();
-    place_flange_attachments();
+    const bool chain_withheld = place_joint_decoration();
+    place_flange_attachments(chain_withheld);
     place_tool_drawing();
     place_ellipsoids();
     place_jacobian_columns();

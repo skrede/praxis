@@ -153,7 +153,7 @@ std::optional<chain_end> loadable_robot_stencil::supplied_marker_poses(const std
 
     const expected<chain_end, withheld_chain> end = supplied_chain_end(*seen);
     if(!end)
-        return chain_end{transform::Identity(), transform::Identity()};
+        return std::nullopt;
 
     return *end;
 }

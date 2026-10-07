@@ -328,10 +328,9 @@ struct stage
                         placement_departure(attached(flange_attachment::tool_frame_marker), carried_by(flange(), as_the_renderer_holds(offset))));
     }
 
-    // How far either frame marker stands from the root-link frame's own origin and axes.
-    double off_the_root()
+    bool either_marker_drawn()
     {
-        return std::max(placement_departure(attached(flange_attachment::frame_marker), root_rule()), placement_departure(attached(flange_attachment::tool_frame_marker), root_rule()));
+        return attached(flange_attachment::frame_marker).visible || attached(flange_attachment::tool_frame_marker).visible;
     }
 
     withheld_chain withheld()
@@ -513,7 +512,7 @@ TEST_CASE("turning the home pose and turning the tool offset back leaves the too
     CHECK(axes_departure(drawn.attached(flange_attachment::frame_marker), flange_stood) > 0.5);
 }
 
-TEST_CASE("a supplied chain naming more screws than the arm has joints parks both markers at the root and says both counts", "[manipulator][supplied]")
+TEST_CASE("a supplied chain naming more screws than the arm has joints withholds both markers and says both counts", "[manipulator][supplied]")
 {
     std::vector<praxis::screw_axis> three = two_axes();
     three.push_back(revolute_screw(0.2));
@@ -526,13 +525,13 @@ TEST_CASE("a supplied chain naming more screws than the arm has joints parks bot
     CHECK(drawn.shown.holds_supplied_chain());
     drawn.settle();
 
-    CHECK(drawn.off_the_root() < single_precision_tolerance);
+    CHECK_FALSE(drawn.either_marker_drawn());
     const withheld_chain why = drawn.withheld();
     CHECK(why.cause == withheld_cause::joint_count);
     CHECK(why.reason == "The supplied chain is not folded: it holds 3 screws and the arm has 2 joints.");
 }
 
-TEST_CASE("a supplied chain folded through an unbound screw exponential parks both markers and names the slot", "[manipulator][supplied]")
+TEST_CASE("a supplied chain folded through an unbound screw exponential withholds both markers and names the slot", "[manipulator][supplied]")
 {
     praxis::rigid_motion::screw_slot_set exponential;
     exponential.set(praxis::rigid_motion::screw_slot::matrix_exponential_screw);
@@ -542,21 +541,21 @@ TEST_CASE("a supplied chain folded through an unbound screw exponential parks bo
     REQUIRE(drawn.shown.supply_joint_screws(displaced_home(), two_axes()).has_value());
     drawn.settle();
 
-    CHECK(drawn.off_the_root() < single_precision_tolerance);
+    CHECK_FALSE(drawn.either_marker_drawn());
     const withheld_chain why = drawn.withheld();
     CHECK(why.cause == withheld_cause::unbound_slot);
     CHECK(why.reason.starts_with("The supplied chain is not folded: '"));
     CHECK(why.reason.find("screw.matrix_exponential_screw") != std::string::npos);
 }
 
-TEST_CASE("a supplied chain whose last exponential is not a rigid transform parks both markers and names that joint", "[manipulator][supplied]")
+TEST_CASE("a supplied chain whose last exponential is not a rigid transform withholds both markers and names that joint", "[manipulator][supplied]")
 {
     stage drawn(bent(), exponentiating_literally(), praxis::rigid_motion::screw_slot_set{});
     drawn.publish(turned_tool_offset());
     REQUIRE(drawn.shown.supply_joint_screws(displaced_home(), doubled_at(1)).has_value());
     drawn.settle();
 
-    CHECK(drawn.off_the_root() < single_precision_tolerance);
+    CHECK_FALSE(drawn.either_marker_drawn());
     const withheld_chain why = drawn.withheld();
     CHECK(why.cause == withheld_cause::refused);
     CHECK(why.reason == "The supplied chain is not folded: the exponential of joint 2's screw is not a rigid transform.");
@@ -569,13 +568,13 @@ TEST_CASE("a supplied chain whose first exponential is not a rigid transform is 
     REQUIRE(drawn.shown.supply_joint_screws(displaced_home(), doubled_at(0)).has_value());
     drawn.settle();
 
-    CHECK(drawn.off_the_root() < single_precision_tolerance);
+    CHECK_FALSE(drawn.either_marker_drawn());
     const withheld_chain why = drawn.withheld();
     CHECK(why.cause == withheld_cause::refused);
     CHECK(why.reason == "The supplied chain is not folded: the exponential of joint 1's screw is not a rigid transform.");
 }
 
-TEST_CASE("a supplied chain folded with the adjoint map left at its default stands both markers where it ends", "[manipulator][supplied]")
+TEST_CASE("a supplied chain folded with the adjoint map left at its default withholds its figure, its axes and both markers while its end is still answered", "[manipulator][supplied]")
 {
     stage drawn(bent(), bound_without(praxis::rigid_motion::screw_slot::adjoint_map), praxis::rigid_motion::screw_slot_set{});
     drawn.publish(turned_tool_offset());
@@ -583,9 +582,18 @@ TEST_CASE("a supplied chain folded with the adjoint map left at its default stan
     drawn.settle();
 
     REQUIRE(drawn.shown.supplied_chain_end(*drawn.published->reader().read()).has_value());
-    const praxis::transform flange_rule = fk(displaced_home(), two_axes(), bent());
-    CHECK(placement_departure(drawn.attached(flange_attachment::frame_marker), drawn.in_root(flange_rule)) < single_precision_tolerance);
-    CHECK(placement_departure(drawn.attached(flange_attachment::tool_frame_marker), drawn.in_root(flange_rule * turned_tool_offset())) < single_precision_tolerance);
+    CHECK_FALSE(drawn.chain_figure().visible);
+    for(std::size_t joint = 0; joint < 2u; ++joint)
+        CHECK_FALSE(drawn.screw_axis_line(joint).visible);
+    CHECK_FALSE(drawn.either_marker_drawn());
+
+    stage whole(bent());
+    whole.publish(turned_tool_offset());
+    REQUIRE(whole.shown.supply_joint_screws(displaced_home(), two_axes()).has_value());
+    whole.settle();
+
+    CHECK(whole.chain_figure().visible);
+    CHECK(whole.either_marker_drawn());
 }
 
 TEST_CASE("a supplied chain exponentiated as Modern Robotics writes it over unit axes stands both markers where it ends", "[manipulator][supplied]")
@@ -630,7 +638,7 @@ TEST_CASE("a supplied chain whose home pose is written to one decimal stands bot
     CHECK(static_cast<double>(drawn.attached(flange_attachment::frame_marker).position.distanceTo(place)) < single_precision_tolerance);
 }
 
-TEST_CASE("a supplied chain whose home pose is not finite parks both markers and says so", "[manipulator][supplied]")
+TEST_CASE("a supplied chain whose home pose is not finite withholds both markers and says so", "[manipulator][supplied]")
 {
     const std::array<praxis::transform, 2> homes{home_holding(1, 3, std::numeric_limits<double>::quiet_NaN()), home_holding(0, 0, std::numeric_limits<double>::infinity())};
     for(const praxis::transform &home : homes)
@@ -640,7 +648,7 @@ TEST_CASE("a supplied chain whose home pose is not finite parks both markers and
         REQUIRE(drawn.shown.supply_joint_screws(home, two_axes()).has_value());
         drawn.settle();
 
-        CHECK(drawn.off_the_root() < single_precision_tolerance);
+        CHECK_FALSE(drawn.either_marker_drawn());
         const withheld_chain why = drawn.withheld();
         CHECK(why.cause == withheld_cause::refused);
         CHECK(why.reason == "The supplied chain is not folded: its home pose is not finite.");
@@ -654,7 +662,7 @@ TEST_CASE("a supplied chain whose exponential answers an entry that is not a num
     REQUIRE(drawn.shown.supply_joint_screws(displaced_home(), two_axes()).has_value());
     drawn.settle();
 
-    CHECK(drawn.off_the_root() < single_precision_tolerance);
+    CHECK_FALSE(drawn.either_marker_drawn());
     const withheld_chain why = drawn.withheld();
     CHECK(why.cause == withheld_cause::refused);
     CHECK(why.reason == "The supplied chain is not folded: the exponential of joint 2's screw is not a rigid transform.");
@@ -692,12 +700,13 @@ TEST_CASE("the chain figure and every screw axis are drawn exactly where a suppl
 
         CHECK(drawn.shown.supplied_chain_end(*drawn.published->reader().read()).has_value() == row.folds);
         CHECK(drawn.chain_figure().visible == row.folds);
+        CHECK(drawn.either_marker_drawn() == row.folds);
         for(std::size_t joint = 0; joint < row.screws.size(); ++joint)
             CHECK(drawn.screw_axis_line(joint).visible == row.folds);
     }
 }
 
-TEST_CASE("a chain supplied as unbuilt parks both markers and names the slot until a chain is supplied again", "[manipulator][supplied]")
+TEST_CASE("a chain supplied as unbuilt withholds both markers and names the slot until a chain is supplied again", "[manipulator][supplied]")
 {
     stage drawn(bent());
     drawn.publish(turned_tool_offset());
@@ -705,14 +714,65 @@ TEST_CASE("a chain supplied as unbuilt parks both markers and names the slot unt
     drawn.settle();
 
     CHECK(drawn.shown.holds_supplied_chain());
-    CHECK(drawn.off_the_root() < single_precision_tolerance);
+    CHECK_FALSE(drawn.either_marker_drawn());
     CHECK(drawn.withheld().reason == "The supplied chain is not folded: 'screw.screw_axis_from_angular_linear' holds its default.");
 
     REQUIRE(drawn.shown.supply_joint_screws(displaced_home(), two_axes()).has_value());
     drawn.draw();
     const praxis::transform flange_rule = fk(displaced_home(), two_axes(), bent());
+    CHECK(drawn.either_marker_drawn());
     CHECK(placement_departure(drawn.attached(flange_attachment::frame_marker), drawn.in_root(flange_rule)) < single_precision_tolerance);
     CHECK(placement_departure(drawn.attached(flange_attachment::tool_frame_marker), drawn.in_root(flange_rule * turned_tool_offset())) < single_precision_tolerance);
+}
+
+TEST_CASE("a chain drawn and then supplied with a count the arm does not have leaves nothing of the drawn chain standing", "[manipulator][supplied]")
+{
+    std::vector<praxis::screw_axis> over = two_axes();
+    over.push_back(revolute_screw(0.2));
+    const std::array<std::vector<praxis::screw_axis>, 2> counts{std::vector<praxis::screw_axis>{revolute_screw(0.0)}, over};
+
+    for(const std::vector<praxis::screw_axis> &screws : counts)
+    {
+        INFO(screws.size() << " screws");
+        stage drawn(bent());
+        drawn.publish(turned_tool_offset());
+        REQUIRE(drawn.shown.supply_joint_screws(displaced_home(), two_axes()).has_value());
+        drawn.settle();
+        REQUIRE(drawn.chain_figure().visible);
+        REQUIRE(drawn.screw_axis_line(0).visible);
+        REQUIRE(drawn.either_marker_drawn());
+
+        REQUIRE_FALSE(drawn.shown.supply_joint_screws(displaced_home(), screws).has_value());
+        drawn.settle();
+
+        CHECK_FALSE(drawn.chain_figure().visible);
+        CHECK_FALSE(drawn.screw_axis_line(0).visible);
+        CHECK_FALSE(drawn.screw_axis_line(1).visible);
+        CHECK_FALSE(drawn.either_marker_drawn());
+        CHECK(drawn.withheld().cause == withheld_cause::joint_count);
+    }
+}
+
+TEST_CASE("a chain drawn and then supplied as unbuilt leaves nothing of the drawn chain standing", "[manipulator][supplied]")
+{
+    stage drawn(bent());
+    drawn.publish(turned_tool_offset());
+    drawn.shown.set_described_marker_shown(true);
+    REQUIRE(drawn.shown.supply_joint_screws(displaced_home(), two_axes()).has_value());
+    drawn.settle();
+    REQUIRE(drawn.chain_figure().visible);
+    REQUIRE(drawn.screw_axis_line(0).visible);
+    REQUIRE(drawn.either_marker_drawn());
+
+    drawn.shown.supply_unbuilt_chain(praxis::rigid_motion::screw_slot::screw_axis_from_angular_linear);
+    drawn.settle();
+
+    CHECK_FALSE(drawn.chain_figure().visible);
+    CHECK_FALSE(drawn.screw_axis_line(0).visible);
+    CHECK_FALSE(drawn.screw_axis_line(1).visible);
+    CHECK_FALSE(drawn.either_marker_drawn());
+    CHECK(drawn.withheld().cause == withheld_cause::unbound_slot);
+    CHECK(drawn.attached(flange_attachment::described_frame_marker).visible);
 }
 
 TEST_CASE("the marker at the description flange stays hidden until a chain is supplied and its switch is on", "[manipulator][supplied]")

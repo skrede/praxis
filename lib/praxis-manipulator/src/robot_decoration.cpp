@@ -155,29 +155,29 @@ void loadable_robot_stencil::apply_selection() const
     wear_jacobian_columns();
 }
 
-void loadable_robot_stencil::place_joint_decoration() const
+bool loadable_robot_stencil::place_joint_decoration() const
 {
     const std::shared_ptr<const arm_snapshot> seen = m_seen.read();
     if(seen == nullptr)
-        return;
+        return false;
 
     if(decline_unbound_fold(m_drawn, m_chain.get(), m_screw, m_inert, m_reported_unbound))
-        return;
+        return true;
 
     const expected<std::vector<Eigen::Vector3d>, refusal> folded = fold_joint_origins(m_home, m_screws, seen->joints, m_screw);
-    if(!folded)
+    if(!folded || (m_supplied && !supplied_chain_end(*seen)))
     {
         withhold_joint_decoration(m_drawn, m_chain.get());
 
-        return;
+        return true;
     }
 
     place_joint_axes(m_drawn, m_screws, seen->joints, m_screw);
-    if(m_chain == nullptr)
-        return;
-
-    m_chain->visible = true;
+    if(m_chain != nullptr)
+        m_chain->visible = true;
     place_chain_figure(m_segments, m_marks, *folded);
+
+    return false;
 }
 
 }

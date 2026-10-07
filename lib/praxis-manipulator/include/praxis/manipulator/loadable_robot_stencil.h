@@ -215,12 +215,13 @@ public:
     void clear_joint_screws();
 
     // A chain supplied rather than told is also where the two frame markers stand, at the joints the
-    // arm publishes; telling or clearing a chain after it ends that.
+    // arm publishes; telling or clearing a chain after it ends that. A supplied chain that is withheld
+    // draws neither its chain, its axes nor the two frame markers.
     expected<void, refusal> supply_joint_screws(const transform &home, std::span<const screw_axis> space_screws);
     bool holds_supplied_chain() const;
 
     // A chain that could not be built because the named slot holds its default is still supplied,
-    // and is withheld naming that slot. The chain the stencil was told before is left as it stands.
+    // and is withheld naming that slot. Nothing the stencil was told before is drawn while it is held.
     void supply_unbuilt_chain(rigid_motion::screw_slot unbound);
 
     // The chain last supplied, folded at the joints of the snapshot handed in. It is read while
@@ -447,20 +448,20 @@ private:
 
     void apply_published() const;
     void detach_flange_attachments();
-    void place_flange_attachments() const;
-    void show_flange_markers() const;
+    void place_flange_attachments(bool chain_withheld) const;
+    void show_flange_markers(bool chain_withheld) const;
     threepp::Matrix4 root_frame() const;
     void place_tool_drawing() const;
     void rebuild_decoration();
     void rebuild_chain();
     void clear_chain();
     void apply_selection() const;
-    void place_joint_decoration() const;
+    bool place_joint_decoration() const;
     void place_ellipsoids() const;
     void place_jacobian_columns() const;
 
     // Where the two frame markers stand while a supplied chain is held, in the model's root-link
-    // frame: its end where it folds and the identity where it is withheld.
+    // frame: its end where it folds and none where it is withheld.
     std::optional<chain_end> supplied_marker_poses(const std::shared_ptr<const arm_snapshot> &seen) const;
 
     // The rotation carrying a quantity taken from the shown Jacobian into the space frame: the

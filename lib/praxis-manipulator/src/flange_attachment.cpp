@@ -159,8 +159,9 @@ void loadable_robot_stencil::detach_flange_attachments()
 }
 
 // Each attachment stands at the flange composed with its offset, the tool frame's marker at the tool
-// offset the arm published. While a supplied chain is held the two frame markers stand where it ends.
-void loadable_robot_stencil::place_flange_attachments() const
+// offset the arm published. The two frame markers stand where a supplied chain ends and are not drawn
+// while it is withheld.
+void loadable_robot_stencil::place_flange_attachments(bool chain_withheld) const
 {
     const std::shared_ptr<const arm_snapshot> seen = m_seen.read();
     const threepp::Matrix4 flange                  = m_robot->getEndEffectorTransform();
@@ -183,15 +184,15 @@ void loadable_robot_stencil::place_flange_attachments() const
         }
     }
 
-    show_flange_markers();
+    show_flange_markers(m_supplied && chain_withheld);
 }
 
-void loadable_robot_stencil::show_flange_markers() const
+void loadable_robot_stencil::show_flange_markers(bool chain_withheld) const
 {
     const bool occupied = m_attached[slot_of(flange_attachment::tool)].object != nullptr;
-    const bool withheld = m_marker_policy == flange_marker_policy::yields && occupied;
-    shown_if(m_attached[slot_of(flange_attachment::frame_marker)].object, m_marker_shown && !withheld);
-    shown_if(m_attached[slot_of(flange_attachment::tool_frame_marker)].object, m_tool_marker_shown);
+    const bool yielded  = m_marker_policy == flange_marker_policy::yields && occupied;
+    shown_if(m_attached[slot_of(flange_attachment::frame_marker)].object, m_marker_shown && !yielded && !chain_withheld);
+    shown_if(m_attached[slot_of(flange_attachment::tool_frame_marker)].object, m_tool_marker_shown && !chain_withheld);
     shown_if(m_attached[slot_of(flange_attachment::described_frame_marker)].object, m_described_marker_shown && m_supplied);
 }
 

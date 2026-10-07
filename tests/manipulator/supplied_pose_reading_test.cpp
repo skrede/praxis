@@ -242,7 +242,7 @@ TEST_CASE("a pose readout over a supplied chain that cannot be folded reads zero
     CHECK(shown.rows[3][0].stated == end.error().reason);
 }
 
-TEST_CASE("a supplied chain whose last exponential is not a rigid transform reads zeros naming that joint and parks the flange frame marker", "[manipulator][supplied]")
+TEST_CASE("a supplied chain whose last exponential is not a rigid transform reads zeros naming that joint and withholds the flange frame marker", "[manipulator][supplied]")
 {
     const std::vector<praxis::screw_axis> doubled{revolute_screw(0.0), praxis::screw_axis(2.0 * revolute_screw(static_cast<double>(link_length)))};
 
@@ -261,10 +261,10 @@ TEST_CASE("a supplied chain whose last exponential is not a rigid transform read
 
     const std::shared_ptr<threepp::Object3D> marker = drawn.shown.attached_at(flange_attachment::frame_marker);
     REQUIRE(marker != nullptr);
-    CHECK(mark_in_world(*marker).norm() < position_tolerance);
+    CHECK_FALSE(marker->visible);
 }
 
-TEST_CASE("a supplied chain whose home pose is not finite reads zeros saying so and parks the flange frame marker", "[manipulator][supplied]")
+TEST_CASE("a supplied chain whose home pose is not finite reads zeros saying so and withholds the flange frame marker", "[manipulator][supplied]")
 {
     praxis::transform home = displaced_home();
     home(1, 3)             = std::numeric_limits<double>::quiet_NaN();
@@ -284,7 +284,23 @@ TEST_CASE("a supplied chain whose home pose is not finite reads zeros saying so 
 
     const std::shared_ptr<threepp::Object3D> marker = drawn.shown.attached_at(flange_attachment::frame_marker);
     REQUIRE(marker != nullptr);
-    CHECK(mark_in_world(*marker).norm() < position_tolerance);
+    CHECK_FALSE(marker->visible);
+}
+
+TEST_CASE("a pose readout over a supplied chain folded with the adjoint map left at its default reads where the chain ends while the drawing withholds the flange frame marker",
+          "[manipulator][supplied]")
+{
+    praxis::rigid_motion::screw_ops turning = praxis::rigid_motion::baseline().screw;
+    turning.adjoint_map                     = praxis::rigid_motion::screw_ops{}.adjoint_map;
+
+    stage drawn(turning);
+    REQUIRE(drawn.shown.supply_joint_screws(displaced_home(), two_axes()).has_value());
+    drawn.draw();
+
+    CHECK(reads_at(drawn.readout.reading(), fk(displaced_home(), two_axes(), bent()) * turned_tool_offset()));
+    const std::shared_ptr<threepp::Object3D> marker = drawn.shown.attached_at(flange_attachment::frame_marker);
+    REQUIRE(marker != nullptr);
+    CHECK_FALSE(marker->visible);
 }
 
 TEST_CASE("a pose readout reads a supplied chain whatever robot slots the composition left unbound", "[manipulator][supplied]")
