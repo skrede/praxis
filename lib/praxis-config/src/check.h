@@ -16,7 +16,7 @@ namespace praxis::config {
 
 // Every finding that keeps `walked` from being used as a document of `shape`, in one refusal: a
 // malformed source where any finding is structural, rejected content otherwise, and nothing where
-// there is none.
+// there is none. The refusal also names each undeclared path with its nearest declared path.
 std::optional<error> refused_content(const folding &walked, const declaration &shape, const std::filesystem::path &from);
 
 // Each path `walked` carries a value at that `shape` does not declare, once, with the declared path

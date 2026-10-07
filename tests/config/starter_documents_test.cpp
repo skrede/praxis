@@ -1,11 +1,13 @@
 #include "praxis/config/error.h"
 #include "praxis/config/store.h"
+#include "praxis/config/writer.h"
 #include "praxis/config/document.h"
 #include "praxis/config/declaration.h"
 
 #include <catch2/catch_test_macros.hpp>
 
 #include <string>
+#include <vector>
 #include <fstream>
 #include <iterator>
 #include <filesystem>
@@ -115,4 +117,28 @@ TEST_CASE("a starter document writes its groups in path order, one segment at a 
     const std::string text = contents(target);
     REQUIRE(text.find("<a>") != std::string::npos);
     REQUIRE(text.find("<a>") < text.find("<a-b>"));
+}
+
+TEST_CASE("a declaration whose space is empty is refused by name by a load and a starter document, and a save into its document writes nothing", "[config]")
+{
+    declaration shape("");
+    shape.group("a").field("a/b", field_kind::text, "FB");
+
+    const std::filesystem::path where = fresh("empty-space.xml");
+    std::ofstream(where) << "<a><b>v</b></a>";
+    const expected<document, error> loaded = load(shape, resolve(where, where.parent_path()));
+    REQUIRE_FALSE(loaded.has_value());
+    CHECK(loaded.error().code == error_code::malformed_source);
+    CHECK(loaded.error().message.find("the space is empty") != std::string::npos);
+
+    const std::filesystem::path target  = fresh("empty-space-starter.xml");
+    const expected<void, error> written = write_template(shape, target);
+    REQUIRE_FALSE(written.has_value());
+    CHECK(written.error().code == error_code::malformed_source);
+    CHECK(written.error().message.find("the space is empty") != std::string::npos);
+    CHECK_FALSE(std::filesystem::exists(target));
+
+    const expected<void, error> saved = save(shape, resolve(where, where.parent_path()), std::vector<edit>{edit{"a/b", "Z"}});
+    REQUIRE_FALSE(saved.has_value());
+    CHECK(contents(where) == "<a><b>v</b></a>");
 }

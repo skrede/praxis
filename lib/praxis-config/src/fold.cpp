@@ -96,7 +96,7 @@ std::optional<std::string> structural_fault(pugi::xml_node element, const std::s
     return "'" + where + "' carries the text '" + text_of(element) + "' " + beside;
 }
 
-// The attributes of the root element of a named space are not values.
+// The attributes of the root element are not values.
 void walk_attributes(walk &state, pugi::xml_node element, const std::string &path)
 {
     if(path.empty())
@@ -212,15 +212,12 @@ expected<folding, error> folded(std::string_view source, const declaration &shap
         return unexpected(error{error_code::malformed_source, "the configuration at " + from.string() + " is not one document: " + *beside});
 
     const pugi::xml_node root = held.document_element();
-    if(!shape.space().empty() && root.name() != shape.space())
+    if(root.name() != shape.space())
         return unexpected(error{error_code::mismatched_space, "the configuration at " + from.string() + " has the root '" + root.name() + "', not '" + shape.space() + "'"});
 
     folding walked;
     walk state = walking(shape, walked);
-    if(shape.space().empty())
-        walk_children(state, held, std::string(), 0);
-    else
-        walk_element(state, root, std::string(), 0);
+    walk_element(state, root, std::string(), 0);
     return walked;
 }
 

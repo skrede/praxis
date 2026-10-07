@@ -159,6 +159,8 @@ std::optional<error> refused_content(const folding &walked, const declaration &s
     for(const std::vector<std::string> *kept : {&found.structural, &found.content})
         for(const std::string &one : *kept)
             message += "\n  - " + one;
+    for(const auto &[path, near] : left_out(walked, shape))
+        message += "\n  - '" + path + "' is not declared" + (near.empty() ? "" : "; the nearest declared path is '" + near + "'");
     return error{found.structural.empty() ? error_code::rejected_content : error_code::malformed_source, std::move(message)};
 }
 

@@ -198,3 +198,20 @@ TEST_CASE("an attribute written twice or a text beside attributes on a declared 
     CHECK(mixed.error().code == error_code::malformed_source);
     CHECK(mixed.error().message.find("'window' carries the text 'text' beside attributes") != std::string::npos);
 }
+
+TEST_CASE("a document refused for a value also names each undeclared path with the declared path nearest it", "[config]")
+{
+    const expected<document, error> content    = loaded("value-and-undeclared.xml", "<probe><window width=\"3.5\" titel=\"b\"/></probe>\n");
+    const expected<document, error> structural = loaded("twice-and-undeclared.xml", "<probe><window title=\"a\" title=\"b\" titel=\"c\"/></probe>\n");
+    const expected<document, error> value_only = loaded("value-only.xml", "<probe><window width=\"3.5\"/></probe>\n");
+
+    REQUIRE_FALSE(content.has_value());
+    CHECK(content.error().code == error_code::rejected_content);
+    CHECK(names(content.error().message, "window/width", "3.5"));
+    CHECK(names(content.error().message, "'window/titel'", "'window/title'"));
+    REQUIRE_FALSE(structural.has_value());
+    CHECK(structural.error().code == error_code::malformed_source);
+    CHECK(structural.error().message.find("'window/titel'") != std::string::npos);
+    REQUIRE_FALSE(value_only.has_value());
+    CHECK(lines_of(value_only.error().message).size() == 2);
+}

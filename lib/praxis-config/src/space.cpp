@@ -45,7 +45,7 @@ std::optional<std::string> finding(const node &declared, const declared_so_far &
 std::optional<error> refused_as_declared(const declaration &shape)
 {
     declared_so_far seen;
-    std::string findings;
+    std::string findings = shape.space().empty() ? "the space is empty, so no document can be rooted at it" : "";
     for(const node &declared : shape.nodes())
     {
         if(const std::optional<std::string> found = finding(declared, seen); found)

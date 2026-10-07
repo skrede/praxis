@@ -91,7 +91,7 @@ std::optional<error> rendered_leaf(pugi::xml_node root, const std::string &path,
 
 expected<std::string, error> starter_text(const declaration &shape)
 {
-    if(!shape.space().empty() && !xml_name(shape.space()))
+    if(!xml_name(shape.space()))
         return unexpected(error{error_code::malformed_source, "the space '" + shape.space() + "' is not an XML name, so no document can be rooted at it"});
 
     pugi::xml_document starter;
