@@ -31,13 +31,19 @@ edited_pose posed(const std::vector<double> &values)
     return taken;
 }
 
-std::string spelled(const edited_pose &row)
+std::string spelled(const edited_pose &row, std::string_view carried)
 {
+    const std::vector<waypoint_rows::carried_number> written = waypoint_rows::numbers_of(carried);
+
     std::vector<std::string> numbers;
     for(Eigen::Index axis = 0; axis < 3; ++axis)
         numbers.push_back(keys::text_of(row.position[axis]));
     for(Eigen::Index axis = 0; axis < 3; ++axis)
         numbers.push_back(keys::text_of(row.euler_degrees[axis]));
+
+    if(written.size() == pose_numbers)
+        for(std::size_t number = 0; number < pose_numbers; ++number)
+            numbers[number] = keys::held_text(numbers[number], written[number].value, written[number].text);
 
     return waypoint_rows::joined(numbers);
 }
@@ -70,9 +76,11 @@ pose_waypoint_list::settings read_pose_waypoints(const config::document &values,
 
 std::vector<config::edit> list_row_traits<edited_pose>::written(const config::document &values, const std::vector<edited_pose> &rows, std::string_view at)
 {
+    const std::vector<std::string> carried = waypoint_rows::addressed_texts(values, at, pose_leaf);
+
     std::vector<std::string> spelled_rows;
-    for(const edited_pose &row : rows)
-        spelled_rows.push_back(spelled(row));
+    for(std::size_t row = 0; row < rows.size(); ++row)
+        spelled_rows.push_back(spelled(rows[row], row < carried.size() ? carried[row] : std::string_view()));
 
     return waypoint_rows::write(values, spelled_rows, at, pose_leaf);
 }

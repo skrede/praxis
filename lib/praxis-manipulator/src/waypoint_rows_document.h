@@ -29,8 +29,19 @@ struct carried_row
     std::vector<double> values;
 };
 
+// One number of a row's text: the characters its extraction consumed, leading blanks dropped, and
+// the value they read as.
+struct carried_number
+{
+    std::string text;
+    double value;
+};
+
 void declare(config::declaration &shape, std::string_view at, std::string_view leaf);
 std::vector<carried_row> read(const config::document &values, std::string_view at, std::string_view leaf);
+
+// The numbers of one row's text as `read` reads them, and none where `read` would read none.
+std::vector<carried_number> numbers_of(std::string_view text);
 
 // The numbers of one row, spelled by the caller because how short a spelling reads back as the same
 // value is a property of the type the caller holds them in, separated by single spaces.
@@ -40,6 +51,10 @@ std::string joined(std::span<const std::string> numbers);
 // there empties the rows it no longer reaches, and a row carrying no index is passed over and keeps
 // its place.
 std::vector<config::edit> write(const config::document &values, std::span<const std::string> rows, std::string_view at, std::string_view leaf);
+
+// The text of each row `write` addresses, in the order it addresses them, and an empty text where
+// that row carries none.
+std::vector<std::string> addressed_texts(const config::document &values, std::string_view at, std::string_view leaf);
 
 }
 

@@ -402,3 +402,23 @@ TEST_CASE("a pose list saved over a document carrying a row with no index writes
     for(std::size_t row = 0; row < read.rows.size(); ++row)
         stands_at(read.rows[row], written.rows[row]);
 }
+
+TEST_CASE("a pose row carrying a number its float cannot hold opens with nothing unsaved and keeps that number's text when another number of the row is edited",
+          "[manipulator][waypoints]")
+{
+    const std::shared_ptr<arm_publisher> published = published_arm();
+    const config::document carried = carrying("pose-float-held.xml", "<pose_waypoints><waypoint index=\"1\" pose=\"0.123456789 0.25 -0.5 30 90 -180\"/></pose_waypoints>");
+    const pose_waypoint_list panel("Poses", published->reader(), frames_of, read_pose_waypoints(carried, poses_at), std::string(poses_at));
+
+    CHECK(panel.settings_edits(carried).empty());
+
+    pose_waypoint_list::settings edited = read_pose_waypoints(carried, poses_at);
+    REQUIRE(edited.rows.size() == 1u);
+    edited.rows.front().euler_degrees[2] = 1.0f / 3.0f;
+
+    const std::vector<config::edit> offered = write_pose_waypoints(carried, edited, poses_at);
+    const auto row = std::find_if(offered.begin(), offered.end(), [](const config::edit &one) { return one.key == std::string(poses_at) + "/waypoint[0]/pose"; });
+
+    REQUIRE(row != offered.end());
+    CHECK(row->value == "0.123456789 0.25 -0.5 30 90 0.33333334");
+}
