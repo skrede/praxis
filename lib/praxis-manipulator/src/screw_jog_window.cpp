@@ -1,3 +1,5 @@
+#include "configuration_keys.h"
+
 #include "praxis/manipulator/option_widgets.h"
 #include "praxis/manipulator/screw_jog_window.h"
 #include "praxis/manipulator/pose_configuration.h"
@@ -87,7 +89,7 @@ screw_jog_window::settings screw_jog_window::state() const
 
 std::vector<config::edit> screw_jog_window::settings_edits(const config::document &carried) const
 {
-    std::vector<config::edit> changes = config::unsaved_edits(carried, write_screw_jog(state(), m_settings_at, m_keeping));
+    std::vector<config::edit> changes = config::unsaved_edits(carried, keys::held_as_carried(carried, write_screw_jog(state(), m_settings_at, m_keeping)));
     std::ranges::copy(unsaved_shared_pose(carried, *m_edited, m_pose_at), std::back_inserter(changes));
 
     return changes;

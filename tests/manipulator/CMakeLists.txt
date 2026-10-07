@@ -89,7 +89,7 @@ praxis_add_test(screw_modeling_window_test.cpp HEADERS six_axis_machine.h ../pre
 praxis_add_test(pose_path_test.cpp HEADERS fixtures.h ../presets/drawn_lines.h LIBS praxis::manipulator spdlog::spdlog praxis_test_support)
 praxis_add_test(path_comparison_window_test.cpp HEADERS fixtures.h window_stage.h ../presets/drawn_lines.h LIBS praxis::manipulator praxis::trajectory spdlog::spdlog praxis_test_support)
 praxis_add_test(render_configuration_test.cpp HEADERS fixtures.h window_stage.h drawn_columns.h drawn_ellipsoids.h velocity_kinematics_stage.h ../presets/drawn_lines.h ../presets/scratch_directory.h LIBS praxis::manipulator praxis::config spdlog::spdlog praxis_test_support)
-praxis_add_test(float_held_offers_test.cpp HEADERS fixtures.h ../presets/scratch_directory.h LIBS praxis::manipulator praxis::config praxis_test_support)
+praxis_add_test(float_held_offers_test.cpp HEADERS fixtures.h window_stage.h ../presets/scratch_directory.h LIBS praxis::manipulator praxis::config praxis_test_support)
 target_include_directories(float_held_offers_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-manipulator/src)
 praxis_add_test(render_controls_window_test.cpp HEADERS fixtures.h window_stage.h drawn_columns.h drawn_ellipsoids.h velocity_kinematics_stage.h ../presets/drawn_lines.h LIBS praxis::manipulator spdlog::spdlog praxis_test_support)
 praxis_add_test(velocity_configuration_test.cpp HEADERS fixtures.h window_stage.h drawn_columns.h drawn_ellipsoids.h velocity_kinematics_stage.h ../presets/drawn_lines.h ../presets/scratch_directory.h LIBS praxis::manipulator praxis::config spdlog::spdlog praxis_test_support)

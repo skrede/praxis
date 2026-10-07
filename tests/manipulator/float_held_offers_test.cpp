@@ -1,15 +1,24 @@
 #include "fixtures.h"
+#include "window_stage.h"
 
 #include "../presets/scratch_directory.h"
 
 #include "configuration_keys.h"
 
 #include "praxis/manipulator/arm_state.h"
+#include "praxis/manipulator/edited_pose.h"
 #include "praxis/manipulator/tool_window.h"
+#include "praxis/manipulator/screw_jog_window.h"
 #include "praxis/manipulator/robot_view_window.h"
+#include "praxis/manipulator/pose_configuration.h"
 #include "praxis/manipulator/tool_configuration.h"
 #include "praxis/manipulator/view_configuration.h"
+#include "praxis/manipulator/world_object_window.h"
+#include "praxis/manipulator/render_configuration.h"
+#include "praxis/manipulator/control_configuration.h"
 #include "praxis/manipulator/loadable_robot_stencil.h"
+#include "praxis/manipulator/render_controls_window.h"
+#include "praxis/manipulator/control_parameters_window.h"
 
 #include "praxis/config/store.h"
 #include "praxis/config/writer.h"
@@ -45,8 +54,13 @@ using namespace praxis::manipulator;
 
 namespace {
 
-constexpr std::string_view view_at = "machine/robot_view";
-constexpr std::string_view tool_at = "machine/tool";
+constexpr std::string_view view_at       = "machine/robot_view";
+constexpr std::string_view tool_at       = "machine/tool";
+constexpr std::string_view screw_jog_at  = "machine/screw_jog";
+constexpr std::string_view pose_at       = "machine/pose";
+constexpr std::string_view world_at      = "machine/world_object";
+constexpr std::string_view render_at     = "machine/render_controls";
+constexpr std::string_view parameters_at = "machine/parameters";
 
 constexpr const char *hand_written_scale  = "<robot_view model=\"Meshes\" frame_marker_scale=\"0.123456789\"/>";
 constexpr const char *hand_written_offset = "<tool><kinematics><offset x=\"0.123456789\"/></kinematics></tool>";
@@ -57,6 +71,11 @@ config::declaration described()
     shape.group("machine");
     declare_robot_view(shape, view_at);
     declare_tool(shape, tool_at);
+    declare_screw_jog(shape, screw_jog_at);
+    declare_shared_pose(shape, pose_at);
+    declare_world_object(shape, world_at);
+    declare_render_controls(shape, render_at);
+    declare_control_parameters(shape, parameters_at);
 
     return shape;
 }
@@ -98,6 +117,12 @@ bool offers_key(const std::vector<config::edit> &offered, const std::string &key
     return std::ranges::find(offered, key, &config::edit::key) != offered.end();
 }
 
+std::string offered_at(const std::vector<config::edit> &offered, std::string_view at, std::string_view leaf)
+{
+    const auto found = std::ranges::find(offered, std::string(at) + "/" + std::string(leaf), &config::edit::key);
+    return found != offered.end() ? found->value : std::string();
+}
+
 struct stage
 {
     stage()
@@ -125,6 +150,29 @@ std::unique_ptr<tool_window> tool_over(stage &headless, const tool_window::setti
                                                std::string(tool_at));
     panel->initialize();
     return panel;
+}
+
+std::unique_ptr<screw_jog_window> screw_jog_over(const screw_jog_window::settings &state)
+{
+    static const std::shared_ptr<arm_publisher> published = publishing(at_rest(configuration(0.0, 0.0), Eigen::Vector3d::Zero(), rotation::Identity()));
+
+    return std::make_unique<screw_jog_window>("Screw jog", published->reader(), std::weak_ptr<owned_arm>(), rigid_motion::baseline().frame, std::make_shared<edited_pose>(), state,
+                                              std::string(screw_jog_at), std::string(), screw_jog_window::screw_keeping::with_document);
+}
+
+world_object_window world_over(stage &headless, const world_object_window::settings &state)
+{
+    return world_object_window("World object", headless.shown, rigid_motion::baseline().frame, state, std::string(world_at));
+}
+
+render_controls_window render_over(stage &headless, const render_controls_window::settings &state)
+{
+    return render_controls_window("Render controls", headless.shown, render_controls_window::controls{}, state, std::string(render_at));
+}
+
+control_parameters_window parameters_over(stage &headless, const control_parameters_window::settings &state)
+{
+    return control_parameters_window("Control parameters", headless.published->reader(), std::weak_ptr<owned_arm>(), state, std::string(parameters_at));
 }
 
 bool unsaved(const config::configurable *panel, const config::document &carried)
@@ -259,4 +307,68 @@ TEST_CASE("an offer that is not a real the document declares passes through the 
         CHECK(passed[at].value == offered[at].value);
         CHECK(passed[at].kind == offered[at].kind);
     }
+}
+
+TEST_CASE("a screw jog window over a hand-written point component its float cannot hold opens with nothing unsaved", "[manipulator][configuration]")
+{
+    const config::document carried           = loaded(authored("held-screw-point.xml", "<screw_jog><q x=\"0.123456789\" y=\"0\" z=\"0\"/></screw_jog>"));
+    const screw_jog_window::settings opening = read_screw_jog(carried, screw_jog_at);
+    REQUIRE(opening.q.x() != 0.123456789);
+    CHECK(screw_jog_over(opening)->settings_edits(carried).empty());
+}
+
+TEST_CASE("a shared pose over a hand-written position its float cannot hold offers nothing and keeps the text through an unrelated save, and an edited one is written at "
+          "float precision",
+          "[manipulator][configuration]")
+{
+    const config::location at      = authored("held-pose-position.xml", "<pose><position x=\"0.123456789\" y=\"0\" z=\"0\"/></pose>");
+    const config::document carried = loaded(at);
+    edited_pose pose               = read_shared_pose(carried, pose_at);
+    REQUIRE(pose.standing == pose_standing::held);
+    CHECK(unsaved_shared_pose(carried, pose, pose_at).empty());
+
+    pose.position.y() = 0.5f;
+    saved(at, unsaved_shared_pose(carried, pose, pose_at));
+    CHECK(file_text(at).find("x=\"0.123456789\"") != std::string::npos);
+    CHECK(file_text(at).find("y=\"0.5\"") != std::string::npos);
+
+    pose.position.x() = 1.0f / 3.0f;
+    CHECK(offered_at(unsaved_shared_pose(carried, pose, pose_at), pose_at, "position/x") == "0.33333334");
+}
+
+TEST_CASE("a world object window over a hand-written offset component its float cannot hold opens with nothing unsaved", "[manipulator][configuration]")
+{
+    const config::document carried = loaded(authored("held-world-offset.xml", "<world_object><offset x=\"0.123456789\" y=\"0\" z=\"0\"/></world_object>"));
+    stage headless;
+
+    world_object_window::settings state = read_world_object(carried, world_at);
+    CHECK(world_over(headless, state).settings_edits(carried).empty());
+
+    state.gfx_offset.x() = 1.0f / 3.0f;
+    CHECK(offered_at(world_over(headless, state).settings_edits(carried), world_at, "offset/x") == "0.33333334");
+}
+
+TEST_CASE("a render controls window over a hand-written length its float cannot hold opens with nothing unsaved", "[manipulator][configuration]")
+{
+    const config::document carried = loaded(authored("held-render-length.xml", "<render_controls linear_scale=\"0.123456789\"/>"));
+    stage headless;
+
+    render_controls_window::settings state = read_render_controls(carried, render_at);
+    REQUIRE(state.linear_scale.has_value());
+    CHECK(render_over(headless, state).settings_edits(carried).empty());
+
+    state.linear_scale = 1.0 / 3.0;
+    CHECK(offered_at(render_over(headless, state).settings_edits(carried), render_at, "linear_scale") == "0.33333334");
+}
+
+TEST_CASE("a control parameters window over a hand-written velocity factor its float cannot hold opens with nothing unsaved", "[manipulator][configuration]")
+{
+    const config::document carried = loaded(authored("held-velocity-factor.xml", "<parameters velocity_factor=\"0.123456789\"/>"));
+    stage headless;
+
+    control_parameters_window::settings state = read_control_parameters(carried, parameters_at);
+    CHECK(parameters_over(headless, state).settings_edits(carried).empty());
+
+    state.velocity = 1.0f / 3.0f;
+    CHECK(offered_at(parameters_over(headless, state).settings_edits(carried), parameters_at, "velocity_factor") == "0.33333334");
 }

@@ -79,7 +79,7 @@ std::vector<config::edit> unsaved_shared_pose(const config::document &carried, c
     if(!carries_pose(carried, at))
         return write_shared_pose(pose, at);
 
-    return config::unsaved_edits(carried, write_shared_pose(pose, at));
+    return config::unsaved_edits(carried, keys::held_as_carried(carried, write_shared_pose(pose, at)));
 }
 
 }

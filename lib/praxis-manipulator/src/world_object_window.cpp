@@ -1,3 +1,5 @@
+#include "configuration_keys.h"
+
 #include "praxis/manipulator/model_file.h"
 #include "praxis/manipulator/model_placement.h"
 #include "praxis/manipulator/tool_configuration.h"
@@ -62,7 +64,7 @@ std::vector<config::edit> world_object_window::settings_edits(const config::docu
     settings chosen      = state();
     chosen.selected_view = m_chosen_view;
 
-    return config::unsaved_edits(carried, write_world_object(chosen, m_settings_at));
+    return config::unsaved_edits(carried, keys::held_as_carried(carried, write_world_object(chosen, m_settings_at)));
 }
 
 void world_object_window::render()

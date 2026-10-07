@@ -1,3 +1,5 @@
+#include "configuration_keys.h"
+
 #include "praxis/manipulator/render_configuration.h"
 #include "praxis/manipulator/render_controls_window.h"
 
@@ -29,7 +31,7 @@ render_controls_window::settings render_controls_window::state() const
 
 std::vector<config::edit> render_controls_window::settings_edits(const config::document &carried) const
 {
-    return config::unsaved_edits(carried, write_render_controls(state(), m_settings_at));
+    return config::unsaved_edits(carried, keys::held_as_carried(carried, write_render_controls(state(), m_settings_at)));
 }
 
 }

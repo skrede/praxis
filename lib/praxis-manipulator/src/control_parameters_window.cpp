@@ -1,3 +1,5 @@
+#include "configuration_keys.h"
+
 #include "praxis/manipulator/option_widgets.h"
 #include "praxis/manipulator/control_configuration.h"
 #include "praxis/manipulator/control_parameters_window.h"
@@ -73,7 +75,7 @@ control_parameters_window::settings control_parameters_window::state() const
 
 std::vector<config::edit> control_parameters_window::settings_edits(const config::document &carried) const
 {
-    return config::unsaved_edits(carried, write_control_parameters(state(), m_settings_at));
+    return config::unsaved_edits(carried, keys::held_as_carried(carried, write_control_parameters(state(), m_settings_at)));
 }
 
 void control_parameters_window::render()
