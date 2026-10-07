@@ -78,6 +78,9 @@ expected<std::size_t, config::error> reach_of(const std::vector<std::string> &pr
     std::size_t reach = joints;
     for(const std::string &identity : present)
     {
+        if(identity.empty())
+            continue;
+
         const std::optional<std::size_t> named = ordinal_of(identity);
         if(!named)
             return unexpected(unreadable(identity, "names no joint's place in a chain"));

@@ -643,6 +643,29 @@ TEST_CASE("a table whose rows stand out of order keeps that order across a save"
     require_same_screws(opened(carried(bound), derived_three()), chosen);
 }
 
+TEST_CASE("a table carrying a row with no index reads past it and saves a new row after it", "[presets][configuration]")
+{
+    const config::binding bound = binding_over(row(1u, six_vector(1.0)) + "<joint/>" + row(2u, six_vector(2.0)), "stray-row.xml");
+
+    supplied chosen = opened(carried(bound), derived_three());
+    REQUIRE(chosen.screws.size() == 3u);
+    REQUIRE(chosen.screws[0].has_value());
+    REQUIRE(chosen.screws[1].has_value());
+    CHECK((*chosen.screws[0] - six_vector(1.0)).norm() == 0.0);
+    CHECK((*chosen.screws[1] - six_vector(2.0)).norm() == 0.0);
+    CHECK_FALSE(chosen.screws[2].has_value());
+
+    chosen.screws[2] = six_vector(3.0);
+    REQUIRE(config::save(bound, written(carried(bound), derived_three(), chosen)).has_value());
+
+    const std::string saved = bytes_at("stray-row.xml");
+    CHECK(occurrences(saved, "<joint/>") == 1u);
+    CHECK(saved.find("index=\"1\"") < saved.find("<joint/>"));
+    CHECK(saved.find("<joint/>") < saved.find("index=\"2\""));
+    CHECK(carried(bound).identities(keys_of_rows()) == std::vector<std::string>{"1", "", "2", "3"});
+    require_same_screws(opened(carried(bound), derived_three()), chosen);
+}
+
 // A chain somebody discarded is a chain the document has to stop carrying. The window hands back an
 // entry per joint holding nothing, and a save writing no row for those is one that restores the
 // discarded chain the next time the scenario is opened.

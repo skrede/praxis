@@ -110,7 +110,10 @@ config::declaration demonstration_keyspace()
 
 std::vector<std::string> preset_keys(const config::document &values)
 {
-    return values.identities(preset_instances);
+    std::vector<std::string> keys = values.identities(preset_instances);
+    std::erase(keys, std::string());
+
+    return keys;
 }
 
 expected<config::location, config::error> preset_document(const config::document &values, const std::string &key, const documents &mine)

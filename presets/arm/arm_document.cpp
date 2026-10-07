@@ -30,7 +30,8 @@ std::map<std::string, std::string> read_arguments(const config::document &values
 {
     std::map<std::string, std::string> named;
     for(const std::string &instance : values.identities(at))
-        named.emplace(keys::text_at(values, keys::keyed(values, at, instance, "name")), keys::text_at(values, keys::keyed(values, at, instance, "value")));
+        if(!instance.empty())
+            named.emplace(keys::text_at(values, keys::keyed(values, at, instance, "name")), keys::text_at(values, keys::keyed(values, at, instance, "value")));
 
     return named;
 }
@@ -55,13 +56,17 @@ meios::load_options read_options(const config::document &values, const std::stri
 }
 
 // The joint values are in the order the document carries them, which is the order the axes are in.
+// An instance carrying no index is no axis.
 manipulator::joint_vector read_initial(const config::document &values, const std::string &at)
 {
-    const std::vector<std::string> present = values.identities(at);
+    std::vector<double> degrees;
+    for(const std::string &instance : values.identities(at))
+        if(!instance.empty())
+            degrees.push_back(keys::real_at(values, keys::keyed(values, at, instance, "degrees")));
 
-    manipulator::joint_vector initial(static_cast<Eigen::Index>(present.size()));
-    for(std::size_t axis = 0u; axis < present.size(); ++axis)
-        initial[static_cast<Eigen::Index>(axis)] = keys::real_at(values, keys::keyed(values, at, present[axis], "degrees")) * radians_per_degree;
+    manipulator::joint_vector initial(static_cast<Eigen::Index>(degrees.size()));
+    for(std::size_t axis = 0u; axis < degrees.size(); ++axis)
+        initial[static_cast<Eigen::Index>(axis)] = degrees[axis] * radians_per_degree;
 
     return initial;
 }

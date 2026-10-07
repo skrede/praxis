@@ -8,12 +8,15 @@
 #include "praxis/manipulator/control_mode.h"
 #include "praxis/manipulator/path_comparison_window.h"
 
+#include "praxis/rigid_motion/angles.h"
+
 #include "praxis/config/store.h"
 #include "praxis/config/document.h"
 #include "praxis/config/declaration.h"
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <map>
 #include <span>
 #include <string>
 #include <vector>
@@ -127,6 +130,25 @@ TEST_CASE("an arm's list of starts is read back out from under the path the seed
     CHECK(read.ik_seeds.seeds.front()[0] == 0.25);
     CHECK(read.ik_seeds.seeds.front()[1] == -0.5);
     CHECK(read.ik_seeds.seeds.front()[2] == 0.75);
+}
+
+TEST_CASE("an arm document carrying a joint and an argument with no index opens as the same document without them", "[presets][documents]")
+{
+    const presets::arm_scenario indexed = opened("indexed-elements",
+                                                 "<arm><initial><joint index=\"0\" degrees=\"10\"/><joint index=\"1\" degrees=\"20\"/></initial>"
+                                                 "<description><argument index=\"1\" name=\"a\" value=\"b\"/></description></arm>\n");
+    const presets::arm_scenario stray   = opened("stray-elements",
+                                                 "<arm><initial><joint index=\"0\" degrees=\"10\"/><joint/><joint index=\"1\" degrees=\"20\"/></initial>"
+                                                 "<description><argument index=\"1\" name=\"a\" value=\"b\"/><argument/></description></arm>\n");
+
+    REQUIRE(indexed.initial.size() == 2);
+    CHECK(indexed.initial[0] == 10.0 * radians_per_degree);
+    CHECK(indexed.initial[1] == 20.0 * radians_per_degree);
+    CHECK(indexed.options.args == std::map<std::string, std::string>{{"a", "b"}});
+
+    CHECK(stray.options.args == indexed.options.args);
+    REQUIRE(stray.initial.size() == indexed.initial.size());
+    CHECK(stray.initial == indexed.initial);
 }
 
 TEST_CASE("an arm's solutions window is read back out from under the path that window keeps it at", "[presets][documents]")

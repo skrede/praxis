@@ -16,6 +16,7 @@
 #include <string>
 #include <vector>
 #include <cstddef>
+#include <fstream>
 #include <optional>
 #include <algorithm>
 #include <filesystem>
@@ -208,4 +209,18 @@ TEST_CASE("the demonstration document names exactly the preset documents that ar
         present.push_back(document.file);
 
     CHECK(named == present);
+}
+
+TEST_CASE("a demonstration document carrying a preset with no name lists only the presets a name addresses", "[examples][documents]")
+{
+    const std::filesystem::path where = std::filesystem::temp_directory_path() / "praxis-shipped-presets-unnamed";
+    std::filesystem::create_directories(where);
+    std::ofstream(where / demonstration_document, std::ios::binary | std::ios::trunc)
+            << "<demonstration><presets><preset/><preset name=\"plain-kr6r\" document=\"kr6r.xml\"/></presets></demonstration>\n";
+
+    const config::outcome answered = config::load_or_defaults(demo::demonstration_keyspace(), config::resolve(where / demonstration_document, where));
+    REQUIRE_FALSE(answered.failure.has_value());
+
+    CHECK(demo::preset_keys(answered.values) == std::vector<std::string>{"plain-kr6r"});
+    CHECK(named_documents(answered.values) == std::vector<std::string>{"kr6r.xml"});
 }

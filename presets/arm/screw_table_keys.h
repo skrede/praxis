@@ -39,7 +39,8 @@ std::optional<std::size_t> ordinal_of(const std::string &identity);
 
 // How far a chain of `joints` is read out to: the furthest joint any of `present` names, and no
 // further out than the surplus a document may name past the chain's end. An identity naming no
-// joint's place, and one naming a joint further out than that, is refused by name.
+// joint's place, and one naming a joint further out than that, is refused by name; an empty one is
+// an instance no index addresses and is passed over.
 expected<std::size_t, config::error> reach_of(const std::vector<std::string> &present, std::size_t joints);
 
 void declare_triple(config::declaration &shape, const std::string &at);
