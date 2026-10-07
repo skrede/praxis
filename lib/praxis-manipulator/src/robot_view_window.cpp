@@ -1,3 +1,5 @@
+#include "configuration_keys.h"
+
 #include "praxis/manipulator/robot_view_window.h"
 #include "praxis/manipulator/view_configuration.h"
 
@@ -102,7 +104,7 @@ robot_view_window::settings robot_view_window::state() const
 
 std::vector<config::edit> robot_view_window::settings_edits(const config::document &carried) const
 {
-    return config::unsaved_edits(carried, write_robot_view(state(), m_settings_at));
+    return config::unsaved_edits(carried, keys::held_as_carried(carried, write_robot_view(state(), m_settings_at)));
 }
 
 void robot_view_window::show_model()

@@ -25,6 +25,14 @@ std::string under(std::string_view at, std::string_view leaf);
 // edits reads as they wrote it rather than as a widened decimal expansion.
 std::string text_of(float value);
 
+// `carried_text` where `carried`, rounded to single precision, is the value `offered` spells, and
+// `offered` otherwise.
+std::string held_text(std::string_view offered, double carried, std::string_view carried_text);
+
+// Each real offered at single precision, offered as the document's own value where that value
+// rounds to it.
+std::vector<config::edit> held_as_carried(const config::document &carried, std::vector<config::edit> offered);
+
 std::vector<std::string> spelled(std::span<const char *const> labels);
 
 bool carried(const config::document &values, const std::string &key);

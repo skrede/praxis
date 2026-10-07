@@ -1,3 +1,5 @@
+#include "configuration_keys.h"
+
 #include "praxis/manipulator/model_file.h"
 #include "praxis/manipulator/tool_window.h"
 #include "praxis/manipulator/option_widgets.h"
@@ -84,7 +86,7 @@ std::vector<config::edit> tool_window::settings_edits(const config::document &ca
     settings chosen      = state();
     chosen.selected_view = m_chosen_view;
 
-    return config::unsaved_edits(carried, write_tool(chosen, m_settings_at));
+    return config::unsaved_edits(carried, keys::held_as_carried(carried, write_tool(chosen, m_settings_at)));
 }
 
 void tool_window::render()

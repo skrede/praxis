@@ -34,6 +34,25 @@ std::string text_of(float value)
     return std::string(printed.data(), written.ptr);
 }
 
+std::string held_text(std::string_view offered, double carried, std::string_view carried_text)
+{
+    return std::string(text_of(static_cast<float>(carried)) == offered ? carried_text : offered);
+}
+
+std::vector<config::edit> held_as_carried(const config::document &carried, std::vector<config::edit> offered)
+{
+    for(config::edit &one : offered)
+    {
+        if(one.kind != config::edit_kind::bound || carried.kind_of(one.key) != config::field_kind::real)
+            continue;
+
+        const expected<double, config::error> read = carried.real(one.key);
+        if(read)
+            one.value = held_text(one.value, read.value(), config::exact_text(read.value()));
+    }
+    return offered;
+}
+
 void declare_mode(config::declaration &shape, std::string_view at, control_mode fallback)
 {
     shape.choice(under(at, mode_leaf), spelled(control_modes), control_modes[static_cast<std::size_t>(fallback)]);
