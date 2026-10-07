@@ -1,4 +1,5 @@
 #include "opened_arm.h"
+#include "drawn_lines.h"
 #include "described_arm.h"
 #include "carried_models.h"
 #include "labeled_panels.h"
@@ -44,6 +45,8 @@ constexpr const char *chain_and_tool  = "supplied chain and tool";
 constexpr const char *keeping_chain   = "<screw_table document=\"chain.xml\"/>";
 constexpr const char *preview_view    = "<robot_view model=\"Meshes\" screw_axes=\"true\" axis_reach=\"0\"/>";
 constexpr const char *described_frame = "robot_view/described_flange_frame";
+constexpr const char *axes_off_view   = "<robot_view model=\"Meshes\" screw_axes=\"false\" axis_reach=\"0\"/>";
+constexpr const char *screw_axes_key  = "robot_view/screw_axes";
 
 std::filesystem::path scratch(const char *named)
 {
@@ -175,6 +178,15 @@ void loaded_and_offset(const std::shared_ptr<scene::preset> &composed, const std
     fixture::type_at(panel, 4u, "0.45");
 }
 
+bool axes_drawn(fixture::opened_arm &stage, const scene::preset &composed)
+{
+    stage.draw(composed);
+    threepp::Object3D *axis = fixture::first_line_under(*stage.scene, manipulator::loadable_robot_stencil::joint_axis_name(0));
+    REQUIRE(axis != nullptr);
+
+    return fixture::drawn(axis);
+}
+
 bool anything_unsaved(const registered_arm &arm, const scene::preset &composed)
 {
     std::vector<const config::configurable *> shown;
@@ -288,4 +300,59 @@ TEST_CASE("an arm document naming view values of its own leaves nothing unsaved 
     CHECK(std::abs(opened.marker_scale - 2.0) < 1.0e-6);
     CHECK_FALSE(anything_unsaved(arm, *composed));
     CHECK(fixture::offered_by(*composed, arm.documents.back()).empty());
+}
+
+TEST_CASE("screw axes a supplied-chain document turns off stay off across a save, a reopen and a second save", "[presets][registry]")
+{
+    const fixture::described_arm described(6, "six");
+    registered_arm arm(arm_at(scratch("kept_axes_off"), supplied_chain, axes_off_view), described);
+
+    fixture::opened_arm first;
+    const std::shared_ptr<scene::preset> composed = arm.composed(first);
+    CHECK_FALSE(view_of(composed)->state().decoration);
+    CHECK_FALSE(axes_drawn(first, *composed));
+    fixture::press_on(*view_of(composed), "Description's flange frame");
+    saved(arm, *composed);
+    CHECK_FALSE(written_flag(reread(arm), screw_axes_key));
+
+    fixture::opened_arm second;
+    const std::shared_ptr<scene::preset> again = arm.composed(second);
+    CHECK_FALSE(view_of(again)->state().decoration);
+    CHECK_FALSE(axes_drawn(second, *again));
+    fixture::press_on(*view_of(again), "Description's flange frame");
+    saved(arm, *again);
+    CHECK_FALSE(written_flag(reread(arm), screw_axes_key));
+
+    fixture::opened_arm third;
+    CHECK_FALSE(view_of(arm.composed(third))->state().decoration);
+}
+
+TEST_CASE("an arm document naming no screw axes opens the supplied-chain scenario with them drawn", "[presets][registry]")
+{
+    const fixture::described_arm described(6, "six");
+    registered_arm arm(arm_at(scratch("axes_unnamed"), supplied_chain, ""), described);
+
+    fixture::opened_arm stage;
+    const std::shared_ptr<scene::preset> composed = arm.composed(stage);
+    CHECK(view_of(composed)->state().decoration);
+    CHECK(axes_drawn(stage, *composed));
+}
+
+TEST_CASE("the screw axes switch beside a supplied chain hides the axes and leaves the change unsaved until it is saved", "[presets][registry]")
+{
+    const fixture::described_arm described(6, "six");
+    registered_arm arm(arm_at(scratch("axes_switched"), supplied_chain, preview_view), described);
+
+    fixture::opened_arm stage;
+    const std::shared_ptr<scene::preset> composed = arm.composed(stage);
+    CHECK_FALSE(anything_unsaved(arm, *composed));
+    fixture::press_on(*view_of(composed), "Screw axes");
+    CHECK_FALSE(view_of(composed)->state().decoration);
+    CHECK_FALSE(axes_drawn(stage, *composed));
+    CHECK(anything_unsaved(arm, *composed));
+    saved(arm, *composed);
+    CHECK_FALSE(written_flag(reread(arm), screw_axes_key));
+
+    fixture::opened_arm again;
+    CHECK_FALSE(view_of(arm.composed(again))->state().decoration);
 }

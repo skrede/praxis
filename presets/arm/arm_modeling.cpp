@@ -35,25 +35,15 @@ namespace {
 
 using composed_windows = std::vector<std::shared_ptr<scene::imgui_window>>;
 
-// The rendered arm is the independent reference a wrong chain is read against, so the control that
-// hides it is offered and can always be taken back; the drawn axes carry no control at all, since a
-// scenario whose subject is the chain has nothing left to show once they are gone.
 manipulator::robot_view_window::controls chain_view_controls(modeling_beside beside)
 {
     manipulator::robot_view_window::controls offered;
     offered.reach                  = true;
-    offered.decoration             = false;
+    offered.decoration             = true;
     offered.tool                   = beside == modeling_beside::pose_and_tool;
     offered.described_frame_marker = true;
 
     return every_marker_control(offered);
-}
-
-manipulator::robot_view_window::settings chain_view(manipulator::robot_view_window::settings chosen)
-{
-    chosen.decoration = true;
-
-    return chosen;
 }
 
 manipulator::screw_modeling_window::settings opened_chain(const screw_table_source &keeping, const manipulator::arm_window_inputs &built)
@@ -83,7 +73,7 @@ composed_windows beside_the_chain(const arm_scenario &state, const screw_table_s
     };
     if(beside == modeling_beside::pose_and_tool)
         opened.push_back(std::make_shared<manipulator::tool_window>("Tool", built.stencil, built.seen, built.arm, built.frames, state.tool, window_paths::tool, state.model_roots));
-    opened.push_back(std::make_shared<manipulator::robot_view_window>("View", built.stencil, chain_view_controls(beside), chain_view(state.robot_view), window_paths::robot_view));
+    opened.push_back(std::make_shared<manipulator::robot_view_window>("View", built.stencil, chain_view_controls(beside), state.robot_view, window_paths::robot_view));
 
     return opened;
 }

@@ -619,7 +619,7 @@ TEST_CASE("a scenario opened at a kept chain draws the axes that chain names", "
     }
 }
 
-TEST_CASE("the supplied-chain scenario hides and restores the rendered arm and can take the drawn axes away nowhere", "[presets][windows]")
+TEST_CASE("the supplied-chain scenario hides and restores the rendered arm and the drawn axes", "[presets][windows]")
 {
     const described_arm described(6, "six");
     const presets::arm_scenario chosen = described_by(described.where);
@@ -643,14 +643,13 @@ TEST_CASE("the supplied-chain scenario hides and restores the rendered arm and c
         REQUIRE(drawn(first_drawn_axis(*built.scene)));
     }
 
-    press_at(view, 1);
+    press_on(view, "Screw axes");
+    REQUIRE_FALSE(drawn(first_drawn_axis(*built.scene)));
+    press_on(view, "Screw axes");
     REQUIRE(drawn(first_drawn_axis(*built.scene)));
 }
 
-// A machine document is free to say the axes open hidden, and every other scenario honors it. This
-// one cannot: with no control to bring them back, honoring it would open a scenario whose whole
-// subject is off screen and unreachable.
-TEST_CASE("a machine asking for the drawn axes hidden still opens the supplied-chain scenario with them on", "[presets][windows]")
+TEST_CASE("a machine asking for the drawn axes hidden opens the supplied-chain scenario with them hidden", "[presets][windows]")
 {
     const described_arm described(6, "six");
     presets::arm_scenario chosen = described_by(described.where);
@@ -660,7 +659,8 @@ TEST_CASE("a machine asking for the drawn axes hidden still opens the supplied-c
     const std::shared_ptr<scene::preset> composed = built.open(chosen, presets::arm_windows_modeling(chosen, presets::screw_table_source{}));
     built.draw(*composed);
 
-    REQUIRE(drawn(first_drawn_axis(*built.scene)));
+    REQUIRE(first_drawn_axis(*built.scene) != nullptr);
+    REQUIRE_FALSE(drawn(first_drawn_axis(*built.scene)));
 }
 
 TEST_CASE("the supplied-chain scenario leaves the scene as it found it", "[presets][windows]")
