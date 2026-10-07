@@ -56,9 +56,14 @@ bool carries_text(pugi::xml_node element)
     return !element.find_child([](pugi::xml_node piece) { return piece.type() == pugi::node_cdata || (piece.type() == pugi::node_pcdata && !blank(piece.value())); }).empty();
 }
 
+pugi::xml_node first_element(pugi::xml_node element)
+{
+    return element.find_child([](pugi::xml_node piece) { return piece.type() == pugi::node_element; });
+}
+
 bool carries_elements(pugi::xml_node element)
 {
-    return !element.find_child([](pugi::xml_node piece) { return piece.type() == pugi::node_element; }).empty();
+    return !first_element(element).empty();
 }
 
 std::string text_of(pugi::xml_node element)
@@ -133,6 +138,16 @@ void walk_undeclared(walk &state, pugi::xml_node element, const std::string &pat
         undeclared_within(state, element, path, depth);
 }
 
+// A declared leaf or identity holds its value alone: a child element is a fault, an attribute undeclared.
+void walk_leaf(walk &state, pugi::xml_node element, const std::string &path)
+{
+    if(const pugi::xml_node inner = first_element(element); inner)
+        state.out.malformed.push_back("'" + path + "' carries the element '" + inner.name() + "' where only its value can stand");
+    kept(state, path, text_of(element));
+    for(const pugi::xml_attribute carried : element.attributes())
+        state.out.undeclared.push_back(joined(path, carried.name()));
+}
+
 void walk_element(walk &state, pugi::xml_node element, const std::string &path, std::size_t depth);
 
 void walk_child(walk &state, pugi::xml_node child, const std::string &path, std::size_t depth)
@@ -145,10 +160,7 @@ void walk_child(walk &state, pugi::xml_node child, const std::string &path, std:
         walk_element(state, child, instance, depth);
     }
     else if(state.leaves.contains(declared))
-    {
-        kept(state, path, text_of(child));
-        undeclared_within(state, child, path, depth);
-    }
+        walk_leaf(state, child, path);
     else if(!state.values.contains(declared))
         walk_undeclared(state, child, path, depth);
     else if(!child.first_attribute() && !carries_elements(child))

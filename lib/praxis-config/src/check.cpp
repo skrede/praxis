@@ -121,17 +121,19 @@ std::set<std::string> instances_of(const detail::entry_map &entries, const std::
     return instances;
 }
 
-// An identity is required on every instance that carries a value, and distinct among the instances
-// one holder carries; a repeat among the instances no collection encloses is structural.
+// An identity is required, and must not be empty, on every instance that carries a value, and is
+// distinct among the instances one holder carries; a repeat among the instances no collection
+// encloses is structural.
 void check_identities(const detail::entry_map &entries, const node &collection, findings &found)
 {
     std::set<std::pair<std::string, std::string>> claimed;
     for(const std::string &instance : instances_of(entries, collection.path))
     {
         const detail::entry_map::const_iterator identity = entries.find(instance + "/" + collection.identity);
-        if(identity == entries.end())
+        if(identity == entries.end() || identity->second.empty())
         {
-            found.content.push_back("the instance '" + instance + "' carries no '" + collection.identity + "'");
+            const char *carries = identity == entries.end() ? "' carries no '" : "' carries an empty '";
+            found.content.push_back("the instance '" + instance + carries + collection.identity + "'");
             continue;
         }
 

@@ -8,8 +8,8 @@
 #include <vector>
 #include <cstddef>
 #include <optional>
-#include <functional>
 #include <filesystem>
+#include <functional>
 #include <string_view>
 
 namespace praxis::config::detail {

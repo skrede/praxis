@@ -81,6 +81,15 @@ document loaded(const declaration &shape, const std::filesystem::path &where)
     return read.value();
 }
 
+void refused_naming(std::string_view collection, std::string_view name, std::string_view instances, std::string_view finding)
+{
+    const expected<document, error> read = load(described(collection), at(written(name, collection, within(collection, instances))));
+    REQUIRE_FALSE(read.has_value());
+    INFO(read.error().message);
+    CHECK(read.error().code == error_code::rejected_content);
+    CHECK(read.error().message.find(finding) != std::string::npos);
+}
+
 bool unlocatable(const expected<std::string, error> &addressed)
 {
     return !addressed.has_value() && addressed.error().code == error_code::unlocatable_key;
@@ -180,15 +189,15 @@ TEST_CASE("every key a document hands out addresses the element it names, under 
     }
 }
 
-TEST_CASE("an empty identity names no instance", "[config]")
+TEST_CASE("an instance carrying no identity is named by no key, and an identity written empty refuses the document by name", "[config]")
 {
-    const declaration shape    = described("station");
-    const document gapped_read = loaded(shape, written("empty-identity", "station", within("station", gapped)));
+    const document gapped_read = loaded(described("station"), written("empty-identity", "station", within("station", gapped)));
     REQUIRE(unlocatable(gapped_read.key("station", "", "width")));
 
-    const document spelled_empty = loaded(shape, written("empty-identity-value", "station", within("station", "<station name=\"\" width=\"5\"/>")));
-    REQUIRE(spelled_empty.identities("station") == std::vector<std::string>{""});
-    REQUIRE(unlocatable(spelled_empty.key("station", "", "width")));
+    refused_naming("station", "empty-identity-value", "<station name=\"\" width=\"5\"/>", "the instance 'station[0]' carries an empty 'name'");
+    refused_naming("stations/station", "empty-identity-value", "<station name=\"\" width=\"5\"/>", "the instance 'stations/station[0]' carries an empty 'name'");
+    refused_naming("station", "empty-identity-alone", "<station name=\"\"/>", "the instance 'station[0]' carries an empty 'name'");
+    refused_naming("station", "empty-identity-element", "<station width=\"5\"><name/></station>", "the instance 'station[0]' carries an empty 'name'");
 }
 
 TEST_CASE("a collection whose instances carry nothing answers its leaves from the fallback", "[config]")

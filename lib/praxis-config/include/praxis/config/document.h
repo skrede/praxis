@@ -6,8 +6,8 @@
 
 #include "praxis/compat/expected.h"
 
-#include <string>
 #include <memory>
+#include <string>
 #include <vector>
 #include <cstdint>
 #include <optional>

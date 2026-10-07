@@ -186,6 +186,45 @@ TEST_CASE("a leaf written twice is malformed by name through load and save, and 
     CHECK(empty.value().text("window/title").value() == "b");
 }
 
+TEST_CASE("a declared leaf carrying a child element is malformed by name at load, no save writes into it, and an attribute on it is not", "[config]")
+{
+    struct refusal
+    {
+        std::string_view body;
+        error_code saved;
+        std::string_view says;
+    };
+    constexpr std::string_view finding  = "'window/title' carries the element 'x' where only its value can stand";
+    constexpr std::string_view no_place = "has no place for window/title";
+    constexpr std::array beside{refusal{"<probe><window><title>ab<x/>cd</title></window></probe>\n", error_code::malformed_source, finding},
+                                refusal{"<probe><window><title><x/>cd</title></window></probe>\n", error_code::unlocatable_key, no_place},
+                                refusal{"<probe><window><title><x/></title></window></probe>\n", error_code::unlocatable_key, no_place}};
+    for(const refusal &one : beside)
+    {
+        INFO(one.body);
+        const std::filesystem::path where    = written("leaf-with-child.xml", one.body);
+        const expected<document, error> read = load(described(), resolve(where, where.parent_path()));
+        const expected<void, error> saved    = save(described(), resolve(where, where.parent_path()), std::vector<edit>{edit{"window/title", "new"}});
+
+        REQUIRE_FALSE(read.has_value());
+        CHECK(read.error().code == error_code::malformed_source);
+        CHECK(read.error().message.find(finding) != std::string::npos);
+        REQUIRE_FALSE(saved.has_value());
+        CHECK(saved.error().code == one.saved);
+        CHECK(saved.error().message.find(one.says) != std::string::npos);
+        CHECK(text_of(where) == one.body);
+    }
+
+    const expected<document, error> identity  = loaded("identity-with-child.xml", "<probe><stations><station><name>a<x/></name></station></stations></probe>\n");
+    const expected<document, error> attribute = loaded("leaf-with-attribute.xml", "<probe><window><title lang=\"en\">abc</title></window></probe>\n");
+    REQUIRE_FALSE(identity.has_value());
+    CHECK(identity.error().code == error_code::malformed_source);
+    CHECK(identity.error().message.find("'stations/station[0]/name' carries the element 'x' where only its value can stand") != std::string::npos);
+    REQUIRE(attribute.has_value());
+    CHECK(attribute.value().text("window/title").value() == "abc");
+    CHECK(attribute.value().origin_of("window/title").kind == origin_kind::source);
+}
+
 TEST_CASE("an attribute written twice or a text beside attributes on a declared path refuses the document by name", "[config]")
 {
     const expected<document, error> repeated = loaded("repeated-attribute.xml", "<probe><window title=\"a\" title=\"b\"/></probe>\n");

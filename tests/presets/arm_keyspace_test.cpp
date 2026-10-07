@@ -10,6 +10,7 @@
 
 #include "praxis/rigid_motion/angles.h"
 
+#include "praxis/config/error.h"
 #include "praxis/config/store.h"
 #include "praxis/config/document.h"
 #include "praxis/config/declaration.h"
@@ -149,6 +150,18 @@ TEST_CASE("an arm document carrying a joint and an argument with no index opens 
     CHECK(stray.options.args == indexed.options.args);
     REQUIRE(stray.initial.size() == indexed.initial.size());
     CHECK(stray.initial == indexed.initial);
+}
+
+TEST_CASE("an arm document carrying a joint whose index is written empty is refused by name", "[presets][documents]")
+{
+    const config::outcome answered = loaded(scratch("empty-index"),
+                                            "<arm><initial><joint index=\"0\" degrees=\"10\"/><joint index=\"\" degrees=\"20\"/>"
+                                            "<joint index=\"2\" degrees=\"30\"/></initial></arm>\n");
+
+    REQUIRE(answered.failure.has_value());
+    CHECK(answered.failure->code == config::error_code::rejected_content);
+    CHECK(answered.failure->message.find("the instance 'initial/joint[1]' carries an empty 'index'") != std::string::npos);
+    CHECK(presets::read_arm(answered.values, {}).initial.size() == 0);
 }
 
 TEST_CASE("an arm's solutions window is read back out from under the path that window keeps it at", "[presets][documents]")
