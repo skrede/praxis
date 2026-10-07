@@ -18,7 +18,8 @@ namespace praxis::config {
 // One document read into keys, each instance keyed by its element position among its same-named
 // siblings: `entries` holds every value at a declared path; `instances` the key of every collection
 // instance element in document order, whether or not it carries a value; `undeclared` the key of
-// every value at a path nothing declares; `malformed` every fault in the document's structure.
+// every path nothing declares, however it is written; `malformed` every fault in the structure of the
+// document's declared paths.
 struct folding
 {
     detail::entry_map entries;

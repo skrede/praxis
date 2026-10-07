@@ -118,7 +118,32 @@ constexpr std::array same_but_undeclared_paths{
         same_but_undeclared{"instance", "<probe><stations><station colour=\"red\"/><station name=\"b\" width=\"4\"/></stations></probe>",
                             "<probe><stations><station/><station name=\"b\" width=\"4\"/></stations></probe>"},
         same_but_undeclared{"only", "<probe><extra/></probe>", "<probe/>"},
+        same_but_undeclared{"beside-text", "<probe><window><title lang=\"en\">abc</title></window></probe>", "<probe><window><title>abc</title></window></probe>"},
+        same_but_undeclared{"beside-nothing", "<probe><window><title colour=\"red\"/></window></probe>", "<probe><window><title/></window></probe>"},
+        same_but_undeclared{"mixed", "<probe><junk>note<x/></junk></probe>", "<probe/>"},
+        same_but_undeclared{"text-and-attribute", "<probe><junk a=\"1\">note</junk></probe>", "<probe/>"},
+        same_but_undeclared{"repeated-attribute", "<probe><junk a=\"1\" a=\"2\"/></probe>", "<probe/>"},
 };
+
+// `levels` elements nested one in the next under the root, at paths nothing declares.
+std::string nested_undeclared(std::size_t levels)
+{
+    std::string body = "<probe>";
+    for(std::size_t level = 0; level < levels; ++level)
+        body += "<j>";
+    for(std::size_t level = 0; level < levels; ++level)
+        body += "</j>";
+    return body + "</probe>";
+}
+
+// The path of the `level`-th of those elements.
+std::string nested_path(std::size_t level)
+{
+    std::string path = "j";
+    for(std::size_t below = 1; below < level; ++below)
+        path += "/j";
+    return path;
+}
 
 }
 
@@ -167,12 +192,29 @@ TEST_CASE("a document carrying undeclared paths answers every declared key as th
         INFO(one.name);
         const expected<document, error> carrying = load(described(), at(written(std::string(one.name) + "-carrying.xml", one.carrying)));
         const expected<document, error> without  = load(described(), at(written(std::string(one.name) + "-without.xml", one.without)));
+        INFO((carrying ? std::string() : carrying.error().message));
         REQUIRE(carrying.has_value());
         REQUIRE(without.has_value());
         CHECK(answers(carrying.value()) == answers(without.value()));
         if(std::string_view(one.name) == "instance")
             REQUIRE(carrying.value().key("stations/station", "b", "width").value() == "stations/station[1]/width");
     }
+}
+
+TEST_CASE("undeclared elements nested past the depth bound answer as the document without them, the deepest named being the 65th", "[config]")
+{
+    const std::filesystem::path where        = written("deep-carrying.xml", nested_undeclared(70));
+    const expected<document, error> carrying = load(described(), at(where));
+    const expected<document, error> without  = load(described(), at(written("deep-without.xml", "<probe/>")));
+    std::optional<outcome> answered;
+    const std::string said = tests::reported_by([&] { answered = load_or_defaults(described(), at(where), expectation::partial); });
+
+    INFO((carrying ? std::string() : carrying.error().message));
+    REQUIRE(carrying.has_value());
+    REQUIRE(without.has_value());
+    CHECK(answers(carrying.value()) == answers(without.value()));
+    CHECK(one_line_names(said, {"warn", "'" + nested_path(65) + "'"}));
+    CHECK(said.find(nested_path(66)) == std::string::npos);
 }
 
 TEST_CASE("a save into a document carrying an undeclared path writes its edit and leaves that path as it was", "[config]")

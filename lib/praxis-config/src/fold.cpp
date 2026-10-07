@@ -19,23 +19,28 @@ namespace {
 
 constexpr std::size_t deepest_element = 64;
 
-// `values` holds every path a value may stand at, which leaves out the collections themselves.
+// `values` holds every path a value may stand at, which leaves out the collections themselves;
+// `leaves` those of them no group stands at: the declared leaves and every collection's identity.
 struct walk
 {
     folding &out;
     std::set<std::string, std::less<>> collections;
     std::set<std::string, std::less<>> values;
+    std::set<std::string, std::less<>> leaves;
     std::map<std::string, std::size_t, std::less<>> ordinals;
 };
 
 walk walking(const declaration &shape, folding &out)
 {
-    walk state{out, {}, {}, {}};
+    walk state{out, {}, {}, {}, {}};
     for(const node &declared : shape.nodes())
     {
         if(declared.shape == node_kind::collection)
             state.collections.insert(declared.path);
-        state.values.insert(declared.shape == node_kind::collection ? declared.path + "/" + declared.identity : declared.path);
+        std::string value = declared.shape == node_kind::collection ? declared.path + "/" + declared.identity : declared.path;
+        if(declared.shape != node_kind::group)
+            state.leaves.insert(value);
+        state.values.insert(std::move(value));
     }
     return state;
 }
@@ -70,12 +75,17 @@ std::string joined(const std::string &path, std::string_view name)
     return path.empty() ? std::string(name) : path + "/" + std::string(name);
 }
 
+// A leaf or identity written twice is a fault; a group written again takes the later copy.
 void kept(walk &state, std::string key, std::string text)
 {
-    if(state.values.contains(declared_path(key)))
-        state.out.entries.insert_or_assign(std::move(key), std::move(text));
-    else
+    const std::string declared = declared_path(key);
+    if(!state.values.contains(declared))
         state.out.undeclared.push_back(std::move(key));
+    else if(!state.leaves.contains(declared))
+        state.out.entries.insert_or_assign(std::move(key), std::move(text));
+    else if(!state.out.entries.try_emplace(key, std::move(text)).second)
+        if(std::string finding = "'" + key + "' is written twice"; std::ranges::find(state.out.malformed, finding) == state.out.malformed.end())
+            state.out.malformed.push_back(std::move(finding));
 }
 
 std::optional<std::string> structural_fault(pugi::xml_node element, const std::string &where)
@@ -89,36 +99,69 @@ std::optional<std::string> structural_fault(pugi::xml_node element, const std::s
 // The attributes of the root element of a named space are not values.
 void walk_attributes(walk &state, pugi::xml_node element, const std::string &path)
 {
+    if(path.empty())
+        return;
     std::set<std::string_view> seen;
     for(const pugi::xml_attribute carried : element.attributes())
     {
-        if(!seen.insert(carried.name()).second)
-            state.out.malformed.push_back("'" + joined(path, carried.name()) + "' is written twice on one element");
-        else if(!path.empty())
-            kept(state, joined(path, carried.name()), carried.value());
+        std::string key = joined(path, carried.name());
+        if(seen.insert(carried.name()).second)
+            kept(state, std::move(key), carried.value());
+        else if(state.values.contains(declared_path(key)))
+            state.out.malformed.push_back("'" + key + "' is written twice on one element");
     }
+}
+
+void walk_undeclared(walk &state, pugi::xml_node element, const std::string &path, std::size_t depth);
+
+// The attributes and child elements of an element at `path`, none of them at a declared path.
+void undeclared_within(walk &state, pugi::xml_node element, const std::string &path, std::size_t depth)
+{
+    for(const pugi::xml_attribute carried : element.attributes())
+        state.out.undeclared.push_back(joined(path, carried.name()));
+    for(const pugi::xml_node child : element.children())
+        if(child.type() == pugi::node_element)
+            walk_undeclared(state, child, joined(path, child.name()), depth + 1);
+}
+
+// Content at a path nothing declares is named and never checked, and not descended into past the depth bound.
+void walk_undeclared(walk &state, pugi::xml_node element, const std::string &path, std::size_t depth)
+{
+    if(depth > deepest_element || carries_text(element) || (!element.first_attribute() && !carries_elements(element)))
+        state.out.undeclared.push_back(path);
+    if(depth <= deepest_element)
+        undeclared_within(state, element, path, depth);
 }
 
 void walk_element(walk &state, pugi::xml_node element, const std::string &path, std::size_t depth);
 
+void walk_child(walk &state, pugi::xml_node child, const std::string &path, std::size_t depth)
+{
+    const std::string declared = declared_path(path);
+    if(state.collections.contains(declared))
+    {
+        const std::string instance = path + "[" + std::to_string(state.ordinals[path]++) + "]";
+        state.out.instances.push_back(instance);
+        walk_element(state, child, instance, depth);
+    }
+    else if(state.leaves.contains(declared))
+    {
+        kept(state, path, text_of(child));
+        undeclared_within(state, child, path, depth);
+    }
+    else if(!state.values.contains(declared))
+        walk_undeclared(state, child, path, depth);
+    else if(!child.first_attribute() && !carries_elements(child))
+        kept(state, path, text_of(child));
+    else
+        walk_element(state, child, path, depth);
+}
+
 void walk_children(walk &state, pugi::xml_node element, const std::string &path, std::size_t depth)
 {
     for(const pugi::xml_node child : element.children())
-    {
-        if(child.type() != pugi::node_element)
-            continue;
-        const std::string child_path = joined(path, child.name());
-        if(state.collections.contains(declared_path(child_path)))
-        {
-            const std::string instance = child_path + "[" + std::to_string(state.ordinals[child_path]++) + "]";
-            state.out.instances.push_back(instance);
-            walk_element(state, child, instance, depth);
-        }
-        else if(!child.first_attribute() && !carries_elements(child))
-            kept(state, child_path, text_of(child));
-        else
-            walk_element(state, child, child_path, depth);
-    }
+        if(child.type() == pugi::node_element)
+            walk_child(state, child, joined(path, child.name()), depth);
 }
 
 void walk_element(walk &state, pugi::xml_node element, const std::string &path, std::size_t depth)

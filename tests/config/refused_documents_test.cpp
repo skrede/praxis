@@ -1,15 +1,18 @@
 #include "praxis/config/error.h"
 #include "praxis/config/store.h"
+#include "praxis/config/writer.h"
 #include "praxis/config/document.h"
 #include "praxis/config/declaration.h"
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <array>
 #include <regex>
 #include <string>
 #include <vector>
 #include <cstddef>
 #include <fstream>
+#include <iterator>
 #include <algorithm>
 #include <filesystem>
 #include <string_view>
@@ -41,6 +44,12 @@ std::filesystem::path written(const std::string &name, std::string_view body)
     std::ofstream out(where, std::ios::trunc | std::ios::binary);
     out << body;
     return where;
+}
+
+std::string text_of(const std::filesystem::path &where)
+{
+    std::ifstream in(where, std::ios::binary);
+    return std::string(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
 }
 
 expected<document, error> loaded(const std::string &name, std::string_view body)
@@ -146,4 +155,46 @@ TEST_CASE("the nearest allowed value is the one fewest weighted edits away, ties
     CHECK(times_named(substituted.error().message, "dial/grade", "'ab'") == 2);
     REQUIRE_FALSE(tie.has_value());
     CHECK(times_named(tie.error().message, "dial/grade", "'bx'") == 2);
+}
+
+TEST_CASE("a leaf written twice is malformed by name through load and save, and a group written twice is not", "[config]")
+{
+    constexpr std::array twice{std::string_view("<probe><window><title>one</title><title>two</title></window></probe>\n"),
+                               std::string_view("<probe><window title=\"attr\"><title>elem</title></window></probe>\n")};
+    for(const std::string_view body : twice)
+    {
+        INFO(body);
+        const std::filesystem::path where    = written("leaf-twice.xml", body);
+        const expected<document, error> read = load(described(), resolve(where, where.parent_path()));
+        const expected<void, error> saved    = save(described(), resolve(where, where.parent_path()), std::vector<edit>{edit{"window/title", "new"}});
+
+        REQUIRE_FALSE(read.has_value());
+        CHECK(read.error().code == error_code::malformed_source);
+        CHECK(read.error().message.find("'window/title' is written twice") != std::string::npos);
+        REQUIRE_FALSE(saved.has_value());
+        CHECK(saved.error().code == error_code::malformed_source);
+        CHECK(saved.error().message.find("'window/title' is written twice") != std::string::npos);
+        CHECK(text_of(where) == body);
+    }
+
+    const expected<document, error> group = loaded("group-twice.xml", "<probe><window title=\"a\"/><window width=\"3\"/></probe>\n");
+    const expected<document, error> empty = loaded("empty-then-full.xml", "<probe><window/><window title=\"b\"/></probe>\n");
+    REQUIRE(group.has_value());
+    CHECK(group.value().text("window/title").value() == "a");
+    CHECK(group.value().integer("window/width").value() == 3);
+    REQUIRE(empty.has_value());
+    CHECK(empty.value().text("window/title").value() == "b");
+}
+
+TEST_CASE("an attribute written twice or a text beside attributes on a declared path refuses the document by name", "[config]")
+{
+    const expected<document, error> repeated = loaded("repeated-attribute.xml", "<probe><window title=\"a\" title=\"b\"/></probe>\n");
+    const expected<document, error> mixed    = loaded("text-beside-attributes.xml", "<probe><window title=\"a\">text</window></probe>\n");
+
+    REQUIRE_FALSE(repeated.has_value());
+    CHECK(repeated.error().code == error_code::malformed_source);
+    CHECK(repeated.error().message.find("'window/title' is written twice on one element") != std::string::npos);
+    REQUIRE_FALSE(mixed.has_value());
+    CHECK(mixed.error().code == error_code::malformed_source);
+    CHECK(mixed.error().message.find("'window' carries the text 'text' beside attributes") != std::string::npos);
 }
