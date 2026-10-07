@@ -85,7 +85,7 @@ std::string answer_of(const Read &read)
 }
 
 // What `values` answers for every declared key, the file a value came from aside, and the identities
-// of the collection.
+// of the collection with the key each addresses.
 std::vector<std::string> answers(const document &values)
 {
     constexpr std::array keys{"window/title", "window/width", "stations/station[0]/name", "stations/station[0]/width", "stations/station[1]/width"};
@@ -97,7 +97,10 @@ std::vector<std::string> answers(const document &values)
                            (origin.layer.empty() ? " unlayered" : " layered") + " held " + std::to_string(values.holds(key)));
     }
     for(const std::string &identity : values.identities("stations/station"))
-        answered.push_back("identity " + identity);
+    {
+        const expected<std::string, error> addressed = values.key("stations/station", identity, "width");
+        answered.push_back("identity " + identity + " at " + (addressed ? addressed.value() : std::string(error_name(addressed.error().code))));
+    }
     return answered;
 }
 
@@ -167,6 +170,8 @@ TEST_CASE("a document carrying undeclared paths answers every declared key as th
         REQUIRE(carrying.has_value());
         REQUIRE(without.has_value());
         CHECK(answers(carrying.value()) == answers(without.value()));
+        if(std::string_view(one.name) == "instance")
+            REQUIRE(carrying.value().key("stations/station", "b", "width").value() == "stations/station[1]/width");
     }
 }
 

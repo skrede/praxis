@@ -9,7 +9,6 @@
 #include <vector>
 #include <cstddef>
 #include <utility>
-#include <iterator>
 #include <optional>
 #include <algorithm>
 #include <functional>
@@ -26,13 +25,12 @@ struct walk
     folding &out;
     std::set<std::string, std::less<>> collections;
     std::set<std::string, std::less<>> values;
-    std::vector<std::pair<std::string, std::string>> found;
     std::map<std::string, std::size_t, std::less<>> ordinals;
 };
 
 walk walking(const declaration &shape, folding &out)
 {
-    walk state{out, {}, {}, {}, {}};
+    walk state{out, {}, {}, {}};
     for(const node &declared : shape.nodes())
     {
         if(declared.shape == node_kind::collection)
@@ -75,7 +73,7 @@ std::string joined(const std::string &path, std::string_view name)
 void kept(walk &state, std::string key, std::string text)
 {
     if(state.values.contains(declared_path(key)))
-        state.found.emplace_back(std::move(key), std::move(text));
+        state.out.entries.insert_or_assign(std::move(key), std::move(text));
     else
         state.out.undeclared.push_back(std::move(key));
 }
@@ -111,7 +109,11 @@ void walk_children(walk &state, pugi::xml_node element, const std::string &path,
             continue;
         const std::string child_path = joined(path, child.name());
         if(state.collections.contains(declared_path(child_path)))
-            walk_element(state, child, child_path + "[" + std::to_string(state.ordinals[child_path]++) + "]", depth);
+        {
+            const std::string instance = child_path + "[" + std::to_string(state.ordinals[child_path]++) + "]";
+            state.out.instances.push_back(instance);
+            walk_element(state, child, instance, depth);
+        }
         else if(!child.first_attribute() && !carries_elements(child))
             kept(state, child_path, text_of(child));
         else
@@ -154,31 +156,6 @@ std::optional<std::string> beside_the_root(const pugi::xml_document &held)
     return std::nullopt;
 }
 
-// Only an instance's segment carries a bracket, so a key's first one names its outermost instance,
-// which is numbered over the instances that carry a value.
-detail::entry_map compacted(const std::vector<std::pair<std::string, std::string>> &found)
-{
-    std::map<std::string, std::set<std::size_t>, std::less<>> carrying;
-    for(const auto &[key, text] : found)
-        if(const std::size_t open = key.find('['); open != std::string::npos)
-            carrying[key.substr(0, open)].insert(std::stoul(key.substr(open + 1)));
-
-    detail::entry_map entries;
-    for(const auto &[key, text] : found)
-    {
-        const std::size_t open = key.find('[');
-        if(open == std::string::npos)
-            entries.insert_or_assign(key, text);
-        else
-        {
-            const std::set<std::size_t> &ordinals = carrying[key.substr(0, open)];
-            const std::ptrdiff_t rank             = std::distance(ordinals.begin(), ordinals.find(std::stoul(key.substr(open + 1))));
-            entries.insert_or_assign(key.substr(0, open + 1) + std::to_string(rank) + key.substr(key.find(']', open)), text);
-        }
-    }
-    return entries;
-}
-
 }
 
 expected<folding, error> folded(std::string_view source, const declaration &shape, const std::filesystem::path &from)
@@ -201,7 +178,6 @@ expected<folding, error> folded(std::string_view source, const declaration &shap
         walk_children(state, held, std::string(), 0);
     else
         walk_element(state, root, std::string(), 0);
-    walked.entries = compacted(state.found);
     return walked;
 }
 

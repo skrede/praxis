@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <utility>
 #include <optional>
+#include <algorithm>
 #include <filesystem>
 #include <string_view>
 
@@ -107,14 +108,17 @@ bool document::holds(std::string_view key) const
 
 std::vector<std::string> document::identities(std::string_view collection_path) const
 {
-    return m_held->identities_in(collection_path);
+    std::vector<std::string> identities;
+    for(std::optional<std::string> &slot : m_held->identities_in(collection_path))
+        identities.push_back(std::move(slot).value_or(std::string()));
+    return identities;
 }
 
 expected<std::string, error> document::key(std::string_view collection_path, std::string_view identity, std::string_view leaf) const
 {
-    const std::vector<std::string> present = identities(collection_path);
-    for(std::size_t ordinal = 0; ordinal < present.size(); ++ordinal)
-        if(present[ordinal] == identity)
+    const std::vector<std::optional<std::string>> slots = identity.empty() ? std::vector<std::optional<std::string>>() : m_held->identities_in(collection_path);
+    for(std::size_t ordinal = 0; ordinal < slots.size(); ++ordinal)
+        if(slots[ordinal] == identity)
             return std::string(collection_path) + "[" + std::to_string(ordinal) + "]/" + std::string(leaf);
 
     return unexpected(error{error_code::unlocatable_key, "the collection '" + std::string(collection_path) + "' carries no instance identified as '" + std::string(identity) + "'"});
@@ -138,7 +142,8 @@ value_origin document::origin_of(std::string_view key) const
         return value_origin{origin_kind::undeclared, std::string()};
 
     for(const std::pair<const std::string, std::string> &collection : m_held->keyed())
-        if(hangs_under(declared, collection.first) && !addressed_through(key, collection.first) && !identities(collection.first).empty())
+        if(hangs_under(declared, collection.first) && !addressed_through(key, collection.first) &&
+           std::ranges::any_of(m_held->identities_in(collection.first), [](const std::optional<std::string> &slot) { return slot.has_value(); }))
             return value_origin{origin_kind::instance_required, std::string()};
 
     return value_origin{origin_kind::fallback, std::string()};

@@ -54,7 +54,7 @@ struct crossed
 class held_document
 {
 public:
-    held_document(entry_map values, std::filesystem::path from, defaults_map fallbacks, identity_map identities);
+    held_document(entry_map values, std::vector<std::string> instances, std::filesystem::path from, defaults_map fallbacks, identity_map identities);
 
     std::optional<std::string_view> value_at(std::string_view key) const;
 
@@ -62,9 +62,10 @@ public:
 
     std::optional<crossed> crossing(std::string_view key) const;
 
-    // The identity values of the instances of the declared collection `collection_path` across every
-    // outer instance, in ordinal order; nothing for a path no collection is declared at.
-    std::vector<std::string> identities_in(std::string_view collection_path) const;
+    // One slot per instance element of the declared collection `collection_path` across every outer
+    // instance, in ordinal order, holding its identity value or nothing where it carries none; no
+    // slot at all for a path no collection is declared at.
+    std::vector<std::optional<std::string>> identities_in(std::string_view collection_path) const;
 
     const std::filesystem::path &from() const noexcept;
 
@@ -76,6 +77,7 @@ public:
 
 private:
     entry_map m_values;
+    std::vector<std::string> m_instances;
     std::filesystem::path m_from;
     defaults_map m_fallbacks;
     identity_map m_identities;

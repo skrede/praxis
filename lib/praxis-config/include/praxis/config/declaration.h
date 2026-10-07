@@ -47,7 +47,8 @@ public:
     declaration &group(std::string path);
 
     // The instances of `path` are keyed and merged by the leaf named `identity`, which every
-    // instance must carry and which must be distinct among them.
+    // instance carrying a declared value must carry and which must be distinct among them; an
+    // instance carrying none keeps its place.
     declaration &collection(std::string path, std::string identity);
 
     // A typed leaf whose fallback is its value wherever the document supplies none; the document's

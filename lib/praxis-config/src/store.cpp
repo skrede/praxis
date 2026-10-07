@@ -37,16 +37,16 @@ detail::identity_map identities_of(const declaration &shape)
     return keyed;
 }
 
-document held(const declaration &shape, detail::entry_map values, const std::filesystem::path &from)
+document held(const declaration &shape, detail::entry_map values, std::vector<std::string> instances, const std::filesystem::path &from)
 {
-    return document(std::make_shared<const detail::held_document>(std::move(values), from, fallbacks_of(shape), identities_of(shape)));
+    return document(std::make_shared<const detail::held_document>(std::move(values), std::move(instances), from, fallbacks_of(shape), identities_of(shape)));
 }
 
 // A document holding no value at all: every read lands on the fallback the declaration named, which
 // is what makes a refused file still answerable.
 document fallbacks_only(const declaration &shape, const std::filesystem::path &from)
 {
-    return held(shape, detail::entry_map(), from);
+    return held(shape, detail::entry_map(), {}, from);
 }
 
 // Everything the file's own state decides, before a byte of it is read.
@@ -98,7 +98,7 @@ expected<read_document, error> load_through(const declaration &shape, const loca
         return unexpected(walked.error());
     if(const std::optional<error> refused = refused_content(walked.value(), shape, at.resolved); refused)
         return unexpected(*refused);
-    return read_document{held(shape, std::move(walked.value().entries), at.resolved), left_out(walked.value(), shape)};
+    return read_document{held(shape, std::move(walked.value().entries), std::move(walked.value().instances), at.resolved), left_out(walked.value(), shape)};
 }
 
 }

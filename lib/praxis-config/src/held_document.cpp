@@ -52,8 +52,9 @@ std::vector<std::size_t> ordinals_of(std::string_view key)
 
 namespace detail {
 
-held_document::held_document(entry_map values, std::filesystem::path from, defaults_map fallbacks, identity_map identities)
+held_document::held_document(entry_map values, std::vector<std::string> instances, std::filesystem::path from, defaults_map fallbacks, identity_map identities)
         : m_values(std::move(values))
+        , m_instances(std::move(instances))
         , m_from(std::move(from))
         , m_fallbacks(std::move(fallbacks))
         , m_identities(std::move(identities))
@@ -95,22 +96,24 @@ std::optional<crossed> held_document::crossing(std::string_view key) const
     return crossed{leading_segments(std::string(key), *shallowest + 1), named.size()};
 }
 
-std::vector<std::string> held_document::identities_in(std::string_view collection_path) const
+std::vector<std::optional<std::string>> held_document::identities_in(std::string_view collection_path) const
 {
     const std::optional<std::string> keyed_by = identity_of(collection_path);
     if(!keyed_by)
         return {};
 
-    const std::string wanted = std::string(collection_path) + "/" + *keyed_by;
-    std::vector<std::pair<std::vector<std::size_t>, std::string>> found;
-    for(const std::pair<const std::string, std::string> &value : m_values)
-        if(declared_path(value.first) == wanted)
-            found.emplace_back(ordinals_of(value.first), value.second);
-    std::ranges::stable_sort(found, {}, &std::pair<std::vector<std::size_t>, std::string>::first);
+    std::vector<const std::string *> instances;
+    for(const std::string &instance : m_instances)
+        if(declared_path(instance) == collection_path)
+            instances.push_back(&instance);
+    std::ranges::stable_sort(instances, {}, [](const std::string *instance) { return ordinals_of(*instance); });
 
-    std::vector<std::string> identities;
-    for(std::pair<std::vector<std::size_t>, std::string> &one : found)
-        identities.push_back(std::move(one.second));
+    std::vector<std::optional<std::string>> identities;
+    for(const std::string *instance : instances)
+    {
+        const std::optional<std::string_view> identity = value_at(*instance + "/" + *keyed_by);
+        identities.push_back(identity ? std::optional<std::string>(*identity) : std::nullopt);
+    }
     return identities;
 }
 

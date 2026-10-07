@@ -179,10 +179,10 @@ TEST_CASE("a collection declared directly under the root reads its instances by 
     INFO(why(present_document));
     REQUIRE(present_document.has_value());
 
-    REQUIRE(present_document.value().identities("station") == std::vector<std::string>{"alpha", "beta"});
+    REQUIRE(present_document.value().identities("station") == std::vector<std::string>{"alpha", "", "beta"});
     const expected<std::string, error> addressed = present_document.value().key("station", "beta", "width");
     REQUIRE(addressed.has_value());
-    REQUIRE(addressed.value() == "station[1]/width");
+    REQUIRE(addressed.value() == "station[2]/width");
     REQUIRE(present_document.value().integer(addressed.value()).value() == 90);
 }
 
