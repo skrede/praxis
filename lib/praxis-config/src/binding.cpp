@@ -1,4 +1,4 @@
-#include "engine.h"
+#include "scalar.h"
 #include "read_back.h"
 
 #include "praxis/config/error.h"
@@ -16,6 +16,7 @@
 #include <span>
 #include <string>
 #include <vector>
+#include <cstdint>
 #include <optional>
 #include <algorithm>
 
@@ -23,7 +24,7 @@ namespace praxis::config {
 
 namespace {
 
-enum class drops
+enum class drops : std::uint8_t
 {
     reported,
     unreported

@@ -1,34 +1,18 @@
-#ifndef HPP_GUARD_PRAXIS_CONFIG_ENGINE_H
-#define HPP_GUARD_PRAXIS_CONFIG_ENGINE_H
+#ifndef HPP_GUARD_PRAXIS_CONFIG_HELD_DOCUMENT_H
+#define HPP_GUARD_PRAXIS_CONFIG_HELD_DOCUMENT_H
 
-#include "praxis/config/error.h"
 #include "praxis/config/declaration.h"
 
 #include <map>
 #include <string>
 #include <vector>
 #include <cstddef>
-#include <cstdint>
 #include <optional>
 #include <functional>
 #include <filesystem>
 #include <string_view>
 
-namespace praxis::config {
-
-std::optional<bool> as_flag(std::string_view text);
-
-std::optional<double> as_real(std::string_view text);
-
-// Whether `text` spells NaN or an infinity in any form std::strtod reads.
-bool non_finite(std::string_view text);
-
-std::optional<std::int64_t> as_integer(std::string_view text);
-
-// Every way `shape` fails to describe a keyspace, in one malformed-source refusal naming each path.
-std::optional<error> refused_as_declared(const declaration &shape);
-
-namespace detail {
+namespace praxis::config::detail {
 
 struct leaf_default
 {
@@ -83,7 +67,6 @@ private:
     identity_map m_identities;
 };
 
-}
 }
 
 #endif

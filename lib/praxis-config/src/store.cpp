@@ -1,13 +1,13 @@
 #include "fold.h"
 #include "check.h"
-#include "engine.h"
 #include "announce.h"
 #include "source_text.h"
+#include "held_document.h"
 
 #include "praxis/config/store.h"
 
-#include <string>
 #include <memory>
+#include <string>
 #include <vector>
 #include <cstdint>
 #include <fstream>

@@ -51,11 +51,6 @@ std::string why(const Outcome &outcome)
     return outcome.has_value() ? std::string() : outcome.error().message;
 }
 
-bool names(const error &refusal, std::string_view first, std::string_view second)
-{
-    return refusal.message.find(first) != std::string::npos && refusal.message.find(second) != std::string::npos;
-}
-
 constexpr std::string_view alpha_and_beta = "<probe>\n"
                                             "    <station name=\"alpha\" width=\"1\"/>\n"
                                             "    <station name=\"beta\" width=\"2\"/>\n"
@@ -70,7 +65,7 @@ TEST_CASE("two instances under the root sharing an identity are refused by name"
 
     REQUIRE_FALSE(loaded.has_value());
     REQUIRE(loaded.error().code == error_code::malformed_source);
-    REQUIRE(names(loaded.error(), "station", "name"));
+    REQUIRE(loaded.error().message.find("'station[1]/name' is 'a'") != std::string::npos);
 }
 
 TEST_CASE("an instance under the root carrying no identity is refused by name", "[config]")
@@ -80,7 +75,7 @@ TEST_CASE("an instance under the root carrying no identity is refused by name", 
 
     REQUIRE_FALSE(loaded.has_value());
     REQUIRE(loaded.error().code == error_code::rejected_content);
-    REQUIRE(names(loaded.error(), "station", "name"));
+    REQUIRE(loaded.error().message.find("the instance 'station[1]' carries no 'name'") != std::string::npos);
 }
 
 TEST_CASE("an instance a save names the identity of is created under the root and written into", "[config]")

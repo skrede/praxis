@@ -1,7 +1,7 @@
 #ifndef HPP_GUARD_PRAXIS_CONFIG_FOLD_H
 #define HPP_GUARD_PRAXIS_CONFIG_FOLD_H
 
-#include "engine.h"
+#include "held_document.h"
 
 #include "praxis/config/error.h"
 #include "praxis/config/declaration.h"

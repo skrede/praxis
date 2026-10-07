@@ -10,7 +10,7 @@ praxis_add_module(config
     include/praxis/config/configurable.h
     src/fold.h
     src/check.h
-    src/engine.h
+    src/scalar.h
     src/locator.h
     src/nearest.h
     src/removal.h
@@ -20,6 +20,7 @@ praxis_add_module(config
     src/read_back.h
     src/source_text.h
     src/readdressing.h
+    src/held_document.h
     src/error.cpp
     src/scalar.cpp
     src/space.cpp

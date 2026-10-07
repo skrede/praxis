@@ -14,6 +14,9 @@
 
 namespace praxis::config {
 
+// Every way `shape` fails to describe a keyspace, in one malformed-source refusal naming each path.
+std::optional<error> refused_as_declared(const declaration &shape);
+
 // Every finding that keeps `walked` from being used as a document of `shape`, in one refusal: a
 // malformed source where any finding is structural, rejected content otherwise, and nothing where
 // there is none. The refusal also names each undeclared path with its nearest declared path.

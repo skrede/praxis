@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <cstddef>
+#include <cstdint>
 #include <utility>
 #include <algorithm>
 #include <string_view>
@@ -14,7 +15,7 @@ namespace {
 constexpr std::size_t half_edit = 1;
 constexpr std::size_t edit      = 2;
 
-int class_of(char c)
+std::uint8_t class_of(char c)
 {
     if(c >= 'a' && c <= 'z')
         return 1;
