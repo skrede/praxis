@@ -37,7 +37,8 @@ std::vector<carried_row> read(const config::document &values, std::string_view a
 std::string joined(std::span<const std::string> numbers);
 
 // The document is taken because it carries no way to drop a row: a list shorter than the one already
-// there empties the rows it no longer reaches.
+// there empties the rows it no longer reaches, and a row carrying no index is passed over and keeps
+// its place.
 std::vector<config::edit> write(const config::document &values, std::span<const std::string> rows, std::string_view at, std::string_view leaf);
 
 }

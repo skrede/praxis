@@ -17,6 +17,7 @@
 #include <vector>
 #include <cstddef>
 #include <fstream>
+#include <iterator>
 #include <algorithm>
 #include <filesystem>
 #include <string_view>
@@ -135,6 +136,13 @@ std::vector<std::string> declared_by(void (*declaring)(config::declaration &, st
             keys.push_back(named.path);
 
     return keys;
+}
+
+std::string text_of(const std::string &name)
+{
+    std::ifstream in(scratch() / name, std::ios::binary);
+
+    return std::string(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
 }
 
 void stands_at(const joint_vector &read, const joint_vector &written)
@@ -267,6 +275,24 @@ TEST_CASE("a list saved shorter than the one already carried reads back at its n
     REQUIRE(read.seeds.size() == 2u);
     stands_at(read.seeds[0], start_at(0.25, -0.5));
     stands_at(read.seeds[1], start_at(-2.25, 3.0));
+}
+
+TEST_CASE("a list saved over a document carrying a start with no index writes past that start and leaves it as it was", "[manipulator][configuration]")
+{
+    const config::document carried = carrying("stray-start.xml",
+                                              "<ik_seeds><start index=\"1\" joints=\"-2.25 3\"/><start/>"
+                                              "<start index=\"2\" joints=\"0.25 -0.5\"/></ik_seeds>");
+    REQUIRE(read_ik_seeds(carried, seeds_at, joints).seeds.size() == 2u);
+
+    const ik_seed_window::settings starts = three_starts();
+    const config::document saved          = saved_and_reloaded(config::resolve(scratch() / "stray-start.xml", scratch()), write_ik_seeds(carried, starts, seeds_at));
+
+    CHECK(saved.identities("machine/ik_seeds/start") == std::vector<std::string>{"1", "", "2", "3"});
+    CHECK_THAT(text_of("stray-start.xml"), ContainsSubstring("<start/>"));
+    const ik_seed_window::settings read = read_ik_seeds(saved, seeds_at, joints);
+    REQUIRE(read.seeds.size() == starts.seeds.size());
+    for(std::size_t row = 0; row < read.seeds.size(); ++row)
+        stands_at(read.seeds[row], starts.seeds[row]);
 }
 
 TEST_CASE("a document declaring nothing yields the iterate table and its plot at the values their settings open at", "[manipulator][configuration]")

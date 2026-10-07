@@ -109,14 +109,20 @@ ik_seed_window::settings read_ik_seeds(const config::document &values, std::stri
 
 std::vector<config::edit> write_ik_seeds(const config::document &values, const ik_seed_window::settings &state, std::string_view at)
 {
-    const std::string rows    = keys::under(at, seed_names::start);
-    const std::size_t carried = values.identities(rows).size();
+    const std::string rows                 = keys::under(at, seed_names::start);
+    const std::vector<std::string> present = values.identities(rows);
+
+    std::vector<std::size_t> indexed;
+    for(std::size_t ordinal = 0; ordinal < present.size(); ++ordinal)
+        if(!present[ordinal].empty())
+            indexed.push_back(ordinal);
 
     std::vector<config::edit> changes;
-    for(std::size_t row = 0; row < std::max(carried, state.seeds.size()); ++row)
+    for(std::size_t row = 0; row < std::max(indexed.size(), state.seeds.size()); ++row)
     {
-        const std::string where = rows + "[" + std::to_string(row) + "]";
-        if(row >= carried)
+        const bool carried      = row < indexed.size();
+        const std::string where = rows + "[" + std::to_string(carried ? indexed[row] : present.size() + row - indexed.size()) + "]";
+        if(!carried)
             changes.push_back(config::edit{keys::under(where, seed_names::index), std::to_string(row + 1u)});
 
         changes.push_back(config::edit{keys::under(where, seed_names::joints), row < state.seeds.size() ? joined(state.seeds[row]) : std::string()});

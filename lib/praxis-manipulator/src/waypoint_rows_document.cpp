@@ -82,14 +82,20 @@ std::string joined(std::span<const std::string> numbers)
 
 std::vector<config::edit> write(const config::document &values, std::span<const std::string> rows, std::string_view at, std::string_view leaf)
 {
-    const std::string held    = keys::under(at, leaf_names::row);
-    const std::size_t carried = values.identities(held).size();
+    const std::string held                 = keys::under(at, leaf_names::row);
+    const std::vector<std::string> present = values.identities(held);
+
+    std::vector<std::size_t> indexed;
+    for(std::size_t ordinal = 0; ordinal < present.size(); ++ordinal)
+        if(!present[ordinal].empty())
+            indexed.push_back(ordinal);
 
     std::vector<config::edit> changes;
-    for(std::size_t row = 0; row < std::max(carried, rows.size()); ++row)
+    for(std::size_t row = 0; row < std::max(indexed.size(), rows.size()); ++row)
     {
-        const std::string where = held + "[" + std::to_string(row) + "]";
-        if(row >= carried)
+        const bool carried      = row < indexed.size();
+        const std::string where = held + "[" + std::to_string(carried ? indexed[row] : present.size() + row - indexed.size()) + "]";
+        if(!carried)
             changes.push_back(config::edit{keys::under(where, leaf_names::index), std::to_string(row + 1u)});
 
         changes.push_back(config::edit{keys::under(where, leaf), row < rows.size() ? rows[row] : std::string()});

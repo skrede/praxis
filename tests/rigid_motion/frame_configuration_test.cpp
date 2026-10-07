@@ -16,6 +16,7 @@
 #include <vector>
 #include <cstddef>
 #include <fstream>
+#include <iterator>
 #include <optional>
 #include <filesystem>
 #include <string_view>
@@ -159,6 +160,36 @@ TEST_CASE("a placement for an object the document carries no instance for is wri
     REQUIRE(named[0] == "upper");
     REQUIRE(named[1] == "base");
     REQUIRE(named[2] == "tip");
+}
+
+TEST_CASE("a placement saved beside an object carrying no name lands in its own instance and leaves that object as it was", "[rigid_motion][configuration]")
+{
+    const std::filesystem::path where = authored("stray-object.xml", "<object/>" + placed("upper", ""));
+
+    frame_window::settings written;
+    written.objects.push_back(made(axis_order::xyz, {0.5f, 1.5f, -2.5f}, {10.f, -20.f, 30.f}, std::nullopt));
+    written.objects.push_back(made(axis_order::yzy, {4.f, 5.f, 6.f}, {1.f, 2.f, 3.f}, std::size_t{0}));
+    written.objects.push_back(made(axis_order::zxz, {-7.f, 8.f, 9.5f}, {-45.f, 0.25f, 90.f}, std::size_t{1}));
+
+    const std::vector<config::edit> changes   = write_arrangement(loaded(where), frame_window::settings(), written, at, objects());
+    const expected<void, config::error> saved = config::save(described(), config::resolve(where, scratch()), changes);
+    INFO((saved ? std::string() : saved.error().message));
+    REQUIRE(saved.has_value());
+
+    const expected<frame_window::settings, config::error> read = read_back(where);
+    INFO((read ? std::string() : read.error().message));
+    REQUIRE(read.has_value());
+    REQUIRE(read.value().objects.size() == written.objects.size());
+    for(std::size_t which = 0u; which < written.objects.size(); ++which)
+    {
+        INFO(objects()[which]);
+        require_same(read.value().objects[which], written.objects[which]);
+    }
+
+    std::ifstream in(where, std::ios::binary);
+    const std::string text((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    CHECK(text.find("<arrangement><object/>") != std::string::npos);
+    CHECK(loaded(where).identities(std::string(at) + "/object") == std::vector<std::string>{"", "upper", "base", "tip"});
 }
 
 TEST_CASE("a save writes only the leaf a placement moved on, and what it leaves out still comes from the caller", "[rigid_motion][configuration]")

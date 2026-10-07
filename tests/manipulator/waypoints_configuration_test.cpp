@@ -21,6 +21,7 @@
 #include <vector>
 #include <cstddef>
 #include <fstream>
+#include <iterator>
 #include <algorithm>
 #include <filesystem>
 #include <string_view>
@@ -164,6 +165,23 @@ void stands_at(const edited_pose &read, const edited_pose &written)
 {
     CHECK(read.position == written.position);
     CHECK(read.euler_degrees == written.euler_degrees);
+}
+
+std::string text_of(const std::string &name)
+{
+    std::ifstream in(scratch() / name, std::ios::binary);
+
+    return std::string(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
+}
+
+config::document saved_beside_stray(const std::string &name, const std::vector<config::edit> &changes, std::string_view at)
+{
+    const config::document carried = saved_and_reloaded(config::resolve(scratch() / name, scratch()), changes);
+
+    CHECK(carried.identities(std::string(at) + "/waypoint") == std::vector<std::string>{"1", "", "2", "3"});
+    CHECK_THAT(text_of(name), ContainsSubstring("<waypoint/>"));
+
+    return carried;
 }
 
 std::shared_ptr<arm_publisher> published_arm()
@@ -349,4 +367,38 @@ TEST_CASE("a pose list whose document already reads as its rows offers no edit a
     const pose_waypoint_list panel("Poses", published->reader(), frames_of, read_pose_waypoints(carried, poses_at), std::string(poses_at));
 
     CHECK(panel.settings_edits(carried).empty());
+}
+
+// A row carrying no index keeps its place, so a list saved over it fills the rows that carry one and
+// appends after the last element.
+TEST_CASE("a list saved over a document carrying a row with no index writes past that row and leaves it as it was", "[manipulator][waypoints]")
+{
+    const config::document carried = carrying("stray-row.xml",
+                                              "<joint_waypoints><waypoint index=\"1\" joints=\"0.25 -0.5\"/><waypoint/>"
+                                              "<waypoint index=\"2\" joints=\"1.5 0.125\"/></joint_waypoints>");
+    REQUIRE(read_joint_waypoints(carried, configurations_at, joints).rows.size() == 2u);
+
+    const joint_waypoint_list::settings written{{row_at(-2.25, 3.0), row_at(0.25, -0.5), row_at(1.5, 0.125)}};
+    const config::document saved = saved_beside_stray("stray-row.xml", write_joint_waypoints(carried, written, configurations_at), configurations_at);
+
+    const joint_waypoint_list::settings read = read_joint_waypoints(saved, configurations_at, joints);
+    REQUIRE(read.rows.size() == written.rows.size());
+    for(std::size_t row = 0; row < read.rows.size(); ++row)
+        stands_at(read.rows[row], written.rows[row]);
+}
+
+TEST_CASE("a pose list saved over a document carrying a row with no index writes past that row and leaves it as it was", "[manipulator][waypoints]")
+{
+    const config::document carried = carrying("stray-pose.xml",
+                                              "<pose_waypoints><waypoint index=\"1\" pose=\"-0.5 0.25 -0.5 30 90 -180\"/><waypoint/>"
+                                              "<waypoint index=\"2\" pose=\"0.125 0.25 -0.5 10 90 -180\"/></pose_waypoints>");
+    REQUIRE(read_pose_waypoints(carried, poses_at).rows.size() == 2u);
+
+    const pose_waypoint_list::settings written = three_poses();
+    const config::document saved               = saved_beside_stray("stray-pose.xml", write_pose_waypoints(carried, written, poses_at), poses_at);
+
+    const pose_waypoint_list::settings read = read_pose_waypoints(saved, poses_at);
+    REQUIRE(read.rows.size() == written.rows.size());
+    for(std::size_t row = 0; row < read.rows.size(); ++row)
+        stands_at(read.rows[row], written.rows[row]);
 }

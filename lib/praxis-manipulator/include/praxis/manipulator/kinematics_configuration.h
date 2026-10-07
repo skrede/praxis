@@ -25,7 +25,8 @@ namespace praxis::manipulator {
 // carries its joint values in radians. A row whose width is not `joints` is declined by name and
 // the rows beside it are still read. The write takes the document because a document carries no
 // way to drop a row: a list shorter than the one already there empties the rows it no longer
-// reaches, and a row carrying no value is read as one that is not there.
+// reaches, a row carrying no value is read as one that is not there, and a start carrying no index
+// is passed over and keeps its place.
 void declare_ik_seeds(config::declaration &shape, std::string_view at);
 ik_seed_window::settings read_ik_seeds(const config::document &values, std::string_view at, std::size_t joints);
 std::vector<config::edit> write_ik_seeds(const config::document &values, const ik_seed_window::settings &state, std::string_view at);
