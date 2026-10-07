@@ -134,6 +134,16 @@ bool written_flag(const config::document &values, const char *key)
     return *read;
 }
 
+std::string written_text(const config::document &values, const char *key)
+{
+    INFO(key);
+    const expected<std::string, config::error> read = values.text(key);
+    REQUIRE(read.has_value());
+    CHECK(values.origin_of(key).kind == config::origin_kind::source);
+
+    return *read;
+}
+
 double written_real(const config::document &values, const char *key)
 {
     INFO(key);
@@ -176,6 +186,22 @@ void loaded_and_offset(const std::shared_ptr<scene::preset> &composed, const std
     fixture::type_at(panel, 1u, model.string().c_str());
     fixture::press_at(panel, 2u);
     fixture::type_at(panel, 4u, "0.45");
+}
+
+// A held tool puts the activation switch above the view choice, the file field and the button.
+void load_beside_held(scene::imgui_window &panel, const std::string &typed)
+{
+    fixture::stands_on(panel, "STL file");
+    fixture::type_at(panel, 2u, typed.c_str());
+    fixture::press_at(panel, 3u);
+}
+
+bool carries_tool(const scene::preset &composed)
+{
+    const auto drawn = std::dynamic_pointer_cast<manipulator::loadable_robot_stencil>(composed.stencil);
+    REQUIRE(drawn != nullptr);
+
+    return drawn->attached_at(manipulator::flange_attachment::tool) != nullptr;
 }
 
 bool axes_drawn(fixture::opened_arm &stage, const scene::preset &composed)
@@ -236,10 +262,33 @@ TEST_CASE("a tool loaded and offset beside a kept chain is the tool the scenario
     fixture::opened_arm second;
     const std::shared_ptr<scene::preset> again = arm.composed(second);
     holds_tool(*tool_of(again), model.where);
+    CHECK(carries_tool(*again));
+}
 
-    const auto drawn = std::dynamic_pointer_cast<manipulator::loadable_robot_stencil>(again->stencil);
-    REQUIRE(drawn != nullptr);
-    CHECK(drawn->attached_at(manipulator::flange_attachment::tool) != nullptr);
+TEST_CASE("a tool Load that fails beside a supplied chain saves no tool active and the path that failed, and the scenario opens again holding no tool", "[presets][registry]")
+{
+    const fixture::described_arm described(6, "six");
+    const fixture::written_model model("praxis_failed_load_tool.stl", 0.1f);
+    const std::filesystem::path directory = scratch("failed_load");
+    const std::string absent              = (directory / "absent.stl").string();
+    registered_arm arm(arm_at(directory, chain_and_tool, "<tool active=\"true\" model=\"" + model.where.string() + "\"/>"), described);
+
+    fixture::opened_arm first;
+    const std::shared_ptr<scene::preset> composed = arm.composed(first);
+    REQUIRE(carries_tool(*composed));
+    REQUIRE(tool_of(composed)->state().active);
+    load_beside_held(*tool_of(composed), absent);
+    CHECK_FALSE(carries_tool(*composed));
+    saved(arm, *composed);
+    CHECK_FALSE(written_flag(reread(arm), "tool/active"));
+    CHECK(written_text(reread(arm), "tool/model") == absent);
+
+    fixture::opened_arm second;
+    const std::shared_ptr<scene::preset> again = arm.composed(second);
+    CHECK_FALSE(carries_tool(*again));
+    CHECK_FALSE(tool_of(again)->state().active);
+    CHECK(tool_of(again)->state().model_path == absent);
+    CHECK_FALSE(anything_unsaved(arm, *again));
 }
 
 TEST_CASE("the description flange frame switch beside a chain kept nowhere is saved into the arm document and opens again", "[presets][registry]")

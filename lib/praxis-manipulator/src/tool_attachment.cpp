@@ -97,6 +97,8 @@ void tool_window::activate_default_tool()
 
 bool tool_window::load_stl()
 {
+    activate_default_tool();
+    m_tool.reset();
     const std::optional<std::filesystem::path> file = located_model(m_model_path, m_roots);
     if(!file)
         return false;

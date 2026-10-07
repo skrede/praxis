@@ -2,6 +2,7 @@
 #include "window_stage.h"
 
 #include "imgui_frame.h"
+#include "panel_labels.h"
 
 #include "../presets/scratch_directory.h"
 
@@ -158,6 +159,46 @@ TEST_CASE("a tool window whose typed model no search root holds says so on its l
 
     REQUIRE(bare.shown->attached_at(flange_attachment::tool) == nullptr);
     CHECK(panel.state().model_path == "models/absent.stl");
+    CHECK(geometry_of([&panel] { panel.render(); }) == stating_unheld("models/absent.stl"));
+}
+
+TEST_CASE("a tool window whose Load fails after a model was loaded takes that model off the flange and offers no Active switch", "[manipulator][tool]")
+{
+    const std::filesystem::path root = scratch_root("replaced_tool_root");
+    written_model(root / "models" / "typed.stl");
+
+    scheduler loop(inline_workers);
+    staged bare = compose(loop);
+    tool_window panel("Tool settings", *bare.shown, bare.published->reader(), std::weak_ptr<owned_arm>(), reference, tool_window::settings{}, std::string(), {root});
+    panel.initialize();
+    type_and_load(panel, 1u, "models/typed.stl");
+    REQUIRE(bare.shown->attached_at(flange_attachment::tool) != nullptr);
+    REQUIRE(panel.state().active);
+
+    {
+        imgui_frame frames;
+        frames.assert_on_frame_faults(true);
+        take_entry_on(frames, [&panel] { panel.render(); }, "Tool settings", "Tool view", 2u);
+    }
+    type_and_load(panel, 2u, "models/absent.stl");
+
+    CHECK(bare.shown->attached_at(flange_attachment::tool) == nullptr);
+    CHECK_FALSE(panel.state().active);
+    CHECK(panel.state().model_path == "models/absent.stl");
+    CHECK(geometry_of([&panel] { panel.render(); }) == stating_unheld("models/absent.stl"));
+}
+
+TEST_CASE("a tool window opened at a model no search root holds reports that on its loader pane and holds nothing at the flange", "[manipulator][tool]")
+{
+    const std::filesystem::path root = scratch_root("opened_absent_tool_root");
+
+    scheduler loop(inline_workers);
+    staged bare = compose(loop);
+    tool_window panel("Tool settings", *bare.shown, bare.published->reader(), std::weak_ptr<owned_arm>(), reference, tool_window::settings{false, "models/absent.stl"}, std::string(),
+                      {root});
+    panel.initialize();
+
+    CHECK(bare.shown->attached_at(flange_attachment::tool) == nullptr);
     CHECK(geometry_of([&panel] { panel.render(); }) == stating_unheld("models/absent.stl"));
 }
 
