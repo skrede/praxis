@@ -96,7 +96,7 @@ double opening_axis_reach(threepp::Object3D *arm)
 // placement, so naming a point further along the same axis leaves the drawn line where it was.
 std::shared_ptr<threepp::Material> axis_material(bool told)
 {
-    return threepp::LineBasicMaterial::create({{"color", told ? threepp::Color(selected_joint_tone) : threepp::Color(axis_tone)}});
+    return threepp::LineBasicMaterial::create({{"color", told ? threepp::Color(selected_axis_tone) : threepp::Color(axis_tone)}});
 }
 
 std::shared_ptr<threepp::Object3D> joint_axis_object(std::string name, double reach, std::shared_ptr<threepp::Material> tone)

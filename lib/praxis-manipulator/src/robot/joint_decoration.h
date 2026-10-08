@@ -21,9 +21,10 @@
 
 namespace praxis::manipulator {
 
-// The tone worn by the joint the drawing is about, an sRGB hex, on its axis line, on its mark and on
-// the segment leading to it. One hue serves all three because it is one joint being told apart, so it
-// is stated here rather than in either drawing's own file.
+// The tones worn by the joint the drawing is about, as sRGB hex: one on its axis line, the other on
+// its mark and on the segment leading to it. Both drawings tell the same joint apart, so the pair is
+// stated here rather than in either drawing's own file.
+inline constexpr std::uint32_t selected_axis_tone  = 0xb01b81;
 inline constexpr std::uint32_t selected_joint_tone = 0x3e628a;
 
 // Hands a drawn item a material it already has geometry for. An item the renderer draws with no

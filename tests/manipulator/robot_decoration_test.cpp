@@ -638,7 +638,8 @@ TEST_CASE("a stencil nobody has told a selection draws every joint's point, segm
         CHECK(headless.mark_tone(joint).equals(chain));
 }
 
-TEST_CASE("a stencil told a joint draws that joint's point, the segment leading to it and its axis in a third tone and leaves every other item alone", "[manipulator][decoration]")
+TEST_CASE("a stencil told a joint draws that joint's point and the segment leading to it in one tone and its axis in another, and leaves every other item alone",
+          "[manipulator][decoration]")
 {
     stage headless(configuration(0.0, 0.0));
     REQUIRE(headless.shown.set_joint_screws(praxis::transform::Identity(), two_axes()).has_value());
@@ -650,12 +651,12 @@ TEST_CASE("a stencil told a joint draws that joint's point, the segment leading 
     REQUIRE(headless.shown.set_selected_joint(0u).has_value());
     headless.draw();
 
-    const threepp::Color told = headless.axis_tone(0);
+    const threepp::Color told = headless.segment_tone(0);
 
+    CHECK(headless.axis_tone(0).getHex(threepp::SRGBColorSpace) == 0xb01b81u);
     CHECK(told.getHex(threepp::SRGBColorSpace) == 0x3e628au);
-    CHECK_FALSE(told.equals(axes));
+    CHECK_FALSE(headless.axis_tone(0).equals(axes));
     CHECK_FALSE(told.equals(chain));
-    CHECK(headless.segment_tone(0).equals(told));
     CHECK(headless.mark_tone(0).equals(told));
 
     CHECK(headless.axis_tone(1).equals(axes));
@@ -672,6 +673,7 @@ TEST_CASE("told a different joint the third tone moves with it and nothing is le
     headless.draw();
 
     const threepp::Color told  = headless.axis_tone(0);
+    const threepp::Color drawn = headless.segment_tone(0);
     const threepp::Color axes  = headless.axis_tone(1);
     const threepp::Color chain = headless.segment_tone(1);
 
@@ -679,8 +681,8 @@ TEST_CASE("told a different joint the third tone moves with it and nothing is le
     headless.draw();
 
     CHECK(headless.axis_tone(1).equals(told));
-    CHECK(headless.segment_tone(1).equals(told));
-    CHECK(headless.mark_tone(1).equals(told));
+    CHECK(headless.segment_tone(1).equals(drawn));
+    CHECK(headless.mark_tone(1).equals(drawn));
 
     CHECK(headless.axis_tone(0).equals(axes));
     CHECK(headless.segment_tone(0).equals(chain));
@@ -780,6 +782,7 @@ TEST_CASE("a selection told before a new set of screws is in force against the d
     headless.draw();
 
     const threepp::Color told  = headless.axis_tone(1);
+    const threepp::Color drawn = headless.segment_tone(1);
     const threepp::Color axes  = headless.axis_tone(0);
     const threepp::Color chain = headless.segment_tone(0);
 
@@ -787,8 +790,8 @@ TEST_CASE("a selection told before a new set of screws is in force against the d
     headless.draw();
 
     CHECK(headless.axis_tone(1).equals(told));
-    CHECK(headless.segment_tone(1).equals(told));
-    CHECK(headless.mark_tone(1).equals(told));
+    CHECK(headless.segment_tone(1).equals(drawn));
+    CHECK(headless.mark_tone(1).equals(drawn));
     CHECK(headless.axis_tone(0).equals(axes));
     CHECK(headless.segment_tone(0).equals(chain));
 }
