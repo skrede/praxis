@@ -21,10 +21,15 @@ screw_axis supplied_or_opening(const rigid_motion::screw_ops &turning, const scr
     return held ? *held : screw_modeling_window::opening_screw(turning, derived);
 }
 
-std::vector<screw_axis> as_drawn(const screw_chain &derived, const rigid_motion::screw_ops &turning, std::span<const supplied_screw> supplied)
+std::size_t drawn_count(const screw_chain &derived, std::size_t supplied, std::size_t rendered)
+{
+    return derived.joint_count() != rendered ? derived.joint_count() : std::max(rendered, supplied);
+}
+
+std::vector<screw_axis> as_drawn(const screw_chain &derived, const rigid_motion::screw_ops &turning, std::span<const supplied_screw> supplied, std::size_t rendered)
 {
     const screw_axis no_turn = screw_axis::Zero();
-    const std::size_t named  = std::max(derived.joint_count(), supplied.size());
+    const std::size_t named  = drawn_count(derived, supplied.size(), rendered);
 
     std::vector<screw_axis> drawn;
     drawn.reserve(named);

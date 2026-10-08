@@ -28,6 +28,7 @@
 #include "praxis/rigid_motion/capabilities.h"
 #include "praxis/rigid_motion/baseline/screw.h"
 
+#include <catch2/generators/catch_generators.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 
@@ -1307,6 +1308,74 @@ TEST_CASE("a chain supplied more screws than the arm has keeps them all and repo
     REQUIRE(panel.state().screws.size() == axes + 2u);
     CHECK(panel.state().screws.back().has_value());
     CHECK(said.empty());
+}
+
+TEST_CASE("a derived chain one joint short of the arm is withheld at its own count and reported over a table as long as the arm or longer", "[manipulator][modeling]")
+{
+    const std::size_t named = GENERATE(axes, axes + 1u);
+    screw_chain one_short   = described_chain();
+    one_short.space_screws.pop_back();
+    stage headless(one_short, at_rest());
+    headless.hang_frame_markers();
+    std::vector<screw_axis> table = described_chain().space_screws;
+    table.resize(named, unit_z_axis());
+    screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{headless.chain.home, table});
+
+    const std::string said = reported_by([&panel] { panel.initialize(); });
+    headless.settle();
+
+    CHECK_THAT(said, Catch::Matchers::ContainsSubstring("holds 5 screws"));
+    CHECK(headless.parts_of_the_chain_drawn() == 0u);
+    CHECK_FALSE(headless.shown.selected_joint().has_value());
+    const withheld_chain withheld = headless.withheld();
+    CHECK(withheld.cause == withheld_cause::joint_count);
+    CHECK(withheld.reason == "The supplied chain is not folded: it holds 5 screws and the arm has 6 joints.");
+}
+
+TEST_CASE("a derived chain one joint short of the arm hands the forward map no screw list of another length than its joint vector", "[manipulator][modeling]")
+{
+    const std::size_t named = GENERATE(std::size_t{0u}, axes);
+    screw_chain one_short   = described_chain();
+    one_short.space_screws.pop_back();
+    stage headless(one_short, folded());
+    const forward_kinematics_ops paired{.forward_kinematics = &paired_forward_kinematics};
+    std::vector<screw_axis> table = described_chain().space_screws;
+    table.resize(named);
+
+    const screw_modeling_window panel(panel_title, headless.shown, headless.published->reader(), turning(), framing(), paired, headless.chain, only_the_rows(),
+                                      opening{headless.chain.home, table}, writer(), route());
+    const scene::readout shown = panel.reading();
+
+    CHECK(shown.message.empty());
+    REQUIRE(shown.rows.size() > whole_chain_rows);
+    for(std::size_t row = 0u; row < whole_chain_rows; ++row)
+        CHECK(shown.rows[row].front().stated == "the supplied chain has no pose here");
+}
+
+TEST_CASE("a reset from a table naming more joints than the arm has draws the chain again and tells the drawing a joint", "[manipulator][modeling]")
+{
+    stage headless(described_chain(), at_rest());
+    headless.hang_frame_markers();
+    screw_modeling_window::controls reset_only;
+    reset_only.home                  = false;
+    std::vector<screw_axis> too_many = headless.chain.space_screws;
+    too_many.push_back(unit_z_axis());
+    screw_modeling_window panel = opened_over(headless, reset_only, opening{headless.chain.home, too_many});
+    panel.initialize();
+    headless.settle();
+    REQUIRE(headless.parts_of_the_chain_drawn() == 0u);
+
+    press_along(panel, reset_control, 0u);
+    headless.settle();
+
+    CHECK(headless.parts_of_the_chain_drawn() == 1u + axes + 2u);
+    CHECK(headless.shown.supplied_chain_end(*headless.published->reader().read()).has_value());
+    CHECK(panel.state().screws.size() == axes);
+    CHECK(headless.told_joint() == std::optional<std::size_t>(0u));
+
+    select_joint(panel, below_reset + joint_selector, axes - 1u);
+    headless.draw();
+    CHECK(headless.told_joint() == std::optional<std::size_t>(axes - 1u));
 }
 
 TEST_CASE("every row of a freshly opened window shows the point the screw it holds carries", "[manipulator][modeling]")

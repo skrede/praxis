@@ -15,6 +15,7 @@
 
 #include <Eigen/Core>
 
+#include <span>
 #include <array>
 #include <memory>
 #include <vector>
@@ -171,12 +172,13 @@ scene::readout screw_modeling_window::reading() const
     if(!share)
         return scene::readout{"The arm has published nothing yet.", {}};
 
-    const std::vector<screw_axis> drawn = as_drawn(m_derived, m_screw, m_supplied);
+    const std::size_t joints            = static_cast<std::size_t>(share->joints.size());
+    const std::vector<screw_axis> drawn = as_drawn(m_derived, m_screw, m_supplied, joints);
     const screw_chain_difference apart  = supplied_chain_difference(m_derived, m_home, m_supplied);
-    const bool one_screw_per_joint      = drawn.size() == m_derived.joint_count();
-    const expected<transform, refusal> supplied =
-            one_screw_per_joint ? m_kinematics.forward_kinematics(m_screw, m_home, drawn, share->joints) : expected<transform, refusal>(unexpected(refusal::unsupported_input));
-    const expected<transform, refusal> described = m_kinematics.forward_kinematics(m_screw, m_derived.home, m_derived.space_screws, share->joints);
+    const auto posed                    = [&](const transform &home, std::span<const screw_axis> screws)
+    { return screws.size() == joints ? m_kinematics.forward_kinematics(m_screw, home, screws, share->joints) : expected<transform, refusal>(unexpected(refusal::unsupported_input)); };
+    const expected<transform, refusal> supplied  = posed(m_home, drawn);
+    const expected<transform, refusal> described = posed(m_derived.home, m_derived.space_screws);
     if(!supplied || !described)
         return screw_modeling_reading(apart, whole_chain_without_pose(supplied ? described_without_pose : supplied_without_pose));
 
