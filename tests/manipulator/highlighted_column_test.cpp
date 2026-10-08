@@ -72,7 +72,7 @@ ImU32 as_written(threepp::Object3D *arrow)
     return IM_COL32((worn >> 16) & 0xffu, (worn >> 8) & 0xffu, worn & 0xffu, 0xff);
 }
 
-// No cell of the reading carries a text tone, whatever it is filled with.
+// A filled cell's text is black; an unfilled cell carries no tone.
 fill_grid fills_carried(const scene::readout &shown)
 {
     fill_grid carried;
@@ -81,7 +81,10 @@ fill_grid fills_carried(const scene::readout &shown)
         std::vector<std::optional<ImU32>> &fills = carried.emplace_back();
         for(const scene::labeled_value &cell : row)
         {
-            CHECK_FALSE(cell.tone.has_value());
+            if(cell.fill)
+                CHECK(cell.tone == IM_COL32_BLACK);
+            else
+                CHECK_FALSE(cell.tone.has_value());
             fills.push_back(cell.fill);
         }
     }

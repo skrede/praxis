@@ -24,8 +24,8 @@ namespace {
 // sRGB hex, as threepp::Color reads a hex.
 constexpr std::uint32_t angular_part_tone             = 0xb01b81;
 constexpr std::uint32_t linear_part_tone              = 0x7f619c;
-constexpr std::uint32_t highlighted_angular_part_tone = 0x75225e;
-constexpr std::uint32_t highlighted_linear_part_tone  = 0x482776;
+constexpr std::uint32_t highlighted_angular_part_tone = 0x6096d0;
+constexpr std::uint32_t highlighted_linear_part_tone  = 0x97d2d4;
 
 std::size_t block_of(jacobian_block which)
 {

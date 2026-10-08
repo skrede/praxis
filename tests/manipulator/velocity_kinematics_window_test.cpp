@@ -438,7 +438,7 @@ TEST_CASE("a panel offering the part switches names each part in the tone that p
 }
 
 // Beside a highlighted column the key keeps the plain tones, while that column's cells are filled in the highlighted ones.
-TEST_CASE("a panel opened at a joint names each part in its plain tone and fills that joint's column in its highlighted tone", "[manipulator][window]")
+TEST_CASE("a panel opened at a joint names each part in its plain tone and fills that joint's column in its highlighted tone behind black text", "[manipulator][window]")
 {
     velocity_stage headless;
     headless.put(reading_of(Eigen::Vector3d(1.0, 0.5, 0.25)));
@@ -457,6 +457,7 @@ TEST_CASE("a panel opened at a joint names each part in its plain tone and fills
         CHECK(carries(seen, plain));
         CHECK(carries(seen, highlighted));
     }
+    CHECK(carries(seen, IM_COL32_BLACK));
 }
 
 // The key stands with the switch it belongs to, so a composition that asked for no switch gets no key

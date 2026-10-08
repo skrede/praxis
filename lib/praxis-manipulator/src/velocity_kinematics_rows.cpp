@@ -25,6 +25,8 @@ constexpr const char *stated_absent    = "absent";
 constexpr const char *stated_refused   = "refused";
 constexpr const char *stated_unbounded = "unbounded";
 
+constexpr ImU32 highlighted_text_tone = IM_COL32_BLACK;
+
 const char *frame_word(jacobian_frame frame)
 {
     return frame == jacobian_frame::space ? "space" : "body";
@@ -73,7 +75,10 @@ std::vector<value_row> rows_of(const jacobian &taken, std::optional<std::size_t>
         {
             cells.push_back(cell(std::string(), taken(row, column)));
             if(marked == static_cast<std::size_t>(column))
+            {
+                cells.back().tone = highlighted_text_tone;
                 cells.back().fill = fill;
+            }
         }
 
         rows.push_back(std::move(cells));

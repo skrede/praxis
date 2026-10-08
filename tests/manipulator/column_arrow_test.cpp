@@ -146,8 +146,8 @@ TEST_CASE("Each part wears a plain and a highlighted tone of its own, and the tw
 {
     CHECK(column_tone(jacobian_block::angular, false).getHex(threepp::SRGBColorSpace) == 0xb01b81u);
     CHECK(column_tone(jacobian_block::linear, false).getHex(threepp::SRGBColorSpace) == 0x7f619cu);
-    CHECK(column_tone(jacobian_block::angular, true).getHex(threepp::SRGBColorSpace) == 0x75225eu);
-    CHECK(column_tone(jacobian_block::linear, true).getHex(threepp::SRGBColorSpace) == 0x482776u);
+    CHECK(column_tone(jacobian_block::angular, true).getHex(threepp::SRGBColorSpace) == 0x6096d0u);
+    CHECK(column_tone(jacobian_block::linear, true).getHex(threepp::SRGBColorSpace) == 0x97d2d4u);
 
     for(const jacobian_block part : {jacobian_block::angular, jacobian_block::linear})
         CHECK(column_tone(part, true) != column_tone(part, false));
