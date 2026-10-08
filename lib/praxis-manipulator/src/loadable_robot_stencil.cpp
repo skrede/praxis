@@ -115,7 +115,7 @@ loadable_robot_stencil::loadable_robot_stencil(std::shared_ptr<threepp::Robot> r
         , m_ellipsoid_wire(body_ramp(true))
         , m_continuation_tone(line_ramp())
         , m_column_tone{column_material(jacobian_block::angular, false), column_material(jacobian_block::linear, false)}
-        , m_column_dimmed{column_material(jacobian_block::angular, true), column_material(jacobian_block::linear, true)}
+        , m_column_highlighted{column_material(jacobian_block::angular, true), column_material(jacobian_block::linear, true)}
 {
     held(m_robot, "the loadable robot stencil", "robot object").rotation.x = -threepp::math::PI / 2.f;
     m_decoration->rotation.x                                               = -threepp::math::PI / 2.f;

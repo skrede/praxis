@@ -12,21 +12,20 @@
 #include <Eigen/Core>
 
 #include <array>
-#include <string>
 #include <memory>
+#include <string>
 #include <cstddef>
+#include <cstdint>
 
 namespace praxis::manipulator {
 
 namespace {
 
-constexpr threepp::Color::ColorName angular_part_tone = threepp::Color::plum;
-constexpr threepp::Color::ColorName linear_part_tone  = threepp::Color::deeppink;
-constexpr threepp::Color::ColorName washed_toward     = threepp::Color::white;
-
-// How far a part's tone is washed toward that light while its column is not the one the drawing is
-// about.
-constexpr float dimmed_part_wash = 0.35f;
+// sRGB hex, as threepp::Color reads a hex.
+constexpr std::uint32_t angular_part_tone             = 0xb01b81;
+constexpr std::uint32_t linear_part_tone              = 0x7f619c;
+constexpr std::uint32_t highlighted_angular_part_tone = 0x75225e;
+constexpr std::uint32_t highlighted_linear_part_tone  = 0x482776;
 
 std::size_t block_of(jacobian_block which)
 {
@@ -52,18 +51,17 @@ refusal no_column_to_draw()
 
 }
 
-threepp::Color column_tone(jacobian_block part, bool dimmed)
+threepp::Color column_tone(jacobian_block part, bool highlighted)
 {
-    threepp::Color worn(part == jacobian_block::angular ? angular_part_tone : linear_part_tone);
-    if(!dimmed)
-        return worn;
+    if(part == jacobian_block::angular)
+        return threepp::Color(highlighted ? highlighted_angular_part_tone : angular_part_tone);
 
-    return worn.lerp(threepp::Color(washed_toward), dimmed_part_wash);
+    return threepp::Color(highlighted ? highlighted_linear_part_tone : linear_part_tone);
 }
 
-std::shared_ptr<threepp::Material> column_material(jacobian_block part, bool dimmed)
+std::shared_ptr<threepp::Material> column_material(jacobian_block part, bool highlighted)
 {
-    return threepp::MeshPhongMaterial::create({{"flatShading", true}, {"color", column_tone(part, dimmed)}});
+    return threepp::MeshPhongMaterial::create({{"flatShading", true}, {"color", column_tone(part, highlighted)}});
 }
 
 std::string loadable_robot_stencil::jacobian_column_name(std::size_t column, jacobian_block part)
@@ -121,16 +119,16 @@ void loadable_robot_stencil::set_column_part_shown(jacobian_block which, bool sh
     m_column_parts[block_of(which)]->visible = shown;
 }
 
-// A column is dimmed only while another column is the one the drawing is about; with nothing told
-// apart every column stands in its part's own tone. An arrow carries its tone on its two pieces rather
-// than on the group they hang under, which carries no material.
+// Only the column the drawing is about wears its part's highlighted tone; every other column, or every
+// column while none is told apart, wears its part's plain one. An arrow carries its tone on its two
+// pieces rather than on the group they hang under, which carries no material.
 void loadable_robot_stencil::wear_jacobian_columns() const
 {
     for(std::size_t column = 0; column < m_column_arrows.size(); ++column)
         for(std::size_t part = 0; part < jacobian_block_count; ++part)
         {
             const drawn_column &standing                   = m_column_arrows[column][part];
-            const std::shared_ptr<threepp::Material> &worn = m_selected.has_value() && m_selected != column ? m_column_dimmed[part] : m_column_tone[part];
+            const std::shared_ptr<threepp::Material> &worn = m_selected == column ? m_column_highlighted[part] : m_column_tone[part];
 
             wear(*standing.shaft, worn);
             wear(*standing.tip, worn);

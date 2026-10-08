@@ -261,6 +261,51 @@ void draws_in_tone(const rows &shown, const drawing &before, const drawing &cell
     CHECK(geometry_of([&panel] { panel.render(); }) != geometry_of(panel_in_order(before, cell, after)));
 }
 
+constexpr ImU32 marked_fill = IM_COL32(40, 120, 200, 255);
+
+scene::labeled_value filled(scene::labeled_value cell)
+{
+    cell.fill = marked_fill;
+
+    return cell;
+}
+
+// An aligned cell is filled through its table cell's background, set once the cell is entered.
+drawing on_cell_fill(drawing call)
+{
+    return [call = std::move(call)]
+    {
+        ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, marked_fill);
+        call();
+    };
+}
+
+// A cell on a labeled line is filled beneath its text, on a draw-list channel below the one the text took.
+drawing on_laid_fill(drawing call)
+{
+    return [call = std::move(call)]
+    {
+        ImDrawList *const list = ImGui::GetWindowDrawList();
+        ImDrawListSplitter layers;
+        layers.Split(list, 2);
+        layers.SetCurrentChannel(list, 1);
+        call();
+        layers.SetCurrentChannel(list, 0);
+        list->AddRectFilled(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), marked_fill);
+        layers.Merge(list);
+    };
+}
+
+// A reading against the panel written out with the filled cell's own call filled the way its path
+// fills, and against the same panel unfilled, which it must not match.
+void draws_filled(const rows &shown, const drawing &before, drawing (*fill)(drawing), const drawing &cell, const drawing &after)
+{
+    scene::labeled_value_window panel(title, nullptr, answering(scene::readout{"", shown}));
+
+    CHECK(geometry_of([&panel] { panel.render(); }) == geometry_of(panel_in_order(before, fill(cell), after)));
+    CHECK(geometry_of([&panel] { panel.render(); }) != geometry_of(panel_in_order(before, cell, after)));
+}
+
 const drawing nothing   = [] {};
 const drawing into_cell = []
 {
@@ -580,6 +625,36 @@ TEST_CASE("a tone stops at its own cell, leaving the aligned cell drawn after it
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
                 in_tone([] { ImGui::Text("%.3f", 1.f); })();
+                ImGui::TableNextColumn();
+                ImGui::Text("%.3f", 2.f);
+                ImGui::EndTable();
+            });
+
+    CHECK(geometry_of([&panel] { panel.render(); }) == geometry_of(expected));
+}
+
+TEST_CASE("a cell carrying a fill is drawn on that color on every drawing path", "[scene]")
+{
+    const scene::labeled_value first{1.f, "M"};
+
+    draws_filled(rows{{filled({2.f, std::string()})}}, into_cell, on_cell_fill, [] { ImGui::Text("%.3f", 2.f); }, out_of_cell);
+    draws_filled(rows{{filled({0.f, std::string(), "absent"})}}, into_cell, on_cell_fill, [] { ImGui::TextUnformatted("absent"); }, out_of_cell);
+    draws_filled(rows{{first, filled({2.f, std::string()})}}, beside_one, on_laid_fill, [] { ImGui::Text("%.3f", 2.f); }, nothing);
+    draws_filled(rows{{first, filled({0.f, std::string(), "absent"})}}, beside_one, on_laid_fill, [] { ImGui::TextUnformatted("absent"); }, nothing);
+    draws_filled(rows{{filled({2.f, "A"})}}, nothing, on_laid_fill, [] { ImGui::Value("A", 2.f); }, nothing);
+    draws_filled(rows{{filled({0.f, "A", "absent"})}}, nothing, on_laid_fill, [] { ImGui::Text("%s: %s", "A", "absent"); }, nothing);
+}
+
+TEST_CASE("a fill stops at its own cell, leaving the aligned cell drawn after it unfilled", "[scene]")
+{
+    scene::labeled_value_window panel(title, nullptr, answering(scene::readout{"", rows{{filled({1.f, std::string()}), scene::labeled_value{2.f, std::string()}}}}));
+    const drawing expected = panel_around(
+            []
+            {
+                REQUIRE(ImGui::BeginTable(std::string(title).append("##aligned0").c_str(), 2, ImGuiTableFlags_SizingFixedFit));
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+                on_cell_fill([] { ImGui::Text("%.3f", 1.f); })();
                 ImGui::TableNextColumn();
                 ImGui::Text("%.3f", 2.f);
                 ImGui::EndTable();

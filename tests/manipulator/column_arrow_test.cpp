@@ -128,38 +128,31 @@ TEST_CASE("An arrow of no length is not drawn", "[manipulator][drawing]")
 TEST_CASE("A part's material carries the tone that part answers, and the two parts answer different tones", "[manipulator][drawing]")
 {
     for(const jacobian_block part : {jacobian_block::angular, jacobian_block::linear})
-        for(const bool dimmed : {false, true})
+        for(const bool highlighted : {false, true})
         {
-            const std::shared_ptr<threepp::Material> worn = column_material(part, dimmed);
+            const std::shared_ptr<threepp::Material> worn = column_material(part, highlighted);
             REQUIRE(worn != nullptr);
 
             threepp::MaterialWithColor *const toned = worn->as<threepp::MaterialWithColor>();
             REQUIRE(toned != nullptr);
-            CHECK(toned->color == column_tone(part, dimmed));
+            CHECK(toned->color == column_tone(part, highlighted));
         }
 
     CHECK(column_tone(jacobian_block::angular, false) != column_tone(jacobian_block::linear, false));
 }
 
-// A column the drawing is not about recedes against a light viewport, which is what washing a tone
-// toward white does and what darkening it would not. The two washed tones stay apart from each other,
-// so which part an arrow stands for is readable among the columns that are not told apart.
-TEST_CASE("A dimmed tone is its part's own tone nearer the light, and the two dimmed tones stay apart", "[manipulator][drawing]")
+// The values are sRGB, as the tones reach the screen unlit.
+TEST_CASE("Each part wears a plain and a highlighted tone of its own, and the two parts differ in each", "[manipulator][drawing]")
 {
+    CHECK(column_tone(jacobian_block::angular, false).getHex(threepp::SRGBColorSpace) == 0xb01b81u);
+    CHECK(column_tone(jacobian_block::linear, false).getHex(threepp::SRGBColorSpace) == 0x7f619cu);
+    CHECK(column_tone(jacobian_block::angular, true).getHex(threepp::SRGBColorSpace) == 0x75225eu);
+    CHECK(column_tone(jacobian_block::linear, true).getHex(threepp::SRGBColorSpace) == 0x482776u);
+
     for(const jacobian_block part : {jacobian_block::angular, jacobian_block::linear})
-    {
-        const threepp::Color told  = column_tone(part, false);
-        const threepp::Color faint = column_tone(part, true);
-
-        CHECK(faint != told);
-        CHECK(faint.r >= told.r);
-        CHECK(faint.g >= told.g);
-        CHECK(faint.b >= told.b);
-        CHECK(faint.r + faint.g + faint.b > told.r + told.g + told.b);
-        CHECK(faint != threepp::Color(threepp::Color::white));
-    }
-
-    CHECK(column_tone(jacobian_block::angular, true) != column_tone(jacobian_block::linear, true));
+        CHECK(column_tone(part, true) != column_tone(part, false));
+    for(const bool highlighted : {false, true})
+        CHECK(column_tone(jacobian_block::angular, highlighted) != column_tone(jacobian_block::linear, highlighted));
 }
 
 TEST_CASE("An arrow along no axis is not drawn and composes no turn", "[manipulator][drawing]")

@@ -18,13 +18,16 @@ namespace praxis::scene {
 // call it, drawn alone in the digits a labeled cell prints, which is how several values stand under
 // one label. A non-empty statement is drawn in place of the cell's number, which is how a reading
 // carrying no number for a cell says so rather than standing a zero there. A cell carrying a tone
-// draws its text in it, and one carrying none draws in the panel's own text color.
+// draws its text in it, and one carrying none draws in the panel's own text color. A cell carrying a
+// fill is drawn on that color, across the whole cell in an aligned row and beneath its text on a
+// labeled line.
 struct labeled_value
 {
     float value;
     std::string label;
     std::string stated        = std::string();
     std::optional<ImU32> tone = std::nullopt;
+    std::optional<ImU32> fill = std::nullopt;
 };
 
 // A non-empty message is drawn in place of the rows rather than above them: a reading that carries

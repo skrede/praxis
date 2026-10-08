@@ -42,6 +42,25 @@ void render_toned(const labeled_value &cell, void (*draw)(const labeled_value &)
         ImGui::PopStyleColor();
 }
 
+// The fill is laid on a channel beneath the text so it can be sized to what the text took.
+void render_laid(const labeled_value &cell, void (*draw)(const labeled_value &))
+{
+    if(!cell.fill)
+    {
+        render_toned(cell, draw);
+        return;
+    }
+
+    ImDrawList *const list = ImGui::GetWindowDrawList();
+    ImDrawListSplitter layers;
+    layers.Split(list, 2);
+    layers.SetCurrentChannel(list, 1);
+    render_toned(cell, draw);
+    layers.SetCurrentChannel(list, 0);
+    list->AddRectFilled(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(), *cell.fill);
+    layers.Merge(list);
+}
+
 void render_entry(const labeled_value &cell)
 {
     if(cell.label.empty() && cell.stated.empty())
@@ -62,7 +81,7 @@ void render_entries(const value_row &row)
         if(entry > 0)
             ImGui::SameLine();
 
-        render_toned(row[entry], render_entry);
+        render_laid(row[entry], render_entry);
     }
 }
 
@@ -105,6 +124,8 @@ void render_aligned(const std::string &identity, const value_rows &rows, const a
         for(const labeled_value &cell : rows[index])
         {
             ImGui::TableNextColumn();
+            if(cell.fill)
+                ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, *cell.fill);
             render_toned(cell, render_column);
         }
     }

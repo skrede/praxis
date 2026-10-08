@@ -437,6 +437,28 @@ TEST_CASE("a panel offering the part switches names each part in the tone that p
     CHECK(carries(bare, linear_tone));
 }
 
+// Beside a highlighted column the key keeps the plain tones, while that column's cells are filled in the highlighted ones.
+TEST_CASE("a panel opened at a joint names each part in its plain tone and fills that joint's column in its highlighted tone", "[manipulator][window]")
+{
+    velocity_stage headless;
+    headless.put(reading_of(Eigen::Vector3d(1.0, 0.5, 0.25)));
+    opening picked{};
+    picked.highlighted = 1u;
+    velocity_kinematics_window panel(panel_title, headless.source->reader(), headless.arm(), headless.shown, controls(), picked);
+    panel.initialize();
+    headless.draw();
+
+    const std::vector<ImU32> seen = tones_drawn(panel);
+    for(const jacobian_block part : {jacobian_block::angular, jacobian_block::linear})
+    {
+        const ImU32 plain       = as_written(headless.arrow(0u, part));
+        const ImU32 highlighted = as_written(headless.arrow(1u, part));
+        CHECK(plain != highlighted);
+        CHECK(carries(seen, plain));
+        CHECK(carries(seen, highlighted));
+    }
+}
+
 // The key stands with the switch it belongs to, so a composition that asked for no switch gets no key
 // either, however the drawing it never offered a control for happens to open.
 TEST_CASE("a panel whose composition offered no part switches names no part, though its columns are drawn", "[manipulator][window]")

@@ -330,7 +330,7 @@ TEST_CASE("a body Jacobian's columns are not stood at all while the tool's own o
 
 // The selection is the one the decoration already answers, so no case names a joint for the columns
 // that the axes and the chain are not also about.
-TEST_CASE("the joint the drawing tells apart tells its own column apart, and every other column is dimmed", "[manipulator][drawing]")
+TEST_CASE("the joint the drawing tells apart wears its part's highlighted tone on its own column, and every other column wears its part's plain tone", "[manipulator][drawing]")
 {
     column_stage headless;
     REQUIRE(headless.shown.set_jacobian_columns(2u).has_value());
@@ -345,8 +345,8 @@ TEST_CASE("the joint the drawing tells apart tells its own column apart, and eve
 
     for(const jacobian_block part : {jacobian_block::angular, jacobian_block::linear})
     {
-        CHECK(arrow_tone(headless.arrow(0u, part)) == column_tone(part, false));
-        CHECK(arrow_tone(headless.arrow(1u, part)) == column_tone(part, true));
+        CHECK(arrow_tone(headless.arrow(0u, part)) == column_tone(part, true));
+        CHECK(arrow_tone(headless.arrow(1u, part)) == column_tone(part, false));
     }
 
     REQUIRE(headless.shown.set_selected_joint(1u).has_value());
@@ -354,8 +354,8 @@ TEST_CASE("the joint the drawing tells apart tells its own column apart, and eve
 
     for(const jacobian_block part : {jacobian_block::angular, jacobian_block::linear})
     {
-        CHECK(arrow_tone(headless.arrow(0u, part)) == column_tone(part, true));
-        CHECK(arrow_tone(headless.arrow(1u, part)) == column_tone(part, false));
+        CHECK(arrow_tone(headless.arrow(0u, part)) == column_tone(part, false));
+        CHECK(arrow_tone(headless.arrow(1u, part)) == column_tone(part, true));
     }
 
     headless.shown.clear_selected_joint();
@@ -378,8 +378,8 @@ TEST_CASE("a column count told while a joint is told apart raises every arrow in
 
     for(const jacobian_block part : {jacobian_block::angular, jacobian_block::linear})
     {
-        CHECK(arrow_tone(headless.arrow(0u, part)) == column_tone(part, true));
-        CHECK(arrow_tone(headless.arrow(1u, part)) == column_tone(part, false));
+        CHECK(arrow_tone(headless.arrow(0u, part)) == column_tone(part, false));
+        CHECK(arrow_tone(headless.arrow(1u, part)) == column_tone(part, true));
     }
 }
 
@@ -397,8 +397,8 @@ TEST_CASE("a joint the drawing carries no screw for is declined and no column ch
 
     for(const jacobian_block part : {jacobian_block::angular, jacobian_block::linear})
     {
-        CHECK(arrow_tone(headless.arrow(0u, part)) == column_tone(part, false));
-        CHECK(arrow_tone(headless.arrow(1u, part)) == column_tone(part, true));
+        CHECK(arrow_tone(headless.arrow(0u, part)) == column_tone(part, true));
+        CHECK(arrow_tone(headless.arrow(1u, part)) == column_tone(part, false));
     }
 }
 

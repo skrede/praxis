@@ -652,6 +652,7 @@ TEST_CASE("a stencil told a joint draws that joint's point, the segment leading 
 
     const threepp::Color told = headless.axis_tone(0);
 
+    CHECK(told.getHex(threepp::SRGBColorSpace) == 0x3e628au);
     CHECK_FALSE(told.equals(axes));
     CHECK_FALSE(told.equals(chain));
     CHECK(headless.segment_tone(0).equals(told));

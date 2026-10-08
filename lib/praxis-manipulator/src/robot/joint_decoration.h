@@ -8,7 +8,6 @@
 
 #include <threepp/core/Object3D.hpp>
 
-#include <threepp/math/Color.hpp>
 #include <threepp/math/Matrix4.hpp>
 
 #include <threepp/materials/Material.hpp>
@@ -16,15 +15,16 @@
 #include <Eigen/Core>
 
 #include <span>
-#include <string>
 #include <memory>
+#include <string>
+#include <cstdint>
 
 namespace praxis::manipulator {
 
-// The tone worn by the joint the drawing is about, on its axis line, on its mark and on the segment
-// leading to it. One hue serves all three because it is one joint being told apart, so it is stated
-// here rather than in either drawing's own file.
-inline constexpr threepp::Color::ColorName selected_joint_tone = threepp::Color::magenta;
+// The tone worn by the joint the drawing is about, an sRGB hex, on its axis line, on its mark and on
+// the segment leading to it. One hue serves all three because it is one joint being told apart, so it
+// is stated here rather than in either drawing's own file.
+inline constexpr std::uint32_t selected_joint_tone = 0x3e628a;
 
 // Hands a drawn item a material it already has geometry for. An item the renderer draws with no
 // material of its own is left alone.

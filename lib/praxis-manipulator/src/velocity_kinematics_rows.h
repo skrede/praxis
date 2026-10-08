@@ -17,9 +17,9 @@
 
 namespace praxis::manipulator {
 
-// A part's tone in the color space the renderer encodes to on output, which is the space a panel
-// writes its own colors in.
-ImU32 as_written(jacobian_block part);
+// A part's plain or highlighted tone in the color space the renderer encodes to on output, which is
+// the space a panel writes its own colors in.
+ImU32 as_written(jacobian_block part, bool highlighted);
 
 // Whether the lengths this block would be drawn at under this reading and this scale are not all
 // finite. A block that is a refusal answers false: it carries no lengths to run away.
@@ -38,8 +38,8 @@ bool either_ellipsoid_unbounded(const jacobian_manipulability &both, ellipsoid_v
 // A publication that has not arrived, a Jacobian that is a refusal, and a decomposition whose two
 // blocks are both refusals each answer a message and no rows, naming which. A block whose drawn
 // lengths run away carries a cell saying so at the end of its scalars row. The marked column's top
-// three cells carry the tone its angular arrow wears and its bottom three the linear one's, and a
-// column the matrix does not have marks nothing. Lynch & Park, Modern Robotics, sections 5.1 and 5.4.
+// three cells are filled in the tone its angular arrow wears and its bottom three in the linear one's,
+// and a column the matrix does not have marks nothing. Lynch & Park, Modern Robotics, sections 5.1 and 5.4.
 scene::readout velocity_kinematics_reading(const arm_snapshot *seen, jacobian_frame frame, ellipsoid_view read, double angular_scale, double linear_scale,
                                            std::optional<std::size_t> marked);
 

@@ -35,7 +35,7 @@ namespace {
 
 using controls  = velocity_kinematics_window::controls;
 using opening   = velocity_kinematics_window::settings;
-using tone_grid = std::vector<std::vector<std::optional<ImU32>>>;
+using fill_grid = std::vector<std::vector<std::optional<ImU32>>>;
 
 constexpr const char *panel_title = "Velocity kinematics";
 constexpr const char *pick_list   = "Show joint";
@@ -72,24 +72,28 @@ ImU32 as_written(threepp::Object3D *arrow)
     return IM_COL32((worn >> 16) & 0xffu, (worn >> 8) & 0xffu, worn & 0xffu, 0xff);
 }
 
-tone_grid tones_carried(const scene::readout &shown)
+// No cell of the reading carries a text tone, whatever it is filled with.
+fill_grid fills_carried(const scene::readout &shown)
 {
-    tone_grid carried;
+    fill_grid carried;
     for(const std::vector<scene::labeled_value> &row : shown.rows)
     {
-        std::vector<std::optional<ImU32>> &tones = carried.emplace_back();
+        std::vector<std::optional<ImU32>> &fills = carried.emplace_back();
         for(const scene::labeled_value &cell : row)
-            tones.push_back(cell.tone);
+        {
+            CHECK_FALSE(cell.tone.has_value());
+            fills.push_back(cell.fill);
+        }
     }
 
     return carried;
 }
 
-// A reading of that shape with the column marked: its top three cells in the tone that column's
-// angular arrow wears, its bottom three in the one its linear arrow wears, and no other cell toned.
-tone_grid marked(const scene::readout &shown, velocity_stage &headless, std::optional<std::size_t> column)
+// A reading of that shape with the column marked: its top three cells filled in the tone that column's
+// angular arrow wears, its bottom three in the one its linear arrow wears, and no other cell filled.
+fill_grid marked(const scene::readout &shown, velocity_stage &headless, std::optional<std::size_t> column)
 {
-    tone_grid wanted = tones_carried(shown);
+    fill_grid wanted = fills_carried(shown);
     for(std::vector<std::optional<ImU32>> &row : wanted)
         std::fill(row.begin(), row.end(), std::nullopt);
     if(!column)
@@ -105,7 +109,7 @@ tone_grid marked(const scene::readout &shown, velocity_stage &headless, std::opt
     return wanted;
 }
 
-// No joint told apart, every arrow of both columns in its part's full tone, and no cell toned.
+// No joint told apart, every arrow of both columns in its part's plain tone, and no cell filled.
 void stands_unpicked(velocity_stage &headless, const velocity_kinematics_window &panel)
 {
     headless.draw();
@@ -114,12 +118,12 @@ void stands_unpicked(velocity_stage &headless, const velocity_kinematics_window 
         for(const std::size_t column : {0u, 1u})
             CHECK(arrow_tone(headless.arrow(column, part)) == column_tone(part, false));
     const scene::readout shown = panel.reading();
-    CHECK(tones_carried(shown) == marked(shown, headless, std::nullopt));
+    CHECK(fills_carried(shown) == marked(shown, headless, std::nullopt));
 }
 
 }
 
-TEST_CASE("taking a joint in the list singles its column out in the drawing and marks it in the matrix in its arrows' tones", "[manipulator][window]")
+TEST_CASE("taking a joint in the list singles its column out in the drawing and fills it in the matrix in its arrows' tones", "[manipulator][window]")
 {
     velocity_stage headless;
     headless.put(reading_of(Eigen::Vector3d(1.0, 0.5, 0.25)));
@@ -132,12 +136,12 @@ TEST_CASE("taking a joint in the list singles its column out in the drawing and 
     REQUIRE(headless.shown.selected_joint() == std::optional<std::size_t>(1u));
     for(const jacobian_block part : both_parts)
     {
-        CHECK(arrow_tone(headless.arrow(1u, part)) == column_tone(part, false));
-        CHECK(arrow_tone(headless.arrow(0u, part)) == column_tone(part, true));
+        CHECK(arrow_tone(headless.arrow(1u, part)) == column_tone(part, true));
+        CHECK(arrow_tone(headless.arrow(0u, part)) == column_tone(part, false));
     }
 
     const scene::readout shown = panel.reading();
-    CHECK(tones_carried(shown) == marked(shown, headless, 1u));
+    CHECK(fills_carried(shown) == marked(shown, headless, 1u));
     CHECK(as_written(headless.arrow(1u, jacobian_block::angular)) != as_written(headless.arrow(1u, jacobian_block::linear)));
 }
 
@@ -156,7 +160,7 @@ TEST_CASE("the list stands directly below the columns switch and directly above 
     CHECK(standing_on() == control_id(panel_title, "Cap the force ellipsoid"));
 }
 
-TEST_CASE("taking none after a joint clears the selection, standing every arrow in its full tone and toning no cell", "[manipulator][window]")
+TEST_CASE("taking none after a joint clears the selection, standing every arrow in its plain tone and filling no cell", "[manipulator][window]")
 {
     velocity_stage headless;
     headless.put(reading_of(Eigen::Vector3d(1.0, 0.5, 0.25)));
@@ -170,7 +174,7 @@ TEST_CASE("taking none after a joint clears the selection, standing every arrow 
     stands_unpicked(headless, panel);
 }
 
-TEST_CASE("a window opened at no pick tells the drawing no joint apart and tones no cell", "[manipulator][window]")
+TEST_CASE("a window opened at no pick tells the drawing no joint apart and fills no cell", "[manipulator][window]")
 {
     velocity_stage headless;
     headless.put(reading_of(Eigen::Vector3d(1.0, 0.5, 0.25)));
@@ -190,12 +194,12 @@ TEST_CASE("the column marked is the one the drawing singles out, however the dra
     REQUIRE(headless.shown.set_selected_joint(0u).has_value());
     headless.draw();
     const scene::readout told = panel.reading();
-    CHECK(tones_carried(told) == marked(told, headless, 0u));
+    CHECK(fills_carried(told) == marked(told, headless, 0u));
 
     headless.shown.clear_selected_joint();
     headless.draw();
     const scene::readout cleared = panel.reading();
-    CHECK(tones_carried(cleared) == marked(cleared, headless, std::nullopt));
+    CHECK(fills_carried(cleared) == marked(cleared, headless, std::nullopt));
 }
 
 TEST_CASE("the marked column stays marked when the frame moves, carrying the body matrix's numbers", "[manipulator][window]")
@@ -211,7 +215,7 @@ TEST_CASE("the marked column stays marked when the frame moves, carrying the bod
 
     REQUIRE(panel.state().frame == jacobian_frame::body);
     const scene::readout shown = panel.reading();
-    CHECK(tones_carried(shown) == marked(shown, headless, 0u));
+    CHECK(fills_carried(shown) == marked(shown, headless, 0u));
     const jacobian body = six_by(2u, 100.0);
     for(std::size_t row = 0; row < matrix_rows; ++row)
         CHECK(shown.rows[row][0].value == Catch::Approx(body(static_cast<Eigen::Index>(row), 0)));
@@ -230,7 +234,7 @@ TEST_CASE("a window opened at a joint tells the drawing that joint apart and mar
     CHECK(headless.shown.selected_joint() == std::optional<std::size_t>(1u));
     CHECK(panel.state().highlighted == std::optional<std::size_t>(1u));
     const scene::readout shown = panel.reading();
-    CHECK(tones_carried(shown) == marked(shown, headless, 1u));
+    CHECK(fills_carried(shown) == marked(shown, headless, 1u));
 }
 
 TEST_CASE("a window opened at a joint the arm lacks stands at none, the drawing naming the refusal once", "[manipulator][window]")

@@ -330,10 +330,10 @@ public:
     expected<void, refusal> set_pose_path_shown(std::string_view named, bool shown);
 
     // Which joint the drawing tells apart from the rest, counted from zero: its point, the segment
-    // leading to it, its screw axis and the two arrows of the Jacobian column of that index take a
-    // tone of their own, and every other column's arrows take a dimmed one. An index the screws the
-    // stencil was told do not reach is declined rather than clamped, and a stencil told nothing tells
-    // nothing apart, which stands every column's arrows in its part's own tone.
+    // leading to it and its screw axis take a tone of their own, the two arrows of the Jacobian column
+    // of that index take their part's highlighted tones, and every other column keeps its part's plain
+    // tones. An index the screws the stencil was told do not reach is declined rather than clamped, and
+    // a stencil told nothing tells nothing apart, which stands every column in its part's plain tone.
     expected<void, refusal> set_selected_joint(std::size_t joint);
     void clear_selected_joint();
 
@@ -441,10 +441,10 @@ private:
     std::vector<std::shared_ptr<threepp::Material>> m_ellipsoid_solid;
     std::vector<std::shared_ptr<threepp::Material>> m_ellipsoid_wire;
     std::vector<std::shared_ptr<threepp::Material>> m_continuation_tone;
-    // One material per block, built once, for the same reason the ramp is: the tone a part's arrows
-    // wear, and the one they wear while the drawing is about another column.
+    // One material per block, built once, for the same reason the ramp is: the plain tone a part's
+    // arrows wear, and the highlighted one they wear while their column is the one the drawing is about.
     std::array<std::shared_ptr<threepp::Material>, jacobian_block_count> m_column_tone;
-    std::array<std::shared_ptr<threepp::Material>, jacobian_block_count> m_column_dimmed;
+    std::array<std::shared_ptr<threepp::Material>, jacobian_block_count> m_column_highlighted;
 
     void apply_published() const;
     void detach_flange_attachments();

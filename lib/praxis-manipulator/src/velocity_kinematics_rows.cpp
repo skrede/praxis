@@ -66,14 +66,14 @@ std::vector<value_row> rows_of(const jacobian &taken, std::optional<std::size_t>
     rows.reserve(static_cast<std::size_t>(taken.rows()));
     for(Eigen::Index row = 0; row < taken.rows(); ++row)
     {
-        const ImU32 tone = as_written(row < 3 ? jacobian_block::angular : jacobian_block::linear);
+        const ImU32 fill = as_written(row < 3 ? jacobian_block::angular : jacobian_block::linear, true);
         value_row cells;
         cells.reserve(static_cast<std::size_t>(taken.cols()));
         for(Eigen::Index column = 0; column < taken.cols(); ++column)
         {
             cells.push_back(cell(std::string(), taken(row, column)));
             if(marked == static_cast<std::size_t>(column))
-                cells.back().tone = tone;
+                cells.back().fill = fill;
         }
 
         rows.push_back(std::move(cells));
@@ -134,9 +134,9 @@ void append_blocks(scene::readout &into, const jacobian_manipulability &both, el
 
 }
 
-ImU32 as_written(jacobian_block part)
+ImU32 as_written(jacobian_block part, bool highlighted)
 {
-    const unsigned int worn = column_tone(part, false).getHex(threepp::SRGBColorSpace);
+    const unsigned int worn = column_tone(part, highlighted).getHex(threepp::SRGBColorSpace);
 
     return IM_COL32((worn >> 16) & 0xffu, (worn >> 8) & 0xffu, worn & 0xffu, 0xff);
 }

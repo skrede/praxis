@@ -22,14 +22,14 @@ namespace {
 constexpr std::size_t angular = static_cast<std::size_t>(jacobian_block::angular);
 constexpr std::size_t linear  = static_cast<std::size_t>(jacobian_block::linear);
 
-// The switch over one part, standing beside the tone that part's arrows wear: the two tones are
-// neighbours by construction, so which part is which is not answerable from the drawing alone.
+// The switch over one part, standing beside the plain tone that part's arrows wear: the two tones are
+// neighbors by construction, so which part is which is not answerable from the drawing alone.
 bool switch_over(const char *called, jacobian_block part, bool &shown)
 {
     const float side = ImGui::GetTextLineHeight();
     const ImVec2 at  = ImGui::GetCursorScreenPos();
 
-    ImGui::GetWindowDrawList()->AddRectFilled(at, ImVec2(at.x + side, at.y + side), as_written(part));
+    ImGui::GetWindowDrawList()->AddRectFilled(at, ImVec2(at.x + side, at.y + side), as_written(part, false));
     ImGui::Dummy(ImVec2(side, side));
     ImGui::SameLine();
 
