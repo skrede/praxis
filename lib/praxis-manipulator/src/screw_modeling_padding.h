@@ -17,9 +17,10 @@ screw_modeling_window::parameterization typed_as(const screw_axis &screw);
 // One joint's drawable screw: what was supplied for it, or the screw a row nobody supplied opens at.
 screw_axis supplied_or_opening(const rigid_motion::screw_ops &turning, const screw_axis &derived, const supplied_screw &held);
 
-// The table the drawing and the forward map are handed, exactly as long as the derived chain: one
-// screw per joint, the padding standing wherever nobody supplied one. It is composed where it is
-// needed rather than stored, so no screw is written in two places.
+// The table handed to the drawing: one screw per joint of the derived chain, padded wherever nobody
+// supplied one, followed by every entry the table names past that chain's last joint, an empty one
+// padded the same way. It is composed where it is needed rather than stored, so no screw is written
+// in two places.
 std::vector<screw_axis> as_drawn(const screw_chain &derived, const rigid_motion::screw_ops &turning, std::span<const supplied_screw> supplied);
 
 }

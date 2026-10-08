@@ -171,9 +171,11 @@ scene::readout screw_modeling_window::reading() const
     if(!share)
         return scene::readout{"The arm has published nothing yet.", {}};
 
-    const std::vector<screw_axis> drawn          = as_drawn(m_derived, m_screw, m_supplied);
-    const screw_chain_difference apart           = supplied_chain_difference(m_derived, m_home, m_supplied);
-    const expected<transform, refusal> supplied  = m_kinematics.forward_kinematics(m_screw, m_home, drawn, share->joints);
+    const std::vector<screw_axis> drawn = as_drawn(m_derived, m_screw, m_supplied);
+    const screw_chain_difference apart  = supplied_chain_difference(m_derived, m_home, m_supplied);
+    const bool one_screw_per_joint      = drawn.size() == m_derived.joint_count();
+    const expected<transform, refusal> supplied =
+            one_screw_per_joint ? m_kinematics.forward_kinematics(m_screw, m_home, drawn, share->joints) : expected<transform, refusal>(unexpected(refusal::unsupported_input));
     const expected<transform, refusal> described = m_kinematics.forward_kinematics(m_screw, m_derived.home, m_derived.space_screws, share->joints);
     if(!supplied || !described)
         return screw_modeling_reading(apart, whole_chain_without_pose(supplied ? described_without_pose : supplied_without_pose));

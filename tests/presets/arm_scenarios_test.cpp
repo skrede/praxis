@@ -777,6 +777,48 @@ TEST_CASE("a document naming more joints than the arm has opens a window that sa
     CHECK(surplus.back().stated.find("6") != std::string::npos);
 }
 
+// The chain figure, the six axis lines and both frame markers a composition hangs, a part the scene
+// does not hold counting as not drawn.
+std::size_t supplied_parts_drawn(threepp::Scene &target, const std::shared_ptr<scene::preset> &composed)
+{
+    std::size_t drawn  = 0u;
+    const auto counted = [&drawn](const threepp::Object3D *part) { drawn += part != nullptr && part->visible ? 1u : 0u; };
+    counted(chain_node(target, manipulator::loadable_robot_stencil::chain_name()));
+    for(std::size_t joint = 0u; joint < 6u; ++joint)
+        counted(target.getObjectByName(manipulator::loadable_robot_stencil::joint_axis_name(joint)));
+    counted(frame_marker_of(composed).get());
+    counted(drawn_by(composed).attached_at(manipulator::flange_attachment::tool_frame_marker).get());
+
+    return drawn;
+}
+
+TEST_CASE("a document naming more joints than the arm has opens with nothing of the supplied chain drawn and says why it is not folded", "[presets][windows]")
+{
+    const described_arm described(6, "six");
+    presets::arm_scenario chosen        = described_by(described.where);
+    chosen.robot_view.model             = manipulator::model_render::meshes_and_chain;
+    chosen.robot_view.tool_frame_marker = true;
+
+    for(const std::size_t joints : {std::size_t{6u}, std::size_t{7u}})
+    {
+        INFO(joints << " joints named");
+        const std::string kept = std::format("{}-joints-against-six.xml", joints);
+        const std::string into = std::format("{}-joints-against-six-into.xml", joints);
+
+        opened_arm built;
+        const std::shared_ptr<scene::preset> composed =
+                built.open(chosen, presets::arm_windows_modeling(chosen, supplied_from(kept_chain(a_supplied_chain(joints), kept.c_str()), chain_binding(into.c_str()))));
+        built.draw(*composed);
+        built.draw(*composed);
+
+        const expected<manipulator::chain_end, manipulator::withheld_chain> end = drawn_by(composed).supplied_chain_end(at_no_turn(transform::Identity()));
+        CHECK(supplied_parts_drawn(*built.scene, composed) == (joints == 6u ? 9u : 0u));
+        CHECK(end.has_value() == (joints == 6u));
+        if(!end)
+            CHECK(end.error().reason == "The supplied chain is not folded: it holds 7 screws and the arm has 6 joints.");
+    }
+}
+
 TEST_CASE("both deployed machines open the supplied-chain scenario", "[presets][windows]")
 {
     for(const auto &named : {std::pair<const char *, bool>{"ur_description/urdf/ur.urdf.xacro", true}, std::pair<const char *, bool>{"kuka_kr6_support/urdf/kr6r900sixx.xacro", false}})

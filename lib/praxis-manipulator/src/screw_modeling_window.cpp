@@ -73,7 +73,7 @@ screw_modeling_window::screw_modeling_window(std::string name, loadable_robot_st
 
 // There is a row per joint of the derived chain, because that chain is what the rendered arm is
 // posed from and what carries the limits a solve reads. A row nobody supplied opens degenerate, and
-// an entry standing past the last joint is drawn against nothing and kept only to be counted.
+// an entry standing past the last joint has no row and is handed to the drawing only to be counted.
 void screw_modeling_window::seed(const settings &opened)
 {
     const rotation held = m_home.block<3, 3>(0, 0);
@@ -108,11 +108,12 @@ void screw_modeling_window::initialize()
     tell_selection();
 }
 
-// A chain of no joints has no joint to tell apart. Beyond that the drawing answers an index it
-// carries no screw for by name, so the refusal it says is the whole answer and none is said twice.
+// A chain of no joints, and a table naming more joints than the derived chain, which the drawing
+// withholds, have no joint to tell apart. Beyond that the drawing answers an index it carries no
+// screw for by name, so the refusal it says is the whole answer and none is said twice.
 void screw_modeling_window::tell_selection()
 {
-    if(m_entries.empty())
+    if(m_entries.empty() || m_supplied.size() > m_derived.joint_count())
         return;
 
     static_cast<void>(m_stencil.set_selected_joint(m_selected));
@@ -132,8 +133,8 @@ void screw_modeling_window::assemble_home()
 }
 
 // The whole table reaches the drawing on every change, so a wrong screw is visible against the link
-// it claims to describe from the moment it is typed. A length the rendered arm cannot be drawn
-// against is the derived chain's own, so it is reported rather than swallowed.
+// it claims to describe from the moment it is typed. A table naming more joints than the derived
+// chain is withheld by the drawing; only a derived chain the rendered arm cannot take is reported.
 void screw_modeling_window::push()
 {
     if(inert_and_reported(m_screw, m_stencil.inert_screw_slots(), rigid_motion::screw_slot::screw_axis_from_angular_linear,
@@ -144,7 +145,7 @@ void screw_modeling_window::push()
     }
 
     const std::vector<screw_axis> drawn = as_drawn(m_derived, m_screw, m_supplied);
-    if(!m_stencil.supply_joint_screws(m_home, drawn))
+    if(!m_stencil.supply_joint_screws(m_home, drawn) && drawn.size() == m_derived.joint_count())
         spdlog::error("praxis: '{}' holds {} screws and the arm they are drawn against does not take that many", display_name(), drawn.size());
 }
 

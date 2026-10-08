@@ -73,12 +73,19 @@ void loadable_robot_stencil::clear_joint_screws()
     rebuild_decoration();
 }
 
-// A count the rendered arm cannot take is refused as set_joint_screws refuses it, and the chain is
-// still supplied so that it is withheld naming both counts.
+// A count the rendered arm cannot take is refused as set_joint_screws refuses it but without a log
+// line, and the chain is still supplied, so it is withheld naming both counts.
 expected<void, refusal> loadable_robot_stencil::supply_joint_screws(const transform &home, std::span<const screw_axis> space_screws)
 {
     m_supplied_count = space_screws.size();
     m_unbuilt.reset();
+    if(space_screws.size() != m_robot->numDOF())
+    {
+        m_supplied = true;
+
+        return unexpected(refusal::unsupported_input);
+    }
+
     const expected<void, refusal> told = set_joint_screws(home, space_screws);
     m_supplied                         = true;
 

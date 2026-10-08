@@ -8,6 +8,7 @@
 
 #include "praxis/manipulator/arm_snapshot.h"
 #include "praxis/manipulator/capabilities.h"
+#include "praxis/manipulator/pose_readout.h"
 #include "praxis/manipulator/screw_chain_builder.h"
 #include "praxis/manipulator/scene_robot_builder.h"
 #include "praxis/manipulator/screw_modeling_window.h"
@@ -134,6 +135,14 @@ expected<transform, refusal> lifted_forward_kinematics(const rigid_motion::screw
     posed.value().block<3, 1>(0, 3) += Eigen::Vector3d::UnitZ();
 
     return posed;
+}
+
+// A forward map that holds it is handed one screw per joint.
+expected<transform, refusal> paired_forward_kinematics(const rigid_motion::screw_ops &screw, const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta)
+{
+    CHECK(space_screws.size() == static_cast<std::size_t>(theta.size()));
+
+    return forward_kinematics(screw, m, space_screws, theta);
 }
 
 screw_axis unit_z_axis()
@@ -298,6 +307,42 @@ struct stage
         REQUIRE(loop.main_strand().post([this] { shown.render(); }).has_value());
         REQUIRE(loop.drain().has_value());
         scene->updateMatrixWorld(true);
+    }
+
+    // The flange-frame marker and the tool-frame marker, the two a supplied chain's end places.
+    void hang_frame_markers()
+    {
+        shown.set_flange_attachment(flange_attachment::frame_marker, make_flange_marker(shown.robot()));
+        shown.set_flange_attachment(flange_attachment::tool_frame_marker, make_flange_marker(shown.robot()));
+    }
+
+    // The chain figure, every axis line and both frame markers, a part the scene does not hold
+    // counting as not drawn.
+    std::size_t parts_of_the_chain_drawn()
+    {
+        std::size_t drawn  = 0u;
+        const auto counted = [&drawn](const threepp::Object3D *part) { drawn += part != nullptr && part->visible ? 1u : 0u; };
+        counted(scene->getObjectByName(loadable_robot_stencil::chain_name()));
+        for(std::size_t joint = 0u; joint < axes; ++joint)
+            counted(scene->getObjectByName(loadable_robot_stencil::joint_axis_name(joint)));
+        counted(shown.attached_at(flange_attachment::frame_marker).get());
+        counted(shown.attached_at(flange_attachment::tool_frame_marker).get());
+
+        return drawn;
+    }
+
+    withheld_chain withheld()
+    {
+        const expected<chain_end, withheld_chain> end = shown.supplied_chain_end(*published->reader().read());
+        REQUIRE_FALSE(end.has_value());
+
+        return end.error();
+    }
+
+    void settle()
+    {
+        draw();
+        draw();
     }
 
     std::vector<Eigen::Vector3d> axis_of(std::size_t joint)
@@ -1147,6 +1192,104 @@ TEST_CASE("a refused row is put back to the screw it kept, so the next accepted 
     REQUIRE(panel.state().screws.front().has_value());
     CHECK((*panel.state().screws.front() - opened).norm() > exactly);
     CHECK(panel.state().screws.front()->head<3>().isApprox(opened.head<3>()));
+}
+
+TEST_CASE("a table naming more joints than the arm has reaches the drawing whole and leaves nothing of the chain drawn", "[manipulator][modeling]")
+{
+    const std::string not_folded = "The supplied chain is not folded: it holds 7 screws and the arm has 6 joints.";
+    stage headless(described_chain(), at_rest());
+    headless.hang_frame_markers();
+    screw_modeling_window whole = opened_over(headless, only_the_rows(), opening{headless.chain.home, headless.chain.space_screws});
+    whole.initialize();
+    headless.settle();
+    REQUIRE(headless.parts_of_the_chain_drawn() == 1u + axes + 2u);
+
+    std::vector<screw_axis> too_many = headless.chain.space_screws;
+    too_many.push_back(unit_z_axis());
+    screw_modeling_window longer = opened_over(headless, only_the_rows(), opening{headless.chain.home, too_many});
+    longer.initialize();
+    headless.settle();
+
+    CHECK(headless.parts_of_the_chain_drawn() == 0u);
+    const withheld_chain withheld = headless.withheld();
+    CHECK(withheld.cause == withheld_cause::joint_count);
+    CHECK(withheld.reason == not_folded);
+
+    const pose_readout readout(headless.published->reader(), framing(), robot_slot_set(), headless.shown);
+    CHECK(readout.reading().rows.back().front().stated == not_folded);
+}
+
+TEST_CASE("a table naming fewer joints than the arm has is padded where nobody supplied a screw and drawn whole", "[manipulator][modeling]")
+{
+    stage headless(described_chain(), at_rest());
+    headless.hang_frame_markers();
+    std::vector<screw_axis> too_few = headless.chain.space_screws;
+    too_few.pop_back();
+    screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{headless.chain.home, too_few});
+    panel.initialize();
+    headless.settle();
+
+    CHECK(headless.parts_of_the_chain_drawn() == 1u + axes + 2u);
+    CHECK(headless.shown.supplied_chain_end(*headless.published->reader().read()).has_value());
+
+    const std::vector<Eigen::Vector3d> padded   = headless.axis_of(axes - 1u);
+    const std::vector<Eigen::Vector3d> supplied = headless.axis_of(axes - 2u);
+
+    REQUIRE(padded.size() == 2u);
+    REQUIRE(supplied.size() == 2u);
+    CHECK(padded.front().head<2>().norm() < read_back);
+    CHECK(supplied.front().head<2>().norm() > read_back);
+}
+
+TEST_CASE("a table whose furthest joint stands two past the arm is withheld for the joints its surplus line names", "[manipulator][modeling]")
+{
+    stage headless(described_chain(), at_rest());
+    std::vector<supplied_screw> sparse(axes + 2u);
+    sparse.front() = headless.chain.space_screws.front();
+    sparse.back()  = unit_z_axis();
+
+    screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{headless.chain.home, sparse});
+    panel.initialize();
+
+    CHECK(headless.withheld().reason == "The supplied chain is not folded: it holds 8 screws and the arm has 6 joints.");
+    CHECK(panel.reading().rows.back().back().stated == "8 joints named against a chain of 6");
+}
+
+TEST_CASE("a table naming more joints than the arm has reads every joint and its surplus while its whole-chain lines say it has no pose", "[manipulator][modeling]")
+{
+    stage headless(described_chain(), folded());
+    const forward_kinematics_ops paired{.forward_kinematics = &paired_forward_kinematics};
+    std::vector<screw_axis> too_many = headless.chain.space_screws;
+    too_many.push_back(unit_z_axis());
+
+    const screw_modeling_window panel(panel_title, headless.shown, headless.published->reader(), turning(), framing(), paired, headless.chain, only_the_rows(),
+                                      opening{headless.chain.home, too_many}, writer(), route());
+    const scene::readout shown = panel.reading();
+
+    CHECK(shown.message.empty());
+    REQUIRE(shown.rows.size() == whole_chain_rows + 1u + axes + 1u);
+    for(std::size_t row = 0u; row < whole_chain_rows; ++row)
+        CHECK(shown.rows[row].front().stated == "the supplied chain has no pose here");
+    for(std::size_t joint = 0u; joint < axes; ++joint)
+        CHECK(joint_line(shown, joint)[rotation_cell].stated.empty());
+    CHECK(shown.rows.back().back().stated == "7 joints named against a chain of 6");
+}
+
+TEST_CASE("a table naming more joints than the arm has is opened without a word in the log while a derived chain the arm cannot take is still reported", "[manipulator][modeling]")
+{
+    stage surplus(described_chain(), at_rest());
+    std::vector<screw_axis> too_many = surplus.chain.space_screws;
+    too_many.push_back(unit_z_axis());
+    screw_modeling_window longer = opened_over(surplus, only_the_rows(), opening{surplus.chain.home, too_many});
+
+    CHECK(reported_by([&longer] { longer.initialize(); }) == std::string());
+
+    screw_chain one_short = described_chain();
+    one_short.space_screws.pop_back();
+    stage shorter(one_short, at_rest());
+    screw_modeling_window derived_short = opened_over(shorter, only_the_rows(), opening{});
+
+    CHECK_THAT(reported_by([&derived_short] { derived_short.initialize(); }), Catch::Matchers::ContainsSubstring("holds 5 screws"));
 }
 
 // The reading says the surplus on a line a person is looking at, so nothing is left for a log to

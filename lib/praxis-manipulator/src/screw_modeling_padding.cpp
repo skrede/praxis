@@ -7,6 +7,7 @@
 #include <span>
 #include <vector>
 #include <cstddef>
+#include <algorithm>
 
 namespace praxis::manipulator {
 
@@ -22,10 +23,14 @@ screw_axis supplied_or_opening(const rigid_motion::screw_ops &turning, const scr
 
 std::vector<screw_axis> as_drawn(const screw_chain &derived, const rigid_motion::screw_ops &turning, std::span<const supplied_screw> supplied)
 {
+    const screw_axis no_turn = screw_axis::Zero();
+    const std::size_t named  = std::max(derived.joint_count(), supplied.size());
+
     std::vector<screw_axis> drawn;
-    drawn.reserve(derived.joint_count());
-    for(std::size_t joint = 0u; joint < derived.joint_count(); ++joint)
-        drawn.push_back(supplied_or_opening(turning, derived.space_screws[joint], joint < supplied.size() ? supplied[joint] : supplied_screw()));
+    drawn.reserve(named);
+    for(std::size_t joint = 0u; joint < named; ++joint)
+        drawn.push_back(
+                supplied_or_opening(turning, joint < derived.joint_count() ? derived.space_screws[joint] : no_turn, joint < supplied.size() ? supplied[joint] : supplied_screw()));
 
     return drawn;
 }
