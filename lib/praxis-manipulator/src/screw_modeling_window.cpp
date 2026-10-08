@@ -62,6 +62,7 @@ screw_modeling_window::screw_modeling_window(std::string name, loadable_robot_st
         , m_home_position(Eigen::Vector3f::Zero())
         , m_frame(framing)
         , m_screw(turning)
+        , m_counted_apart(false)
         , m_unbound(false)
         , m_home_euler_degrees(Eigen::Vector3f::Zero())
         , m_stencil(target)
@@ -135,9 +136,15 @@ void screw_modeling_window::assemble_home()
 
 // The table reaches the drawing on every change, so a wrong screw is visible against the link it
 // claims to describe from the moment it is typed. A derived chain the rendered arm cannot take is
-// withheld at its own count and reported, since no row mends it; a surplus is withheld silently.
+// reported before anything else, since no row mends it; a surplus is withheld silently.
 void screw_modeling_window::push()
 {
+    const std::size_t rendered = m_stencil.robot().numDOF();
+    const bool apart           = m_derived.joint_count() != rendered;
+    if(apart && !m_counted_apart)
+        spdlog::error("praxis: '{}' holds {} screws and the arm they are drawn against does not take that many", display_name(), m_derived.joint_count());
+    m_counted_apart = apart;
+
     if(inert_and_reported(m_screw, m_stencil.inert_screw_slots(), rigid_motion::screw_slot::screw_axis_from_angular_linear,
                           "'" + display_name() + "' composes no chain from the rows it holds", m_unbound))
     {
@@ -145,9 +152,7 @@ void screw_modeling_window::push()
         return;
     }
 
-    const std::size_t rendered = m_stencil.robot().numDOF();
-    if(!m_stencil.supply_joint_screws(m_home, as_drawn(m_derived, m_screw, m_supplied, rendered)) && m_derived.joint_count() != rendered)
-        spdlog::error("praxis: '{}' holds {} screws and the arm they are drawn against does not take that many", display_name(), m_derived.joint_count());
+    static_cast<void>(m_stencil.supply_joint_screws(m_home, as_drawn(m_derived, m_screw, m_supplied, rendered)));
 }
 
 void screw_modeling_window::reset()

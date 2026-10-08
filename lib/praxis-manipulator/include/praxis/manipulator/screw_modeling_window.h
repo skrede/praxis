@@ -161,6 +161,7 @@ private:
     Eigen::Vector3f m_home_position;
     rigid_motion::frame_ops m_frame;
     rigid_motion::screw_ops m_screw;
+    bool m_counted_apart;
     // The construction each row is built through holds no refusal channel, so a composition that
     // left it at its default is said once for as long as that stands rather than once per push.
     bool m_unbound;

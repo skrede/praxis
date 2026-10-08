@@ -498,6 +498,15 @@ std::size_t items_offered(scene::imgui_window &panel)
     return navigable_items(frames, draw);
 }
 
+std::size_t said_of(const std::string &reported, std::string_view named)
+{
+    std::size_t times = 0u;
+    for(std::string::size_type at = reported.find(named); at != std::string::npos; at = reported.find(named, at + named.size()))
+        ++times;
+
+    return times;
+}
+
 // Whether a point stands on the drawn segment rather than merely on the line through it, which is
 // what a drawn axis reaching far enough either way of its anchor buys.
 bool covers(const std::vector<Eigen::Vector3d> &drawn, const Eigen::Vector3d &at)
@@ -1350,6 +1359,39 @@ TEST_CASE("a derived chain one joint short of the arm hands the forward map no s
     REQUIRE(shown.rows.size() > whole_chain_rows);
     for(std::size_t row = 0u; row < whole_chain_rows; ++row)
         CHECK(shown.rows[row].front().stated == "the supplied chain has no pose here");
+}
+
+TEST_CASE("a derived chain one joint short of the arm is reported before an unbound construction, and the drawing withholds it for the construction", "[manipulator][modeling]")
+{
+    screw_chain one_short = described_chain();
+    one_short.space_screws.pop_back();
+    stage headless(one_short, at_rest(), without_the_construction(), the_construction());
+    screw_modeling_window panel(panel_title, headless.shown, headless.published->reader(), without_the_construction(), framing(), solving(), headless.chain);
+
+    const std::string said = reported_by([&panel] { panel.initialize(); });
+
+    CHECK_THAT(said, Catch::Matchers::ContainsSubstring("holds 5 screws"));
+    CHECK_THAT(said, Catch::Matchers::ContainsSubstring("composes no chain"));
+    CHECK(said.find("holds 5 screws") < said.find("composes no chain"));
+    CHECK(headless.withheld().cause == withheld_cause::unbound_slot);
+}
+
+TEST_CASE("a derived chain one joint short of the arm is reported once for as long as it stands, not again on an edit", "[manipulator][modeling]")
+{
+    screw_chain one_short = described_chain();
+    one_short.space_screws.pop_back();
+    stage headless(one_short, at_rest());
+    screw_modeling_window panel = opened_over(headless, only_the_rows(), opening{});
+
+    const std::string said = reported_by(
+            [&panel]
+            {
+                panel.initialize();
+                type_component(panel, point_row, 0u, "0.25");
+            });
+
+    REQUIRE(panel.state().screws.front().has_value());
+    CHECK(said_of(said, "holds 5 screws") == 1u);
 }
 
 TEST_CASE("a reset from a table naming more joints than the arm has draws the chain again and tells the drawing a joint", "[manipulator][modeling]")

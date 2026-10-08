@@ -1659,6 +1659,7 @@ lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_kine
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_home_position	member	-	typename:Eigen::Vector3f
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_frame	member	-	typename:rigid_motion::frame_ops
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_screw	member	-	typename:rigid_motion::screw_ops
+lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_counted_apart	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_unbound	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_home_euler_degrees	member	-	typename:Eigen::Vector3f
 lib/praxis-manipulator/include/praxis/manipulator/screw_modeling_window.h	m_stencil	member	-	typename:loadable_robot_stencil &
