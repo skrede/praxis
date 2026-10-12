@@ -64,25 +64,15 @@ velocity_kinematics_window::velocity_kinematics_window(std::string name, arm_rea
         , m_controls(offered)
         , m_settings_at(std::move(at))
         , m_seen(std::move(seen))
+        , m_twist(state.twist)
         , m_arm(std::move(arm))
         , m_drawn(drawn)
+        , m_rate_weighted(state.rate_weighted)
         , m_frame(state.frame, {jacobian_frame::space, jacobian_frame::body}, {"Space", "Body"})
         , m_highlighted(state.highlighted)
         , m_reading(state.reading, {ellipsoid_view::velocity, ellipsoid_view::force}, {"Velocity", "Force"})
         , m_highlight_entries(highlight_entries(drawn))
 {
-}
-
-velocity_kinematics_window::settings velocity_kinematics_window::state() const
-{
-    return settings{.frame       = m_frame.value(),
-                    .reading     = m_reading.value(),
-                    .angular     = m_shown[angular],
-                    .linear      = m_shown[linear],
-                    .columns     = m_columns,
-                    .capped      = m_capped,
-                    .ellipsoids  = m_ellipsoids,
-                    .highlighted = m_highlighted};
 }
 
 void velocity_kinematics_window::initialize()
@@ -93,6 +83,10 @@ void velocity_kinematics_window::initialize()
     apply_part(jacobian_block::linear);
     m_drawn.set_jacobian_columns_shown(m_columns);
     m_drawn.set_force_capped(m_capped);
+    if(m_rate_weighted)
+        m_drawn.set_columns_weighted(*m_rate_weighted);
+    if(m_twist)
+        m_drawn.set_twist_shown(*m_twist);
     tell_highlighted();
 }
 

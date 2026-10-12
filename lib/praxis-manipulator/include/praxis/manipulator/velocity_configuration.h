@@ -18,6 +18,10 @@ void declare_velocity_kinematics(config::declaration &shape, std::string_view at
 velocity_kinematics_window::settings read_velocity_kinematics(const config::document &values, std::string_view at);
 std::vector<config::edit> write_velocity_kinematics(const velocity_kinematics_window::settings &state, std::string_view at);
 
+// What differs from what `carried` reads, and each set switch `carried` lacks whatever its value, so
+// a document that opted in keeps the attribute across a save.
+std::vector<config::edit> unsaved_velocity_kinematics(const config::document &carried, const velocity_kinematics_window::settings &state, std::string_view at);
+
 }
 
 #endif

@@ -18,7 +18,9 @@
 #include <vector>
 #include <cstddef>
 #include <fstream>
+#include <iterator>
 #include <optional>
+#include <algorithm>
 #include <filesystem>
 #include <string_view>
 
@@ -50,14 +52,19 @@ config::document loaded(const config::location &at, config::expectation carries 
     return answered.values;
 }
 
-config::outcome answering(const std::string &name, std::string_view body)
+config::location written(const std::string &name, std::string_view body)
 {
     const std::filesystem::path where = shared_scratch_directory() / name;
     std::ofstream out(where, std::ios::binary | std::ios::trunc);
     out << "<probe><machine>" << body << "</machine></probe>\n";
     out.close();
 
-    return config::load_or_defaults(described(), config::resolve(where, shared_scratch_directory()), config::expectation::partial);
+    return config::resolve(where, shared_scratch_directory());
+}
+
+config::outcome answering(const std::string &name, std::string_view body)
+{
+    return config::load_or_defaults(described(), written(name, body), config::expectation::partial);
 }
 
 config::document carrying(const std::string &name, std::string_view body)
@@ -85,6 +92,32 @@ config::document saved_and_reloaded(const config::location &at, const std::vecto
     REQUIRE(saved.has_value());
 
     return loaded(at);
+}
+
+std::string bytes_of(const config::location &at)
+{
+    std::ifstream in(at.resolved, std::ios::binary);
+    return std::string(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
+}
+
+velocity_kinematics_window window_at(velocity_stage &headless, const opening &state)
+{
+    return velocity_kinematics_window("Velocity kinematics", headless.source->reader(), headless.arm(), headless.shown, velocity_kinematics_window::controls{}, state,
+                                      std::string(velocity_at));
+}
+
+std::vector<std::string> keys_of(const std::vector<config::edit> &edits)
+{
+    std::vector<std::string> keys;
+    for(const config::edit &one : edits)
+        keys.push_back(one.key);
+
+    return keys;
+}
+
+bool names_a_rate_switch(const config::edit &one)
+{
+    return one.key.ends_with("rate_weighted") || one.key.ends_with("twist");
 }
 
 // Every field moved off what the settings struct opens at, in the order that struct declares them,
@@ -261,4 +294,148 @@ TEST_CASE("a window opened from a document naming a joint the arm lacks offers e
     REQUIRE(offered.size() == 1u);
     CHECK(offered[0].key.ends_with("highlighted"));
     CHECK(offered[0].value == "0");
+}
+
+TEST_CASE("a document carrying both rate switches opens a window holding them, tells the stencil, and saves what the window then holds", "[manipulator][configuration]")
+{
+    const config::location at      = written("rate-switches.xml", "<velocity_kinematics rate_weighted=\"true\" twist=\"false\"/>");
+    const config::document carried = loaded(at, config::expectation::partial);
+    const opening read             = read_velocity_kinematics(carried, velocity_at);
+    CHECK(read.rate_weighted == std::optional<bool>(true));
+    CHECK(read.twist == std::optional<bool>(false));
+
+    velocity_stage headless;
+    velocity_kinematics_window panel = window_at(headless, read);
+    panel.initialize();
+    CHECK(headless.shown.columns_weighted());
+    CHECK_FALSE(headless.shown.twist_shown());
+    CHECK(panel.state().rate_weighted == read.rate_weighted);
+    CHECK(panel.state().twist == read.twist);
+
+    opening moved                            = read;
+    moved.rate_weighted                      = false;
+    moved.twist                              = true;
+    const velocity_kinematics_window changed = window_at(headless, moved);
+
+    const opening reread = read_velocity_kinematics(saved_and_reloaded(at, changed.settings_edits(carried)), velocity_at);
+    CHECK(reread.rate_weighted == std::optional<bool>(false));
+    CHECK(reread.twist == std::optional<bool>(true));
+}
+
+TEST_CASE("a document carrying neither rate switch reads neither, offers neither and leaves the stencil where a composition put it", "[manipulator][configuration]")
+{
+    const config::document carried = carrying("rate-switches-absent.xml", "<velocity_kinematics frame=\"body\"/>");
+    opening read                   = read_velocity_kinematics(carried, velocity_at);
+    CHECK_FALSE(read.rate_weighted.has_value());
+    CHECK_FALSE(read.twist.has_value());
+
+    velocity_stage headless;
+    headless.shown.set_columns_weighted(true);
+    headless.shown.set_twist_shown(true);
+    read.capped                      = false;
+    velocity_kinematics_window panel = window_at(headless, read);
+    panel.initialize();
+    CHECK(headless.shown.columns_weighted());
+    CHECK(headless.shown.twist_shown());
+
+    const std::vector<config::edit> offered = panel.settings_edits(carried);
+    REQUIRE(offered.size() == 1u);
+    CHECK(offered[0].key.ends_with("capped"));
+}
+
+TEST_CASE("a document carrying only the weighting reads no twist, and a window moving the weighting saves it and no twist", "[manipulator][configuration]")
+{
+    const config::location at      = written("rate-weighted-alone.xml", "<velocity_kinematics rate_weighted=\"true\"/>");
+    const config::document carried = loaded(at, config::expectation::partial);
+    opening read                   = read_velocity_kinematics(carried, velocity_at);
+    CHECK(read.rate_weighted == std::optional<bool>(true));
+    CHECK_FALSE(read.twist.has_value());
+
+    velocity_stage headless;
+    read.rate_weighted                      = false;
+    const std::vector<config::edit> offered = window_at(headless, read).settings_edits(carried);
+    REQUIRE(offered.size() == 1u);
+    CHECK(offered[0].key.ends_with("rate_weighted"));
+    CHECK(offered[0].value == "false");
+
+    const opening reread = read_velocity_kinematics(saved_and_reloaded(at, offered), velocity_at);
+    CHECK(reread.rate_weighted == std::optional<bool>(false));
+    CHECK_FALSE(reread.twist.has_value());
+    CHECK(bytes_of(at).find("twist") == std::string::npos);
+}
+
+TEST_CASE("a rate switch carried at its declared fallback still opts the document in, and a window holding it off saves it over a document lacking it", "[manipulator][configuration]")
+{
+    CHECK(read_velocity_kinematics(carrying("twist-off.xml", "<velocity_kinematics twist=\"false\"/>"), velocity_at).twist == std::optional<bool>(false));
+
+    const config::location at      = written("weighting-off.xml", "<velocity_kinematics frame=\"space\"/>");
+    const config::document carried = loaded(at, config::expectation::partial);
+    opening off{};
+    off.rate_weighted = false;
+
+    velocity_stage headless;
+    const std::vector<config::edit> offered = window_at(headless, off).settings_edits(carried);
+    REQUIRE(offered.size() == 1u);
+    CHECK(offered[0].key.ends_with("rate_weighted"));
+
+    const config::document saved = saved_and_reloaded(at, offered);
+    const opening reread         = read_velocity_kinematics(saved, velocity_at);
+    CHECK(reread.rate_weighted == std::optional<bool>(false));
+    CHECK_FALSE(reread.twist.has_value());
+    CHECK(window_at(headless, reread).settings_edits(saved).empty());
+}
+
+TEST_CASE("a document written from the declaration alone carries both rate switches off", "[manipulator][configuration]")
+{
+    const opening read = read_velocity_kinematics(loaded(cleared("rate-switches-template.xml")), velocity_at);
+
+    CHECK(read.rate_weighted == std::optional<bool>(false));
+    CHECK(read.twist == std::optional<bool>(false));
+}
+
+TEST_CASE("the writer lists the rate switches after every other field, the weighting before the twist, and a window's offer keeps that order", "[manipulator][configuration]")
+{
+    const std::vector<config::edit> plain = write_velocity_kinematics(opening{}, velocity_at);
+    CHECK(plain.size() == 8u);
+    CHECK(std::ranges::none_of(plain, names_a_rate_switch));
+
+    opening both                        = every_field_moved();
+    both.highlighted                    = 1u;
+    both.rate_weighted                  = true;
+    both.twist                          = true;
+    const std::vector<config::edit> all = write_velocity_kinematics(both, velocity_at);
+    REQUIRE(all.size() == 10u);
+    CHECK(all[8].key.ends_with("rate_weighted"));
+    CHECK(all[9].key.ends_with("twist"));
+
+    std::vector<std::string> moved = keys_of(all);
+    std::erase_if(moved, [](const std::string &key) { return key.ends_with("ellipsoids"); });
+
+    velocity_stage headless;
+    CHECK(keys_of(window_at(headless, both).settings_edits(loaded(cleared("rate-switches-order.xml")))) == moved);
+}
+
+TEST_CASE("a document carrying neither rate switch saved with its frame moved changes that value's bytes and no other", "[manipulator][configuration]")
+{
+    const config::location at      = written("rate-switches-bytes.xml",
+                                             "<velocity_kinematics frame=\"space\" reading=\"velocity\" angular=\"true\" linear=\"true\" "
+                                             "columns=\"true\" capped=\"true\" ellipsoids=\"true\" highlighted=\"0\"/>");
+    const std::string before       = bytes_of(at);
+    const config::document carried = loaded(at, config::expectation::partial);
+    opening read                   = read_velocity_kinematics(carried, velocity_at);
+
+    velocity_stage headless;
+    CHECK(window_at(headless, read).settings_edits(carried).empty());
+
+    read.frame                              = jacobian_frame::body;
+    const std::vector<config::edit> offered = window_at(headless, read).settings_edits(carried);
+    REQUIRE(offered.size() == 1u);
+    REQUIRE(config::save(described(), at, offered).has_value());
+
+    std::string expected = before;
+    expected.replace(expected.find("frame=\"space\""), std::string_view("frame=\"space\"").size(), "frame=\"body\"");
+    const std::string after = bytes_of(at);
+    CHECK(after == expected);
+    CHECK(after.find("rate_weighted") == std::string::npos);
+    CHECK(after.find("twist") == std::string::npos);
 }

@@ -164,6 +164,17 @@ TEST_CASE("an arm document carrying a joint whose index is written empty is refu
     CHECK(presets::read_arm(answered.values, {}).initial.size() == 0);
 }
 
+TEST_CASE("an arm's rate switches are read back out from under the path the velocity window keeps them at, and an arm naming neither reads neither", "[presets][documents]")
+{
+    const presets::arm_scenario both = opened("rate-switches", "<arm>\n    <velocity_kinematics rate_weighted=\"true\" twist=\"false\"/>\n</arm>\n");
+    CHECK(both.velocity_kinematics.rate_weighted == std::optional<bool>(true));
+    CHECK(both.velocity_kinematics.twist == std::optional<bool>(false));
+
+    const presets::arm_scenario neither = opened("no-rate-switches", a_solving_arm);
+    CHECK_FALSE(neither.velocity_kinematics.rate_weighted.has_value());
+    CHECK_FALSE(neither.velocity_kinematics.twist.has_value());
+}
+
 TEST_CASE("an arm's solutions window is read back out from under the path that window keeps it at", "[presets][documents]")
 {
     const presets::arm_scenario read = opened("a-solutions-window", a_solving_arm);

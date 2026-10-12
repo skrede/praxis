@@ -1,12 +1,16 @@
 #include "demo_documents.h"
 #include "demo_configuration.h"
 
+#include "praxis/presets/arm.h"
 #include "praxis/presets/arm_scenarios.h"
 #include "praxis/presets/arm_registration.h"
+
+#include "praxis/manipulator/velocity_configuration.h"
 
 #include "praxis/scene/preset_registry.h"
 
 #include "praxis/config/store.h"
+#include "praxis/config/writer.h"
 #include "praxis/config/document.h"
 
 #include <catch2/catch_test_macros.hpp>
@@ -17,6 +21,7 @@
 #include <vector>
 #include <cstddef>
 #include <fstream>
+#include <iterator>
 #include <optional>
 #include <algorithm>
 #include <filesystem>
@@ -123,6 +128,12 @@ std::vector<std::string> named_documents(const config::document &values)
     return named;
 }
 
+std::string bytes_of(const std::filesystem::path &file)
+{
+    std::ifstream in(file, std::ios::binary);
+    return std::string(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
+}
+
 }
 
 TEST_CASE("every shipped preset document loads against the declaration the application reads it with", "[examples][documents]")
@@ -223,4 +234,41 @@ TEST_CASE("a demonstration document carrying a preset with no name lists only th
 
     CHECK(demo::preset_keys(answered.values) == std::vector<std::string>{"plain-kr6r"});
     CHECK(named_documents(answered.values) == std::vector<std::string>{"kr6r.xml"});
+}
+
+TEST_CASE("every shipped preset reads neither rate switch and offers no velocity edit against its own document", "[examples][documents]")
+{
+    for(const shipped &preset : shipped_presets())
+    {
+        INFO(preset.file);
+        const manipulator::velocity_kinematics_window::settings read = opened(preset.values).velocity_kinematics;
+        CHECK_FALSE(read.rate_weighted.has_value());
+        CHECK_FALSE(read.twist.has_value());
+        CHECK(manipulator::unsaved_velocity_kinematics(preset.values, read, presets::window_paths::velocity_kinematics).empty());
+    }
+}
+
+TEST_CASE("the shipped velocity kinematics document saved with its frame moved differs from it in that value alone", "[examples][documents]")
+{
+    const std::filesystem::path directory = std::filesystem::temp_directory_path() / "praxis-shipped-velocity-saved";
+    const std::filesystem::path copy      = directory / "kr6r-velocity-kinematics.xml";
+    std::filesystem::create_directories(directory);
+    std::filesystem::copy_file(std::filesystem::path(PRAXIS_SHIPPED_MACHINE_DIR) / copy.filename(), copy, std::filesystem::copy_options::overwrite_existing);
+    const std::string shipped_bytes = bytes_of(copy);
+
+    const config::location at      = config::resolve(copy, directory);
+    const config::outcome answered = config::load_or_defaults(presets::arm_keyspace(), at, config::expectation::partial);
+    REQUIRE_FALSE(answered.failure.has_value());
+
+    manipulator::velocity_kinematics_window::settings moved = opened(answered.values).velocity_kinematics;
+    moved.frame                                             = manipulator::jacobian_frame::body;
+    const std::vector<config::edit> offered                 = manipulator::unsaved_velocity_kinematics(answered.values, moved, presets::window_paths::velocity_kinematics);
+    REQUIRE(offered.size() == 1u);
+    REQUIRE(config::save(presets::arm_keyspace(), at, offered).has_value());
+
+    constexpr std::string_view space = "frame=\"space\"";
+    std::string expected             = shipped_bytes;
+    REQUIRE(expected.find(space) != std::string::npos);
+    expected.replace(expected.find(space), space.size(), "frame=\"body\"");
+    CHECK(bytes_of(copy) == expected);
 }

@@ -43,7 +43,10 @@ public:
     // ellipsoid and the arrows of that part of every column; the columns switch governs whether the
     // columns stand at all, and the ellipsoids switch whether the two ellipsoids do. The highlighted
     // joint, counted from zero, is the one whose column is drawn apart from the others and marked in
-    // the matrix, and none names no joint.
+    // the matrix, and none names no joint. The weighting of the columns by the told joint rates and
+    // the twist those rates sum to are optional: a value names where each stands, and none means the
+    // document did not ask for it, which leaves the stencil where the composition put it and saves
+    // nothing.
     struct settings
     {
         jacobian_frame frame                   = jacobian_frame::space;
@@ -54,6 +57,8 @@ public:
         bool capped                            = true;
         bool ellipsoids                        = true;
         std::optional<std::size_t> highlighted = std::nullopt;
+        std::optional<bool> rate_weighted      = std::nullopt;
+        std::optional<bool> twist              = std::nullopt;
     };
 
     velocity_kinematics_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, loadable_robot_stencil &drawn);
@@ -62,8 +67,8 @@ public:
 
     settings state() const;
 
-    // Every value reaches the stencil here whether or not a control was drawn for it, which is what
-    // leaves a feature nobody offered a control for standing where the composition put it.
+    // Every value set reaches the stencil here whether or not a control was drawn for it, which is
+    // what leaves a feature nobody offered a control for standing where the composition put it.
     void initialize() override;
 
     std::string_view settings_path() const override
@@ -102,8 +107,10 @@ private:
     controls m_controls;
     std::string m_settings_at;
     arm_reader m_seen;
+    std::optional<bool> m_twist;
     std::weak_ptr<owned_arm> m_arm;
     loadable_robot_stencil &m_drawn;
+    std::optional<bool> m_rate_weighted;
     option_cycle<jacobian_frame, 2> m_frame;
     std::optional<std::size_t> m_highlighted;
     option_cycle<ellipsoid_view, 2> m_reading;
