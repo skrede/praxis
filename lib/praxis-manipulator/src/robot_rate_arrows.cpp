@@ -9,6 +9,7 @@
 #include <threepp/materials/MeshPhongMaterial.hpp>
 
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include <span>
 #include <array>
@@ -140,7 +141,7 @@ void loadable_robot_stencil::place_twist() const
         return;
     }
 
-    const expected<jacobian, refusal> &taken     = shown_jacobian(*seen, m_frame);
+    const expected<jacobian, refusal> taken      = shown_jacobian(*seen, m_frame);
     const expected<rotation, refusal> into_space = carried_into_space(*seen);
     if(!taken || !into_space || !seen->tool_position || static_cast<std::size_t>(taken->cols()) != m_rates.size())
     {

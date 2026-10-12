@@ -48,9 +48,10 @@ threepp::Color twist_tone(jacobian_block part);
 // A material in that tone, built by the caller once.
 std::shared_ptr<threepp::Material> twist_material(jacobian_block part);
 
-// The one field says which of the two the whole stencil is showing, so the columns cannot be taken
-// from a matrix the ellipsoids beside them are not taken from.
-const expected<jacobian, refusal> &shown_jacobian(const arm_snapshot &seen, jacobian_frame taken);
+// Chosen by the one frame field that also chooses the ellipsoids' Jacobian. The body Jacobian is
+// published at the flange and handed out re-expressed in the tool frame through the tool offset, so
+// a body column is a twist of the tool frame.
+expected<jacobian, refusal> shown_jacobian(const arm_snapshot &seen, jacobian_frame taken);
 
 }
 

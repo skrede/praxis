@@ -281,9 +281,9 @@ public:
     expected<void, refusal> set_solution_figures(std::span<const joint_vector> at);
     void clear_solution_figures();
 
-    // Which Jacobian everything the stencil draws from a Jacobian is drawn from. One field governs
-    // them all, so no two of those drawings can be standing for different matrices. Lynch & Park,
-    // Modern Robotics, section 5.1.
+    // Which Jacobian everything the stencil draws from a Jacobian is drawn from. One field chooses
+    // the space or the body variant for all of those drawings at once, and the arrows read the body
+    // variant re-expressed at the tool. Lynch & Park, Modern Robotics, section 5.1.
     void set_jacobian_frame(jacobian_frame taken);
     jacobian_frame jacobian_frame_shown() const;
 
@@ -336,6 +336,9 @@ public:
     void set_linear_ellipsoid_shown(bool shown);
     void set_jacobian_columns_shown(bool shown);
     void set_column_part_shown(jacobian_block which, bool shown);
+    // The twist J times the told rates stands at the tool in either frame: its angular arrow the
+    // angular velocity, its linear arrow the tool point's velocity, both in the space frame, each at
+    // its part's column scale. Lynch & Park, Modern Robotics, section 5.1.
     void set_twist_shown(bool shown);
     bool twist_shown() const;
     expected<void, refusal> set_pose_path_shown(std::string_view named, bool shown);

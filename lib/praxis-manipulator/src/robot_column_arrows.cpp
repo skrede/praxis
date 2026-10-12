@@ -10,6 +10,7 @@
 #include <threepp/materials/MeshPhongMaterial.hpp>
 
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include <array>
 #include <memory>
@@ -37,6 +38,20 @@ Eigen::Vector3d part_of(const jacobian &taken, std::size_t column, std::size_t p
     return Eigen::Vector3d(taken.block<3, 1>(part == block_of(jacobian_block::angular) ? 0 : 3, static_cast<Eigen::Index>(column)));
 }
 
+// A twist of the flange re-expressed in the tool frame, the offset being the tool frame's pose in the
+// flange frame. Lynch & Park, Modern Robotics, Def. 3.20.
+jacobian at_the_tool(const jacobian &flange, const transform &offset)
+{
+    const Eigen::Matrix3d turned_back = offset.block<3, 3>(0, 0).transpose();
+    const Eigen::Vector3d moved       = offset.block<3, 1>(0, 3);
+
+    jacobian tool(6, flange.cols());
+    tool.topRows<3>()    = turned_back * flange.topRows<3>();
+    tool.bottomRows<3>() = turned_back * (flange.bottomRows<3>() + flange.topRows<3>().colwise().cross(moved));
+
+    return tool;
+}
+
 refusal no_column_to_draw()
 {
     spdlog::error("praxis: the columns of a Jacobian were told to stand at a width of none, so no arrow is raised and the ones standing are left as they were");
@@ -59,12 +74,14 @@ std::shared_ptr<threepp::Material> column_material(jacobian_block part, bool hig
     return threepp::MeshPhongMaterial::create({{"flatShading", true}, {"color", column_tone(part, highlighted)}});
 }
 
-const expected<jacobian, refusal> &shown_jacobian(const arm_snapshot &seen, jacobian_frame taken)
+expected<jacobian, refusal> shown_jacobian(const arm_snapshot &seen, jacobian_frame taken)
 {
     if(taken == jacobian_frame::space)
         return seen.space_jacobian;
+    if(!seen.body_jacobian)
+        return unexpected(seen.body_jacobian.error());
 
-    return seen.body_jacobian;
+    return at_the_tool(*seen.body_jacobian, seen.tool_offset);
 }
 
 std::string loadable_robot_stencil::jacobian_column_name(std::size_t column, jacobian_block part)
@@ -158,7 +175,7 @@ void loadable_robot_stencil::place_jacobian_columns() const
     if(m_column_arrows.empty() || seen == nullptr)
         return;
 
-    const expected<jacobian, refusal> &taken     = shown_jacobian(*seen, m_frame);
+    const expected<jacobian, refusal> taken      = shown_jacobian(*seen, m_frame);
     const expected<Eigen::Vector3d, refusal> put = m_frame == jacobian_frame::space ? expected<Eigen::Vector3d, refusal>(Eigen::Vector3d::Zero()) : seen->tool_position;
     const expected<rotation, refusal> into_space = carried_into_space(*seen);
     if(!taken || !put || !into_space || static_cast<std::size_t>(taken->cols()) != m_column_arrows.size())
