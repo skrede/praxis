@@ -222,6 +222,7 @@ praxis_add_module(manipulator
     src/trajectory_preview_configuration.cpp
     src/trajectory_recording_window.cpp
     src/velocity_configuration.cpp
+    src/velocity_kinematics_rates.cpp
     src/velocity_kinematics_rows.h
     src/velocity_kinematics_rows.cpp
     src/velocity_kinematics_settings.cpp

@@ -2015,8 +2015,10 @@ lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	r
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	render_frame	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	render_reading	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	render_switches	prototype	()	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	render_rate_switches	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	render_highlighted	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	tell_highlighted	prototype	()	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	tell_rates	prototype	() const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	apply_part	prototype	(jacobian_block which) const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/velocity_kinematics_window.h	report_unbounded	prototype	() const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/view_configuration.h	manipulator	namespace	-	-

@@ -83,10 +83,7 @@ void velocity_kinematics_window::initialize()
     apply_part(jacobian_block::linear);
     m_drawn.set_jacobian_columns_shown(m_columns);
     m_drawn.set_force_capped(m_capped);
-    if(m_rate_weighted)
-        m_drawn.set_columns_weighted(*m_rate_weighted);
-    if(m_twist)
-        m_drawn.set_twist_shown(*m_twist);
+    tell_rates();
     tell_highlighted();
 }
 
@@ -155,6 +152,7 @@ void velocity_kinematics_window::render_switches()
     render_highlighted();
     if(ImGui::Checkbox("Cap the force ellipsoid", &m_capped))
         m_drawn.set_force_capped(m_capped);
+    render_rate_switches();
 }
 
 void velocity_kinematics_window::render_highlighted()

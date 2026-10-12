@@ -329,6 +329,32 @@ TEST_CASE("the velocity-kinematics scenario's list over a seven-joint arm reache
     CHECK(static_cast<manipulator::loadable_robot_stencil &>(*composed->stencil).selected_joint() == std::optional<std::size_t>(6u));
 }
 
+TEST_CASE("the velocity-kinematics scenario opens its rate switches where its settings carry them and leaves the stencil untold where they do not", "[presets][windows]")
+{
+    const described_arm described(2, "two");
+    presets::arm_scenario opted             = described_by(described.where);
+    opted.velocity_kinematics.rate_weighted = true;
+    opted.velocity_kinematics.twist         = true;
+
+    threepp::Scene opted_target;
+    std::shared_ptr<scene::preset> opted_composed;
+    const std::shared_ptr<manipulator::velocity_kinematics_window> opted_panel = velocity_opened(opted_target, opted_composed, opted);
+    const manipulator::loadable_robot_stencil &opted_drawn                     = static_cast<manipulator::loadable_robot_stencil &>(*opted_composed->stencil);
+    CHECK(opted_panel->state().rate_weighted == std::optional<bool>(true));
+    CHECK(opted_panel->state().twist == std::optional<bool>(true));
+    CHECK(opted_drawn.columns_weighted());
+    CHECK(opted_drawn.twist_shown());
+
+    threepp::Scene plain_target;
+    std::shared_ptr<scene::preset> plain_composed;
+    const std::shared_ptr<manipulator::velocity_kinematics_window> plain_panel = velocity_opened(plain_target, plain_composed, described_by(described.where));
+    const manipulator::loadable_robot_stencil &plain_drawn                     = static_cast<manipulator::loadable_robot_stencil &>(*plain_composed->stencil);
+    CHECK_FALSE(plain_panel->state().rate_weighted.has_value());
+    CHECK_FALSE(plain_panel->state().twist.has_value());
+    CHECK_FALSE(plain_drawn.columns_weighted());
+    CHECK_FALSE(plain_drawn.twist_shown());
+}
+
 TEST_CASE("no arm is composed from a description that does not load", "[presets][windows]")
 {
     threepp::Scene target;

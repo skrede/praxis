@@ -30,7 +30,8 @@ class velocity_kinematics_window : public scene::labeled_value_window, public co
 public:
     // Which controls a composition offers. A control this does not ask for is not drawn, so the
     // feature behind it stays wherever the composition set it and nothing in the running
-    // application can move it.
+    // application can move it. The weighting and twist switches are drawn under shown only for a
+    // value the settings carry.
     struct controls
     {
         bool frame   = true;
@@ -120,8 +121,10 @@ private:
     void render_frame();
     void render_reading();
     void render_switches();
+    void render_rate_switches();
     void render_highlighted();
     void tell_highlighted();
+    void tell_rates() const;
 
     // Both drawings of one part, told together, which is what leaves a part shown or hidden across
     // the ellipsoid and the columns rather than on one of them. The ellipsoid stands only while the
