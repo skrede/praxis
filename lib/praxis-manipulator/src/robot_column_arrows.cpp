@@ -32,6 +32,11 @@ std::size_t block_of(jacobian_block which)
     return static_cast<std::size_t>(which);
 }
 
+Eigen::Vector3d part_of(const jacobian &taken, std::size_t column, std::size_t part)
+{
+    return Eigen::Vector3d(taken.block<3, 1>(part == block_of(jacobian_block::angular) ? 0 : 3, static_cast<Eigen::Index>(column)));
+}
+
 // The one field says which of the two the whole stencil is showing, so the columns cannot be taken
 // from a matrix the ellipsoids beside them are not taken from.
 const expected<jacobian, refusal> &shown_jacobian(const arm_snapshot &seen, jacobian_frame taken)
@@ -107,6 +112,7 @@ void loadable_robot_stencil::clear_jacobian_columns()
     for(const std::shared_ptr<threepp::Object3D> &part : m_column_parts)
         part->clear();
     m_column_arrows.clear();
+    m_rates.clear();
 }
 
 void loadable_robot_stencil::set_jacobian_columns_shown(bool shown)
@@ -166,7 +172,8 @@ void loadable_robot_stencil::place_jacobian_columns() const
         for(std::size_t part = 0; part < jacobian_block_count; ++part)
         {
             const drawn_column &standing = m_column_arrows[column][part];
-            const Eigen::Vector3d along  = *into_space * Eigen::Vector3d(taken->block<3, 1>(part == block_of(jacobian_block::angular) ? 0 : 3, static_cast<Eigen::Index>(column)));
+            const double weight          = m_weighted && !m_rates.empty() ? m_rates[column] : 1.0;
+            const Eigen::Vector3d along  = *into_space * (weight * part_of(*taken, column, part));
 
             place_arrow(drawn_arrow{standing.object, standing.shaft, standing.tip}, *put, along, along.norm() * m_column_scale[part]);
         }

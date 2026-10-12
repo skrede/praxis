@@ -307,6 +307,15 @@ public:
     void set_column_scale(jacobian_block which, double drawn_metres_per_unit);
     double column_scale(jacobian_block which) const;
 
+    // One rate per drawn column, in its joint's own unit per second: rad/s for a revolute joint, m/s
+    // for a prismatic one. None at all clears them, as telling or clearing the columns does; a count
+    // other than the column count, or a rate that is not finite, is declined by name and leaves the
+    // rates standing. While weighted, each column's parts stand at its rate times their unit length,
+    // signed; without rates every column stands at unit length.
+    expected<void, refusal> set_joint_rates(std::span<const double> rates);
+    void set_columns_weighted(bool weighted);
+    bool columns_weighted() const;
+
     // The arm's meshes, its screw axes, the chain through its joint origins, the paths it was told,
     // the figures of the configurations it was told, its angular manipulability ellipsoid, its
     // linear one and the columns of the Jacobian it is showing are eight drawings of one arm, and
@@ -419,6 +428,7 @@ private:
     // One entry per column of the Jacobian the stencil was told the width of, each holding the
     // arrow of that column's angular part and the arrow of its linear part.
     std::vector<std::array<drawn_column, jacobian_block_count>> m_column_arrows;
+    std::vector<double> m_rates;
     // Drawn metres per unit semi-axis, one per block.
     std::array<double, jacobian_block_count> m_ellipsoid_scale;
     // Drawn metres per unit column part, one per block.
@@ -428,6 +438,7 @@ private:
     // A multiple of the size a marker was built at.
     double m_marker_scale;
     bool m_supplied;
+    bool m_weighted;
     bool m_marker_shown;
     bool m_tool_marker_shown;
     bool m_described_marker_shown;

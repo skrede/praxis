@@ -961,6 +961,9 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_j
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	clear_jacobian_columns	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_column_scale	prototype	(jacobian_block which,double drawn_metres_per_unit)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	column_scale	prototype	(jacobian_block which) const	typename:double
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_joint_rates	prototype	(std::span<const double> rates)	typename:expected<void,refusal>
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_columns_weighted	prototype	(bool weighted)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	columns_weighted	prototype	() const	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_meshes_shown	prototype	(bool shown)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_decoration_shown	prototype	(bool shown)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	set_chain_shown	prototype	(bool shown)	typename:void
@@ -1028,11 +1031,13 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_seg
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_marks	member	-	typename:std::vector<std::shared_ptr<threepp::Object3D>>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_ellipsoids	member	-	typename:std::array<drawn_ellipsoid,jacobian_block_count>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_column_arrows	member	-	typename:std::vector<std::array<drawn_column,jacobian_block_count>>
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_rates	member	-	typename:std::vector<double>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_ellipsoid_scale	member	-	typename:std::array<double,jacobian_block_count>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_column_scale	member	-	typename:std::array<double,jacobian_block_count>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_force_cap_ratio	member	-	typename:double
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_marker_scale	member	-	typename:double
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_supplied	member	-	typename:bool
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_weighted	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_marker_shown	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_tool_marker_shown	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_described_marker_shown	member	-	typename:bool

@@ -189,6 +189,7 @@ praxis_add_module(manipulator
     src/robot_column_arrows.cpp
     src/robot_ellipsoids.cpp
     src/robot_pose_path.cpp
+    src/robot_rate_arrows.cpp
     src/robot_solution_figures.cpp
     src/robot_view_window.cpp
     src/scene_robot.cpp

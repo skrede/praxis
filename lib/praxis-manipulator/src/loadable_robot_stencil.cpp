@@ -103,6 +103,7 @@ loadable_robot_stencil::loadable_robot_stencil(std::shared_ptr<threepp::Robot> r
         , m_force_cap_ratio(opening_force_cap_ratio)
         , m_marker_scale(1.0)
         , m_supplied(false)
+        , m_weighted(false)
         , m_marker_shown(true)
         , m_tool_marker_shown(true)
         , m_described_marker_shown(false)
