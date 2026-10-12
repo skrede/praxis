@@ -96,6 +96,8 @@ loadable_robot_stencil::loadable_robot_stencil(std::shared_ptr<threepp::Robot> r
         , m_ellipsoid_groups{threepp::Group::create(), threepp::Group::create()}
         , m_columns(threepp::Group::create())
         , m_column_parts{threepp::Group::create(), threepp::Group::create()}
+        , m_twist(threepp::Group::create())
+        , m_twist_parts{threepp::Group::create(), threepp::Group::create()}
         , m_decoration(threepp::Group::create())
         , m_world_frame(threepp::Group::create())
         , m_ellipsoid_scale{opening_angular_scale, opening_linear_scale}
@@ -122,11 +124,12 @@ loadable_robot_stencil::loadable_robot_stencil(std::shared_ptr<threepp::Robot> r
     m_decoration->rotation.x                                               = -threepp::math::PI / 2.f;
     m_world_frame->rotation.x                                              = -threepp::math::PI / 2.f;
 
-    // Seven subtrees under the one root, so that the switch over the axes, the switch over the
+    // Eight subtrees under the one root, so that the switch over the axes, the switch over the
     // chain, the switch over any one path, the switch over the figures the stencil was told, the
-    // switch over each of the two manipulability ellipsoids and the switch over the columns of the
-    // Jacobian it is showing are each a write the others cannot reach. The columns carry a subtree
-    // per part beneath their own, so a part is withheld without that write reaching the columns.
+    // switch over each of the two manipulability ellipsoids, the switch over the columns of the
+    // Jacobian it is showing and the switch over the twist the told rates sum to are each a write the
+    // others cannot reach. The columns and the twist each carry a subtree per part beneath their own,
+    // so a part is withheld without that write reaching either.
     m_decoration->add(m_axes);
     m_decoration->add(m_figure);
     m_decoration->add(m_paths);
@@ -134,8 +137,10 @@ loadable_robot_stencil::loadable_robot_stencil(std::shared_ptr<threepp::Robot> r
     m_decoration->add(m_ellipsoid_groups[block_of(jacobian_block::angular)]);
     m_decoration->add(m_ellipsoid_groups[block_of(jacobian_block::linear)]);
     m_decoration->add(m_columns);
+    m_decoration->add(m_twist);
     m_columns->add(m_column_parts[block_of(jacobian_block::angular)]);
     m_columns->add(m_column_parts[block_of(jacobian_block::linear)]);
+    raise_twist();
     m_tool_stick->add(m_tool_segment);
     m_tool_stick->visible = false;
 
@@ -218,6 +223,7 @@ void loadable_robot_stencil::render() const
     place_tool_drawing();
     place_ellipsoids();
     place_jacobian_columns();
+    place_twist();
 }
 
 }

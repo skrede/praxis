@@ -37,16 +37,6 @@ Eigen::Vector3d part_of(const jacobian &taken, std::size_t column, std::size_t p
     return Eigen::Vector3d(taken.block<3, 1>(part == block_of(jacobian_block::angular) ? 0 : 3, static_cast<Eigen::Index>(column)));
 }
 
-// The one field says which of the two the whole stencil is showing, so the columns cannot be taken
-// from a matrix the ellipsoids beside them are not taken from.
-const expected<jacobian, refusal> &shown_jacobian(const arm_snapshot &seen, jacobian_frame taken)
-{
-    if(taken == jacobian_frame::space)
-        return seen.space_jacobian;
-
-    return seen.body_jacobian;
-}
-
 refusal no_column_to_draw()
 {
     spdlog::error("praxis: the columns of a Jacobian were told to stand at a width of none, so no arrow is raised and the ones standing are left as they were");
@@ -67,6 +57,14 @@ threepp::Color column_tone(jacobian_block part, bool highlighted)
 std::shared_ptr<threepp::Material> column_material(jacobian_block part, bool highlighted)
 {
     return threepp::MeshPhongMaterial::create({{"flatShading", true}, {"color", column_tone(part, highlighted)}});
+}
+
+const expected<jacobian, refusal> &shown_jacobian(const arm_snapshot &seen, jacobian_frame taken)
+{
+    if(taken == jacobian_frame::space)
+        return seen.space_jacobian;
+
+    return seen.body_jacobian;
 }
 
 std::string loadable_robot_stencil::jacobian_column_name(std::size_t column, jacobian_block part)
@@ -123,6 +121,7 @@ void loadable_robot_stencil::set_jacobian_columns_shown(bool shown)
 void loadable_robot_stencil::set_column_part_shown(jacobian_block which, bool shown)
 {
     m_column_parts[block_of(which)]->visible = shown;
+    m_twist_parts[block_of(which)]->visible  = shown;
 }
 
 // Only the column the drawing is about wears its part's highlighted tone; every other column, or every

@@ -1,4 +1,5 @@
 #include "robot/column_arrow.h"
+#include "robot/joint_decoration.h"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -166,4 +167,29 @@ TEST_CASE("An arrow along no axis is not drawn and composes no turn", "[manipula
 
     CHECK_FALSE(drawn.object->visible);
     CHECK(std::abs(std::abs(standing.dot(turn_of(*drawn.object))) - 1.0) < read_back);
+}
+
+// Both sides of each comparison are read by threepp from a hex, so the case pins the hex itself.
+TEST_CASE("the twist's two tones are its own, apart from every column tone, the selected joint's and the screw axes'", "[manipulator][drawing]")
+{
+    CHECK(twist_tone(jacobian_block::angular) == threepp::Color(0xff8c00));
+    CHECK(twist_tone(jacobian_block::linear) == threepp::Color(0x9b7700));
+    CHECK(twist_tone(jacobian_block::angular) != twist_tone(jacobian_block::linear));
+
+    for(const jacobian_block part : {jacobian_block::angular, jacobian_block::linear})
+    {
+        const threepp::Color worn = twist_tone(part);
+        for(const jacobian_block column : {jacobian_block::angular, jacobian_block::linear})
+            for(const bool highlighted : {false, true})
+                CHECK(worn != column_tone(column, highlighted));
+        CHECK(worn != threepp::Color(selected_joint_tone));
+        CHECK(worn != threepp::Color(selected_axis_tone));
+        CHECK(worn != threepp::Color(threepp::Color::orange));
+
+        const std::shared_ptr<threepp::Material> material = twist_material(part);
+        REQUIRE(material != nullptr);
+        threepp::MaterialWithColor *const toned = material->as<threepp::MaterialWithColor>();
+        REQUIRE(toned != nullptr);
+        CHECK(toned->color == worn);
+    }
 }

@@ -155,9 +155,9 @@ class loadable_robot_stencil : public scene::stencil
         std::array<std::shared_ptr<threepp::Object3D>, 6> lines;
     };
 
-    // One part of one Jacobian column standing in the scene as an arrow: the group the arrow hangs
-    // under and the two pieces its placement stretches and stands. Every handle is null until the
-    // drawing is told.
+    // One part of one Jacobian column, or of the twist, standing in the scene as an arrow: the group
+    // the arrow hangs under and the two pieces its placement stretches and stands. A column's handles
+    // are null until the drawing is told; the twist's are raised at construction.
     struct drawn_column
     {
         std::shared_ptr<threepp::Object3D> object;
@@ -318,16 +318,16 @@ public:
 
     // The arm's meshes, its screw axes, the chain through its joint origins, the paths it was told,
     // the figures of the configurations it was told, its angular manipulability ellipsoid, its
-    // linear one and the columns of the Jacobian it is showing are eight drawings of one arm, and
-    // each of these shows or hides its own and reaches none of the others; a path is shown or hidden
-    // by name, one at a time, and a name no path stands under is declined rather than quietly
-    // ignored. None of them decides when it should be on: that is the composition's to say. Eight
-    // drawings, eight switches.
+    // linear one, the columns of the Jacobian it is showing and the twist the told rates sum to are
+    // nine drawings of one arm, and each of these shows or hides its own and reaches none of the
+    // others; a path is shown or hidden by name, one at a time, and a name no path stands under is
+    // declined rather than quietly ignored. None of them decides when it should be on: that is the
+    // composition's to say. Nine drawings, nine switches.
     //
     // The columns carry one grain beneath their own switch: either part of every column is shown or
     // hidden on its own, under the switch that shows or hides the columns at all, so a part withheld
     // leaves the other part of every column standing and the switch over the columns still reaches
-    // both.
+    // both. The same grain reaches the twist's two arrows, under the twist's own switch.
     void set_meshes_shown(bool shown);
     void set_decoration_shown(bool shown);
     void set_chain_shown(bool shown);
@@ -336,6 +336,8 @@ public:
     void set_linear_ellipsoid_shown(bool shown);
     void set_jacobian_columns_shown(bool shown);
     void set_column_part_shown(jacobian_block which, bool shown);
+    void set_twist_shown(bool shown);
+    bool twist_shown() const;
     expected<void, refusal> set_pose_path_shown(std::string_view named, bool shown);
 
     // Which joint the drawing tells apart from the rest, counted from zero: its point, the segment
@@ -373,6 +375,9 @@ public:
 
     // The name one part of one Jacobian column's arrow stands under. The column is counted from one.
     static std::string jacobian_column_name(std::size_t column, jacobian_block part);
+
+    // The name one part of the twist's arrow stands under.
+    static std::string twist_name(jacobian_block part);
 
     std::shared_ptr<threepp::Object3D> attached_at(flange_attachment which) const;
     std::shared_ptr<threepp::Object3D> world_object() const;
@@ -414,6 +419,8 @@ private:
     // One subtree per part beneath the columns, so the switch over a part and the switch over the
     // columns at all are each a write the other cannot reach.
     std::array<std::shared_ptr<threepp::Object3D>, jacobian_block_count> m_column_parts;
+    std::shared_ptr<threepp::Object3D> m_twist;
+    std::array<std::shared_ptr<threepp::Object3D>, jacobian_block_count> m_twist_parts;
     std::shared_ptr<threepp::Object3D> m_decoration;
     // Turned like the robot, so a world object's placement is read in the robot's frame rather than
     // the renderer's.
@@ -425,6 +432,7 @@ private:
     std::vector<std::shared_ptr<threepp::Object3D>> m_segments;
     std::vector<std::shared_ptr<threepp::Object3D>> m_marks;
     std::array<drawn_ellipsoid, jacobian_block_count> m_ellipsoids;
+    std::array<drawn_column, jacobian_block_count> m_twist_arrows;
     // One entry per column of the Jacobian the stencil was told the width of, each holding the
     // arrow of that column's angular part and the arrow of its linear part.
     std::vector<std::array<drawn_column, jacobian_block_count>> m_column_arrows;
@@ -470,6 +478,9 @@ private:
     bool place_joint_decoration() const;
     void place_ellipsoids() const;
     void place_jacobian_columns() const;
+    void raise_twist();
+    void place_twist() const;
+    void hide_twist() const;
 
     // Where the two frame markers stand while a supplied chain is held, in the model's root-link
     // frame: its end where it folds and none where it is withheld.

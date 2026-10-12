@@ -42,6 +42,16 @@ threepp::Color column_tone(jacobian_block part, bool highlighted);
 // drawing running every frame assigns a material rather than building one.
 std::shared_ptr<threepp::Material> column_material(jacobian_block part, bool highlighted);
 
+// The tone one part of the twist wears, in the renderer's working color space.
+threepp::Color twist_tone(jacobian_block part);
+
+// A material in that tone, built by the caller once.
+std::shared_ptr<threepp::Material> twist_material(jacobian_block part);
+
+// The one field says which of the two the whole stencil is showing, so the columns cannot be taken
+// from a matrix the ellipsoids beside them are not taken from.
+const expected<jacobian, refusal> &shown_jacobian(const arm_snapshot &seen, jacobian_frame taken);
+
 }
 
 #endif
