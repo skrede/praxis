@@ -76,10 +76,9 @@ public:
     }
 };
 
-inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> stretched_by(double by, std::span<const trajectory::configuration> waypoints,
-                                                                                         const trajectory::configuration &j0, const trajectory::configuration_limits &limits)
+inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> stretched_by(double by, std::span<const trajectory::via_point> via_points)
 {
-    expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> answered = trajectory::joint_space_waypoints(waypoints, j0, limits);
+    expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> answered = trajectory::joint_space_via_points(via_points);
     if(!answered)
         return unexpected(answered.error());
 
@@ -90,34 +89,20 @@ inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> stre
 // agreeing admits it.
 inline constexpr double stretch = 1.5;
 
-inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal>
-counted_joint_space_waypoints(std::span<const trajectory::configuration> waypoints, const trajectory::configuration &j0, const trajectory::configuration_limits &limits)
+inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> counted_joint_space_via_points(std::span<const trajectory::via_point> via_points)
 {
-    return stretched_by(1.0, waypoints, j0, limits);
+    return stretched_by(1.0, via_points);
 }
 
-inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal>
-stretched_joint_space_waypoints(std::span<const trajectory::configuration> waypoints, const trajectory::configuration &j0, const trajectory::configuration_limits &limits)
+inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> stretched_joint_space_via_points(std::span<const trajectory::via_point> via_points)
 {
-    return stretched_by(stretch, waypoints, j0, limits);
-}
-
-inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> unbuilt_joint_space_waypoints(std::span<const trajectory::configuration>, const trajectory::configuration &,
-                                                                                                          const trajectory::configuration_limits &)
-{
-    return unexpected(refusal::degenerate);
+    return stretched_by(stretch, via_points);
 }
 
 template<typename Generator, typename Sample>
 expected<std::unique_ptr<Generator>, refusal> answering_no_sample()
 {
     return std::unique_ptr<Generator>(std::make_unique<refusing_generator<Generator, Sample>>());
-}
-
-inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> declining_joint_space_waypoints(std::span<const trajectory::configuration>,
-                                                                                                            const trajectory::configuration &, const trajectory::configuration_limits &)
-{
-    return answering_no_sample<trajectory::trajectory_generator, trajectory::trajectory_sample>();
 }
 
 inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> declining_joint_space_via_points(std::span<const trajectory::via_point>)

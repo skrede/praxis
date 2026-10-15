@@ -141,7 +141,7 @@ TEST_CASE("a_run_holding_a_coordinate_that_is_not_finite_is_refused_and_the_row_
         const std::vector<configuration> via = {pair_of(1.0, 1.0), pair_of(2.0, unfinished), pair_of(3.0, 2.0)};
 
         praxis::tests::captured_log captured;
-        const auto refused         = joint_space_waypoints(via, pair_of(-5.0, -5.0), bounds());
+        const auto refused         = via_point_schedule(via, pair_of(-5.0, -5.0), bounds());
         const std::string reported = captured.text();
 
         INFO("the coordinate: " << unfinished);

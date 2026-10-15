@@ -35,22 +35,6 @@ const pose_trajectory_ops &pose_trajectories_of(const void *value)
 constexpr evaluation::residual_kind configuration_kind = evaluation::residual_kind::element_wise;
 constexpr evaluation::residual_kind pose_kind          = evaluation::residual_kind::pose;
 
-evaluation::case_result compare_joint_space_waypoints(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed)
-{
-    const joint_waypoint_case example = drawn_joint_waypoint_case(drawn);
-    if(!advances_at_every_row(example.seed, example.waypoints))
-        return unusable_input(configuration_kind);
-
-    const expected<std::unique_ptr<trajectory_generator>, refusal> held  = trajectories_of(first).joint_space_waypoints(example.waypoints, example.seed, example.limits);
-    const expected<std::unique_ptr<trajectory_generator>, refusal> other = trajectories_of(second).joint_space_waypoints(example.waypoints, example.seed, example.limits);
-    if(const std::optional<evaluation::case_result> refused = refusal_outcome(held, other))
-        return *refused;
-    if(!both_named_a_motion(*held, *other))
-        return differing(configuration_kind);
-
-    return driven(**held, **other, configuration_kind, allowed);
-}
-
 evaluation::case_result compare_joint_space_via_points(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed)
 {
     const via_point_case example = drawn_via_point_case(drawn);
@@ -130,7 +114,6 @@ evaluation::case_result compare_screw_pose_waypoints(const void *first, const vo
 // The rows are in the enumerator order of their own slot enumeration, and each name is spelled
 // exactly as the descriptor table spells it.
 constexpr evaluation::tolerance_pair driven_pose_allowance{driven_pose_tolerance_radians, driven_pose_tolerance_metres};
-constexpr evaluation::tolerance_pair driven_configuration_allowance{driven_configuration_tolerance, driven_configuration_tolerance};
 constexpr evaluation::tolerance_pair via_point_allowance{via_point_run_tolerance, via_point_run_tolerance};
 constexpr evaluation::tolerance_pair schedule_allowance{via_point_schedule_tolerance, via_point_schedule_tolerance};
 
@@ -140,8 +123,6 @@ constexpr std::array pose_trajectory_table{
 };
 
 constexpr std::array trajectory_table{
-        evaluation::slot_evaluation{"trajectory.joint_space_waypoints", configuration_kind, driven_configuration_allowance, &compare_joint_space_waypoints,
-                                    driven_configuration_measured_to_cases},
         evaluation::slot_evaluation{"trajectory.joint_space_via_points", configuration_kind, via_point_allowance, &compare_joint_space_via_points},
         evaluation::slot_evaluation{"trajectory.via_point_schedule", configuration_kind, schedule_allowance, &compare_via_point_schedule, via_point_schedule_measured_to_cases},
 };

@@ -23,11 +23,6 @@ public:
 
 }
 
-expected<std::unique_ptr<trajectory_generator>, refusal> joint_space_waypoints(std::span<const configuration>, const configuration &, const configuration_limits &)
-{
-    return std::make_unique<inert_trajectory_generator>();
-}
-
 expected<std::unique_ptr<trajectory_generator>, refusal> joint_space_via_points(std::span<const via_point>)
 {
     return std::make_unique<inert_trajectory_generator>();

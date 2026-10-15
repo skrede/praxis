@@ -25,11 +25,11 @@ constexpr std::uint64_t recorded_seed = 0xC0FFEEu;
 constexpr std::size_t cases_per_row   = 24u;
 constexpr std::size_t wider_run       = 200u;
 
-// The rows answering a prepared generator are the four after the first nine the report lists, the
-// joint-space waypoint row the third of them; the via-point schedule row after them answers a value.
+// The rows answering a prepared generator are the three after the first nine the report lists, the
+// joint-space via-point row the third of them; the via-point schedule row after them answers a value.
 constexpr std::size_t first_generator_row = 9u;
-constexpr std::size_t generator_rows      = 4u;
-constexpr std::size_t waypoint_row        = 11u;
+constexpr std::size_t generator_rows      = 3u;
+constexpr std::size_t via_point_row       = 11u;
 
 evaluation_report reported_against(const trajectory::capabilities &reference, const trajectory::capabilities &other, std::size_t cases)
 {
@@ -40,7 +40,6 @@ trajectory::capabilities declining_every_generator()
 {
     trajectory::capabilities shapes = trajectory::baseline();
 
-    shapes.trajectory.joint_space_waypoints         = &fixture::declining_joint_space_waypoints;
     shapes.trajectory.joint_space_via_points        = &fixture::declining_joint_space_via_points;
     shapes.pose_trajectory.decoupled_pose_waypoints = &fixture::declining_pose_waypoints;
     shapes.pose_trajectory.screw_pose_waypoints     = &fixture::declining_pose_waypoints;
@@ -52,7 +51,6 @@ trajectory::capabilities building_no_generator()
 {
     trajectory::capabilities shapes = trajectory::baseline();
 
-    shapes.trajectory.joint_space_waypoints         = &fixture::unbuilt_joint_space_waypoints;
     shapes.trajectory.joint_space_via_points        = &fixture::unbuilt_joint_space_via_points;
     shapes.pose_trajectory.decoupled_pose_waypoints = &fixture::unbuilt_pose_waypoints;
     shapes.pose_trajectory.screw_pose_waypoints     = &fixture::unbuilt_pose_waypoints;
@@ -60,12 +58,12 @@ trajectory::capabilities building_no_generator()
     return shapes;
 }
 
-// The row over `trajectory.joint_space_waypoints`, driven directly so a case can be handed a source
-// of a spread the published run never draws from.
+// The row over `trajectory.via_point_schedule`, driven directly so a case can be handed a source of a
+// spread the published run never draws from.
 case_result one_case(const trajectory::capabilities &reference, spread drawn_from, std::size_t index)
 {
     const std::array<evaluation_view, 4> compared = trajectory::evaluation_views(reference, reference);
-    const slot_evaluation &row                    = compared.at(3).slots().front();
+    const slot_evaluation &row                    = compared.at(3).slots().back();
     case_source drawn                             = case_source::at_case(recorded_seed, row.name, drawn_from, index);
 
     return row.compare(compared.at(3).first(), compared.at(3).second(), drawn, row.allowed);
@@ -75,18 +73,18 @@ case_result one_case(const trajectory::capabilities &reference, spread drawn_fro
 
 TEST_CASE("a_generator_pair_exactly_one_side_built_is_one_refused_and_the_side_that_built_one_is_never_driven")
 {
-    trajectory::capabilities counted         = trajectory::baseline();
-    counted.trajectory.joint_space_waypoints = &fixture::counted_joint_space_waypoints;
-    trajectory::capabilities unbuilt         = trajectory::baseline();
-    unbuilt.trajectory.joint_space_waypoints = &fixture::unbuilt_joint_space_waypoints;
+    trajectory::capabilities counted          = trajectory::baseline();
+    counted.trajectory.joint_space_via_points = &fixture::counted_joint_space_via_points;
+    trajectory::capabilities unbuilt          = trajectory::baseline();
+    unbuilt.trajectory.joint_space_via_points = &fixture::unbuilt_joint_space_via_points;
 
     fixture::forget_what_was_driven();
 
     const evaluation_report reported = reported_against(counted, unbuilt, cases_per_row);
-    const slot_report &driving       = reported.slots.at(waypoint_row);
+    const slot_report &driving       = reported.slots.at(via_point_row);
 
     REQUIRE(reported.slots.size() == first_generator_row + generator_rows + 1u);
-    REQUIRE(driving.slot == "trajectory.joint_space_waypoints");
+    REQUIRE(driving.slot == "trajectory.joint_space_via_points");
     REQUIRE(driving.verdict == agreement::not_exercised);
     REQUIRE(driving.outcomes.one_refused == cases_per_row);
     REQUIRE(driving.outcomes.agreed == 0u);
@@ -99,18 +97,18 @@ TEST_CASE("a_generator_pair_exactly_one_side_built_is_one_refused_and_the_side_t
 
 TEST_CASE("two_generators_whose_durations_differ_are_reported_as_differing_and_are_never_sampled")
 {
-    trajectory::capabilities counted         = trajectory::baseline();
-    counted.trajectory.joint_space_waypoints = &fixture::counted_joint_space_waypoints;
+    trajectory::capabilities counted          = trajectory::baseline();
+    counted.trajectory.joint_space_via_points = &fixture::counted_joint_space_via_points;
 
-    trajectory::capabilities stretched         = trajectory::baseline();
-    stretched.trajectory.joint_space_waypoints = &fixture::stretched_joint_space_waypoints;
+    trajectory::capabilities stretched          = trajectory::baseline();
+    stretched.trajectory.joint_space_via_points = &fixture::stretched_joint_space_via_points;
 
     fixture::forget_what_was_driven();
 
     const evaluation_report reported = reported_against(counted, stretched, cases_per_row);
-    const slot_report &driving       = reported.slots.at(waypoint_row);
+    const slot_report &driving       = reported.slots.at(via_point_row);
 
-    REQUIRE(driving.slot == "trajectory.joint_space_waypoints");
+    REQUIRE(driving.slot == "trajectory.joint_space_via_points");
     REQUIRE(driving.verdict == agreement::differed);
     REQUIRE(driving.outcomes.differed == cases_per_row);
     REQUIRE(std::isinf(driving.worst.magnitude));
@@ -121,8 +119,8 @@ TEST_CASE("two_generators_whose_durations_differ_are_reported_as_differing_and_a
 
 TEST_CASE("two_generators_reporting_one_duration_are_sampled_at_a_count_that_does_not_follow_the_span")
 {
-    trajectory::capabilities counted         = trajectory::baseline();
-    counted.trajectory.joint_space_waypoints = &fixture::counted_joint_space_waypoints;
+    trajectory::capabilities counted          = trajectory::baseline();
+    counted.trajectory.joint_space_via_points = &fixture::counted_joint_space_via_points;
 
     fixture::forget_what_was_driven();
 
@@ -134,9 +132,9 @@ TEST_CASE("two_generators_reporting_one_duration_are_sampled_at_a_count_that_doe
 
     const evaluation_report twice = reported_against(counted, counted, 2u * cases_per_row);
 
-    REQUIRE(once.slots.at(waypoint_row).verdict == agreement::agreed);
-    REQUIRE(once.slots.at(waypoint_row).outcomes.agreed == cases_per_row);
-    REQUIRE(twice.slots.at(waypoint_row).outcomes.agreed == 2u * cases_per_row);
+    REQUIRE(once.slots.at(via_point_row).verdict == agreement::agreed);
+    REQUIRE(once.slots.at(via_point_row).outcomes.agreed == cases_per_row);
+    REQUIRE(twice.slots.at(via_point_row).outcomes.agreed == 2u * cases_per_row);
     REQUIRE(durations_taken == 2u * cases_per_row);
     REQUIRE(over_one_run > 0u);
     REQUIRE(over_one_run % (2u * cases_per_row) == 0u);

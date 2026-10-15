@@ -57,7 +57,6 @@ constexpr std::array pose_trajectory_partition{
 };
 
 constexpr std::array trajectory_partition{
-        pairing{static_cast<std::size_t>(trajectory_slot::joint_space_waypoints), returns_refusal_v<decltype(trajectory_ops::joint_space_waypoints)>},
         pairing{static_cast<std::size_t>(trajectory_slot::joint_space_via_points), returns_refusal_v<decltype(trajectory_ops::joint_space_via_points)>},
         pairing{static_cast<std::size_t>(trajectory_slot::via_point_schedule), returns_refusal_v<decltype(trajectory_ops::via_point_schedule)>},
 };
@@ -86,7 +85,6 @@ static_assert(path_partition[static_cast<std::size_t>(path_slot::decoupled)].car
 static_assert(pose_trajectory_partition[static_cast<std::size_t>(pose_trajectory_slot::decoupled_pose_waypoints)].carries_the_channel);
 static_assert(pose_trajectory_partition[static_cast<std::size_t>(pose_trajectory_slot::screw_pose_waypoints)].carries_the_channel);
 
-static_assert(trajectory_partition[static_cast<std::size_t>(trajectory_slot::joint_space_waypoints)].carries_the_channel);
 static_assert(trajectory_partition[static_cast<std::size_t>(trajectory_slot::joint_space_via_points)].carries_the_channel);
 static_assert(trajectory_partition[static_cast<std::size_t>(trajectory_slot::via_point_schedule)].carries_the_channel);
 
@@ -108,6 +106,6 @@ TEST_CASE("every_slot_of_this_extension_is_paired_with_its_enumerator_and_carrie
     const std::size_t paired   = time_scaling_partition.size() + path_partition.size() + pose_trajectory_partition.size() + trajectory_partition.size();
     const std::size_t fallible = counted(time_scaling_partition) + counted(path_partition) + counted(pose_trajectory_partition) + counted(trajectory_partition);
 
-    CHECK(paired == 14u);
-    CHECK(fallible == 14u);
+    CHECK(paired == 13u);
+    CHECK(fallible == 13u);
 }

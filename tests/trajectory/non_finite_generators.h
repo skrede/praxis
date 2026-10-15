@@ -71,10 +71,9 @@ expected<std::unique_ptr<Generator>, refusal> spoiling(expected<std::unique_ptr<
 }
 
 template<void (*Spoil)(trajectory::trajectory_sample &), placement Where>
-expected<std::unique_ptr<trajectory::trajectory_generator>, refusal>
-not_finite_joint_space_waypoints(std::span<const trajectory::configuration> waypoints, const trajectory::configuration &j0, const trajectory::configuration_limits &limits)
+expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> not_finite_joint_space_via_points(std::span<const trajectory::via_point> via_points)
 {
-    return spoiling<trajectory::trajectory_generator, trajectory::trajectory_sample, Spoil, Where>(trajectory::joint_space_waypoints(waypoints, j0, limits));
+    return spoiling<trajectory::trajectory_generator, trajectory::trajectory_sample, Spoil, Where>(trajectory::joint_space_via_points(via_points));
 }
 
 template<void (*Spoil)(trajectory::pose_sample &)>

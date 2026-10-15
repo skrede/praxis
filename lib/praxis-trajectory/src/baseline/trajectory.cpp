@@ -1,4 +1,3 @@
-#include "straight_line.h"
 #include "via_point_cubics.h"
 
 #include "praxis/trajectory/baseline/trajectory.h"
@@ -6,15 +5,25 @@
 #include <spdlog/spdlog.h>
 
 #include <cmath>
-#include <memory>
 #include <vector>
 #include <cstddef>
-#include <utility>
 #include <algorithm>
 
 namespace praxis::trajectory {
 
 namespace {
+
+// The time the slowest degree of freedom needs to cross its own span at its velocity bound, which is
+// the duration rule every segment of a configuration-space motion is apportioned by.
+double traversal_time(const configuration &from, const configuration &to, const configuration &velocity)
+{
+    double span = 0.0;
+    for(Eigen::Index i = 0; i < std::min(from.size(), to.size()); ++i)
+        if(i < velocity.size() && velocity[i] > 0.0)
+            span = std::max(span, std::abs(to[i] - from[i]) / velocity[i]);
+
+    return span;
+}
 
 std::vector<double> knot_times(std::span<const configuration> waypoints, const configuration &velocity)
 {
@@ -82,23 +91,6 @@ std::vector<double> bounded_times(const via_point_run &run, const configuration 
     return stretched;
 }
 
-expected<std::unique_ptr<trajectory_generator>, refusal> via_points(std::span<const configuration> waypoints, const configuration_limits &limits)
-{
-    if(!widths_agree(waypoints) || !all_finite(waypoints))
-        return unexpected(refusal::unsupported_input);
-
-    const std::vector<double> apportioned = knot_times(waypoints, limits.velocity);
-    if(!rows_advance(apportioned))
-        return unexpected(refusal::unsupported_input);
-
-    via_point_run run               = fitted_run(waypoints, apportioned);
-    const std::vector<double> times = bounded_times(run, limits.velocity);
-    if(times.back() > apportioned.back())
-        run = fitted_run(waypoints, times);
-
-    return via_point_generator(std::move(run));
-}
-
 bool schedule_advances(std::size_t given, const std::vector<double> &times)
 {
     if(given > 2u)
@@ -110,20 +102,6 @@ bool schedule_advances(std::size_t given, const std::vector<double> &times)
     return false;
 }
 
-}
-
-expected<std::unique_ptr<trajectory_generator>, refusal> joint_space_waypoints(std::span<const configuration> waypoints, const configuration &j0, const configuration_limits &limits)
-{
-    if(waypoints.size() == 1u)
-        return straight_line(j0, waypoints.front(), limits);
-    if(waypoints.size() == 2u)
-        return straight_line(waypoints.front(), waypoints.back(), limits);
-    if(waypoints.size() >= 3u)
-        return via_points(waypoints, limits);
-
-    spdlog::error("praxis: a run of waypoints joins at least one configuration and none were given");
-
-    return unexpected(refusal::unsupported_input);
 }
 
 expected<std::vector<via_point>, refusal> via_point_schedule(std::span<const configuration> positions, const configuration &j0, const configuration_limits &limits)

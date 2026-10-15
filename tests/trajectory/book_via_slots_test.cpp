@@ -22,8 +22,8 @@ using namespace praxis::evaluation;
 namespace {
 
 constexpr std::size_t seeds_walked  = 40u;
-constexpr std::size_t via_point_row = 1u;
-constexpr std::size_t schedule_row  = 2u;
+constexpr std::size_t via_point_row = 0u;
+constexpr std::size_t schedule_row  = 1u;
 constexpr std::size_t printed_form  = 0u;
 
 // Only the joint-space trajectory view is evaluated: it is the last the aggregate lists.

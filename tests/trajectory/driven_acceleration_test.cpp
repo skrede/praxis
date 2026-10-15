@@ -59,10 +59,9 @@ private:
 };
 
 template<answering Answer>
-expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> answered(std::span<const trajectory::configuration> waypoints, const trajectory::configuration &j0,
-                                                                              const trajectory::configuration_limits &limits)
+expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> answered(std::span<const trajectory::via_point> via_points)
 {
-    expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> held = trajectory::joint_space_waypoints(waypoints, j0, limits);
+    expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> held = trajectory::joint_space_via_points(via_points);
     if(!held)
         return held;
 
@@ -73,10 +72,10 @@ expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> answered(st
 template<answering Answer>
 slot_report judged()
 {
-    trajectory::capabilities literal         = trajectory::baseline();
-    literal.trajectory.joint_space_waypoints = &answered<Answer>;
-    const trajectory::capabilities reference = trajectory::baseline();
-    const auto views                         = trajectory::evaluation_views(literal, reference);
+    trajectory::capabilities literal          = trajectory::baseline();
+    literal.trajectory.joint_space_via_points = &answered<Answer>;
+    const trajectory::capabilities reference  = trajectory::baseline();
+    const auto views                          = trajectory::evaluation_views(literal, reference);
 
     return evaluate(std::span(views).last(1), default_seed, default_cases_per_slot).slots.at(0);
 }
@@ -92,19 +91,19 @@ slot_report judged_displaced_by(double fraction)
 
 }
 
-TEST_CASE("an_acceleration_moved_by_a_fraction_of_its_own_size_a_decade_above_the_joint_space_waypoint_bound_is_judged_differing_on_every_case")
-{
-    const slot_report row = judged_displaced_by(1.0e-7);
-
-    REQUIRE(row.slot == "trajectory.joint_space_waypoints");
-    REQUIRE(row.outcomes.differed == default_cases_per_slot);
-}
-
-TEST_CASE("an_acceleration_moved_by_a_fraction_of_its_own_size_a_decade_beneath_the_joint_space_waypoint_bound_is_judged_agreeing_on_every_case")
+TEST_CASE("an_acceleration_moved_by_a_fraction_of_its_own_size_a_decade_above_the_joint_space_via_point_bound_is_judged_differing_on_every_case")
 {
     const slot_report row = judged_displaced_by(1.0e-9);
 
-    REQUIRE(row.slot == "trajectory.joint_space_waypoints");
+    REQUIRE(row.slot == "trajectory.joint_space_via_points");
+    REQUIRE(row.outcomes.differed == default_cases_per_slot);
+}
+
+TEST_CASE("an_acceleration_moved_by_a_fraction_of_its_own_size_a_decade_beneath_the_joint_space_via_point_bound_is_judged_agreeing_on_every_case")
+{
+    const slot_report row = judged_displaced_by(1.0e-11);
+
+    REQUIRE(row.slot == "trajectory.joint_space_via_points");
     REQUIRE(row.verdict == agreement::agreed);
     REQUIRE(row.outcomes.agreed == default_cases_per_slot);
 }

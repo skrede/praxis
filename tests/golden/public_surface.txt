@@ -3115,7 +3115,6 @@ lib/praxis-trajectory/include/praxis/trajectory/baseline/time_scaling.h	trapezoi
 lib/praxis-trajectory/include/praxis/trajectory/baseline/time_scaling.h	trapezoidal_within_bounds	prototype	(double t,double duration,double max_velocity,double max_acceleration)	typename:expected<scaling_sample,refusal>
 lib/praxis-trajectory/include/praxis/trajectory/baseline/trajectory.h	praxis	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/baseline/trajectory.h	trajectory	namespace	-	-
-lib/praxis-trajectory/include/praxis/trajectory/baseline/trajectory.h	joint_space_waypoints	prototype	(std::span<const configuration> waypoints,const configuration & j0,const configuration_limits & limits)	typename:expected<std::unique_ptr<trajectory_generator>,refusal>
 lib/praxis-trajectory/include/praxis/trajectory/baseline/trajectory.h	joint_space_via_points	prototype	(std::span<const via_point> via_points)	typename:expected<std::unique_ptr<trajectory_generator>,refusal>
 lib/praxis-trajectory/include/praxis/trajectory/baseline/trajectory.h	via_point_schedule	prototype	(std::span<const configuration> positions,const configuration & j0,const configuration_limits & limits)	typename:expected<std::vector<via_point>,refusal>
 lib/praxis-trajectory/include/praxis/trajectory/capabilities.h	praxis	namespace	-	-
@@ -3193,7 +3192,6 @@ lib/praxis-trajectory/include/praxis/trajectory/slots.h	decoupled_pose_waypoints
 lib/praxis-trajectory/include/praxis/trajectory/slots.h	screw_pose_waypoints	enumerator	-	-
 lib/praxis-trajectory/include/praxis/trajectory/slots.h	count	enumerator	-	-
 lib/praxis-trajectory/include/praxis/trajectory/slots.h	trajectory_slot	enum	-	typename:std::uint32_t
-lib/praxis-trajectory/include/praxis/trajectory/slots.h	joint_space_waypoints	enumerator	-	-
 lib/praxis-trajectory/include/praxis/trajectory/slots.h	joint_space_via_points	enumerator	-	-
 lib/praxis-trajectory/include/praxis/trajectory/slots.h	via_point_schedule	enumerator	-	-
 lib/praxis-trajectory/include/praxis/trajectory/slots.h	count	enumerator	-	-
@@ -3264,13 +3262,11 @@ lib/praxis-trajectory/include/praxis/trajectory/trajectory.h	duration	prototype	
 lib/praxis-trajectory/include/praxis/trajectory/trajectory.h	inert	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/trajectory.h	praxis	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/trajectory.h	trajectory	namespace	-	-
-lib/praxis-trajectory/include/praxis/trajectory/trajectory.h	joint_space_waypoints	prototype	(std::span<const configuration> waypoints,const configuration & j0,const configuration_limits & limits)	typename:expected<std::unique_ptr<trajectory_generator>,refusal>
 lib/praxis-trajectory/include/praxis/trajectory/trajectory.h	joint_space_via_points	prototype	(std::span<const via_point> via_points)	typename:expected<std::unique_ptr<trajectory_generator>,refusal>
 lib/praxis-trajectory/include/praxis/trajectory/trajectory.h	via_point_schedule	prototype	(std::span<const configuration> positions,const configuration & j0,const configuration_limits & limits)	typename:expected<std::vector<via_point>,refusal>
 lib/praxis-trajectory/include/praxis/trajectory/trajectory.h	praxis	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/trajectory.h	trajectory	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/trajectory.h	trajectory_ops	struct	-	-
-lib/praxis-trajectory/include/praxis/trajectory/trajectory.h	joint_space_waypoints	member	-	typename:expected<std::unique_ptr<trajectory_generator>,refusal> (*)(std::span<const configuration> waypoints,const configuration & j0,const configuration_limits & limits)
 lib/praxis-trajectory/include/praxis/trajectory/trajectory.h	joint_space_via_points	member	-	typename:expected<std::unique_ptr<trajectory_generator>,refusal> (*)(std::span<const via_point> via_points)
 lib/praxis-trajectory/include/praxis/trajectory/trajectory.h	via_point_schedule	member	-	typename:expected<std::vector<via_point>,refusal> (*)(std::span<const configuration> positions,const configuration & j0,const configuration_limits & limits)
 lib/praxis-trajectory/include/praxis/trajectory/types.h	praxis	namespace	-	-

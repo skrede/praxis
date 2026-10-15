@@ -177,9 +177,9 @@ TEST_CASE("every_described_slot_carries_a_comparator")
 }
 
 // The ledger matches a slot name byte for byte and reads nothing of which extension owns it, so the
-// manipulator's task-space via-point factory and the configuration-space one the trajectory
-// extension describes have to be spelled apart or one of them would answer for the other.
-TEST_CASE("the_two_via_point_factories_named_under_trajectory_are_spelled_apart")
+// manipulator's task-space via-point factory and the configuration-space via-point step the
+// trajectory extension describes have to be spelled apart or one of them would answer for the other.
+TEST_CASE("the_task_space_via_point_factory_and_the_via_point_step_named_under_trajectory_are_spelled_apart")
 {
     const manipulator::capabilities arm       = manipulator::baseline();
     const trajectory::capabilities shapes     = trajectory::baseline();
@@ -187,7 +187,7 @@ TEST_CASE("the_two_via_point_factories_named_under_trajectory_are_spelled_apart"
     const std::vector<std::string_view> there = described_in_order(trajectory::capability_views(shapes));
 
     REQUIRE(names(here, "trajectory.task_space_waypoints"));
-    REQUIRE(names(there, "trajectory.joint_space_waypoints"));
-    REQUIRE_FALSE(names(here, "trajectory.joint_space_waypoints"));
+    REQUIRE(names(there, "trajectory.via_point_schedule"));
+    REQUIRE_FALSE(names(here, "trajectory.via_point_schedule"));
     REQUIRE_FALSE(names(there, "trajectory.task_space_waypoints"));
 }

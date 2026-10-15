@@ -43,7 +43,6 @@ namespace praxis::trajectory::probe {
 std::size_t trajectory_surface()
 {
     reachable_types types{};
-    expected<std::unique_ptr<trajectory_generator>, refusal> motion    = types.via_points.joint_space_waypoints({}, configuration(), types.bounds);
     expected<std::vector<via_point>, refusal> schedule                 = types.via_points.via_point_schedule({}, configuration(), types.bounds);
     expected<std::unique_ptr<trajectory_generator>, refusal> joined    = types.via_points.joint_space_via_points({&types.passed, 1u});
     types.chosen                                                       = trajectory_slot::via_point_schedule;
@@ -54,11 +53,11 @@ std::size_t trajectory_surface()
     types.expected.set(types.named);
     types.described = view_of(types.path);
     types.scaled    = types.time_scaling.quintic(0.0, 1.0).value_or(scaling_sample{});
-    if(!motion || !pose || !joined)
+    if(!pose || !joined)
         return 0;
 
-    types.sampled = (*motion)->sample(types.scaled.s + types.scaled.ds + types.scaled.dds).value_or(trajectory_sample{});
-    types.posed   = (*pose)->sample((*pose)->duration() + (*motion)->duration()).value_or(pose_sample{});
+    types.sampled = (*joined)->sample(types.scaled.s + types.scaled.ds + types.scaled.dds).value_or(trajectory_sample{});
+    types.posed   = (*pose)->sample((*pose)->duration() + (*joined)->duration()).value_or(pose_sample{});
 
     const std::array<capability_view, 4> reported{types.described, view_of(types.via_points), view_of(types.time_scaling), view_of(types.pose_trajectory)};
 

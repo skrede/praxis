@@ -30,12 +30,12 @@ namespace {
 
 constexpr std::uint64_t recorded_seed = 0xC0FFEEu;
 constexpr std::size_t cases_per_row   = 24u;
-constexpr std::size_t compared_rows   = 14u;
+constexpr std::size_t compared_rows   = 13u;
 
-// The rows answering a prepared generator, which decline through it instead, are the four after the
+// The rows answering a prepared generator, which decline through it instead, are the three after the
 // first nine the report lists; every other row answers a value.
 constexpr std::size_t first_generator_row = 9u;
-constexpr std::size_t generator_rows      = 4u;
+constexpr std::size_t generator_rows      = 3u;
 
 // Wider than the run the other cases draw, so the bounded profile is drawn over many bound pairs.
 constexpr std::size_t wider_run = 200u;

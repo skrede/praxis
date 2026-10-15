@@ -37,8 +37,6 @@ constexpr std::array pose_trajectory_descriptors{
 };
 
 constexpr std::array trajectory_descriptors{
-        slot_descriptor{"trajectory.joint_space_waypoints",
-                        [](const void *value) -> bool { return static_cast<const trajectory_ops *>(value)->joint_space_waypoints == &inert::joint_space_waypoints; }},
         slot_descriptor{"trajectory.joint_space_via_points",
                         [](const void *value) -> bool { return static_cast<const trajectory_ops *>(value)->joint_space_via_points == &inert::joint_space_via_points; }},
         slot_descriptor{"trajectory.via_point_schedule",

@@ -38,8 +38,6 @@ praxis_add_module(trajectory
     src/baseline/time_scaling.cpp
     src/baseline/swept_pose.h
     src/baseline/swept_pose.cpp
-    src/baseline/straight_line.h
-    src/baseline/straight_line.cpp
     src/baseline/pose_trajectory.cpp
     src/baseline/via_point_cubics.h
     src/baseline/via_point_cubics.cpp

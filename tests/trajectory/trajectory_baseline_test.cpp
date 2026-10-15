@@ -42,7 +42,7 @@ TEST_CASE("a_value_initialized_capabilities_reports_every_slot_holding_its_inert
     const std::array<capability_view, 4> reported = capability_views(untouched);
 
     REQUIRE(count_defaults(reported) == slot_count());
-    REQUIRE(slot_count() == 14u);
+    REQUIRE(slot_count() == 13u);
 }
 
 TEST_CASE("overriding_a_bound_slot_leaves_it_bound")
@@ -72,5 +72,5 @@ TEST_CASE("every_report_from_an_unbound_capability_carries_this_extension_and_a_
     }
     CHECK(qualified.count("trajectory.time_scaling.quintic") == 1u);
     CHECK(qualified.count("trajectory.pose_trajectory.decoupled_pose_waypoints") == 1u);
-    CHECK(qualified.count("trajectory.trajectory.joint_space_waypoints") == 1u);
+    CHECK(qualified.count("trajectory.trajectory.via_point_schedule") == 1u);
 }

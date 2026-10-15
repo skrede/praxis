@@ -23,7 +23,7 @@ namespace {
 
 using sample     = trajectory::trajectory_sample;
 using pose       = trajectory::pose_sample;
-using joint_slot = decltype(trajectory::trajectory_ops::joint_space_waypoints);
+using joint_slot = decltype(trajectory::trajectory_ops::joint_space_via_points);
 using pose_slot  = decltype(trajectory::pose_trajectory_ops::decoupled_pose_waypoints);
 
 struct joint_entry
@@ -33,12 +33,12 @@ struct joint_entry
 };
 
 constexpr std::array joint_entries{
-        joint_entry{"position inside", &fixture::not_finite_joint_space_waypoints<&fixture::made_not_finite<&sample::position, 0>, &fixture::inside>},
-        joint_entry{"position at the start", &fixture::not_finite_joint_space_waypoints<&fixture::made_not_finite<&sample::position, 0>, &fixture::at_the_start>},
-        joint_entry{"velocity inside", &fixture::not_finite_joint_space_waypoints<&fixture::made_not_finite<&sample::velocity, 0>, &fixture::inside>},
-        joint_entry{"velocity at the start", &fixture::not_finite_joint_space_waypoints<&fixture::made_not_finite<&sample::velocity, 0>, &fixture::at_the_start>},
-        joint_entry{"acceleration inside", &fixture::not_finite_joint_space_waypoints<&fixture::made_not_finite<&sample::acceleration, 0>, &fixture::inside>},
-        joint_entry{"acceleration at the start", &fixture::not_finite_joint_space_waypoints<&fixture::made_not_finite<&sample::acceleration, 0>, &fixture::at_the_start>},
+        joint_entry{"position inside", &fixture::not_finite_joint_space_via_points<&fixture::made_not_finite<&sample::position, 0>, &fixture::inside>},
+        joint_entry{"position at the start", &fixture::not_finite_joint_space_via_points<&fixture::made_not_finite<&sample::position, 0>, &fixture::at_the_start>},
+        joint_entry{"velocity inside", &fixture::not_finite_joint_space_via_points<&fixture::made_not_finite<&sample::velocity, 0>, &fixture::inside>},
+        joint_entry{"velocity at the start", &fixture::not_finite_joint_space_via_points<&fixture::made_not_finite<&sample::velocity, 0>, &fixture::at_the_start>},
+        joint_entry{"acceleration inside", &fixture::not_finite_joint_space_via_points<&fixture::made_not_finite<&sample::acceleration, 0>, &fixture::inside>},
+        joint_entry{"acceleration at the start", &fixture::not_finite_joint_space_via_points<&fixture::made_not_finite<&sample::acceleration, 0>, &fixture::at_the_start>},
 };
 
 struct pose_entry
@@ -68,10 +68,10 @@ constexpr std::array orders{"answering first", "reference first"};
 // The joint-space trajectory view is the last the aggregate lists.
 slot_report joint_row(joint_slot slot, bool answering_first)
 {
-    trajectory::capabilities answering         = trajectory::baseline();
-    answering.trajectory.joint_space_waypoints = slot;
-    const trajectory::capabilities reference   = trajectory::baseline();
-    const auto views                           = answering_first ? trajectory::evaluation_views(answering, reference) : trajectory::evaluation_views(reference, answering);
+    trajectory::capabilities answering          = trajectory::baseline();
+    answering.trajectory.joint_space_via_points = slot;
+    const trajectory::capabilities reference    = trajectory::baseline();
+    const auto views                            = answering_first ? trajectory::evaluation_views(answering, reference) : trajectory::evaluation_views(reference, answering);
 
     return evaluate(std::span(views).last(1), default_seed, default_cases_per_slot).slots.at(0);
 }
@@ -90,7 +90,7 @@ evaluation_report pose_rows(const pose_entry &entry, bool answering_first)
 
 }
 
-TEST_CASE("a_value_that_is_not_finite_in_a_driven_configuration_is_judged_differing_by_the_joint_space_waypoint_row_whichever_side_answers_it")
+TEST_CASE("a_value_that_is_not_finite_in_a_driven_configuration_is_judged_differing_by_the_joint_space_via_point_row_whichever_side_answers_it")
 {
     for(const joint_entry &entry : joint_entries)
         for(const bool answering_first : {true, false})

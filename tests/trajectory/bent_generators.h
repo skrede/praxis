@@ -78,12 +78,6 @@ expected<std::unique_ptr<Generator>, refusal> wrapping(Answered &&answered)
     return std::unique_ptr<Generator>(std::make_unique<displacing_generator<Generator, Sample>>(std::move(*answered)));
 }
 
-inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal>
-displaced_joint_space_waypoints(std::span<const trajectory::configuration> waypoints, const trajectory::configuration &j0, const trajectory::configuration_limits &limits)
-{
-    return wrapping<trajectory::trajectory_generator, trajectory::trajectory_sample>(trajectory::joint_space_waypoints(waypoints, j0, limits));
-}
-
 inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> displaced_joint_space_via_points(std::span<const trajectory::via_point> via_points)
 {
     return wrapping<trajectory::trajectory_generator, trajectory::trajectory_sample>(trajectory::joint_space_via_points(via_points));
@@ -122,11 +116,6 @@ inline void bend_screw_pose_waypoints(trajectory::capabilities &shapes)
     shapes.pose_trajectory.screw_pose_waypoints = &displaced_screw_pose_waypoints;
 }
 
-inline void bend_joint_space_waypoints(trajectory::capabilities &shapes)
-{
-    shapes.trajectory.joint_space_waypoints = &displaced_joint_space_waypoints;
-}
-
 inline void bend_joint_space_via_points(trajectory::capabilities &shapes)
 {
     shapes.trajectory.joint_space_via_points = &displaced_joint_space_via_points;
@@ -138,9 +127,9 @@ inline void bend_via_point_schedule(trajectory::capabilities &shapes)
 }
 
 // The index is the order the report lists slots in: the six time scalings in enumerator order, the
-// three paths, the two pose runs, then the three configuration-space slots. The function is total, so an
+// three paths, the two pose runs, then the two configuration-space slots. The function is total, so an
 // index past the last slot answers the reference unchanged and no visible difference.
-inline constexpr std::array<bend_applier, 14> bends{&bend_cubic,
+inline constexpr std::array<bend_applier, 13> bends{&bend_cubic,
                                                     &bend_quintic,
                                                     &bend_trapezoidal_from_velocity_acceleration,
                                                     &bend_trapezoidal_from_velocity_duration,
@@ -151,7 +140,6 @@ inline constexpr std::array<bend_applier, 14> bends{&bend_cubic,
                                                     &bend_decoupled,
                                                     &bend_decoupled_pose_waypoints,
                                                     &bend_screw_pose_waypoints,
-                                                    &bend_joint_space_waypoints,
                                                     &bend_joint_space_via_points,
                                                     &bend_via_point_schedule};
 

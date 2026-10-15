@@ -26,12 +26,13 @@ using namespace praxis::trajectory;
 
 namespace {
 
-constexpr double exact_tolerance        = 1.0e-12;
-constexpr double duration_bound         = 1.0e-8;
-constexpr double peak_bound             = 1.0e-14;
-constexpr std::size_t short_run_cases   = 4000u;
-constexpr std::size_t fewest_short_runs = 500u;
-constexpr std::size_t peak_samples      = 4096u;
+constexpr double exact_tolerance          = 1.0e-12;
+constexpr double duration_bound           = 1.0e-8;
+constexpr double peak_bound               = 1.0e-14;
+constexpr std::size_t short_run_cases     = 4000u;
+constexpr std::size_t three_or_more_cases = 2000u;
+constexpr std::size_t fewest_short_runs   = 500u;
+constexpr std::size_t peak_samples        = 4096u;
 
 joint_waypoint_case drawn_run(std::size_t index)
 {
@@ -61,22 +62,19 @@ double fastest_over_bound(const trajectory_generator &motion, const configuratio
     return fastest;
 }
 
-// At rest at both via points, 1.5 times the straight line's duration, from and to where it starts and
-// ends, and no faster than any joint's bound.
+// At rest at both via points, 1.5 times the slowest joint's traversal, from and to where it starts
+// and ends, and no faster than any joint's bound.
 void require_rest_to_rest(const joint_waypoint_case &run)
 {
     const configuration &from        = run.waypoints.size() == 1u ? run.seed : run.waypoints.front();
     const std::vector<via_point> via = scheduled(run.waypoints, run.seed, run.limits);
     const auto motion                = joined(via);
-    const auto line                  = joint_space_waypoints(run.waypoints, run.seed, run.limits);
-    REQUIRE(line);
 
     REQUIRE(via.size() == 2u);
     REQUIRE((via.front().velocity.isZero(0.0) && via.back().velocity.isZero(0.0)));
     REQUIRE(std::abs(motion->duration() / (1.5 * slowest_traversal(from, run.waypoints.back(), run.limits.velocity)) - 1.0) <= duration_bound);
-    REQUIRE(std::abs(motion->duration() / (1.5 * (*line)->duration()) - 1.0) <= duration_bound);
-    REQUIRE(is_approx_equal(at(*motion, 0.0).position, at(**line, 0.0).position, exact_tolerance));
-    REQUIRE(is_approx_equal(at(*motion, motion->duration()).position, at(**line, (*line)->duration()).position, exact_tolerance));
+    REQUIRE(is_approx_equal(at(*motion, 0.0).position, from, exact_tolerance));
+    REQUIRE(is_approx_equal(at(*motion, motion->duration()).position, run.waypoints.back(), exact_tolerance));
     REQUIRE(fastest_over_bound(*motion, run.limits.velocity, 0u) <= 1.0 + peak_bound);
     REQUIRE(fastest_over_bound(*motion, run.limits.velocity, peak_samples) <= 1.0 + peak_bound);
 }
@@ -131,7 +129,7 @@ TEST_CASE("two_configurations_are_joined_at_rest_at_both_from_the_first_whatever
     CHECK(is_approx_equal(at(*motion, 0.4 * T).velocity, pair_of(0.96, 0.0), exact_tolerance));
 }
 
-TEST_CASE("every_drawn_run_of_one_or_two_takes_one_and_a_half_times_the_straight_line_and_no_joint_passes_its_bound")
+TEST_CASE("every_drawn_run_of_one_or_two_takes_one_and_a_half_times_its_slowest_joint_s_traversal_and_no_joint_passes_its_bound")
 {
     std::size_t judged = 0u;
     for(std::size_t index = 0u; index < short_run_cases; ++index)
@@ -146,6 +144,29 @@ TEST_CASE("every_drawn_run_of_one_or_two_takes_one_and_a_half_times_the_straight
     }
 
     REQUIRE(judged >= fewest_short_runs);
+}
+
+TEST_CASE("a_schedule_of_three_or_more_starts_at_rest_at_zero_ends_at_rest_and_passes_each_interior_row_at_the_book_velocity")
+{
+    for(std::size_t index = 0u; index < three_or_more_cases; ++index)
+    {
+        const joint_waypoint_case run = drawn_run(index);
+        if(run.waypoints.size() < 3u)
+            continue;
+
+        const std::vector<via_point> via = scheduled(run.waypoints, run.seed, run.limits);
+        std::vector<double> times;
+        for(const via_point &point : via)
+            times.push_back(point.time);
+
+        INFO("case " << index);
+        REQUIRE(via.front().time == 0.0);
+        REQUIRE(std::adjacent_find(times.begin(), times.end(), [](double before, double after) { return !(after > before); }) == times.end());
+        REQUIRE(via.front().velocity.isZero(0.0));
+        REQUIRE(via.back().velocity.isZero(0.0));
+        for(std::size_t k = 1u; k + 1u < via.size(); ++k)
+            REQUIRE(is_approx_equal(via[k].velocity, book_velocity(run.waypoints, times, k), exact_tolerance));
+    }
 }
 
 TEST_CASE("a_run_the_schedule_cannot_time_is_refused_with_one_error_line")

@@ -135,7 +135,7 @@ TEST_CASE("a_run_repeating_the_configuration_it_already_stands_at_is_refused_and
     const std::vector<configuration> via = {pair_of(1.0, 1.0), pair_of(2.0, 1.0), pair_of(2.0, 1.0), pair_of(3.0, 2.0)};
 
     praxis::tests::captured_log captured;
-    const auto refused         = joint_space_waypoints(via, pair_of(-5.0, -5.0), bounds());
+    const auto refused         = via_point_schedule(via, pair_of(-5.0, -5.0), bounds());
     const std::string reported = captured.text();
 
     REQUIRE(!refused);
@@ -147,7 +147,7 @@ TEST_CASE("a_run_of_via_points_of_differing_widths_is_refused_rather_than_joined
 {
     const std::vector<configuration> via = {pair_of(1.0, 1.0), configuration::Zero(3), pair_of(3.0, 2.0)};
 
-    const auto refused = joint_space_waypoints(via, pair_of(-5.0, -5.0), bounds());
+    const auto refused = via_point_schedule(via, pair_of(-5.0, -5.0), bounds());
 
     REQUIRE(!refused);
     CHECK(refused.error() == refusal::unsupported_input);

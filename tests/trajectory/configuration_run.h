@@ -34,14 +34,6 @@ inline configuration_limits bounds()
     return limits;
 }
 
-inline std::unique_ptr<trajectory_generator> commanded(std::span<const configuration> via, const configuration &seed)
-{
-    auto motion = joint_space_waypoints(via, seed, bounds());
-    REQUIRE(motion);
-
-    return std::move(*motion);
-}
-
 inline std::vector<via_point> scheduled(std::span<const configuration> positions, const configuration &j0, const configuration_limits &limits)
 {
     auto schedule = via_point_schedule(positions, j0, limits);
@@ -56,6 +48,12 @@ inline std::unique_ptr<trajectory_generator> joined(std::span<const via_point> v
     REQUIRE(motion);
 
     return std::move(*motion);
+}
+
+// The run the via-point step chooses for `via` from `seed` under bounds(), joined by the via-point slot.
+inline std::unique_ptr<trajectory_generator> commanded(std::span<const configuration> via, const configuration &seed)
+{
+    return joined(scheduled(via, seed, bounds()));
 }
 
 inline trajectory_sample at(const trajectory_generator &motion, double t)

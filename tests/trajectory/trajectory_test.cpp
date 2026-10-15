@@ -8,7 +8,6 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <memory>
 #include <vector>
 #include <utility>
 #include <algorithm>
@@ -67,31 +66,6 @@ private:
     scaling_sample (*m_scaling)(double, double);
 };
 
-}
-
-TEST_CASE("the_via_point_factory_slot_defaults_to_a_generator_that_refuses_to_sample")
-{
-    trajectory_ops ops{};
-    configuration j0 = configuration::Constant(3, 0.25);
-    std::vector<configuration> configurations(3, j0);
-
-    REQUIRE(ops.joint_space_waypoints != nullptr);
-
-    auto held = ops.joint_space_waypoints(configurations, j0, configuration_limits{});
-    REQUIRE(held);
-
-    const std::unique_ptr<trajectory_generator> generator = std::move(*held);
-
-    REQUIRE(generator != nullptr);
-    REQUIRE(is_approx_equal(generator->duration(), 0.0));
-
-    for(double t : {-1.0, 0.0, 0.5, 1.0e6})
-    {
-        const expected<trajectory_sample, refusal> sampled = generator->sample(t);
-
-        REQUIRE(!sampled);
-        REQUIRE(sampled.error() == refusal::not_implemented);
-    }
 }
 
 TEST_CASE("the_via_point_slot_defaults_to_a_generator_that_refuses_to_sample")

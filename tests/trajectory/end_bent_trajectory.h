@@ -70,26 +70,23 @@ private:
     }
 };
 
-inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> bent_at(displaced_end at, std::span<const trajectory::configuration> waypoints,
-                                                                                    const trajectory::configuration &j0, const trajectory::configuration_limits &limits)
+inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> bent_at(displaced_end at, std::span<const trajectory::via_point> via_points)
 {
-    expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> answered = trajectory::joint_space_waypoints(waypoints, j0, limits);
+    expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> answered = trajectory::joint_space_via_points(via_points);
     if(!answered)
         return unexpected(answered.error());
 
     return std::unique_ptr<trajectory::trajectory_generator>(std::make_unique<trajectory_bent_at_one_end>(std::move(*answered), at));
 }
 
-inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> bent_at_the_start(std::span<const trajectory::configuration> waypoints, const trajectory::configuration &j0,
-                                                                                              const trajectory::configuration_limits &limits)
+inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> bent_at_the_start(std::span<const trajectory::via_point> via_points)
 {
-    return bent_at(displaced_end::start, waypoints, j0, limits);
+    return bent_at(displaced_end::start, via_points);
 }
 
-inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> bent_at_the_finish(std::span<const trajectory::configuration> waypoints, const trajectory::configuration &j0,
-                                                                                               const trajectory::configuration_limits &limits)
+inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> bent_at_the_finish(std::span<const trajectory::via_point> via_points)
 {
-    return bent_at(displaced_end::finish, waypoints, j0, limits);
+    return bent_at(displaced_end::finish, via_points);
 }
 
 }

@@ -30,15 +30,8 @@ inline constexpr double decoupled_path_tolerance_metres  = 1.0e-12;
 // their answers to orthonormality and its determinant to one.
 inline constexpr double path_rotation_membership_tolerance = 1.0e-6;
 
-// A driven configuration in radians, its rate in radians per second, and its acceleration as a
-// fraction of the larger of one and either side's magnitude.
-inline constexpr double driven_configuration_tolerance = 1.0e-8;
-
-// The run the bound above was measured over. It is not known to hold over a longer one: the shortest
-// segment a run draws has no floor.
-inline constexpr std::size_t driven_configuration_measured_to_cases = 2000;
-
-// A driven configuration joined through drawn via points, in the same units as the bound above.
+// A driven configuration joined through drawn via points in radians, its rate in radians per second,
+// and its acceleration as a fraction of the larger of one and either side's magnitude.
 inline constexpr double via_point_run_tolerance = 1.0e-10;
 
 // A chosen via point's time as a fraction of the larger of one and its magnitude, its position in
