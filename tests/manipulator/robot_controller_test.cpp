@@ -199,16 +199,27 @@ expected<trajectory::scaling_sample, refusal> recorded_quintic(double t, double 
     return trajectory::baseline().time_scaling.quintic(t, duration);
 }
 
-expected<trajectory::scaling_sample, refusal> recorded_trapezoidal(double t, double duration, double max_velocity, double max_acceleration)
+// Lynch & Park, Modern Robotics, sec. 9.2.2.2: T = (a + v^2)/(va).
+expected<trajectory::scaling_sample, refusal> recorded_velocity_acceleration(double t, double velocity, double acceleration)
+{
+    commanded_span = (acceleration + velocity * velocity) / (velocity * acceleration);
+
+    return trajectory::baseline().time_scaling.trapezoidal_from_velocity_acceleration(t, velocity, acceleration);
+}
+
+expected<trajectory::scaling_sample, refusal> recorded_acceleration_duration(double t, double duration, double acceleration)
 {
     commanded_span = duration;
 
-    return trajectory::baseline().time_scaling.trapezoidal_within_bounds(t, duration, max_velocity, max_acceleration);
+    return trajectory::baseline().time_scaling.trapezoidal_from_acceleration_duration(t, duration, acceleration);
 }
 
 trajectory::time_scaling_ops recording_time_scaling()
 {
-    return trajectory::time_scaling_ops{.cubic = &recorded_cubic, .quintic = &recorded_quintic, .trapezoidal_within_bounds = &recorded_trapezoidal};
+    return trajectory::time_scaling_ops{.cubic                                  = &recorded_cubic,
+                                        .quintic                                = &recorded_quintic,
+                                        .trapezoidal_from_velocity_acceleration = &recorded_velocity_acceleration,
+                                        .trapezoidal_from_acceleration_duration = &recorded_acceleration_duration};
 }
 
 double span_under(robot_controller &controller, scene_robot &robot, time_scaling_choice chosen)

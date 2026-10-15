@@ -216,8 +216,9 @@ TEST_CASE("the_quintic_choice_answers_the_duration_and_the_samples_the_compositi
     }
 }
 
-// The reference refuses a trapezoid any duration below its natural one, so a motion answering at
-// every sample was handed a duration the reference accepts.
+// Short reaches stand below the floor and are sampled through the (a, T) trapezoid, long ones at
+// their natural duration through the (v, a) one; either reference refuses a request outside its
+// domain, so a motion answering at every sample was handed requests both accept.
 TEST_CASE("the_trapezoidal_choice_hands_the_profile_a_duration_it_accepts_over_both_branches")
 {
     const prepared_time_scaling scaled(trajectory::baseline().time_scaling, time_scaling_choice::trapezoidal);
@@ -235,7 +236,8 @@ TEST_CASE("the_trapezoidal_choice_hands_the_profile_a_duration_it_accepts_over_b
     }
 }
 
-TEST_CASE("the_trapezoidal_duration_stands_within_a_small_fraction_of_the_shortest_the_reference_accepts")
+// Lynch & Park, Modern Robotics, sec. 9.2.2.2, choosing v and a, with v held one step below sqrt(a).
+TEST_CASE("the_trapezoidal_duration_is_the_natural_duration_of_the_capped_rate_and_the_reference_ends_there")
 {
     const trajectory::time_scaling_ops reference = trajectory::baseline().time_scaling;
     const prepared_time_scaling scaled(reference, time_scaling_choice::trapezoidal);
@@ -243,17 +245,18 @@ TEST_CASE("the_trapezoidal_duration_stands_within_a_small_fraction_of_the_shorte
     {
         const joint_vector target        = reaching(reach);
         const path_parameter_bounds held = derived_bounds(bounds(), from, target);
+        const double v                   = std::min(held.max_rate, std::nextafter(std::sqrt(held.max_rate_change), 0.0));
+        const double a                   = held.max_rate_change;
         const double span                = scaled.duration(bounds(), from, target);
         INFO("reach " << reach << " span " << span);
 
-        CHECK(reference.trapezoidal_within_bounds(0.0, span, held.max_rate, held.max_rate_change).has_value());
-        CHECK_FALSE(reference.trapezoidal_within_bounds(0.0, 0.999 * span, held.max_rate, held.max_rate_change).has_value());
+        CHECK(span == (a + v * v) / (v * a));
+        CHECK(std::abs(answered(reference.trapezoidal_from_velocity_acceleration(span, v, a)).s - 1.0) <= 4.0 * std::numeric_limits<double>::epsilon());
     }
 }
 
-// Where the rate is exactly the peak the rate of change reaches, the coast has collapsed and the
-// displacement left for it rounds below zero, where another arrangement of the same algebra lands
-// below the reference's natural duration.
+// Where the rate is exactly the peak the rate of change reaches, v^2/a can round above one; the rate
+// the profile is handed stands one step below that peak.
 TEST_CASE("a_trapezoid_whose_coast_has_exactly_collapsed_is_still_a_duration_the_profile_accepts")
 {
     const trajectory::time_scaling_ops reference = trajectory::baseline().time_scaling;
@@ -265,6 +268,7 @@ TEST_CASE("a_trapezoid_whose_coast_has_exactly_collapsed_is_still_a_duration_the
         INFO("rate change " << rate_change << " span " << span);
 
         CHECK(scaled.sample(0.5 * span, span).has_value());
+        CHECK(scaled.sample(span, span).has_value());
     }
 }
 

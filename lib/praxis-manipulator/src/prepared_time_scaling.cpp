@@ -22,8 +22,8 @@ constexpr double cubic_acceleration_peak = 6.0;
 // report a zero duration and end before its first sample.
 constexpr double shortest_motion = 0.25;
 
-// The trapezoid is handed its natural duration lengthened by this fraction.
-constexpr double trapezoid_margin = 1.0e-5;
+// A span within this fraction of a trapezoid's natural duration, on either side, is that duration.
+constexpr double natural_duration_band = 1.0e-13;
 
 // A motion of no extent leaves both derivatives of the path parameter unbounded; these stand in for
 // the infinities the closed forms cannot divide by.
@@ -55,30 +55,48 @@ double peak_bounded_duration(const joint_limits &bounds, const joint_vector &sta
     return span;
 }
 
-// Lynch & Park, Modern Robotics, sec. 9.2.2.2: over a unit path a trapezoid that coasts spans
-// 1/v + v/a, and one whose peak sqrt(a) stays below v is the triangle spanning 2 sqrt(a)/a.
+bool usable(const path_parameter_bounds &held_to)
+{
+    return std::isfinite(held_to.max_rate) && held_to.max_rate > 0.0 && std::isfinite(held_to.max_rate_change) && held_to.max_rate_change > 0.0;
+}
+
+// v stays below sqrt(a), so v^2/a <= 1 holds after rounding.
+double capped_rate(const path_parameter_bounds &held_to)
+{
+    return std::min(held_to.max_rate, std::nextafter(std::sqrt(held_to.max_rate_change), 0.0));
+}
+
+// Lynch & Park, Modern Robotics, sec. 9.2.2.2, choosing v and a.
 double natural_trapezoid_duration(const path_parameter_bounds &held_to)
 {
-    const double rate        = held_to.max_rate;
-    const double rate_change = held_to.max_rate_change;
+    const double v = capped_rate(held_to);
+    const double a = held_to.max_rate_change;
 
-    const double peak = std::sqrt(rate_change);
-    if(peak < rate)
-        return peak / rate_change + peak / rate_change;
-
-    const double ramp    = rate / rate_change;
-    const double covered = 0.5 * rate_change * ramp * ramp;
-    const double coast   = ((1.0 - covered) - covered) / rate;
-
-    return ramp + (coast < 0.0 ? 0.0 : coast) + ramp;
+    return (a + v * v) / (v * a);
 }
 
 double trapezoid_duration(const path_parameter_bounds &held_to)
 {
-    if(!(held_to.max_rate > 0.0) || !(held_to.max_rate_change > 0.0))
+    if(!usable(held_to))
         return shortest_motion;
 
-    return std::max(shortest_motion, natural_trapezoid_duration(held_to) * (1.0 + trapezoid_margin));
+    return std::max(shortest_motion, natural_trapezoid_duration(held_to));
+}
+
+// A span below the natural duration is refused before any slot is asked; above it the rate of change
+// is held and the slot solves the cruise rate.
+expected<trajectory::scaling_sample, refusal> trapezoid_at(const trajectory::time_scaling_ops &scaling, const path_parameter_bounds &held_to, double at, double duration)
+{
+    if(!usable(held_to))
+        return unexpected(refusal::unsupported_input);
+
+    const double natural = natural_trapezoid_duration(held_to);
+    if(duration < natural * (1.0 - natural_duration_band))
+        return unexpected(refusal::unsupported_input);
+    if(duration <= natural * (1.0 + natural_duration_band))
+        return scaling.trapezoidal_from_velocity_acceleration(std::min(at, natural), capped_rate(held_to), held_to.max_rate_change);
+
+    return scaling.trapezoidal_from_acceleration_duration(at, duration, held_to.max_rate_change);
 }
 
 }
@@ -131,7 +149,7 @@ expected<trajectory::scaling_sample, refusal> prepared_time_scaling::sample(doub
     if(!m_bounds)
         return unexpected(refusal::unsupported_input);
 
-    return m_scaling.trapezoidal_within_bounds(at, duration, m_bounds->max_rate, m_bounds->max_rate_change);
+    return trapezoid_at(m_scaling, *m_bounds, at, duration);
 }
 
 double prepared_time_scaling::duration(const joint_limits &bounds, const joint_vector &start, const joint_vector &target) const

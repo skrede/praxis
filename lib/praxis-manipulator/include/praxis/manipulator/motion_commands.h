@@ -56,11 +56,12 @@ public:
 
     // The time is held to [0, duration] before a scaling is asked. A trapezoid is the bounds it was
     // built from, so a value holding none has nothing to sample against and refuses rather than
-    // inventing a pair.
+    // inventing a pair. A trapezoid is sampled through the (v, a) slot at its natural duration and
+    // through the (a, T) slot over a longer span; a shorter span is refused with no slot asked.
     expected<trajectory::scaling_sample, refusal> sample(double t, double duration) const;
 
-    // A trapezoidal duration is never less than the trapezoid's natural duration for the same bounds
-    // lengthened by a fixed fraction.
+    // A trapezoidal duration is the natural duration of the bounds with v held below sqrt(a), and
+    // never shorter than the floor every motion keeps.
     double duration(const joint_limits &bounds, const joint_vector &start, const joint_vector &target) const;
 
     time_scaling_choice chosen() const;

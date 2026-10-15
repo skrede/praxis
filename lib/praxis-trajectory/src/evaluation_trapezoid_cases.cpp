@@ -8,7 +8,8 @@ namespace praxis::trajectory {
 
 namespace {
 
-// The relative margin the manipulator's duration rule lengthens a natural trapezoid by.
+// The relative margin the bounded row's shortest drawn duration stands above the natural duration
+// of its bounds.
 constexpr double trapezoid_margin = 1.0e-5;
 
 // The relative margin a drawn cruise rate keeps under sqrt(a), so v^2/a <= 1 survives rounding.
@@ -25,8 +26,8 @@ constexpr double book_snap_fraction = 0.3;
 
 constexpr std::array trapezoid_kinks{snapped_instant::start, snapped_instant::ramp_end, snapped_instant::coast_end, snapped_instant::finish};
 
-// Lynch & Park, Modern Robotics, sec. 9.2.2.2, in the operand order of the manipulator's duration
-// rule.
+// Lynch & Park, Modern Robotics, sec. 9.2.2.2, in the operand order of the bounded reference's own
+// natural duration.
 double natural_trapezoid_duration(double rate, double rate_change)
 {
     const double peak = std::sqrt(rate_change);

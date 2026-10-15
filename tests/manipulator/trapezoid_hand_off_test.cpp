@@ -1,6 +1,6 @@
 #include "fixtures.h"
 
-#include "book_time_scalings.h"
+#include "book_trapezoid_options.h"
 
 #include "praxis/manipulator/motion_commands.h"
 
@@ -63,16 +63,11 @@ std::vector<bounded_motion> population()
     return pairs;
 }
 
-// A form whose check never computes a natural duration runs the same arithmetic whichever natural
-// duration it is labeled with, and a form at rest beyond both ends runs a held form's arithmetic
-// everywhere inside them.
-bool distinct(const trapezoid_form &form)
+// A form at rest beyond both ends answers its rest at t = 0 and t = T and a form as written
+// everywhere between them, so it runs no arithmetic the forms as written do not.
+bool distinct(std::size_t form)
 {
-    const trapezoid_form first = trapezoid_forms.front();
-    if(form.ends == end_handling::at_rest)
-        return false;
-
-    return form.check == duration_check::natural || (form.apex_when == first.apex_when && form.coast == first.coast && form.apex == first.apex);
+    return option_shape_at(form % option_shape_count).ends != end_handling::at_rest;
 }
 
 bool sound(const expected<trajectory::trajectory_sample, refusal> &sampled)
@@ -87,11 +82,8 @@ struct failure
     std::size_t instant;
 };
 
-std::size_t failures_over(trapezoid_slot literal, failure at, const bounded_motion &bounded, std::optional<failure> &first)
+std::size_t failures_over(const trajectory::time_scaling_ops &ops, failure at, const bounded_motion &bounded, std::optional<failure> &first)
 {
-    trajectory::time_scaling_ops ops = trajectory::baseline().time_scaling;
-    ops.trapezoidal_within_bounds    = literal;
-
     const prepared_time_scaling scaled(ops, time_scaling_choice::trapezoidal, bounded.held);
     const auto motion = joint_space_motion(composing_path(), scaled, two_joint_limits(), from, bounded.target);
     if(!motion)
@@ -127,48 +119,74 @@ expected<trajectory::scaling_sample, refusal> recorded_quintic(double t, double 
     return trajectory::baseline().time_scaling.quintic(t, duration);
 }
 
-expected<trajectory::scaling_sample, refusal> recorded_trapezoidal(double t, double duration, double max_velocity, double max_acceleration)
+expected<trajectory::scaling_sample, refusal> recorded_velocity_acceleration(double t, double velocity, double acceleration)
 {
     asked.push_back(t);
 
-    return trajectory::baseline().time_scaling.trapezoidal_within_bounds(t, duration, max_velocity, max_acceleration);
+    return trajectory::baseline().time_scaling.trapezoidal_from_velocity_acceleration(t, velocity, acceleration);
+}
+
+expected<trajectory::scaling_sample, refusal> recorded_acceleration_duration(double t, double duration, double acceleration)
+{
+    asked.push_back(t);
+
+    return trajectory::baseline().time_scaling.trapezoidal_from_acceleration_duration(t, duration, acceleration);
 }
 
 trajectory::time_scaling_ops recording_time_scaling()
 {
-    return trajectory::time_scaling_ops{.cubic = &recorded_cubic, .quintic = &recorded_quintic, .trapezoidal_within_bounds = &recorded_trapezoidal};
+    return trajectory::time_scaling_ops{.cubic                                  = &recorded_cubic,
+                                        .quintic                                = &recorded_quintic,
+                                        .trapezoidal_from_velocity_acceleration = &recorded_velocity_acceleration,
+                                        .trapezoidal_from_acceleration_duration = &recorded_acceleration_duration};
 }
 
-}
-
-TEST_CASE("every_book_trapezoid_runs_each_motion_the_scene_composes_to_its_end")
+// Each literal bound alone, the reference in the other trapezoid slot.
+template<std::size_t Count>
+std::size_t failures_of(const std::array<option_slot, Count> &literals, option_slot trajectory::time_scaling_ops::*slot)
 {
     const std::vector<bounded_motion> pairs = population();
-    const auto literals                     = book_trapezoids();
-
-    std::size_t failed = 0;
     std::optional<failure> first;
-    for(std::size_t form = 0; form < trapezoid_form_count; ++form)
-        for(std::size_t pair = 0; distinct(trapezoid_forms[form]) && pair < pairs.size(); ++pair)
-            failed += failures_over(literals[form], failure{form, pair, 0}, pairs[pair], first);
-
+    std::size_t failed = 0;
+    for(std::size_t form = 0; form < Count; ++form)
+    {
+        trajectory::time_scaling_ops ops = trajectory::baseline().time_scaling;
+        ops.*slot                        = literals[form];
+        for(std::size_t pair = 0; distinct(form) && pair < pairs.size(); ++pair)
+            failed += failures_over(ops, failure{form, pair, 0}, pairs[pair], first);
+    }
     if(first)
-        UNSCOPED_INFO("first failure: form " << first->form << " rate " << pairs[first->pair].held.max_rate << " rate change " << pairs[first->pair].held.max_rate_change << " instant "
-                                             << first->instant);
-    CHECK(failed == 0u);
+        UNSCOPED_INFO("first failure: form " << first->form << " pair " << first->pair << " instant " << first->instant);
+
+    return failed;
 }
 
+}
+
+TEST_CASE("every_book_velocity_acceleration_trapezoid_runs_each_motion_the_scene_composes_to_its_end")
+{
+    CHECK(failures_of(book_velocity_acceleration_options(), &trajectory::time_scaling_ops::trapezoidal_from_velocity_acceleration) == 0u);
+}
+
+TEST_CASE("every_book_acceleration_duration_trapezoid_runs_each_motion_the_scene_composes_to_its_end")
+{
+    CHECK(failures_of(book_acceleration_duration_options(), &trajectory::time_scaling_ops::trapezoidal_from_acceleration_duration) == 0u);
+}
+
+// Bounds {1, 4} have the natural duration 1.25 s: a span of 2.7 s asks the (a, T) trapezoid and a
+// span of exactly 1.25 s the (v, a) one.
 TEST_CASE("no_scaling_is_asked_about_a_time_outside_the_duration_it_is_handed")
 {
-    constexpr double duration = 2.7;
-    const std::array<std::pair<double, double>, 4> asks{
-            {{-1.0, 0.0}, {duration * (1.0 + 0x1p-52), duration}, {std::nextafter(duration, std::numeric_limits<double>::infinity()), duration}, {2.0 * duration, duration}}};
-    for(const time_scaling_choice chosen : {time_scaling_choice::cubic, time_scaling_choice::quintic, time_scaling_choice::trapezoidal})
+    const std::array<std::pair<time_scaling_choice, double>, 4> spans{
+            {{time_scaling_choice::cubic, 2.7}, {time_scaling_choice::quintic, 2.7}, {time_scaling_choice::trapezoidal, 2.7}, {time_scaling_choice::trapezoidal, 1.25}}};
+    for(const auto &[chosen, duration] : spans)
     {
         const prepared_time_scaling scaled(recording_time_scaling(), chosen, path_parameter_bounds{1.0, 4.0});
+        const std::array<std::pair<double, double>, 4> asks{
+                {{-1.0, 0.0}, {duration * (1.0 + 0x1p-52), duration}, {std::nextafter(duration, std::numeric_limits<double>::infinity()), duration}, {2.0 * duration, duration}}};
         for(const auto &[t, held_at] : asks)
         {
-            INFO("choice " << static_cast<int>(chosen) << " asked at " << t);
+            INFO("choice " << static_cast<int>(chosen) << " over " << duration << " asked at " << t);
             asked.clear();
             CHECK(scaled.sample(t, duration).has_value());
             REQUIRE(asked.size() == 1u);
