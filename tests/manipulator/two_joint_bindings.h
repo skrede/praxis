@@ -93,16 +93,18 @@ inline expected<jacobian, refusal> exhausted_body_jacobian(const rigid_motion::s
     return unexpected(refusal::no_solution);
 }
 
-inline expected<void, refusal> degenerate_inverse_kinematics(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &,
-                                                             const transform &, const joint_vector &, const solver_parameters &, ik_result &)
+inline expected<void, refusal> degenerate_inverse_kinematics(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const forward_kinematics_ops &,
+                                                             const differential_kinematics_ops &, const screw_chain &, const transform &, const joint_vector &,
+                                                             const solver_parameters &, ik_result &)
 {
     return unexpected(refusal::degenerate);
 }
 
 // Shaped the way a solve written against this seam is: it asks the forward maps it was handed rather
 // than computing its own, so what it reads is whatever the composition bound.
-inline expected<void, refusal> fk_reading_inverse_kinematics(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const differential_kinematics_ops &,
-                                                             const screw_chain &chain, const transform &, const joint_vector &j0, const solver_parameters &, ik_result &answer)
+inline expected<void, refusal> fk_reading_inverse_kinematics(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &, const forward_kinematics_ops &forward,
+                                                             const differential_kinematics_ops &, const screw_chain &chain, const transform &, const joint_vector &j0,
+                                                             const solver_parameters &, ik_result &answer)
 {
     const expected<transform, refusal> reached = forward.forward_kinematics(screw, chain.home, chain.space_screws, j0);
     if(!reached)
@@ -114,8 +116,9 @@ inline expected<void, refusal> fk_reading_inverse_kinematics(const rigid_motion:
     return {};
 }
 
-inline expected<void, refusal> two_solution_inverse_kinematics(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &,
-                                                               const transform &, const joint_vector &j0, const solver_parameters &, ik_result &answer)
+inline expected<void, refusal> two_solution_inverse_kinematics(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const forward_kinematics_ops &,
+                                                               const differential_kinematics_ops &, const screw_chain &, const transform &, const joint_vector &j0,
+                                                               const solver_parameters &, ik_result &answer)
 {
     answer.solutions.emplace_back(joint_vector::Constant(j0.size(), 1.0));
     answer.solutions.emplace_back(joint_vector::Constant(j0.size(), 2.0));
@@ -123,8 +126,9 @@ inline expected<void, refusal> two_solution_inverse_kinematics(const rigid_motio
     return {};
 }
 
-inline expected<void, refusal> converging_on_nothing(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &,
-                                                     const transform &, const joint_vector &, const solver_parameters &, ik_result &)
+inline expected<void, refusal> converging_on_nothing(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const forward_kinematics_ops &,
+                                                     const differential_kinematics_ops &, const screw_chain &, const transform &, const joint_vector &, const solver_parameters &,
+                                                     ik_result &)
 {
     return {};
 }

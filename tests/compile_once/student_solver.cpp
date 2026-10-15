@@ -42,9 +42,9 @@ praxis::expected<praxis::manipulator::jacobian, praxis::refusal> space_jacobian(
 // The solve reads forward kinematics off the aggregate it is handed rather than repeating it, so it
 // is whichever one the composition bound. The iteration sequence it records is offered for inspection
 // afterwards without the solve owning a buffer of its own.
-praxis::expected<void, praxis::refusal> inverse_kinematics(const praxis::rigid_motion::screw_ops &screw, const praxis::manipulator::forward_kinematics_ops &forward,
-                                                           const praxis::manipulator::differential_kinematics_ops &, const praxis::manipulator::screw_chain &chain,
-                                                           const praxis::transform &, const praxis::manipulator::joint_vector &j0,
+praxis::expected<void, praxis::refusal> inverse_kinematics(const praxis::rigid_motion::screw_ops &screw, const praxis::rigid_motion::frame_ops &,
+                                                           const praxis::manipulator::forward_kinematics_ops &forward, const praxis::manipulator::differential_kinematics_ops &,
+                                                           const praxis::manipulator::screw_chain &chain, const praxis::transform &, const praxis::manipulator::joint_vector &j0,
                                                            const praxis::manipulator::solver_parameters &parameters, praxis::manipulator::ik_result &answer)
 {
     const praxis::expected<praxis::transform, praxis::refusal> reached = forward.forward_kinematics(screw, chain.home, chain.space_screws, j0);

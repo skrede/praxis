@@ -187,7 +187,7 @@ expected<void, refusal> kinematics::solve(const transform &desired_pose, const j
     m_last.iterations.clear();
     ++m_solve_tally;
 
-    return m_ik.inverse_kinematics(m_screw, m_fk, m_dk, m_space, desired_pose, j0, parameters, m_last);
+    return m_ik.inverse_kinematics(m_screw, m_frames, m_fk, m_dk, m_space, desired_pose, j0, parameters, m_last);
 }
 
 }

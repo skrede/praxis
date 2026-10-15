@@ -1,3 +1,4 @@
+#include "three_link_arm.h"
 #include "book_inverse_kinematics.h"
 
 #include "praxis/manipulator/evaluation.h"
@@ -5,7 +6,10 @@
 #include "praxis/manipulator/capabilities.h"
 
 #include "praxis/evaluation/report.h"
+#include "praxis/evaluation/tolerance.h"
 #include "praxis/evaluation/slot_evaluation.h"
+
+#include "praxis/rigid_motion/capabilities.h"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -28,11 +32,12 @@ constexpr std::size_t cases_per_seed = default_cases_per_slot;
 
 // The form, refusing an answer at which its own error twist is not finite.
 template<std::size_t I>
-expected<void, refusal> refusing_a_non_finite_stop(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const differential_kinematics_ops &differential,
-                                                   const screw_chain &chain, const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer)
+expected<void, refusal> refusing_a_non_finite_stop(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward,
+                                                   const differential_kinematics_ops &differential, const screw_chain &chain, const transform &desired, const joint_vector &j0,
+                                                   const solver_parameters &parameters, ik_result &answer)
 {
     constexpr literal_form form          = literal_forms[I];
-    const expected<void, refusal> solved = form.solve(screw, forward, differential, chain, desired, j0, parameters, answer);
+    const expected<void, refusal> solved = form.solve(screw, frames, forward, differential, chain, desired, j0, parameters, answer);
     if(!solved || answer.solutions.empty())
         return solved;
     const expected<twist, refusal> own = error_twist<form.frame, form.source>(handed_maps{screw, forward, differential, chain}, desired, answer.solutions.front());
@@ -49,6 +54,41 @@ constexpr std::array<tests::book::inverse_kinematics_slot, sizeof...(I)> refusin
 }
 
 constexpr std::array<tests::book::inverse_kinematics_slot, literal_forms.size()> refusing_forms = refusing_forms_of(std::make_index_sequence<literal_forms.size()>{});
+
+// [V_b] = log(T_sb^-1 T_sd), with T_sb and its inverse asked of the operations the solve is handed.
+expected<twist, refusal> body_error(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward, const screw_chain &chain,
+                                    const transform &desired, const joint_vector &theta)
+{
+    const expected<transform, refusal> tsb = forward.body_forward_kinematics(screw, frames, chain.home, chain.space_screws, theta);
+    if(!tsb)
+        return unexpected(tsb.error());
+    const expected<pose_reading, refusal> logarithm = screw.matrix_logarithm_se3(frames.inverse(*tsb) * desired);
+    if(!logarithm)
+        return unexpected(logarithm.error());
+    return twist(logarithm->first * logarithm->second);
+}
+
+// Lynch & Park, Modern Robotics, sec. 6.2.2, the body-frame iteration with the step of eq. (6.6) and
+// J_b asked of the differential maps it is handed.
+expected<void, refusal> body_frame_literal(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward,
+                                           const differential_kinematics_ops &differential, const screw_chain &chain, const transform &desired, const joint_vector &j0,
+                                           const solver_parameters &parameters, ik_result &answer)
+{
+    joint_vector theta         = j0;
+    expected<twist, refusal> v = body_error(screw, frames, forward, chain, desired, theta);
+    for(std::uint32_t i = 0; v && outside(*v, parameters) && i < parameters.max_iterations_per_attempt; ++i)
+    {
+        const expected<jacobian, refusal> jb = differential.body_jacobian(screw, frames, forward, chain.home, chain.space_screws, theta);
+        if(!jb)
+            return unexpected(jb.error());
+        theta += step_along<step::cod>(*jb, *v);
+        v = body_error(screw, frames, forward, chain, desired, theta);
+    }
+    if(!v || outside(*v, parameters))
+        return unexpected(refusal::no_solution);
+    answer.solutions.push_back(theta);
+    return {};
+}
 
 bool carries_the_inverse_kinematics_row(const evaluation_view &view)
 {
@@ -116,4 +156,42 @@ TEST_CASE("a_literal_inverse_kinematics_form_on_the_text_logarithm_differs_from_
     }
 
     CHECK(forms_judged == 12u);
+}
+
+TEST_CASE("a_literal_body_frame_solve_reading_its_maps_through_the_frames_it_is_handed_passes_the_inverse_kinematics_row")
+{
+    for(std::uint64_t seed = default_seed; seed <= default_seed + 40u; ++seed)
+    {
+        const slot_report row = judged(&body_frame_literal, seed);
+
+        INFO("seed " << seed);
+        REQUIRE(row.slot == "ik.inverse_kinematics");
+        REQUIRE(row.cases == cases_per_seed);
+        CHECK(row.outcomes.differed + row.outcomes.refused_differently + row.outcomes.unusable == 0u);
+        CHECK(row.outcomes.agreed > 0u);
+    }
+}
+
+TEST_CASE("the_literal_body_frame_solve_handed_default_frame_operations_does_not_reach_a_target_the_reference_frames_reach")
+{
+    const screw_chain chain                   = fixture::three_link_arm();
+    const rigid_motion::capabilities spatial  = rigid_motion::baseline();
+    const capabilities maps                   = manipulator::baseline();
+    const expected<transform, refusal> target = maps.fk.forward_kinematics(spatial.screw, chain.home, chain.space_screws, fixture::posed_arm());
+    const joint_vector seed                   = fixture::arm_configuration(0.3, -1.0, 0.4);
+    REQUIRE(target);
+
+    ik_result composed;
+    ik_result defaulted;
+    const expected<void, refusal> reached = body_frame_literal(spatial.screw, spatial.frame, maps.fk, maps.dk, chain, *target, seed, solver_parameters(), composed);
+    const expected<void, refusal> missed  = body_frame_literal(spatial.screw, rigid_motion::frame_ops{}, maps.fk, maps.dk, chain, *target, seed, solver_parameters(), defaulted);
+
+    REQUIRE(reached);
+    REQUIRE(composed.solutions.size() == 1u);
+    const expected<transform, refusal> landed = maps.fk.forward_kinematics(spatial.screw, chain.home, chain.space_screws, composed.solutions.front());
+    REQUIRE(landed);
+    CHECK(is_approx_equal(*landed, *target, fixture::solved_tolerance));
+    REQUIRE_FALSE(missed);
+    CHECK(missed.error() == refusal::no_solution);
+    CHECK(defaulted.solutions.empty());
 }

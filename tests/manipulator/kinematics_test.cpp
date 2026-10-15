@@ -19,6 +19,43 @@ using namespace praxis;
 using namespace praxis::manipulator;
 using namespace praxis::fixture;
 
+namespace {
+
+transform marked_inverse(const transform &)
+{
+    return transform::Constant(5.0);
+}
+
+transform (*handed_inverse)(const transform &) = nullptr;
+
+expected<void, refusal> frames_recording_inverse_kinematics(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &,
+                                                            const differential_kinematics_ops &, const screw_chain &, const transform &, const joint_vector &j0,
+                                                            const solver_parameters &, ik_result &answer)
+{
+    handed_inverse = frames.inverse;
+    answer.solutions.emplace_back(j0);
+
+    return {};
+}
+
+}
+
+TEST_CASE("a solve is handed the frame operations its composition was composed with")
+{
+    rigid_motion::frame_ops frames = rigid_motion::baseline().frame;
+    frames.inverse                 = &marked_inverse;
+    handed_inverse                 = nullptr;
+
+    const expected<kinematics, refusal> composed =
+            kinematics::compose(two_joint_chain(), {}, {}, inverse_kinematics_ops{&frames_recording_inverse_kinematics}, rigid_motion::baseline().screw, frames);
+    REQUIRE(composed.has_value());
+
+    const expected<joint_vector, refusal> solved = composed->ik_solve(transform::Identity(), joint_vector::Constant(2, 0.25), solver_parameters());
+
+    REQUIRE(solved.has_value());
+    CHECK(handed_inverse == &marked_inverse);
+}
+
 TEST_CASE("every slot of a value-initialized composition refuses rather than answering")
 {
     forward_kinematics_ops forward{};
@@ -31,8 +68,8 @@ TEST_CASE("every slot of a value-initialized composition refuses rather than ans
     const expected<jacobian, refusal> space_frame            = differential.space_jacobian(rigid_motion::screw_ops{}, {}, j0);
     const expected<jacobian, refusal> body_frame             = differential.body_jacobian(rigid_motion::screw_ops{}, rigid_motion::frame_ops{}, forward, transform::Identity(), {}, j0);
     const expected<std::vector<screw_axis>, refusal> derived = forward.body_screws_from_space(rigid_motion::screw_ops{}, rigid_motion::frame_ops{}, transform::Identity(), {});
-    const expected<void, refusal> solved =
-            inverse.inverse_kinematics(rigid_motion::screw_ops{}, forward, differential, screw_chain(), transform::Identity(), j0, solver_parameters(), answer);
+    const expected<void, refusal> solved = inverse.inverse_kinematics(rigid_motion::screw_ops{}, rigid_motion::frame_ops{}, forward, differential, screw_chain(), transform::Identity(),
+                                                                      j0, solver_parameters(), answer);
     const expected<transform, refusal> body_reached = forward.body_forward_kinematics(rigid_motion::screw_ops{}, rigid_motion::frame_ops{}, transform::Identity(), {}, j0);
 
     REQUIRE_FALSE(reached.has_value());

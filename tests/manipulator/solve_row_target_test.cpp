@@ -89,9 +89,10 @@ TEST_CASE("a_reflected_seed_reaches_the_requested_pose_from_a_configuration_that
 
         ik_result here;
         ik_result there;
-        const expected<void, refusal> held = inverse_kinematics(rigid_motion::baseline().screw, reference.fk, reference.dk, example.chain, *target, seed, solver_parameters(), here);
-        const expected<void, refusal> other =
-                solves_from_a_reflected_seed(rigid_motion::baseline().screw, reference.fk, reference.dk, example.chain, *target, seed, solver_parameters(), there);
+        const expected<void, refusal> held =
+                inverse_kinematics(rigid_motion::baseline().screw, rigid_motion::baseline().frame, reference.fk, reference.dk, example.chain, *target, seed, solver_parameters(), here);
+        const expected<void, refusal> other = solves_from_a_reflected_seed(rigid_motion::baseline().screw, rigid_motion::baseline().frame, reference.fk, reference.dk, example.chain,
+                                                                           *target, seed, solver_parameters(), there);
         if(!held || !other || here.solutions.empty() || there.solutions.empty())
             continue;
 

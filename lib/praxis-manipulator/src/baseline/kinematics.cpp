@@ -18,8 +18,8 @@ expected<joint_vector, refusal> newton_step(const body_target &, const joint_vec
 
 }
 
-expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &chain,
-                                           const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer)
+expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &,
+                                           const screw_chain &chain, const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer)
 {
     return iterated(chain, desired, j0, parameters, &newton_step, answer);
 }

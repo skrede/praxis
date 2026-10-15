@@ -89,9 +89,9 @@ scheduler::clock_source dictating()
 
 std::size_t solves_entered = 0;
 
-expected<void, refusal> recorded_search(const rigid_motion::screw_ops &, const manipulator::forward_kinematics_ops &, const manipulator::differential_kinematics_ops &,
-                                        const manipulator::screw_chain &, const transform &, const manipulator::joint_vector &, const manipulator::solver_parameters &,
-                                        manipulator::ik_result &)
+expected<void, refusal> recorded_search(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const manipulator::forward_kinematics_ops &,
+                                        const manipulator::differential_kinematics_ops &, const manipulator::screw_chain &, const transform &, const manipulator::joint_vector &,
+                                        const manipulator::solver_parameters &, manipulator::ik_result &)
 {
     ++solves_entered;
 

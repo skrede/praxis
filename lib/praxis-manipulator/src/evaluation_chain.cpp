@@ -84,7 +84,7 @@ std::optional<solve_request> drawn_request(evaluation::case_source &drawn, const
 
 expected<void, refusal> solved_by(const inverse_kinematics_ops &bound, const screw_chain &chain, const solve_request &asked, ik_result &answer)
 {
-    return bound.inverse_kinematics(shared_screw(), asked.forward, asked.differential, chain, asked.target, asked.seed, solver_parameters(), answer);
+    return bound.inverse_kinematics(shared_screw(), shared_frames(), asked.forward, asked.differential, chain, asked.target, asked.seed, solver_parameters(), answer);
 }
 
 expected<void, refusal> answered_with_a_configuration(const expected<void, refusal> &solved, const ik_result &answer)

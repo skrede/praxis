@@ -63,8 +63,8 @@ screw_chain reaching_chain()
 // A stub whose answer each case dictates through the seed it hands it: the first value names the
 // posture found, the magnitude of the second names how many iterates the search reported, and a
 // negative second value is a start that entered the solve and converged on nothing.
-expected<void, refusal> the_posture_the_seed_names(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &,
-                                                   const transform &, const joint_vector &seed, const solver_parameters &, ik_result &answer)
+expected<void, refusal> the_posture_the_seed_names(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &,
+                                                   const screw_chain &, const transform &, const joint_vector &seed, const solver_parameters &, ik_result &answer)
 {
     const std::uint32_t iterates = static_cast<std::uint32_t>(std::lround(std::abs(seed[1])));
     for(std::uint32_t taken = 0; taken < iterates; ++taken)

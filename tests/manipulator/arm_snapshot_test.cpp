@@ -47,9 +47,9 @@ praxis::expected<praxis::transform, praxis::refusal> counting_forward_kinematics
 
 // The answer is the desired pose's own translation, so a command reaches a configuration the case
 // can name, and the one recorded step is what the published trace is compared against.
-praxis::expected<void, praxis::refusal> recording_inverse_kinematics(const praxis::rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &,
-                                                                     const screw_chain &, const praxis::transform &desired, const joint_vector &j0, const solver_parameters &,
-                                                                     ik_result &answer)
+praxis::expected<void, praxis::refusal> recording_inverse_kinematics(const praxis::rigid_motion::screw_ops &, const praxis::rigid_motion::frame_ops &, const forward_kinematics_ops &,
+                                                                     const differential_kinematics_ops &, const screw_chain &, const praxis::transform &desired, const joint_vector &j0,
+                                                                     const solver_parameters &, ik_result &answer)
 {
     answer.iterations.push_back(iteration_state{j0, 0.5, 0.25, 0.125, 7u});
     answer.solutions.push_back(configuration(desired(0, 3), desired(1, 3)));

@@ -89,7 +89,7 @@ kinematics projected_solver(const screw_chain &chain)
 expected<void, refusal> solved_through(inverse_kinematics_ops inverse, const screw_chain &chain, const transform &target, const joint_vector &seed, const solver_parameters &parameters,
                                        ik_result &answer)
 {
-    return inverse.inverse_kinematics(reference_screw, manipulator::baseline().fk, manipulator::baseline().dk, chain, target, seed, parameters, answer);
+    return inverse.inverse_kinematics(reference_screw, reference_frames, manipulator::baseline().fk, manipulator::baseline().dk, chain, target, seed, parameters, answer);
 }
 
 transform pose_of(const screw_chain &chain, const joint_vector &q)

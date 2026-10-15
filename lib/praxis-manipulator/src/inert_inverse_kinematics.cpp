@@ -2,8 +2,8 @@
 
 namespace praxis::manipulator::inert {
 
-expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &, const screw_chain &, const transform &,
-                                           const joint_vector &, const solver_parameters &, ik_result &)
+expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &,
+                                           const screw_chain &, const transform &, const joint_vector &, const solver_parameters &, ik_result &)
 {
     return unexpected(refusal::not_implemented);
 }

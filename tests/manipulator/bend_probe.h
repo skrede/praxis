@@ -99,7 +99,7 @@ std::vector<manipulator::joint_vector> solved_by(const manipulator::capabilities
                                                  const transform &target, const manipulator::joint_vector &seed)
 {
     manipulator::ik_result answer;
-    static_cast<void>(solving.inverse_kinematics(shared_motions().screw, held.fk, held.dk, chain, target, seed, manipulator::solver_parameters(), answer));
+    static_cast<void>(solving.inverse_kinematics(shared_motions().screw, shared_motions().frame, held.fk, held.dk, chain, target, seed, manipulator::solver_parameters(), answer));
 
     return answer.solutions;
 }
