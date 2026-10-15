@@ -64,7 +64,8 @@ std::size_t trajectory_surface()
 
     return count_defaults(reported) + defaulted_slots(reported).size() + static_cast<std::size_t>(types.sampled.position.size() + types.sampled.velocity.size()) +
             static_cast<std::size_t>(types.sampled.acceleration.size() + types.posed.velocity.size() + types.posed.position.size()) +
-            static_cast<std::size_t>(types.path.screw(types.posed.position, transform::Identity(), 0.0).value_or(transform::Identity()).size()) +
+            static_cast<std::size_t>(
+                    types.path.screw(rigid_motion::screw_ops{}, rigid_motion::frame_ops{}, types.posed.position, transform::Identity(), 0.0).value_or(transform::Identity()).size()) +
             (types.expected.contains(types.named) ? 1u : 0u) + (holds_default(types.described, static_cast<std::size_t>(types.named)) ? 1u : 0u) +
             (slot_name(types.described, 0).empty() ? 0u : 1u) + count_defaults(capability_views(types.composed)) + (schedule ? schedule->size() : 0u) +
             static_cast<std::size_t>(types.chosen) + static_cast<std::size_t>(types.passed.position.size());

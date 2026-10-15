@@ -47,10 +47,10 @@ expected<scaling_sample, refusal> counted_quintic(double t, double duration)
     return quintic(t, duration);
 }
 
-expected<transform, refusal> counted_decoupled(const transform &start, const transform &end, double s)
+expected<transform, refusal> counted_decoupled(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &start, const transform &end, double s)
 {
     ++decoupled_calls;
-    return decoupled(start, end, s);
+    return decoupled(screw, frames, start, end, s);
 }
 
 // The pose capability's view, in the aggregate's member order.

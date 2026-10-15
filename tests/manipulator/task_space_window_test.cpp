@@ -74,11 +74,11 @@ expected<joint_vector, refusal> recorded_pose(const kinematics &solver, const tr
     return position_as_configuration(solver, pose, j0);
 }
 
-expected<transform, refusal> recorded_decoupled(const transform &start, const transform &end, double s)
+expected<transform, refusal> recorded_decoupled(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &start, const transform &end, double s)
 {
     straight.push_back(end);
 
-    return interpolated(start, end, s);
+    return interpolated(screw, frames, start, end, s);
 }
 
 composed_arm composing(praxis::scheduler::scheduler &loop)

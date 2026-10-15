@@ -1136,7 +1136,7 @@ lib/praxis-manipulator/include/praxis/manipulator/motion_commands.h	m_scaling	me
 lib/praxis-manipulator/include/praxis/manipulator/motion_commands.h	m_bounds	member	-	typename:std::optional<path_parameter_bounds>
 lib/praxis-manipulator/include/praxis/manipulator/motion_commands.h	joint_space_motion	prototype	(const trajectory::path_ops & injected_path,const prepared_time_scaling & scaled,const joint_limits & bounds,const joint_vector & start,const joint_vector & target)	typename:expected<std::unique_ptr<trajectory::trajectory_generator>,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/motion_commands.h	via_point_motion	prototype	(const trajectory::trajectory_ops & injected_trajectory,std::span<const joint_vector> positions,const joint_vector & j0,const joint_limits & limits)	typename:expected<std::unique_ptr<trajectory::trajectory_generator>,refusal>
-lib/praxis-manipulator/include/praxis/manipulator/motion_commands.h	task_space_motion	prototype	(const motion_ops & injected_motion,const prepared_time_scaling & scaled,const kinematics & solver,const joint_limits & bounds,const joint_vector & start,const transform & start_pose,const transform & end_pose,task_space_path shape)	typename:expected<std::unique_ptr<trajectory::trajectory_generator>,refusal>
+lib/praxis-manipulator/include/praxis/manipulator/motion_commands.h	task_space_motion	prototype	(const motion_ops & injected_motion,const rigid_motion::screw_ops & injected_screw,const rigid_motion::frame_ops & injected_frames,const prepared_time_scaling & scaled,const kinematics & solver,const joint_limits & bounds,const joint_vector & start,const transform & start_pose,const transform & end_pose,task_space_path shape)	typename:expected<std::unique_ptr<trajectory::trajectory_generator>,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/motion_drawings.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/motion_drawings.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/motion_drawings.h	commanded_motion_path	variable	-	typename:const char *
@@ -1192,8 +1192,8 @@ lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	screw
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	drawn_points	member	-	typename:std::size_t
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	opening_first	prototype	(std::size_t joints)	typename:joint_vector
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	opening_second	prototype	(std::size_t joints)	typename:joint_vector
-lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	path_comparison_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,loadable_robot_stencil & drawn,rigid_motion::screw_ops screw,forward_kinematics_ops forward,screw_chain chain,trajectory::path_ops shapes,robot_ops robot)	-
-lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	path_comparison_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,loadable_robot_stencil & drawn,rigid_motion::screw_ops screw,forward_kinematics_ops forward,screw_chain chain,trajectory::path_ops shapes,robot_ops robot,const settings & state,std::string at=std::string ())	-
+lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	path_comparison_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,loadable_robot_stencil & drawn,rigid_motion::screw_ops screw,rigid_motion::frame_ops frames,forward_kinematics_ops forward,screw_chain chain,trajectory::path_ops shapes,robot_ops robot)	-
+lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	path_comparison_window	prototype	(std::string name,arm_reader seen,std::weak_ptr<owned_arm> arm,loadable_robot_stencil & drawn,rigid_motion::screw_ops screw,rigid_motion::frame_ops frames,forward_kinematics_ops forward,screw_chain chain,trajectory::path_ops shapes,robot_ops robot,const settings & state,std::string at=std::string ())	-
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	state	prototype	() const	typename:settings
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	poses_along	prototype	(compared_path shape) const	typename:std::vector<transform>
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	render	prototype	()	typename:void
@@ -1207,6 +1207,7 @@ lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_see
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_chain	member	-	typename:screw_chain
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_settings_at	member	-	typename:std::string
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_screw_ops	member	-	typename:rigid_motion::screw_ops
+lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_frame_ops	member	-	typename:rigid_motion::frame_ops
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_fk	member	-	typename:forward_kinematics_ops
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_shapes	member	-	typename:trajectory::path_ops
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_robot	member	-	typename:robot_ops
@@ -3099,8 +3100,8 @@ lib/praxis-scheduler/include/praxis/scheduler/task.h	task_handle	prototype	(cons
 lib/praxis-trajectory/include/praxis/trajectory/baseline/path.h	praxis	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/baseline/path.h	trajectory	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/baseline/path.h	joint_straight_line	prototype	(const configuration & start,const configuration & end,double s)	typename:expected<configuration,refusal>
-lib/praxis-trajectory/include/praxis/trajectory/baseline/path.h	screw	prototype	(const transform & start,const transform & end,double s)	typename:expected<transform,refusal>
-lib/praxis-trajectory/include/praxis/trajectory/baseline/path.h	decoupled	prototype	(const transform & start,const transform & end,double s)	typename:expected<transform,refusal>
+lib/praxis-trajectory/include/praxis/trajectory/baseline/path.h	screw	prototype	(const rigid_motion::screw_ops & screw,const rigid_motion::frame_ops & frames,const transform & start,const transform & end,double s)	typename:expected<transform,refusal>
+lib/praxis-trajectory/include/praxis/trajectory/baseline/path.h	decoupled	prototype	(const rigid_motion::screw_ops & screw,const rigid_motion::frame_ops & frames,const transform & start,const transform & end,double s)	typename:expected<transform,refusal>
 lib/praxis-trajectory/include/praxis/trajectory/baseline/pose_trajectory.h	praxis	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/baseline/pose_trajectory.h	trajectory	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/baseline/pose_trajectory.h	decoupled_pose_waypoints	prototype	(const rigid_motion::screw_ops & screw,const rigid_motion::frame_ops & frames,const path_ops & path,const time_scaling_ops & time_scaling,std::span<const transform> waypoints,const transform & seed,double max_linear_speed,double max_angular_speed)	typename:expected<std::unique_ptr<pose_trajectory_generator>,refusal>
@@ -3139,14 +3140,14 @@ lib/praxis-trajectory/include/praxis/trajectory/path.h	inert	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/path.h	praxis	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/path.h	trajectory	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/path.h	joint_straight_line	prototype	(const configuration & start,const configuration & end,double s)	typename:expected<configuration,refusal>
-lib/praxis-trajectory/include/praxis/trajectory/path.h	screw	prototype	(const transform & start,const transform & end,double s)	typename:expected<transform,refusal>
-lib/praxis-trajectory/include/praxis/trajectory/path.h	decoupled	prototype	(const transform & start,const transform & end,double s)	typename:expected<transform,refusal>
+lib/praxis-trajectory/include/praxis/trajectory/path.h	screw	prototype	(const rigid_motion::screw_ops & screw,const rigid_motion::frame_ops & frames,const transform & start,const transform & end,double s)	typename:expected<transform,refusal>
+lib/praxis-trajectory/include/praxis/trajectory/path.h	decoupled	prototype	(const rigid_motion::screw_ops & screw,const rigid_motion::frame_ops & frames,const transform & start,const transform & end,double s)	typename:expected<transform,refusal>
 lib/praxis-trajectory/include/praxis/trajectory/path.h	praxis	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/path.h	trajectory	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/path.h	path_ops	struct	-	-
 lib/praxis-trajectory/include/praxis/trajectory/path.h	joint_straight_line	member	-	typename:expected<configuration,refusal> (*)(const configuration & start,const configuration & end,double s)
-lib/praxis-trajectory/include/praxis/trajectory/path.h	screw	member	-	typename:expected<transform,refusal> (*)(const transform & start,const transform & end,double s)
-lib/praxis-trajectory/include/praxis/trajectory/path.h	decoupled	member	-	typename:expected<transform,refusal> (*)(const transform & start,const transform & end,double s)
+lib/praxis-trajectory/include/praxis/trajectory/path.h	screw	member	-	typename:expected<transform,refusal> (*)(const rigid_motion::screw_ops & screw,const rigid_motion::frame_ops & frames,const transform & start,const transform & end,double s)
+lib/praxis-trajectory/include/praxis/trajectory/path.h	decoupled	member	-	typename:expected<transform,refusal> (*)(const rigid_motion::screw_ops & screw,const rigid_motion::frame_ops & frames,const transform & start,const transform & end,double s)
 lib/praxis-trajectory/include/praxis/trajectory/pose_trajectory.h	praxis	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/pose_trajectory.h	trajectory	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/pose_trajectory.h	pose_sample	struct	-	-

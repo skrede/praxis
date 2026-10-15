@@ -6,9 +6,13 @@
 #include "praxis/manipulator/kinematics.h"
 #include "praxis/manipulator/screw_chain.h"
 #include "praxis/manipulator/capabilities.h"
+#include "praxis/manipulator/motion_commands.h"
+
+#include "praxis/trajectory/capabilities.h"
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <memory>
 #include <vector>
 
 using namespace praxis;
@@ -45,6 +49,27 @@ expected<joint_vector, refusal> swept_under(const rigid_motion::capabilities &sp
     const robot_ops arm = manipulator::baseline().robot;
 
     return manipulator::baseline().motion.task_space_screw(spatial.screw, solver, start, Eigen::Vector3d::UnitZ(), arm.position_from_pose(start), turn, 0.0, at);
+}
+
+// The arm's configuration halfway through a task-space motion from the posed arm to a second planar
+// pose, the motion composed under the rigid-motion operations given.
+expected<joint_vector, refusal> midway_along(const rigid_motion::capabilities &spatial, const kinematics &solver, task_space_path shape)
+{
+    const joint_vector at = posed_arm();
+    const prepared_time_scaling scaled(trajectory::baseline().time_scaling, time_scaling_choice::quintic);
+    const transform from = solver.fk_solve(at).value();
+    const transform to   = solver.fk_solve(arm_configuration(0.9, -0.6, -0.3)).value();
+
+    const expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> motion =
+            task_space_motion(manipulator::baseline().motion, spatial.screw, spatial.frame, scaled, solver, three_link_arm().limits, at, from, to, shape);
+    if(!motion)
+        return unexpected(motion.error());
+
+    const expected<trajectory::trajectory_sample, refusal> midway = (*motion)->sample(0.5 * (*motion)->duration());
+    if(!midway)
+        return unexpected(midway.error());
+
+    return midway->position;
 }
 
 }
@@ -101,4 +126,36 @@ TEST_CASE("the screw-swept task-space motion answers under the screw operations 
     REQUIRE(under_the_reference.has_value());
     REQUIRE(under_substitution.has_value());
     REQUIRE((*under_substitution - *under_the_reference).cwiseAbs().maxCoeff() > apart_by_radians);
+}
+
+TEST_CASE("a straight-line task-space motion answers under the screw and frame operations the composition hands it", "[seam][routing]")
+{
+    const kinematics solver                                   = arm_solver();
+    const task_space_path straight                            = trajectory::baseline().path.decoupled;
+    const expected<joint_vector, refusal> under_the_reference = midway_along(rigid_motion::baseline(), solver, straight);
+    const expected<joint_vector, refusal> under_substitution  = midway_along(substituted_along_a_path(), solver, straight);
+
+    REQUIRE(every_path_substitution_differs(rigid_motion::baseline(), substituted_along_a_path()));
+    REQUIRE(under_the_reference.has_value());
+    REQUIRE(under_substitution.has_value());
+    REQUIRE((*under_substitution - *under_the_reference).cwiseAbs().maxCoeff() > apart_by_radians);
+
+    // A rotation read as twice itself is no rotation, so the path refuses the start pose it is read from.
+    REQUIRE_FALSE(midway_along(substituted_everywhere(), solver, straight).has_value());
+}
+
+TEST_CASE("a screw-path task-space motion answers under the screw and frame operations the composition hands it", "[seam][routing]")
+{
+    const kinematics solver                                   = arm_solver();
+    const task_space_path screwed                             = trajectory::baseline().path.screw;
+    const expected<joint_vector, refusal> under_the_reference = midway_along(rigid_motion::baseline(), solver, screwed);
+    const expected<joint_vector, refusal> under_substitution  = midway_along(substituted_along_a_path(), solver, screwed);
+
+    REQUIRE(every_path_substitution_differs(rigid_motion::baseline(), substituted_along_a_path()));
+    REQUIRE(under_the_reference.has_value());
+    REQUIRE(under_substitution.has_value());
+    REQUIRE((*under_substitution - *under_the_reference).cwiseAbs().maxCoeff() > apart_by_radians);
+
+    // A rotation read as twice itself is no rotation, so the path refuses the start pose it is read from.
+    REQUIRE_FALSE(midway_along(substituted_everywhere(), solver, screwed).has_value());
 }

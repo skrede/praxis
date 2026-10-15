@@ -60,7 +60,7 @@ public:
 
         const double s                                            = std::clamp(scaled->s, 0.0, 1.0);
         const expected<detail::derivatives<twist>, refusal> along = detail::central_differences([this](double u) { return coordinates(u); }, s);
-        const expected<transform, refusal> placed                 = m_along(m_from, m_to, s);
+        const expected<transform, refusal> placed                 = m_along(m_screw, m_frames, m_from, m_to, s);
         if(!along)
             return unexpected(along.error());
         if(!placed)
@@ -88,7 +88,7 @@ private:
 
     expected<twist, refusal> coordinates(double s) const
     {
-        const expected<transform, refusal> placed = m_along(m_from, m_to, s);
+        const expected<transform, refusal> placed = m_along(m_screw, m_frames, m_from, m_to, s);
         if(!placed)
             return unexpected(placed.error());
 

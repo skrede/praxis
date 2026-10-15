@@ -108,17 +108,18 @@ expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> via_point_m
     return injected_trajectory.joint_space_via_points(*schedule);
 }
 
-expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> task_space_motion(const motion_ops &injected_motion, const prepared_time_scaling &scaled, const kinematics &solver,
-                                                                                       const joint_limits &bounds, const joint_vector &start, const transform &start_pose,
-                                                                                       const transform &end_pose, task_space_path shape)
+expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> task_space_motion(const motion_ops &injected_motion, const rigid_motion::screw_ops &injected_screw,
+                                                                                       const rigid_motion::frame_ops &injected_frames, const prepared_time_scaling &scaled,
+                                                                                       const kinematics &solver, const joint_limits &bounds, const joint_vector &start,
+                                                                                       const transform &start_pose, const transform &end_pose, task_space_path shape)
 {
     const auto resolve = injected_motion.task_space_pose;
     const std::reference_wrapper<const kinematics> borrowed(solver);
 
     return compose(scaled, bounds, start,
-                   [resolve, borrowed, shape, start_pose, end_pose, start](double s) -> expected<joint_vector, refusal>
+                   [resolve, borrowed, screw = injected_screw, frames = injected_frames, shape, start_pose, end_pose, start](double s) -> expected<joint_vector, refusal>
                    {
-                       const expected<transform, refusal> along = shape(start_pose, end_pose, s);
+                       const expected<transform, refusal> along = shape(screw, frames, start_pose, end_pose, s);
                        if(!along)
                            return unexpected(along.error());
 

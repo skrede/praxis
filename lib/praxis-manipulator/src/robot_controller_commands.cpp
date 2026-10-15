@@ -287,7 +287,7 @@ void robot_controller::preview_trajectory(const transform &tool_pose)
 
     const transform target = m_robot.flange_pose_from_tool_pose(tool_pose);
 
-    auto motion = task_space_motion(m_motion, prepared(), m_robot.solver(), m_robot.limits(), m_robot.joint_positions(), *start_pose, target, m_path.decoupled);
+    auto motion = task_space_motion(m_motion, m_screw, m_frames, prepared(), m_robot.solver(), m_robot.limits(), m_robot.joint_positions(), *start_pose, target, m_path.decoupled);
     if(!motion)
     {
         spdlog::error("praxis: the task-space composition refused the previewed pose, so no preview stands");
@@ -566,7 +566,7 @@ void robot_controller::run_along(const transform &tool_pose, task_space_path sha
 
     asking();
     const prepared_time_scaling scaled = prepared();
-    auto motion                        = task_space_motion(m_motion, scaled, m_robot.solver(), m_robot.limits(), m_robot.joint_positions(), *start_pose, target, shape);
+    auto motion = task_space_motion(m_motion, m_screw, m_frames, scaled, m_robot.solver(), m_robot.limits(), m_robot.joint_positions(), *start_pose, target, shape);
     if(!motion)
     {
         report_refusal("task_space_motion", motion.error());

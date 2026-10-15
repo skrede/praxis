@@ -60,7 +60,7 @@ expected<trajectory::configuration, refusal> degenerate_joint_path(const traject
     return praxis::unexpected(refusal::degenerate);
 }
 
-expected<transform, refusal> degenerate_pose_path(const transform &, const transform &, double)
+expected<transform, refusal> degenerate_pose_path(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const transform &, const transform &, double)
 {
     return praxis::unexpected(refusal::degenerate);
 }

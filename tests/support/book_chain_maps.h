@@ -142,25 +142,28 @@ inline expected<jacobian, refusal> body_jacobian(const rigid_motion::screw_ops &
 }
 
 // eq. (9.6): X(s) = X_start exp(log(X_start^-1 X_end) s)
-inline expected<transform, refusal> screw_path(const transform &start, const transform &end, double s)
+inline expected<transform, refusal> screw_path(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &start, const transform &end, double s)
 {
     if(!is_rigid(start) || !is_rigid(end))
         return unexpected(refusal::degenerate);
-    const transform relative = inverse_of(start) * end;
-    const auto [axis, theta] = pose_logarithm(relative.block<3, 3>(0, 0), relative.block<3, 1>(0, 3));
-    return transform(start * matrix_exponential_screw(axis, theta * s));
+    const expected<pose_reading, refusal> logged = screw.matrix_logarithm_se3(frames.inverse(start) * end);
+    if(!logged)
+        return unexpected(logged.error());
+    return transform(start * screw.matrix_exponential_screw(logged->first, logged->second * s));
 }
 
 // eq. (9.8): p(s) = p_start + s(p_end - p_start), R(s) = R_start exp(log(R_start^T R_end) s)
-inline expected<transform, refusal> decoupled_path(const transform &start, const transform &end, double s)
+inline expected<transform, refusal> decoupled_path(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &start, const transform &end, double s)
 {
     if(!is_rigid(start) || !is_rigid(end))
         return unexpected(refusal::degenerate);
-    const rotation r_start   = start.block<3, 3>(0, 0);
-    const auto [axis, theta] = rotation_logarithm(rotation(r_start.transpose() * end.block<3, 3>(0, 0)));
-    transform x              = transform::Identity();
-    x.block<3, 3>(0, 0)      = r_start * matrix_exponential_so3(axis, theta * s);
-    x.block<3, 1>(0, 3)      = start.block<3, 1>(0, 3) + s * (end.block<3, 1>(0, 3) - start.block<3, 1>(0, 3));
+    const rotation r_start                           = frames.rotation_matrix_from_transform(start);
+    const expected<rotation_reading, refusal> logged = screw.matrix_logarithm_so3(rotation(r_start.transpose() * frames.rotation_matrix_from_transform(end)));
+    if(!logged)
+        return unexpected(logged.error());
+    transform x         = transform::Identity();
+    x.block<3, 3>(0, 0) = r_start * screw.matrix_exponential_so3(logged->first, logged->second * s);
+    x.block<3, 1>(0, 3) = start.block<3, 1>(0, 3) + s * (end.block<3, 1>(0, 3) - start.block<3, 1>(0, 3));
     return x;
 }
 

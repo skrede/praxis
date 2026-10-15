@@ -24,7 +24,7 @@
 
 namespace praxis::fixture {
 
-using task_path = expected<transform, refusal> (*)(const transform &start, const transform &end, double s);
+using task_path = expected<transform, refusal> (*)(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &start, const transform &end, double s);
 
 struct swept_pair
 {
@@ -60,7 +60,7 @@ public:
         if(!scaled)
             return unexpected(scaled.error());
 
-        const expected<transform, refusal> placed = m_along(pair.from, pair.to, scaled->s);
+        const expected<transform, refusal> placed = m_along(m_screw, m_frames, pair.from, pair.to, scaled->s);
         const expected<twist, refusal> ahead      = coordinates(pair, scaled->s + step);
         const expected<twist, refusal> here       = coordinates(pair, scaled->s);
         const expected<twist, refusal> behind     = coordinates(pair, scaled->s - step);
@@ -89,7 +89,7 @@ private:
 
     expected<twist, refusal> coordinates(const swept_pair &pair, double s) const
     {
-        const expected<transform, refusal> placed = m_along(pair.from, pair.to, s);
+        const expected<transform, refusal> placed = m_along(m_screw, m_frames, pair.from, pair.to, s);
         if(!placed)
             return unexpected(placed.error());
 
@@ -150,9 +150,9 @@ literal_pose_waypoints(const rigid_motion::screw_ops &screw, const rigid_motion:
 
 // The reference path, carried 0.1 m along x at its middle and nowhere at its ends.
 template<task_path Along>
-expected<transform, refusal> bowed(const transform &start, const transform &end, double s)
+expected<transform, refusal> bowed(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &start, const transform &end, double s)
 {
-    expected<transform, refusal> placed = Along(start, end, s);
+    expected<transform, refusal> placed = Along(screw, frames, start, end, s);
     if(placed)
         (*placed)(0, 3) += 0.4 * s * (1.0 - s);
 

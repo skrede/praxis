@@ -69,13 +69,14 @@ path_comparison_window::settings::settings(joint_vector opening_first, joint_vec
 }
 
 path_comparison_window::path_comparison_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, loadable_robot_stencil &drawn, rigid_motion::screw_ops screw,
-                                               forward_kinematics_ops forward, screw_chain chain, trajectory::path_ops shapes, robot_ops robot)
-        : path_comparison_window(std::move(name), std::move(seen), std::move(arm), drawn, screw, forward, std::move(chain), shapes, robot, settings{})
+                                               rigid_motion::frame_ops frames, forward_kinematics_ops forward, screw_chain chain, trajectory::path_ops shapes, robot_ops robot)
+        : path_comparison_window(std::move(name), std::move(seen), std::move(arm), drawn, screw, frames, forward, std::move(chain), shapes, robot, settings{})
 {
 }
 
 path_comparison_window::path_comparison_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, loadable_robot_stencil &drawn, rigid_motion::screw_ops screw,
-                                               forward_kinematics_ops forward, screw_chain chain, trajectory::path_ops shapes, robot_ops robot, const settings &state, std::string at)
+                                               rigid_motion::frame_ops frames, forward_kinematics_ops forward, screw_chain chain, trajectory::path_ops shapes, robot_ops robot,
+                                               const settings &state, std::string at)
         : imgui_window(std::move(name))
         , m_screw(state.screw)
         , m_decoupled(state.decoupled)
@@ -84,6 +85,7 @@ path_comparison_window::path_comparison_window(std::string name, arm_reader seen
         , m_chain(std::move(chain))
         , m_settings_at(std::move(at))
         , m_screw_ops(screw)
+        , m_frame_ops(frames)
         , m_fk(forward)
         , m_shapes(shapes)
         , m_robot(robot)

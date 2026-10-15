@@ -21,7 +21,7 @@ std::size_t slot_count()
             static_cast<std::size_t>(trajectory_slot::count);
 }
 
-expected<transform, refusal> held(const transform &start, const transform &, double)
+expected<transform, refusal> held(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const transform &start, const transform &, double)
 {
     return start;
 }

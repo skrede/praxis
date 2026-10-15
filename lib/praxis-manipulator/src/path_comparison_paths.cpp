@@ -1,7 +1,10 @@
 #include "path_comparison_paths.h"
 
+#include "praxis/manipulator/motion_commands.h"
 #include "praxis/manipulator/motion_drawings.h"
 
+#include "praxis/rigid_motion/frame.h"
+#include "praxis/rigid_motion/screw.h"
 #include "praxis/rigid_motion/angles.h"
 
 #include <threepp/math/Color.hpp>
@@ -61,12 +64,12 @@ std::vector<transform> at_the_tool(const robot_ops &robot, const transform &tool
     return standing;
 }
 
-std::vector<transform> between(expected<transform, refusal> (*shape)(const transform &, const transform &, double), const transform &from, const transform &to)
+std::vector<transform> between(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, task_space_path shape, const transform &from, const transform &to)
 {
     std::vector<transform> through;
     for(std::size_t step = 0; step < path_comparison_window::drawn_points; ++step)
     {
-        const expected<transform, refusal> pose = shape(from, to, along(step));
+        const expected<transform, refusal> pose = shape(screw, frames, from, to, along(step));
         if(!pose)
             return {};
 
@@ -128,7 +131,7 @@ std::vector<transform> path_comparison_window::poses_along(compared_path shape) 
     if(ends.size() != 2u)
         return {};
 
-    return between(shape == compared_path::screw ? m_shapes.screw : m_shapes.decoupled, ends.front(), ends.back());
+    return between(m_screw_ops, m_frame_ops, shape == compared_path::screw ? m_shapes.screw : m_shapes.decoupled, ends.front(), ends.back());
 }
 
 // Three polylines of sixty-five poses are rebuilt where an end or the tool offset they are carried to

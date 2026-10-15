@@ -1,6 +1,7 @@
 #include "praxis/evaluation/tolerance.h"
 
 #include "praxis/rigid_motion/types.h"
+#include "praxis/rigid_motion/capabilities.h"
 
 #include "praxis/trajectory/baseline/path.h"
 
@@ -54,12 +55,12 @@ transform reflected()
 // as the start frame is answered as a refusal rather than as an interpolated pose.
 bool offered_as_a_path_endpoint(const transform &tf)
 {
-    return trajectory::screw(tf, framed(turned()), 0.5).has_value();
+    return trajectory::screw(rigid_motion::baseline().screw, rigid_motion::baseline().frame, tf, framed(turned()), 0.5).has_value();
 }
 
 refusal refusal_for(const transform &tf)
 {
-    return trajectory::screw(tf, framed(turned()), 0.5).error();
+    return trajectory::screw(rigid_motion::baseline().screw, rigid_motion::baseline().frame, tf, framed(turned()), 0.5).error();
 }
 
 }

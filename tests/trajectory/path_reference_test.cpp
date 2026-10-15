@@ -2,6 +2,7 @@
 
 #include "praxis/trajectory/baseline/path.h"
 
+#include "praxis/rigid_motion/capabilities.h"
 #include "praxis/rigid_motion/baseline/frame.h"
 
 #include "praxis/evaluation/tolerance.h"
@@ -19,6 +20,8 @@ using namespace praxis::tests;
 using namespace praxis::trajectory;
 
 namespace {
+
+const rigid_motion::capabilities spatial = rigid_motion::baseline();
 
 transform assembled(const rotation &r, const Eigen::Vector3d &p)
 {
@@ -91,8 +94,8 @@ TEST_CASE("a_task_space_path_between_endpoints_that_are_not_rigid_motions_is_ref
 {
     const transform skewed = assembled(2.0 * rotation::Identity(), Eigen::Vector3d{1.0, 0.0, 0.25});
 
-    const auto refused_screw     = screw(skewed, end_frame(), 0.5);
-    const auto refused_decoupled = decoupled(start_frame(), skewed, 0.5);
+    const auto refused_screw     = screw(spatial.screw, spatial.frame, skewed, end_frame(), 0.5);
+    const auto refused_decoupled = decoupled(spatial.screw, spatial.frame, start_frame(), skewed, 0.5);
 
     REQUIRE(!refused_screw);
     CHECK(refused_screw.error() == refusal::degenerate);
@@ -109,8 +112,8 @@ TEST_CASE("an_endpoint_whose_bottom_row_is_not_affine_is_refused_even_though_the
     transform unscaled = start_frame();
     unscaled.row(3)    = Eigen::Vector4d{0.0, 0.0, 0.0, 2.0}.transpose();
 
-    const auto refused_screw     = screw(unscaled, end_frame(), 0.5);
-    const auto refused_decoupled = decoupled(unscaled, end_frame(), 0.5);
+    const auto refused_screw     = screw(spatial.screw, spatial.frame, unscaled, end_frame(), 0.5);
+    const auto refused_decoupled = decoupled(spatial.screw, spatial.frame, unscaled, end_frame(), 0.5);
 
     REQUIRE(is_a_rigid_motion(rigid_motion::inverse(unscaled) * end_frame()));
     REQUIRE(!refused_screw);
@@ -123,8 +126,8 @@ TEST_CASE("an_endpoint_whose_translation_is_not_finite_is_refused_by_both_task_s
 {
     const transform far = assembled(rotation::Identity(), Eigen::Vector3d{std::numeric_limits<double>::infinity(), 0.0, 0.25});
 
-    const auto refused_screw     = screw(start_frame(), far, 0.5);
-    const auto refused_decoupled = decoupled(start_frame(), far, 0.5);
+    const auto refused_screw     = screw(spatial.screw, spatial.frame, start_frame(), far, 0.5);
+    const auto refused_decoupled = decoupled(spatial.screw, spatial.frame, start_frame(), far, 0.5);
 
     REQUIRE(!refused_screw);
     CHECK(refused_screw.error() == refusal::degenerate);
@@ -134,10 +137,10 @@ TEST_CASE("an_endpoint_whose_translation_is_not_finite_is_refused_by_both_task_s
 
 TEST_CASE("both_task_space_paths_hold_their_endpoints")
 {
-    CHECK(is_approx_equal(answered(screw(start_frame(), end_frame(), 0.0)), start_frame(), 1.0e-9));
-    CHECK(is_approx_equal(answered(screw(start_frame(), end_frame(), 1.0)), end_frame(), 1.0e-9));
-    CHECK(is_approx_equal(answered(decoupled(start_frame(), end_frame(), 0.0)), start_frame(), 1.0e-9));
-    CHECK(is_approx_equal(answered(decoupled(start_frame(), end_frame(), 1.0)), end_frame(), 1.0e-9));
+    CHECK(is_approx_equal(answered(screw(spatial.screw, spatial.frame, start_frame(), end_frame(), 0.0)), start_frame(), 1.0e-9));
+    CHECK(is_approx_equal(answered(screw(spatial.screw, spatial.frame, start_frame(), end_frame(), 1.0)), end_frame(), 1.0e-9));
+    CHECK(is_approx_equal(answered(decoupled(spatial.screw, spatial.frame, start_frame(), end_frame(), 0.0)), start_frame(), 1.0e-9));
+    CHECK(is_approx_equal(answered(decoupled(spatial.screw, spatial.frame, start_frame(), end_frame(), 1.0)), end_frame(), 1.0e-9));
 }
 
 TEST_CASE("both_task_space_paths_are_rigid_motions_throughout")
@@ -145,8 +148,8 @@ TEST_CASE("both_task_space_paths_are_rigid_motions_throughout")
     for(int step = 0; step <= 10; ++step)
     {
         const double s = static_cast<double>(step) / 10.0;
-        CHECK(is_a_rigid_motion(answered(screw(start_frame(), end_frame(), s))));
-        CHECK(is_a_rigid_motion(answered(decoupled(start_frame(), end_frame(), s))));
+        CHECK(is_a_rigid_motion(answered(screw(spatial.screw, spatial.frame, start_frame(), end_frame(), s))));
+        CHECK(is_a_rigid_motion(answered(decoupled(spatial.screw, spatial.frame, start_frame(), end_frame(), s))));
     }
 }
 
@@ -158,7 +161,7 @@ TEST_CASE("the_decoupled_path_carries_its_origin_along_the_straight_line")
     for(int step = 0; step <= 10; ++step)
     {
         const double s = static_cast<double>(step) / 10.0;
-        CHECK(origin_of(answered(decoupled(start_frame(), end_frame(), s))).isApprox(from + s * (to - from), 1.0e-9));
+        CHECK(origin_of(answered(decoupled(spatial.screw, spatial.frame, start_frame(), end_frame(), s))).isApprox(from + s * (to - from), 1.0e-9));
     }
 }
 
@@ -168,7 +171,7 @@ TEST_CASE("the_screw_path_leaves_the_straight_line_its_endpoints_span")
 {
     const Eigen::Vector3d from   = origin_of(start_frame());
     const Eigen::Vector3d to     = origin_of(end_frame());
-    const Eigen::Vector3d midway = origin_of(answered(screw(start_frame(), end_frame(), 0.5)));
+    const Eigen::Vector3d midway = origin_of(answered(screw(spatial.screw, spatial.frame, start_frame(), end_frame(), 0.5)));
 
     CHECK((midway - 0.5 * (from + to)).norm() > 0.1);
 }
@@ -177,9 +180,9 @@ TEST_CASE("the_screw_path_leaves_the_straight_line_its_endpoints_span")
 // path parameters depends on their difference and not on where in the path they sit.
 TEST_CASE("the_screw_path_advances_by_the_same_relative_motion_everywhere")
 {
-    const transform first  = answered(screw(start_frame(), end_frame(), 0.25));
-    const transform second = answered(screw(start_frame(), end_frame(), 0.50));
-    const transform third  = answered(screw(start_frame(), end_frame(), 0.75));
+    const transform first  = answered(screw(spatial.screw, spatial.frame, start_frame(), end_frame(), 0.25));
+    const transform second = answered(screw(spatial.screw, spatial.frame, start_frame(), end_frame(), 0.50));
+    const transform third  = answered(screw(spatial.screw, spatial.frame, start_frame(), end_frame(), 0.75));
     const transform early  = first.inverse() * second;
     const transform late   = second.inverse() * third;
 
@@ -188,6 +191,6 @@ TEST_CASE("the_screw_path_advances_by_the_same_relative_motion_everywhere")
 
 TEST_CASE("a_task_space_path_between_a_frame_and_itself_stands_still")
 {
-    CHECK(is_approx_equal(answered(screw(start_frame(), start_frame(), 0.6)), start_frame(), 1.0e-9));
-    CHECK(is_approx_equal(answered(decoupled(start_frame(), start_frame(), 0.6)), start_frame(), 1.0e-9));
+    CHECK(is_approx_equal(answered(screw(spatial.screw, spatial.frame, start_frame(), start_frame(), 0.6)), start_frame(), 1.0e-9));
+    CHECK(is_approx_equal(answered(decoupled(spatial.screw, spatial.frame, start_frame(), start_frame(), 0.6)), start_frame(), 1.0e-9));
 }

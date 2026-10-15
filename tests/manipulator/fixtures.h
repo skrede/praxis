@@ -111,7 +111,7 @@ inline expected<joint_vector, refusal> straight_line(const joint_vector &start, 
     return joint_vector(start + s * (end - start));
 }
 
-inline expected<transform, refusal> interpolated(const transform &start, const transform &end, double s)
+inline expected<transform, refusal> interpolated(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const transform &start, const transform &end, double s)
 {
     return transform(start + s * (end - start));
 }

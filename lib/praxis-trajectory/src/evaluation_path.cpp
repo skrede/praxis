@@ -58,16 +58,16 @@ evaluation::case_result compare_screw(const void *first, const void *second, eva
 {
     const pose_path_case example = drawn_pose_path_case(drawn);
 
-    return evaluation::agreed_or_refused(paths_of(first).screw(example.start, example.end, example.s), paths_of(second).screw(example.start, example.end, example.s), path_pose_residual,
-                                         allowed);
+    return evaluation::agreed_or_refused(paths_of(first).screw(shared_screw(), shared_frames(), example.start, example.end, example.s),
+                                         paths_of(second).screw(shared_screw(), shared_frames(), example.start, example.end, example.s), path_pose_residual, allowed);
 }
 
 evaluation::case_result compare_decoupled(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed)
 {
     const pose_path_case example = drawn_pose_path_case(drawn);
 
-    return evaluation::agreed_or_refused(paths_of(first).decoupled(example.start, example.end, example.s), paths_of(second).decoupled(example.start, example.end, example.s),
-                                         path_pose_residual, allowed);
+    return evaluation::agreed_or_refused(paths_of(first).decoupled(shared_screw(), shared_frames(), example.start, example.end, example.s),
+                                         paths_of(second).decoupled(shared_screw(), shared_frames(), example.start, example.end, example.s), path_pose_residual, allowed);
 }
 
 constexpr evaluation::residual_kind configuration_kind = evaluation::residual_kind::element_wise;

@@ -6,6 +6,8 @@
 
 #include "praxis/trajectory/capabilities.h"
 
+#include "praxis/rigid_motion/capabilities.h"
+
 #include "praxis/evaluation/tolerance.h"
 
 #include <catch2/catch_test_macros.hpp>
@@ -310,7 +312,8 @@ TEST_CASE("an_overridden_pair_of_bounds_lengthens_or_shortens_the_motion_against
 TEST_CASE("a_task_space_motion_follows_the_path_the_caller_supplies")
 {
     const kinematics solver = sliding_solver();
-    const auto motion       = task_space_motion(composing_motion(), as_quintic(), solver, bounds(), from, planar_pose(from), planar_pose(to), &interpolated);
+    const auto motion = task_space_motion(composing_motion(), rigid_motion::baseline().screw, rigid_motion::baseline().frame, as_quintic(), solver, bounds(), from, planar_pose(from),
+                                          planar_pose(to), &interpolated);
     REQUIRE(motion.has_value());
 
     REQUIRE((*motion)->duration() > 0.0);

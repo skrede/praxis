@@ -6,7 +6,8 @@
 namespace praxis::trajectory {
 
 // The shape of the task-space paths of this extension, one of which a pose motion is swept along.
-using task_space_path = expected<transform, refusal> (*)(const transform &start, const transform &end, double s);
+using task_space_path = expected<transform, refusal> (*)(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &start, const transform &end,
+                                                         double s);
 
 // One path traversed under the quintic scaling handed in, whose rate is zero at both ends, so the
 // motion stands still at each of the two poses. Refuses a turn with no logarithm and a pair traversing

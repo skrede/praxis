@@ -117,14 +117,15 @@ inline expected<trajectory::configuration, refusal> displaced_joint_straight_lin
                             });
 }
 
-inline expected<transform, refusal> displaced_screw(const transform &start, const transform &end, double s)
+inline expected<transform, refusal> displaced_screw(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &start, const transform &end, double s)
 {
-    return moved_or_refused(trajectory::screw(start, end, s), [](const transform &reached) { return displaced(reached); });
+    return moved_or_refused(trajectory::screw(screw, frames, start, end, s), [](const transform &reached) { return displaced(reached); });
 }
 
-inline expected<transform, refusal> displaced_decoupled(const transform &start, const transform &end, double s)
+inline expected<transform, refusal> displaced_decoupled(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &start, const transform &end,
+                                                        double s)
 {
-    return moved_or_refused(trajectory::decoupled(start, end, s), [](const transform &reached) { return displaced(reached); });
+    return moved_or_refused(trajectory::decoupled(screw, frames, start, end, s), [](const transform &reached) { return displaced(reached); });
 }
 
 using bend_applier = void (*)(trajectory::capabilities &shapes);

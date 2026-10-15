@@ -7,12 +7,12 @@ expected<configuration, refusal> joint_straight_line(const configuration &, cons
     return unexpected(refusal::not_implemented);
 }
 
-expected<transform, refusal> screw(const transform &, const transform &, double)
+expected<transform, refusal> screw(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const transform &, const transform &, double)
 {
     return unexpected(refusal::not_implemented);
 }
 
-expected<transform, refusal> decoupled(const transform &, const transform &, double)
+expected<transform, refusal> decoupled(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const transform &, const transform &, double)
 {
     return unexpected(refusal::not_implemented);
 }

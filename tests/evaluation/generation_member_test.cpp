@@ -2,6 +2,7 @@
 #include "praxis/evaluation/generation.h"
 
 #include "praxis/rigid_motion/types.h"
+#include "praxis/rigid_motion/capabilities.h"
 
 #include "praxis/trajectory/baseline/path.h"
 
@@ -91,7 +92,7 @@ TEST_CASE("a_drawn_transform_stands_over_an_affine_bottom_row_and_is_accepted_as
         const transform pose = drawn.transform_member();
 
         worst_bottom = std::max(worst_bottom, (pose.row(3) - Eigen::RowVector4d::UnitW()).cwiseAbs().maxCoeff());
-        every_member = every_member && trajectory::screw(pose, elsewhere, 0.5).has_value();
+        every_member = every_member && trajectory::screw(rigid_motion::baseline().screw, rigid_motion::baseline().frame, pose, elsewhere, 0.5).has_value();
     }
 
     REQUIRE(worst_bottom == 0.0);

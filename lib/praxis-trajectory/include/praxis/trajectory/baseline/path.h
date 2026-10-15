@@ -9,8 +9,8 @@ namespace praxis::trajectory {
 
 expected<configuration, refusal> joint_straight_line(const configuration &start, const configuration &end, double s);
 
-expected<transform, refusal> screw(const transform &start, const transform &end, double s);
-expected<transform, refusal> decoupled(const transform &start, const transform &end, double s);
+expected<transform, refusal> screw(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &start, const transform &end, double s);
+expected<transform, refusal> decoupled(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &start, const transform &end, double s);
 
 }
 

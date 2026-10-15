@@ -5,6 +5,7 @@
 #include "praxis/trajectory/baseline/time_scaling.h"
 #include "praxis/trajectory/baseline/pose_trajectory.h"
 
+#include "praxis/rigid_motion/capabilities.h"
 #include "praxis/rigid_motion/baseline/frame.h"
 #include "praxis/rigid_motion/baseline/screw.h"
 
@@ -23,6 +24,8 @@ using namespace praxis::fixture;
 using namespace praxis::trajectory;
 
 namespace {
+
+const rigid_motion::capabilities spatial = rigid_motion::baseline();
 
 constexpr double time_step              = 1.0e-4;
 constexpr double velocity_agreement     = 1.0e-7;
@@ -128,9 +131,9 @@ TEST_CASE("the_reported_derivatives_are_the_chain_rule_through_the_scalings_own_
     const double t                                          = 0.25 * span;
     const scaling_sample scaled                             = answered(quintic(t, span));
 
-    const twist ahead  = coordinates(seed_frame(), answered(decoupled(seed_frame(), waypoint(), scaled.s + time_step)));
-    const twist here   = coordinates(seed_frame(), answered(decoupled(seed_frame(), waypoint(), scaled.s)));
-    const twist behind = coordinates(seed_frame(), answered(decoupled(seed_frame(), waypoint(), scaled.s - time_step)));
+    const twist ahead  = coordinates(seed_frame(), answered(decoupled(spatial.screw, spatial.frame, seed_frame(), waypoint(), scaled.s + time_step)));
+    const twist here   = coordinates(seed_frame(), answered(decoupled(spatial.screw, spatial.frame, seed_frame(), waypoint(), scaled.s)));
+    const twist behind = coordinates(seed_frame(), answered(decoupled(spatial.screw, spatial.frame, seed_frame(), waypoint(), scaled.s - time_step)));
 
     const twist first         = (ahead - behind) / (2.0 * time_step);
     const twist second        = (ahead - 2.0 * here + behind) / (time_step * time_step);
@@ -164,7 +167,7 @@ TEST_CASE("a_pair_of_poses_is_swept_between_them_at_the_speed_the_wider_of_the_t
     CHECK(is_approx_equal(span, 2.0 * std::sqrt(3.5)));
     CHECK(is_approx_equal(at(motion, 0.0).position, via.front(), 1.0e-9));
     CHECK(is_approx_equal(at(motion, span).position, via.back(), 1.0e-9));
-    CHECK(is_approx_equal(at(motion, t).position, answered(decoupled(via.front(), via.back(), scaled.s)), 1.0e-9));
+    CHECK(is_approx_equal(at(motion, t).position, answered(decoupled(spatial.screw, spatial.frame, via.front(), via.back(), scaled.s)), 1.0e-9));
     CHECK((at(motion, t).velocity - (ahead - behind) / (2.0 * time_step)).norm() < velocity_agreement);
     CHECK((at(motion, t).acceleration - (ahead - 2.0 * here + behind) / (time_step * time_step)).norm() < acceleration_agreement);
 }

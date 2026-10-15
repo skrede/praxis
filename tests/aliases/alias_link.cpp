@@ -50,7 +50,8 @@ std::size_t (*praxis_extension_symbol)(std::span<const praxis::capability_view>)
 #endif
 
 #if __has_include("praxis/trajectory/path.h")
-praxis::expected<praxis::transform, praxis::refusal> (*praxis_trajectory_path_symbol)(const praxis::transform &, const praxis::transform &, double) = &praxis::trajectory::inert::screw;
+praxis::expected<praxis::transform, praxis::refusal> (*praxis_trajectory_path_symbol)(const praxis::rigid_motion::screw_ops &, const praxis::rigid_motion::frame_ops &,
+                                                                                      const praxis::transform &, const praxis::transform &, double) = &praxis::trajectory::inert::screw;
 #endif
 
 #if __has_include("praxis/trajectory/pose_trajectory.h")

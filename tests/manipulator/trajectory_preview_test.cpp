@@ -106,8 +106,9 @@ previewed_arm arm_at(const joint_vector &start)
                     .value());
     robot->set_joint_positions(start);
 
-    auto control = std::make_unique<robot_controller>(*robot, motion_ops{.task_space_pose = &solving_task_space_pose}, trajectory::baseline().path, task_trajectory_ops{},
-                                                      trajectory::baseline().time_scaling, trajectory::baseline().trajectory, rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
+    auto control =
+            std::make_unique<robot_controller>(*robot, motion_ops{.task_space_pose = &solving_task_space_pose}, trajectory::baseline().path, task_trajectory_ops{},
+                                               trajectory::baseline().time_scaling, trajectory::baseline().trajectory, rigid_motion::baseline().screw, rigid_motion::baseline().frame);
 
     return previewed_arm{std::move(robot), std::move(control)};
 }

@@ -26,12 +26,15 @@ expected<configuration, refusal> straight_line(const configuration &start, const
 // because the matrix logarithm and exponential the real one needs are themselves slots and hold
 // their inert defaults here. What it does carry is the property that separates the two task-space
 // paths: the origin travels the straight line between the endpoints.
-expected<transform, refusal> straight_line_origin(const transform &start, const transform &end, double s)
+expected<transform, refusal> straight_line_origin(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const transform &start, const transform &end, double s)
 {
     transform pose         = start;
     pose.block<3, 1>(0, 3) = start.block<3, 1>(0, 3) + s * (end.block<3, 1>(0, 3) - start.block<3, 1>(0, 3));
     return pose;
 }
+
+const rigid_motion::screw_ops inert_screw{};
+const rigid_motion::frame_ops inert_frames{};
 
 transform endpoints()
 {
@@ -53,8 +56,8 @@ TEST_CASE("the_path_slots_default_to_refusing_rather_than_to_a_pose_a_bound_path
     REQUIRE(ops.decoupled != nullptr);
 
     CHECK(ops.joint_straight_line(start, end, 0.5).error() == refusal::not_implemented);
-    CHECK(ops.screw(transform::Identity(), endpoints(), 0.5).error() == refusal::not_implemented);
-    CHECK(ops.decoupled(transform::Identity(), endpoints(), 0.5).error() == refusal::not_implemented);
+    CHECK(ops.screw(inert_screw, inert_frames, transform::Identity(), endpoints(), 0.5).error() == refusal::not_implemented);
+    CHECK(ops.decoupled(inert_screw, inert_frames, transform::Identity(), endpoints(), 0.5).error() == refusal::not_implemented);
 }
 
 TEST_CASE("a_configuration_space_path_bound_into_the_seam_meets_the_endpoint_conditions")
@@ -77,8 +80,8 @@ TEST_CASE("the_two_task_space_path_slots_are_independently_bound_and_only_the_bo
     REQUIRE(ops.screw == defaults.screw);
     REQUIRE(ops.joint_straight_line == defaults.joint_straight_line);
 
-    REQUIRE(is_approx_equal(answered(ops.decoupled(transform::Identity(), end, 0.0)), transform::Identity()));
-    REQUIRE(is_approx_equal(answered(ops.decoupled(transform::Identity(), end, 1.0)), end));
-    REQUIRE(answered(ops.decoupled(transform::Identity(), end, 0.5)).block<3, 1>(0, 3).isApprox(Eigen::Vector3d(1.0, 2.0, 3.0), default_tolerance));
-    REQUIRE(!ops.screw(transform::Identity(), end, 0.5));
+    REQUIRE(is_approx_equal(answered(ops.decoupled(inert_screw, inert_frames, transform::Identity(), end, 0.0)), transform::Identity()));
+    REQUIRE(is_approx_equal(answered(ops.decoupled(inert_screw, inert_frames, transform::Identity(), end, 1.0)), end));
+    REQUIRE(answered(ops.decoupled(inert_screw, inert_frames, transform::Identity(), end, 0.5)).block<3, 1>(0, 3).isApprox(Eigen::Vector3d(1.0, 2.0, 3.0), default_tolerance));
+    REQUIRE(!ops.screw(inert_screw, inert_frames, transform::Identity(), end, 0.5));
 }

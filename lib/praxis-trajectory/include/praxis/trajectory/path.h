@@ -7,14 +7,16 @@
 
 #include "praxis/compat/expected.h"
 
+#include "praxis/rigid_motion/frame.h"
+#include "praxis/rigid_motion/screw.h"
 #include "praxis/rigid_motion/types.h"
 
 namespace praxis::trajectory::inert {
 
 expected<configuration, refusal> joint_straight_line(const configuration &start, const configuration &end, double s);
 
-expected<transform, refusal> screw(const transform &start, const transform &end, double s);
-expected<transform, refusal> decoupled(const transform &start, const transform &end, double s);
+expected<transform, refusal> screw(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &start, const transform &end, double s);
+expected<transform, refusal> decoupled(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &start, const transform &end, double s);
 
 }
 
@@ -26,13 +28,16 @@ namespace praxis::trajectory {
 // Modern Robotics, eq. (9.3), (9.6), (9.7) and (9.8). The two task-space paths differ in whether
 // the rotation is coupled to the translation -- the screw path holds a constant screw axis and its
 // origin leaves the straight line, the decoupled path moves the origin along the straight line at
-// constant angular velocity.
+// constant angular velocity. Both task-space paths answer through the rigid-motion operations they
+// are handed.
 struct path_ops
 {
     expected<configuration, refusal> (*joint_straight_line)(const configuration &start, const configuration &end, double s) = &inert::joint_straight_line;
 
-    expected<transform, refusal> (*screw)(const transform &start, const transform &end, double s)     = &inert::screw;
-    expected<transform, refusal> (*decoupled)(const transform &start, const transform &end, double s) = &inert::decoupled;
+    expected<transform, refusal> (*screw)(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &start, const transform &end,
+                                          double s)     = &inert::screw;
+    expected<transform, refusal> (*decoupled)(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &start, const transform &end,
+                                              double s) = &inert::decoupled;
 };
 
 }

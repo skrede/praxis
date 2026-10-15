@@ -2,6 +2,7 @@
 #include "captured_log.h"
 
 #include "../presets/drawn_lines.h"
+#include "../presets/substituted_rigid_motion.h"
 
 #include "praxis/manipulator/capabilities.h"
 #include "praxis/manipulator/motion_drawings.h"
@@ -109,6 +110,20 @@ std::vector<transform> traversed_run(std::size_t poses)
         at(0, 3)     = static_cast<double>(step) * traversed_step;
         through.push_back(at);
     }
+
+    return through;
+}
+
+// The run a task-space shape answers between the poses at two ends under the reference rigid-motion
+// operations, at the path parameters the window samples.
+std::vector<transform> under_the_reference(decltype(trajectory::path_ops::screw) shape, const joint_vector &first, const joint_vector &second)
+{
+    const rigid_motion::capabilities spatial = rigid_motion::baseline();
+    std::vector<transform> through;
+    for(std::size_t step = 0; step < path_comparison_window::drawn_points; ++step)
+        through.push_back(
+                shape(spatial.screw, spatial.frame, pose_at(first), pose_at(second), static_cast<double>(step) / static_cast<double>(path_comparison_window::drawn_points - 1u))
+                        .value());
 
     return through;
 }
@@ -224,13 +239,13 @@ double worst_gap(const std::vector<transform> &one, const std::vector<transform>
 struct stage
 {
     explicit stage(const path_comparison_window::settings &opened = ends_at(configuration(0.0, 0.0), configuration(1.0, 1.0)), std::weak_ptr<owned_arm> driving = {},
-                   const arm_snapshot &opening = tooled_with(transform::Identity()))
+                   const arm_snapshot &opening = tooled_with(transform::Identity()), const rigid_motion::frame_ops &framing = rigid_motion::baseline().frame)
             : loop(inline_workers)
             , scene(threepp::Scene::create())
             , seen(opening)
             , published(publishing(seen))
             , stencil(two_joint_handle(), attachments{}, *scene, loop.main_strand(), published->reader(), rigid_motion::baseline().screw, rigid_motion::screw_slot_set{})
-            , panel(panel_title, published->reader(), std::move(driving), stencil, rigid_motion::baseline().screw, baseline().fk, planar_chain(), trajectory::baseline().path,
+            , panel(panel_title, published->reader(), std::move(driving), stencil, rigid_motion::baseline().screw, framing, baseline().fk, planar_chain(), trajectory::baseline().path,
                     baseline().robot, opened, comparison_at)
     {
         REQUIRE(stencil.initialize().has_value());
@@ -422,6 +437,24 @@ TEST_CASE("the screw shape bows away from the straight line the decoupled shape 
 
     CHECK(apart(over.path(path_comparison_window::screw_path), over.path(path_comparison_window::decoupled_path)) > 0.05);
     CHECK(apart(over.path(path_comparison_window::joint_space_path), over.path(path_comparison_window::decoupled_path)) > 0.05);
+}
+
+TEST_CASE("the two task-space shapes are drawn through the frame operations the window is handed", "[manipulator][comparison]")
+{
+    rigid_motion::frame_ops displaced                      = rigid_motion::baseline().frame;
+    displaced.inverse                                      = &marked_inverse;
+    displaced.transformation_matrix_from_rotation_position = &displaced_pose;
+    const trajectory::path_ops shapes                      = trajectory::baseline().path;
+    const joint_vector first                               = configuration(0.0, 0.0);
+    const joint_vector second                              = configuration(1.0, 1.0);
+
+    stage over(ends_at(first, second), {}, tooled_with(transform::Identity()), displaced);
+    over.draw();
+
+    REQUIRE(over.path(path_comparison_window::decoupled_path).size() == path_comparison_window::drawn_points);
+    REQUIRE(over.path(path_comparison_window::screw_path).size() == path_comparison_window::drawn_points);
+    CHECK(worst_gap(over.panel.poses_along(compared_path::decoupled), under_the_reference(shapes.decoupled, first, second)) > 0.05);
+    CHECK(worst_gap(over.panel.poses_along(compared_path::screw), under_the_reference(shapes.screw, first, second)) > 0.05);
 }
 
 TEST_CASE("hiding one shape leaves the other two drawn and shown", "[manipulator][comparison]")

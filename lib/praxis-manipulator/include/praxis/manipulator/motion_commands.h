@@ -12,6 +12,8 @@
 
 #include "praxis/compat/expected.h"
 
+#include "praxis/rigid_motion/frame.h"
+#include "praxis/rigid_motion/screw.h"
 #include "praxis/rigid_motion/types.h"
 
 #include <span>
@@ -21,7 +23,8 @@
 
 namespace praxis::manipulator {
 
-using task_space_path = expected<transform, refusal> (*)(const transform &start, const transform &end, double s);
+using task_space_path = expected<transform, refusal> (*)(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &start, const transform &end,
+                                                         double s);
 
 enum class time_scaling_choice : std::uint8_t
 {
@@ -87,10 +90,12 @@ expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> via_point_m
                                                                                       const joint_vector &j0, const joint_limits &limits);
 
 // The task-space path is resolved to a configuration through the motion capability at every sample,
-// always from the same seed, so that sampling stays a pure function of the path parameter.
-expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> task_space_motion(const motion_ops &injected_motion, const prepared_time_scaling &scaled, const kinematics &solver,
-                                                                                       const joint_limits &bounds, const joint_vector &start, const transform &start_pose,
-                                                                                       const transform &end_pose, task_space_path shape);
+// always from the same seed, so that sampling stays a pure function of the path parameter. The path
+// is handed the screw and frame operations given here.
+expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> task_space_motion(const motion_ops &injected_motion, const rigid_motion::screw_ops &injected_screw,
+                                                                                       const rigid_motion::frame_ops &injected_frames, const prepared_time_scaling &scaled,
+                                                                                       const kinematics &solver, const joint_limits &bounds, const joint_vector &start,
+                                                                                       const transform &start_pose, const transform &end_pose, task_space_path shape);
 
 }
 
