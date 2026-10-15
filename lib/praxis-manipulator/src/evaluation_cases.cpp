@@ -3,6 +3,8 @@
 
 #include "praxis/manipulator/capabilities.h"
 
+#include "praxis/trajectory/capabilities.h"
+
 #include "praxis/rigid_motion/capabilities.h"
 
 #include <string>
@@ -62,9 +64,10 @@ meios::joint<> revolute(std::size_t index, evaluation::case_source &drawn)
 
 }
 
-// One screw implementation, one frame implementation and one set of each kinematics aggregate serve
-// every row in the module, so a row measures its own slot rather than a capability neither side is
-// under test for. Each is built once on first use and outlives every caller.
+// One screw implementation, one frame implementation, one set of each kinematics aggregate, one
+// motion aggregate and one trajectory aggregate serve every row in the module, so a row measures its
+// own slot rather than a capability neither side is under test for. Each is built once on first use
+// and outlives every caller.
 const rigid_motion::screw_ops &shared_screw()
 {
     static const rigid_motion::screw_ops screw = rigid_motion::baseline().screw;
@@ -98,6 +101,20 @@ const inverse_kinematics_ops &shared_inverse()
     static const inverse_kinematics_ops inverse = baseline().ik;
 
     return inverse;
+}
+
+const motion_ops &shared_motion()
+{
+    static const motion_ops motion = baseline().motion;
+
+    return motion;
+}
+
+const trajectory::trajectory_ops &shared_trajectory()
+{
+    static const trajectory::trajectory_ops trajectory = trajectory::baseline().trajectory;
+
+    return trajectory;
 }
 
 joint_vector drawn_joints(evaluation::case_source &drawn, std::size_t joints)

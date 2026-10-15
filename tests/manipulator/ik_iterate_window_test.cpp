@@ -82,12 +82,12 @@ bool same_sequences(const std::vector<std::vector<iteration_state>> &held, const
     return true;
 }
 
-// What the joint-space route was handed, one entry per motion asked for. The factory refuses, so a
-// case reads the waypoints without a motion having to play out and the arm stays idle.
+// What the joint-space route was handed, one entry per motion asked for. The via-point step refuses,
+// so a case reads the waypoints without a motion having to play out and the arm stays idle.
 std::vector<std::vector<joint_vector>> handed;
 
-expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> recorded_waypoints(std::span<const trajectory::configuration> waypoints, const trajectory::configuration &,
-                                                                                        const trajectory::configuration_limits &)
+expected<std::vector<trajectory::via_point>, refusal> recorded_waypoints(std::span<const trajectory::configuration> waypoints, const trajectory::configuration &,
+                                                                         const trajectory::configuration_limits &)
 {
     handed.emplace_back(waypoints.begin(), waypoints.end());
 
@@ -132,7 +132,7 @@ composed_arm solving_arm(praxis::scheduler::scheduler &loop)
                     .value());
     const auto published = std::make_shared<arm_publisher>();
     const auto control   = std::make_shared<robot_controller>(*driven, motion_ops{.task_space_pose = &solving_task_space_pose}, trajectory::path_ops{}, task_trajectory_ops{},
-                                                              trajectory::time_scaling_ops{}, trajectory::trajectory_ops{.joint_space_waypoints = &recorded_waypoints},
+                                                              trajectory::time_scaling_ops{}, trajectory::trajectory_ops{.via_point_schedule = &recorded_waypoints},
                                                               rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
 
     return composed_arm{published->reader(), published, std::make_shared<owned_arm>(work, work, driven, control, published)};

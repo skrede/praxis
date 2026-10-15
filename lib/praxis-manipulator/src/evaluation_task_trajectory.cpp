@@ -76,9 +76,9 @@ evaluation::case_result compare_task_space_waypoints(const void *first, const vo
 
     const joint_limits &bounds = example->solver.space_chain().limits;
     const expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> held =
-            trajectories_of(first).task_space_waypoints(example->solver, example->waypoints, example->seed, bounds);
+            trajectories_of(first).task_space_waypoints(shared_trajectory(), shared_motion(), example->solver, example->waypoints, example->seed, bounds);
     const expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> against =
-            trajectories_of(second).task_space_waypoints(example->solver, example->waypoints, example->seed, bounds);
+            trajectories_of(second).task_space_waypoints(shared_trajectory(), shared_motion(), example->solver, example->waypoints, example->seed, bounds);
     if(const std::optional<evaluation::case_result> refused = refusal_outcome(held, against))
         return *refused;
     if(*held == nullptr || *against == nullptr)

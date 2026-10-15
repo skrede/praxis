@@ -55,18 +55,20 @@ private:
     std::unique_ptr<trajectory::trajectory_generator> m_held;
 };
 
-expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> stretched_task_space_waypoints(const kinematics &solver, std::span<const transform> waypoints,
+expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> stretched_task_space_waypoints(const trajectory::trajectory_ops &trajectory, const motion_ops &motion,
+                                                                                                    const kinematics &solver, std::span<const transform> waypoints,
                                                                                                     const joint_vector &j0, const joint_limits &limits)
 {
-    expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> motion = task_space_waypoints(solver, waypoints, j0, limits);
-    if(!motion || *motion == nullptr)
-        return motion;
+    expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> answered = task_space_waypoints(trajectory, motion, solver, waypoints, j0, limits);
+    if(!answered || *answered == nullptr)
+        return answered;
 
-    return std::unique_ptr<trajectory::trajectory_generator>(std::make_unique<stretched_motion>(std::move(*motion)));
+    return std::unique_ptr<trajectory::trajectory_generator>(std::make_unique<stretched_motion>(std::move(*answered)));
 }
 
 // A factory answering no motion at all. Nothing may read through the pointer it names.
-expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> no_motion_at_all(const kinematics &, std::span<const transform>, const joint_vector &, const joint_limits &)
+expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> no_motion_at_all(const trajectory::trajectory_ops &, const motion_ops &, const kinematics &,
+                                                                                      std::span<const transform>, const joint_vector &, const joint_limits &)
 {
     return std::unique_ptr<trajectory::trajectory_generator>();
 }
@@ -82,8 +84,7 @@ slot_report row_of(const capabilities &reference, const capabilities &other)
     return slot_report{};
 }
 
-capabilities factories_bound_to(expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> (*factory)(const kinematics &, std::span<const transform>, const joint_vector &,
-                                                                                                                const joint_limits &))
+capabilities factories_bound_to(decltype(task_trajectory_ops::task_space_waypoints) factory)
 {
     capabilities arm = baseline();
 

@@ -61,7 +61,7 @@ std::size_t reachable_surface()
     reachable_types types{};
     types.composed          = baseline();
     const kinematics solver = kinematics::compose(types.chain, types.fk, types.dk, types.ik, rigid_motion::screw_ops{}, rigid_motion::frame_ops{}).value_or(kinematics());
-    auto motion             = types.trajectory.task_space_waypoints(solver, {}, to_joint_vector({}), joint_limits{});
+    auto motion             = types.trajectory.task_space_waypoints(trajectory::trajectory_ops{}, motion_ops{}, solver, {}, to_joint_vector({}), joint_limits{});
     types.named             = modeling_slot::build_chain;
     types.derivative        = solver.space_jacobian(joint_vector()).value_or(jacobian());
 

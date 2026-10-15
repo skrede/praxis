@@ -1,60 +1,19 @@
-#include "fixtures.h"
+#include "seam_stage.h"
 #include "substituted_trajectory.h"
 
 #include "praxis/manipulator/arm_snapshot.h"
-#include "praxis/manipulator/capabilities.h"
 #include "praxis/manipulator/robot_controller.h"
 
 #include "praxis/evaluation/tolerance.h"
-
-#include "praxis/trajectory/capabilities.h"
-
-#include "praxis/rigid_motion/capabilities.h"
 
 #include <catch2/catch_test_macros.hpp>
 
 #include <array>
 #include <memory>
-#include <cstdint>
 
 using namespace praxis;
 using namespace praxis::fixture;
 using namespace praxis::manipulator;
-
-namespace {
-
-constexpr scheduler::step_delta stepped{scheduler::seconds{0.01}};
-constexpr std::uint32_t most_steps = 100000;
-
-struct composed_arm
-{
-    std::shared_ptr<scene_robot> robot;
-    std::unique_ptr<robot_controller> control;
-};
-
-// The arm and its controller composed the way a course composes them: every slot the reference
-// except the trajectory aggregate handed in.
-composed_arm arm_under(const trajectory::capabilities &shapes)
-{
-    const manipulator::capabilities arm    = manipulator::baseline();
-    const rigid_motion::capabilities rigid = rigid_motion::baseline();
-
-    auto robot = std::make_shared<scene_robot>(two_joint_arm(arm.robot));
-    robot->set_joint_positions(configuration(0.0, 0.0));
-    auto control = std::make_unique<robot_controller>(*robot, arm.motion, shapes.path, arm.trajectory, shapes.time_scaling, shapes.trajectory, rigid.screw, rigid.frame);
-
-    return composed_arm{std::move(robot), std::move(control)};
-}
-
-bool played_out(robot_controller &control)
-{
-    for(std::uint32_t taken = 0; taken < most_steps && control.executing(); ++taken)
-        static_cast<void>(control.advance_playback(stepped));
-
-    return !control.executing();
-}
-
-}
 
 TEST_CASE("a trapezoidal run is timed and sampled by the velocity and acceleration trapezoid the composition binds", "[seam][routing]")
 {

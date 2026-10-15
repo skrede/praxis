@@ -132,8 +132,8 @@ std::vector<transform> &carried_from_the_tool_frame()
     return carried;
 }
 
-expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> recorded_waypoints(const kinematics &, std::span<const transform> waypoints, const joint_vector &,
-                                                                                        const joint_limits &)
+expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> recorded_waypoints(const trajectory::trajectory_ops &, const motion_ops &, const kinematics &,
+                                                                                        std::span<const transform> waypoints, const joint_vector &, const joint_limits &)
 {
     handed_to_the_factory().assign(waypoints.begin(), waypoints.end());
 

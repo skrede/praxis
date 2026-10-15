@@ -7,7 +7,8 @@ namespace praxis::manipulator {
 
 // Each pose is resolved from the configuration the previous one resolved to, so a chain of
 // waypoints stays on one inverse-kinematics branch as far as the solver allows.
-expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> task_space_waypoints(const kinematics &solver, std::span<const transform> waypoints, const joint_vector &j0,
+expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> task_space_waypoints(const trajectory::trajectory_ops &trajectory, const motion_ops &motion,
+                                                                                          const kinematics &solver, std::span<const transform> waypoints, const joint_vector &j0,
                                                                                           const joint_limits &limits);
 
 }

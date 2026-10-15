@@ -435,7 +435,7 @@ lib/praxis-manipulator/include/praxis/manipulator/baseline/robot.h	ik_solve_pose
 lib/praxis-manipulator/include/praxis/manipulator/baseline/robot.h	ik_solve_flange_pose	prototype	(const kinematics & solver,const transform & flange_pose,const joint_vector & j0)	typename:expected<joint_vector,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/baseline/task_trajectory.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/baseline/task_trajectory.h	praxis	namespace	-	-
-lib/praxis-manipulator/include/praxis/manipulator/baseline/task_trajectory.h	task_space_waypoints	prototype	(const kinematics & solver,std::span<const transform> waypoints,const joint_vector & j0,const joint_limits & limits)	typename:expected<std::unique_ptr<trajectory::trajectory_generator>,refusal>
+lib/praxis-manipulator/include/praxis/manipulator/baseline/task_trajectory.h	task_space_waypoints	prototype	(const trajectory::trajectory_ops & trajectory,const motion_ops & motion,const kinematics & solver,std::span<const transform> waypoints,const joint_vector & j0,const joint_limits & limits)	typename:expected<std::unique_ptr<trajectory::trajectory_generator>,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/capabilities.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/capabilities.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/capabilities.h	capabilities	struct	-	-
@@ -1135,6 +1135,7 @@ lib/praxis-manipulator/include/praxis/manipulator/motion_commands.h	m_chosen	mem
 lib/praxis-manipulator/include/praxis/manipulator/motion_commands.h	m_scaling	member	-	typename:trajectory::time_scaling_ops
 lib/praxis-manipulator/include/praxis/manipulator/motion_commands.h	m_bounds	member	-	typename:std::optional<path_parameter_bounds>
 lib/praxis-manipulator/include/praxis/manipulator/motion_commands.h	joint_space_motion	prototype	(const trajectory::path_ops & injected_path,const prepared_time_scaling & scaled,const joint_limits & bounds,const joint_vector & start,const joint_vector & target)	typename:expected<std::unique_ptr<trajectory::trajectory_generator>,refusal>
+lib/praxis-manipulator/include/praxis/manipulator/motion_commands.h	via_point_motion	prototype	(const trajectory::trajectory_ops & injected_trajectory,std::span<const joint_vector> positions,const joint_vector & j0,const joint_limits & limits)	typename:expected<std::unique_ptr<trajectory::trajectory_generator>,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/motion_commands.h	task_space_motion	prototype	(const motion_ops & injected_motion,const prepared_time_scaling & scaled,const kinematics & solver,const joint_limits & bounds,const joint_vector & start,const transform & start_pose,const transform & end_pose,task_space_path shape)	typename:expected<std::unique_ptr<trajectory::trajectory_generator>,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/motion_drawings.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/motion_drawings.h	praxis	namespace	-	-
@@ -1805,11 +1806,11 @@ lib/praxis-manipulator/include/praxis/manipulator/task_space_window.h	render_res
 lib/praxis-manipulator/include/praxis/manipulator/task_trajectory.h	inert	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/task_trajectory.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/task_trajectory.h	praxis	namespace	-	-
-lib/praxis-manipulator/include/praxis/manipulator/task_trajectory.h	task_space_waypoints	prototype	(const kinematics & solver,std::span<const transform> waypoints,const joint_vector & j0,const joint_limits & limits)	typename:expected<std::unique_ptr<trajectory::trajectory_generator>,refusal>
+lib/praxis-manipulator/include/praxis/manipulator/task_trajectory.h	task_space_waypoints	prototype	(const trajectory::trajectory_ops & trajectory,const motion_ops & motion,const kinematics & solver,std::span<const transform> waypoints,const joint_vector & j0,const joint_limits & limits)	typename:expected<std::unique_ptr<trajectory::trajectory_generator>,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/task_trajectory.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/task_trajectory.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/task_trajectory.h	task_trajectory_ops	struct	-	-
-lib/praxis-manipulator/include/praxis/manipulator/task_trajectory.h	task_space_waypoints	member	-	typename:expected<std::unique_ptr<trajectory::trajectory_generator>,refusal> (*)(const kinematics & solver,std::span<const transform> waypoints,const joint_vector & j0,const joint_limits & limits)
+lib/praxis-manipulator/include/praxis/manipulator/task_trajectory.h	task_space_waypoints	member	-	typename:expected<std::unique_ptr<trajectory::trajectory_generator>,refusal> (*)(const trajectory::trajectory_ops & trajectory,const motion_ops & motion,const kinematics & solver,std::span<const transform> waypoints,const joint_vector & j0,const joint_limits & limits)
 lib/praxis-manipulator/include/praxis/manipulator/tool_configuration.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/tool_configuration.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/tool_configuration.h	declare_tool	prototype	(config::declaration & shape,std::string_view at)	typename:void

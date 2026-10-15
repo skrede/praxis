@@ -60,6 +60,8 @@ const rigid_motion::frame_ops &shared_frames();
 const forward_kinematics_ops &shared_forward();
 const differential_kinematics_ops &shared_differential();
 const inverse_kinematics_ops &shared_inverse();
+const motion_ops &shared_motion();
+const trajectory::trajectory_ops &shared_trajectory();
 
 inline evaluation::case_result judged(const evaluation::residual &difference, const evaluation::tolerance_pair &allowed)
 {

@@ -7,6 +7,8 @@
 
 #include "praxis/evaluation/tolerance.h"
 
+#include "praxis/trajectory/capabilities.h"
+
 #include "praxis/rigid_motion/capabilities.h"
 
 #include <catch2/catch_test_macros.hpp>
@@ -133,7 +135,8 @@ TEST_CASE("a_chain_of_four_poses_is_traversed_where_the_count_was_refused")
 {
     const kinematics solver            = reference();
     const std::vector<transform> poses = four_poses(solver);
-    const auto motion                  = manipulator::task_space_waypoints(solver, poses, configuration(0.0, 0.0), planar_arm().limits);
+    const auto motion =
+            manipulator::task_space_waypoints(trajectory::baseline().trajectory, manipulator::baseline().motion, solver, poses, configuration(0.0, 0.0), planar_arm().limits);
 
     REQUIRE(motion.has_value());
     CHECK((*motion)->duration() > 0.0);
@@ -147,7 +150,7 @@ TEST_CASE("each_knot_of_a_chain_reaches_the_pose_it_was_given_through_the_arms_o
     const std::vector<transform> poses = four_poses(solver);
     const joint_vector seed            = configuration(0.0, 0.0);
     const joint_limits limits          = planar_arm().limits;
-    const auto motion                  = manipulator::task_space_waypoints(solver, poses, seed, limits);
+    const auto motion                  = manipulator::task_space_waypoints(trajectory::baseline().trajectory, manipulator::baseline().motion, solver, poses, seed, limits);
     REQUIRE(motion.has_value());
 
     const std::vector<double> times = boundaries(resolved(solver, poses, seed), limits.velocity, (*motion)->duration());
@@ -169,7 +172,8 @@ TEST_CASE("a_chain_holding_a_pose_beyond_the_arms_reach_is_refused_and_the_waypo
     beyond(0, 3)                     = 10.0;
 
     praxis::tests::captured_log captured;
-    const auto refused         = manipulator::task_space_waypoints(solver, std::vector<transform>{all[0], all[1], beyond, all[2]}, configuration(0.0, 0.0), planar_arm().limits);
+    const auto refused         = manipulator::task_space_waypoints(trajectory::baseline().trajectory, manipulator::baseline().motion, solver,
+                                                                   std::vector<transform>{all[0], all[1], beyond, all[2]}, configuration(0.0, 0.0), planar_arm().limits);
     const std::string reported = captured.text();
 
     REQUIRE_FALSE(refused.has_value());

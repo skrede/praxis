@@ -14,6 +14,7 @@
 
 #include "praxis/rigid_motion/types.h"
 
+#include <span>
 #include <memory>
 #include <cstdint>
 #include <optional>
@@ -79,6 +80,11 @@ private:
 // composition that does not begin at the configuration the arm is in is refused.
 expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> joint_space_motion(const trajectory::path_ops &injected_path, const prepared_time_scaling &scaled,
                                                                                         const joint_limits &bounds, const joint_vector &start, const joint_vector &target);
+
+// The step chooses the via points' times and velocities and the via-point slot joins them, both from
+// the operations handed in.
+expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> via_point_motion(const trajectory::trajectory_ops &injected_trajectory, std::span<const joint_vector> positions,
+                                                                                      const joint_vector &j0, const joint_limits &limits);
 
 // The task-space path is resolved to a configuration through the motion capability at every sample,
 // always from the same seed, so that sampling stays a pure function of the path parameter.

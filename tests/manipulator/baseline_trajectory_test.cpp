@@ -1,6 +1,9 @@
+#include "praxis/manipulator/capabilities.h"
 #include "praxis/manipulator/baseline/task_trajectory.h"
 
 #include "praxis/evaluation/tolerance.h"
+
+#include "praxis/trajectory/capabilities.h"
 
 #include "praxis/rigid_motion/capabilities.h"
 
@@ -90,7 +93,7 @@ TEST_CASE("a_single_task_space_waypoint_runs_from_the_seed_to_the_pose_it_resolv
     const kinematics solver          = recording_solver();
     const joint_vector seed          = configuration(0.0, 0.0);
     const std::vector<transform> via = {at_height(0.5)};
-    const auto motion                = manipulator::task_space_waypoints(solver, via, seed, bounds());
+    const auto motion                = manipulator::task_space_waypoints(trajectory::baseline().trajectory, manipulator::baseline().motion, solver, via, seed, bounds());
 
     REQUIRE(motion.has_value());
     REQUIRE(recorded_seeds.size() == 1u);
@@ -104,7 +107,7 @@ TEST_CASE("a_chain_of_task_space_waypoints_seeds_each_resolution_from_the_previo
     const kinematics solver          = recording_solver();
     const joint_vector seed          = configuration(0.1, 0.1);
     const std::vector<transform> via = {at_height(0.5), at_height(0.25), at_height(0.75), at_height(0.3)};
-    const auto motion                = manipulator::task_space_waypoints(solver, via, seed, bounds());
+    const auto motion                = manipulator::task_space_waypoints(trajectory::baseline().trajectory, manipulator::baseline().motion, solver, via, seed, bounds());
 
     REQUIRE(motion.has_value());
     REQUIRE(recorded_seeds.size() == 4u);
@@ -121,7 +124,7 @@ TEST_CASE("a_chain_of_three_poses_is_traversed_through_the_configurations_they_r
     const kinematics solver            = recording_solver();
     const joint_vector seed            = configuration(0.3, -0.2);
     const std::vector<transform> poses = {at_height(0.5), at_height(0.25), at_height(0.75)};
-    const auto motion                  = manipulator::task_space_waypoints(solver, poses, seed, bounds());
+    const auto motion                  = manipulator::task_space_waypoints(trajectory::baseline().trajectory, manipulator::baseline().motion, solver, poses, seed, bounds());
 
     REQUIRE(motion.has_value());
     REQUIRE(recorded_seeds.size() == 3u);
@@ -132,7 +135,7 @@ TEST_CASE("a_chain_of_three_poses_is_traversed_through_the_configurations_they_r
 TEST_CASE("a_via_point_request_carrying_no_pose_is_refused_before_anything_is_resolved")
 {
     const kinematics solver = recording_solver();
-    const auto motion       = manipulator::task_space_waypoints(solver, {}, configuration(0.1, 0.1), bounds());
+    const auto motion       = manipulator::task_space_waypoints(trajectory::baseline().trajectory, manipulator::baseline().motion, solver, {}, configuration(0.1, 0.1), bounds());
 
     REQUIRE_FALSE(motion.has_value());
     CHECK(motion.error() == refusal::unsupported_input);
@@ -146,7 +149,7 @@ TEST_CASE("a_pose_that_resolves_to_nothing_refuses_the_whole_via_point_motion")
     const kinematics solver            = recording_solver();
     const joint_vector seed            = joint_vector::Constant(3, 0.2);
     const std::vector<transform> poses = {at_height(0.5), at_height(0.25)};
-    const auto motion                  = manipulator::task_space_waypoints(solver, poses, seed, bounds());
+    const auto motion                  = manipulator::task_space_waypoints(trajectory::baseline().trajectory, manipulator::baseline().motion, solver, poses, seed, bounds());
 
     REQUIRE_FALSE(motion.has_value());
     CHECK(motion.error() == refusal::unsupported_input);
@@ -157,7 +160,7 @@ TEST_CASE("the_via_point_factory_slot_defaults_to_refusing_rather_than_to_a_moti
 {
     const task_trajectory_ops ops{};
     const kinematics solver = recording_solver();
-    const auto motion       = ops.task_space_waypoints(solver, {}, configuration(0.1, 0.1), bounds());
+    const auto motion       = ops.task_space_waypoints(trajectory::trajectory_ops{}, motion_ops{}, solver, {}, configuration(0.1, 0.1), bounds());
 
     REQUIRE_FALSE(motion.has_value());
     CHECK(motion.error() == refusal::not_implemented);

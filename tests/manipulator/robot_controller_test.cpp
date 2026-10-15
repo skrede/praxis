@@ -20,10 +20,12 @@
 
 #include <spdlog/spdlog.h>
 
+#include <span>
 #include <cmath>
 #include <array>
 #include <chrono>
 #include <memory>
+#include <string>
 #include <vector>
 #include <cstdint>
 #include <fstream>
@@ -134,14 +136,13 @@ public:
     }
 };
 
-expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> refusing_waypoints(std::span<const trajectory::configuration>, const trajectory::configuration &,
-                                                                                        const trajectory::configuration_limits &)
+expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> refusing_via_points(std::span<const trajectory::via_point>)
 {
     return std::make_unique<refusing_trajectory>();
 }
 
-expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> refused_waypoints(std::span<const trajectory::configuration>, const trajectory::configuration &,
-                                                                                       const trajectory::configuration_limits &)
+expected<std::vector<trajectory::via_point>, refusal> refused_schedule(std::span<const trajectory::configuration>, const trajectory::configuration &,
+                                                                       const trajectory::configuration_limits &)
 {
     return praxis::unexpected(refusal::unsupported_input);
 }
@@ -401,9 +402,11 @@ TEST_CASE("a_point_to_point_command_plays_back_and_leaves_the_arm_at_the_target"
 // arm's own reading is what the case asserts against rather than the executor's state.
 TEST_CASE("a_refused_sample_stops_the_playback_and_leaves_the_arm_where_it_is")
 {
-    scene_robot robot = adapter(manipulator::baseline().robot);
-    robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{},
-                                trajectory::trajectory_ops{.joint_space_waypoints = &refusing_waypoints}, rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
+    scene_robot robot                   = adapter(manipulator::baseline().robot);
+    trajectory::trajectory_ops refusing = trajectory::baseline().trajectory;
+    refusing.joint_space_via_points     = &refusing_via_points;
+    robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{}, refusing, rigid_motion::screw_ops{},
+                                rigid_motion::frame_ops{});
     robot.set_joint_positions(configuration(0.15, 0.25));
 
     controller.joint_space_trajectory(std::array<joint_vector, 1>{configuration(0.9, -0.9)});
@@ -412,17 +415,57 @@ TEST_CASE("a_refused_sample_stops_the_playback_and_leaves_the_arm_where_it_is")
     CHECK(is_approx_equal(robot.joint_positions(), configuration(0.15, 0.25), round_trip));
 }
 
-TEST_CASE("a_waypoint_factory_that_refuses_commands_no_motion_at_all")
+TEST_CASE("a_move_to_the_configuration_the_arm_stands_at_commands_nothing_and_is_reported_as_information")
 {
     scene_robot robot = adapter(manipulator::baseline().robot);
-    robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{},
-                                trajectory::trajectory_ops{.joint_space_waypoints = &refused_waypoints}, rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
+    robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{}, trajectory::baseline().trajectory,
+                                rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
     robot.set_joint_positions(configuration(0.15, 0.25));
+    const joint_vector held = robot.joint_positions();
 
-    controller.joint_space_trajectory(std::array<joint_vector, 1>{configuration(0.9, -0.9)});
+    const std::string once  = reported_by([&] { controller.joint_space_trajectory(std::array<joint_vector, 1>{held}); });
+    const std::string twice = reported_by([&] { controller.joint_space_trajectory(std::array<joint_vector, 2>{held, held}); });
 
     CHECK_FALSE(controller.executing());
-    CHECK(is_approx_equal(robot.joint_positions(), configuration(0.15, 0.25), round_trip));
+    CHECK((robot.joint_positions().array() == held.array()).all());
+    for(const std::string &reported : {once, twice})
+    {
+        CHECK(reported.find("[info]") != std::string::npos);
+        CHECK(reported.find("[error]") == std::string::npos);
+    }
+}
+
+TEST_CASE("a_preview_of_the_configuration_the_arm_stands_at_stands_nothing_and_is_reported_as_information")
+{
+    scene_robot robot = adapter(manipulator::baseline().robot);
+    robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{}, trajectory::baseline().trajectory,
+                                rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
+    robot.set_joint_positions(configuration(0.15, 0.25));
+    const joint_vector held = robot.joint_positions();
+
+    const std::string reported = reported_by([&] { controller.preview_trajectory(std::span<const joint_vector>(std::array<joint_vector, 1>{held})); });
+
+    CHECK(controller.preview() == nullptr);
+    CHECK((robot.joint_positions().array() == held.array()).all());
+    CHECK(reported.find("[info]") != std::string::npos);
+    CHECK(reported.find("[error]") == std::string::npos);
+}
+
+TEST_CASE("a_refused_move_to_a_configuration_the_arm_does_not_stand_at_is_still_reported_as_an_error")
+{
+    trajectory::trajectory_ops refusing = trajectory::baseline().trajectory;
+    refusing.via_point_schedule         = &refused_schedule;
+    scene_robot robot                   = adapter(manipulator::baseline().robot);
+    robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{}, refusing, rigid_motion::screw_ops{},
+                                rigid_motion::frame_ops{});
+    robot.set_joint_positions(configuration(0.15, 0.25));
+    const joint_vector held = robot.joint_positions();
+
+    const std::string reported = reported_by([&] { controller.joint_space_trajectory(std::array<joint_vector, 1>{configuration(0.9, -0.9)}); });
+
+    CHECK_FALSE(controller.executing());
+    CHECK((robot.joint_positions().array() == held.array()).all());
+    CHECK(reported.find("[error]") != std::string::npos);
 }
 
 // The comparison is exact rather than approximate: a consumer that substituted the seed, the

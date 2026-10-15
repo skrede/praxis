@@ -59,14 +59,15 @@ private:
 };
 
 template<trajectory::configuration point::*Member>
-expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> not_finite_task_space_waypoints(const kinematics &solver, std::span<const transform> waypoints,
+expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> not_finite_task_space_waypoints(const trajectory::trajectory_ops &trajectory, const motion_ops &motion,
+                                                                                                     const kinematics &solver, std::span<const transform> waypoints,
                                                                                                      const joint_vector &j0, const joint_limits &limits)
 {
-    expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> motion = task_space_waypoints(solver, waypoints, j0, limits);
-    if(!motion || *motion == nullptr)
-        return motion;
+    expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> answered = task_space_waypoints(trajectory, motion, solver, waypoints, j0, limits);
+    if(!answered || *answered == nullptr)
+        return answered;
 
-    return std::unique_ptr<trajectory::trajectory_generator>(std::make_unique<not_finite_motion<Member>>(std::move(*motion)));
+    return std::unique_ptr<trajectory::trajectory_generator>(std::make_unique<not_finite_motion<Member>>(std::move(*answered)));
 }
 
 struct task_entry

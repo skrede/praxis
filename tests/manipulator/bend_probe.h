@@ -8,6 +8,7 @@
 #include "praxis/manipulator/capabilities.h"
 
 #include "praxis/trajectory/trajectory.h"
+#include "praxis/trajectory/capabilities.h"
 
 #include "praxis/rigid_motion/capabilities.h"
 
@@ -175,8 +176,8 @@ void note_answers_apart(const manipulator::capabilities &held, const manipulator
     const std::array<transform, 1> route{*stepped};
 
     seen[15] = seen[15] ||
-            answers_apart(held.trajectory.task_space_waypoints(*composed, route, start, example.chain.limits),
-                          bent.trajectory.task_space_waypoints(*composed, route, start, example.chain.limits));
+            answers_apart(held.trajectory.task_space_waypoints(trajectory::baseline().trajectory, held.motion, *composed, route, start, example.chain.limits),
+                          bent.trajectory.task_space_waypoints(trajectory::baseline().trajectory, held.motion, *composed, route, start, example.chain.limits));
 }
 
 std::array<bool, every_row> apart_over_the_run(const manipulator::capabilities &held, const manipulator::capabilities &bent)

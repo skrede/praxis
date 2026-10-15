@@ -6,7 +6,9 @@
 
 #include <spdlog/spdlog.h>
 
+#include <span>
 #include <memory>
+#include <vector>
 #include <utility>
 #include <algorithm>
 #include <functional>
@@ -94,6 +96,16 @@ expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> joint_space
     const auto straight = injected_path.joint_straight_line;
 
     return compose(scaled, bounds, start, [straight, start, target](double s) { return straight(start, target, s); });
+}
+
+expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> via_point_motion(const trajectory::trajectory_ops &injected_trajectory, std::span<const joint_vector> positions,
+                                                                                      const joint_vector &j0, const joint_limits &limits)
+{
+    const expected<std::vector<trajectory::via_point>, refusal> schedule = injected_trajectory.via_point_schedule(positions, j0, limits);
+    if(!schedule)
+        return unexpected(schedule.error());
+
+    return injected_trajectory.joint_space_via_points(*schedule);
 }
 
 expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> task_space_motion(const motion_ops &injected_motion, const prepared_time_scaling &scaled, const kinematics &solver,
