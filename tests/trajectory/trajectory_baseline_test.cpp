@@ -42,7 +42,7 @@ TEST_CASE("a_value_initialized_capabilities_reports_every_slot_holding_its_inert
     const std::array<capability_view, 4> reported = capability_views(untouched);
 
     REQUIRE(count_defaults(reported) == slot_count());
-    REQUIRE(slot_count() == 12u);
+    REQUIRE(slot_count() == 14u);
 }
 
 TEST_CASE("overriding_a_bound_slot_leaves_it_bound")

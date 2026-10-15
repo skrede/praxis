@@ -25,9 +25,11 @@ constexpr std::uint64_t recorded_seed = 0xC0FFEEu;
 constexpr std::size_t cases_per_row   = 24u;
 constexpr std::size_t wider_run       = 200u;
 
-// The rows answering a prepared generator are the last three the report lists.
+// The rows answering a prepared generator are the four after the first nine the report lists, the
+// joint-space waypoint row the third of them; the via-point schedule row after them answers a value.
 constexpr std::size_t first_generator_row = 9u;
-constexpr std::size_t generator_rows      = 3u;
+constexpr std::size_t generator_rows      = 4u;
+constexpr std::size_t waypoint_row        = 11u;
 
 evaluation_report reported_against(const trajectory::capabilities &reference, const trajectory::capabilities &other, std::size_t cases)
 {
@@ -39,6 +41,7 @@ trajectory::capabilities declining_every_generator()
     trajectory::capabilities shapes = trajectory::baseline();
 
     shapes.trajectory.joint_space_waypoints         = &fixture::declining_joint_space_waypoints;
+    shapes.trajectory.joint_space_via_points        = &fixture::declining_joint_space_via_points;
     shapes.pose_trajectory.decoupled_pose_waypoints = &fixture::declining_pose_waypoints;
     shapes.pose_trajectory.screw_pose_waypoints     = &fixture::declining_pose_waypoints;
 
@@ -50,6 +53,7 @@ trajectory::capabilities building_no_generator()
     trajectory::capabilities shapes = trajectory::baseline();
 
     shapes.trajectory.joint_space_waypoints         = &fixture::unbuilt_joint_space_waypoints;
+    shapes.trajectory.joint_space_via_points        = &fixture::unbuilt_joint_space_via_points;
     shapes.pose_trajectory.decoupled_pose_waypoints = &fixture::unbuilt_pose_waypoints;
     shapes.pose_trajectory.screw_pose_waypoints     = &fixture::unbuilt_pose_waypoints;
 
@@ -79,9 +83,9 @@ TEST_CASE("a_generator_pair_exactly_one_side_built_is_one_refused_and_the_side_t
     fixture::forget_what_was_driven();
 
     const evaluation_report reported = reported_against(counted, unbuilt, cases_per_row);
-    const slot_report &driving       = reported.slots.back();
+    const slot_report &driving       = reported.slots.at(waypoint_row);
 
-    REQUIRE(reported.slots.size() == first_generator_row + generator_rows);
+    REQUIRE(reported.slots.size() == first_generator_row + generator_rows + 1u);
     REQUIRE(driving.slot == "trajectory.joint_space_waypoints");
     REQUIRE(driving.verdict == agreement::not_exercised);
     REQUIRE(driving.outcomes.one_refused == cases_per_row);
@@ -104,7 +108,7 @@ TEST_CASE("two_generators_whose_durations_differ_are_reported_as_differing_and_a
     fixture::forget_what_was_driven();
 
     const evaluation_report reported = reported_against(counted, stretched, cases_per_row);
-    const slot_report &driving       = reported.slots.back();
+    const slot_report &driving       = reported.slots.at(waypoint_row);
 
     REQUIRE(driving.slot == "trajectory.joint_space_waypoints");
     REQUIRE(driving.verdict == agreement::differed);
@@ -130,9 +134,9 @@ TEST_CASE("two_generators_reporting_one_duration_are_sampled_at_a_count_that_doe
 
     const evaluation_report twice = reported_against(counted, counted, 2u * cases_per_row);
 
-    REQUIRE(once.slots.back().verdict == agreement::agreed);
-    REQUIRE(once.slots.back().outcomes.agreed == cases_per_row);
-    REQUIRE(twice.slots.back().outcomes.agreed == 2u * cases_per_row);
+    REQUIRE(once.slots.at(waypoint_row).verdict == agreement::agreed);
+    REQUIRE(once.slots.at(waypoint_row).outcomes.agreed == cases_per_row);
+    REQUIRE(twice.slots.at(waypoint_row).outcomes.agreed == 2u * cases_per_row);
     REQUIRE(durations_taken == 2u * cases_per_row);
     REQUIRE(over_one_run > 0u);
     REQUIRE(over_one_run % (2u * cases_per_row) == 0u);
@@ -146,8 +150,8 @@ TEST_CASE("a_generator_row_reaches_its_refusal_channel_through_the_object_it_was
     const evaluation_report differing = reported_against(inert, declining_every_generator(), cases_per_row);
     const evaluation_report one_sided = reported_against(building_no_generator(), inert, cases_per_row);
 
-    REQUIRE(alike.slots.size() == first_generator_row + generator_rows);
-    for(std::size_t row = first_generator_row; row < alike.slots.size(); ++row)
+    REQUIRE(alike.slots.size() == first_generator_row + generator_rows + 1u);
+    for(std::size_t row = first_generator_row; row < first_generator_row + generator_rows; ++row)
     {
         INFO(alike.slots.at(row).slot);
         REQUIRE(alike.slots.at(row).verdict == agreement::both_refused);

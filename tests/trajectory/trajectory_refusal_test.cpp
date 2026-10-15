@@ -1,6 +1,7 @@
 #include "praxis/trajectory/path.h"
 #include "praxis/trajectory/types.h"
 #include "praxis/trajectory/evaluation.h"
+#include "praxis/trajectory/trajectory.h"
 #include "praxis/trajectory/capabilities.h"
 #include "praxis/trajectory/time_scaling.h"
 
@@ -16,7 +17,9 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <span>
 #include <cmath>
+#include <vector>
 #include <cstddef>
 #include <cstdint>
 
@@ -27,11 +30,12 @@ namespace {
 
 constexpr std::uint64_t recorded_seed = 0xC0FFEEu;
 constexpr std::size_t cases_per_row   = 24u;
-constexpr std::size_t compared_rows   = 12u;
+constexpr std::size_t compared_rows   = 14u;
 
-// The rows answering a value rather than a prepared generator are the first nine the report lists.
-// The three after them hand back an object and decline through it instead.
-constexpr std::size_t value_rows = 9u;
+// The rows answering a prepared generator, which decline through it instead, are the four after the
+// first nine the report lists; every other row answers a value.
+constexpr std::size_t first_generator_row = 9u;
+constexpr std::size_t generator_rows      = 4u;
 
 // Wider than the run the other cases draw, so the bounded profile is drawn over many bound pairs.
 constexpr std::size_t wider_run = 200u;
@@ -61,6 +65,17 @@ expected<transform, refusal> degenerate_pose_path(const transform &, const trans
     return praxis::unexpected(refusal::degenerate);
 }
 
+expected<std::vector<trajectory::via_point>, refusal> degenerate_schedule(std::span<const trajectory::configuration>, const trajectory::configuration &,
+                                                                          const trajectory::configuration_limits &)
+{
+    return praxis::unexpected(refusal::degenerate);
+}
+
+bool answers_a_value(std::size_t row)
+{
+    return row < first_generator_row || row >= first_generator_row + generator_rows;
+}
+
 // Every slot declines, and every one of them declines for a reason the inert bindings never give.
 trajectory::capabilities declining_for_another_reason()
 {
@@ -75,6 +90,7 @@ trajectory::capabilities declining_for_another_reason()
     shapes.path.joint_straight_line                            = &degenerate_joint_path;
     shapes.path.screw                                          = &degenerate_pose_path;
     shapes.path.decoupled                                      = &degenerate_pose_path;
+    shapes.trajectory.via_point_schedule                       = &degenerate_schedule;
 
     return shapes;
 }
@@ -112,9 +128,11 @@ TEST_CASE("two_bindings_declining_for_different_reasons_reach_an_outcome_of_thei
     const evaluation_report reported = reported_against(inert, declining_for_another_reason());
 
     REQUIRE(reported.slots.size() == compared_rows);
-    for(std::size_t at = 0; at < value_rows; ++at)
+    for(std::size_t at = 0; at < reported.slots.size(); ++at)
     {
         const slot_report &row = reported.slots.at(at);
+        if(!answers_a_value(at))
+            continue;
 
         INFO(row.slot);
         REQUIRE(row.verdict == agreement::refused_differently);
@@ -130,9 +148,11 @@ TEST_CASE("a_case_exactly_one_side_declines_is_counted_and_folds_nothing")
     const evaluation_report reported = reported_against(reference, inert);
 
     REQUIRE(reported.slots.size() == compared_rows);
-    for(std::size_t at = 0; at < value_rows; ++at)
+    for(std::size_t at = 0; at < reported.slots.size(); ++at)
     {
         const slot_report &row = reported.slots.at(at);
+        if(!answers_a_value(at))
+            continue;
 
         INFO(row.slot);
         REQUIRE(row.outcomes.agreed == 0u);
@@ -161,7 +181,7 @@ TEST_CASE("an_unbound_generator_slot_against_a_bound_one_is_a_difference_in_what
     const trajectory::capabilities inert{};
     const evaluation_report reported = reported_against(reference, inert);
 
-    for(std::size_t row = value_rows; row < reported.slots.size(); ++row)
+    for(std::size_t row = first_generator_row; row < first_generator_row + generator_rows; ++row)
     {
         INFO(reported.slots.at(row).slot);
         REQUIRE(reported.slots.at(row).verdict == agreement::differed);

@@ -9,6 +9,7 @@
 
 #include <span>
 #include <memory>
+#include <vector>
 
 namespace praxis::trajectory {
 
@@ -17,6 +18,14 @@ struct trajectory_sample
     configuration position;
     configuration velocity;
     configuration acceleration;
+};
+
+// A configuration the run stands at, at a time in seconds from its start, moving at a velocity.
+struct via_point
+{
+    double time;
+    configuration position;
+    configuration velocity;
 };
 
 class trajectory_generator
@@ -43,6 +52,8 @@ public:
 namespace praxis::trajectory::inert {
 
 expected<std::unique_ptr<trajectory_generator>, refusal> joint_space_waypoints(std::span<const configuration> waypoints, const configuration &j0, const configuration_limits &limits);
+expected<std::unique_ptr<trajectory_generator>, refusal> joint_space_via_points(std::span<const via_point> via_points);
+expected<std::vector<via_point>, refusal> via_point_schedule(std::span<const configuration> positions, const configuration &j0, const configuration_limits &limits);
 
 }
 
@@ -50,9 +61,9 @@ namespace praxis::trajectory {
 
 // Declaration order is frozen: a designated initializer must name members in declaration order, so
 // reordering a slot breaks every project that already composes this aggregate. Appending is safe.
-// Only a via-point factory is here: its coefficients are solved once and sampled many times. A
-// point-to-point motion is a path composed with a time scaling and needs no prepared object. The
-// kinematic limits enter at construction, since the duration is derived from them.
+// Only via-point factories and the step choosing their via points are here: a run's coefficients are
+// solved once and sampled many times. A point-to-point motion is a path composed with a time scaling
+// and needs no prepared object. The kinematic limits enter where a duration is derived from them.
 //
 // A single configuration is reached from j0 in a straight line at constant speed, and two are joined
 // by one. Three or more are joined by one cubic per segment, Lynch & Park, Modern Robotics,
@@ -70,10 +81,31 @@ namespace praxis::trajectory {
 // is not finite, on either side, agrees with nothing. Rows of differing width and an empty run are
 // refused as unsupported_input, and so, in a run of three or more, are a row repeating the
 // configuration before it and a coordinate that is not finite.
+//
+// joint_space_via_points joins every pair of consecutive via points by one cubic per degree of
+// freedom matching the position and velocity of both at their times, Lynch & Park, Modern Robotics,
+// sec. 9.3, eq. (9.25)-(9.29). It is judged by its duration, the last via point's time, and by
+// samples as above. A run handed for judgment holds at least two via points, starts at time 0, its
+// times strictly increase, every position and velocity has one width and every value is finite;
+// nothing outside that is judged, and a reference refuses it as unsupported_input.
+//
+// via_point_schedule chooses those via points from configurations. One configuration is joined to it
+// from j0 and two are joined to each other; three or more are joined as above, at rest at both ends
+// with eq. (2.3) inside, each segment given the time its slowest joint needs at its bound and every
+// time then stretched by the one factor above, the velocities being those at the stretched times. A
+// run of one or two is therefore at rest at both via points, over the slowest joint's traversal
+// stretched until the cubic's peak speed, 1.5 times its average, reaches the bound (sec. 9.2.2.1). A
+// run of one or two that does not move, an empty run, rows of differing width, a coordinate that is
+// not finite, and in a run of three or more a row repeating the one before it are refused as
+// unsupported_input. A schedule is judged by its length and element by element, each time against
+// the larger of one and its magnitude and each position and velocity by its difference.
 struct trajectory_ops
 {
     expected<std::unique_ptr<trajectory_generator>, refusal> (*joint_space_waypoints)(std::span<const configuration> waypoints, const configuration &j0,
-                                                                                      const configuration_limits &limits) = &inert::joint_space_waypoints;
+                                                                                      const configuration_limits &limits)     = &inert::joint_space_waypoints;
+    expected<std::unique_ptr<trajectory_generator>, refusal> (*joint_space_via_points)(std::span<const via_point> via_points) = &inert::joint_space_via_points;
+    expected<std::vector<via_point>, refusal> (*via_point_schedule)(std::span<const configuration> positions, const configuration &j0,
+                                                                    const configuration_limits &limits)                       = &inert::via_point_schedule;
 };
 
 }

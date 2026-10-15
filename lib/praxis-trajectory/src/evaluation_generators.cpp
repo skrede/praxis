@@ -4,11 +4,16 @@
 
 #include "praxis/trajectory/slots.h"
 
+#include "praxis/evaluation/comparators.h"
+
 #include <span>
 #include <array>
+#include <cmath>
 #include <memory>
+#include <vector>
 #include <cstddef>
 #include <optional>
+#include <algorithm>
 
 namespace praxis::trajectory {
 
@@ -46,6 +51,56 @@ evaluation::case_result compare_joint_space_waypoints(const void *first, const v
     return driven(**held, **other, configuration_kind, allowed);
 }
 
+evaluation::case_result compare_joint_space_via_points(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed)
+{
+    const via_point_case example = drawn_via_point_case(drawn);
+
+    const expected<std::unique_ptr<trajectory_generator>, refusal> held  = trajectories_of(first).joint_space_via_points(example.via_points);
+    const expected<std::unique_ptr<trajectory_generator>, refusal> other = trajectories_of(second).joint_space_via_points(example.via_points);
+    if(const std::optional<evaluation::case_result> refused = refusal_outcome(held, other))
+        return *refused;
+    if(!both_named_a_motion(*held, *other))
+        return differing(configuration_kind);
+
+    return driven(**held, **other, configuration_kind, allowed);
+}
+
+// Each time over the larger of one and the second side's magnitude, each position and velocity by
+// its difference, folded to the loosest.
+evaluation::residual schedule_residual(const std::vector<via_point> &held, const std::vector<via_point> &other)
+{
+    double worst = 0.0;
+    for(std::size_t k = 0u; k < held.size(); ++k)
+    {
+        const via_point &first  = held[k];
+        const via_point &second = other[k];
+        if(!std::isfinite(first.time) || !std::isfinite(second.time) || !first.position.allFinite() || !first.velocity.allFinite() || !second.position.allFinite() ||
+           !second.velocity.allFinite() || first.position.size() != second.position.size() || first.velocity.size() != second.velocity.size())
+            return differing(configuration_kind).difference;
+
+        worst = std::max({worst, std::abs(first.time - second.time) / std::max(1.0, std::abs(second.time)), evaluation::element_wise_residual(first.position, second.position).magnitude,
+                          evaluation::element_wise_residual(first.velocity, second.velocity).magnitude});
+    }
+
+    return evaluation::residual{configuration_kind, worst, 0.0};
+}
+
+evaluation::case_result compare_via_point_schedule(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed)
+{
+    const joint_waypoint_case example = drawn_joint_waypoint_case(drawn);
+    if(!advances_at_every_row(example.seed, example.waypoints))
+        return unusable_input(configuration_kind);
+
+    const expected<std::vector<via_point>, refusal> held  = trajectories_of(first).via_point_schedule(example.waypoints, example.seed, example.limits);
+    const expected<std::vector<via_point>, refusal> other = trajectories_of(second).via_point_schedule(example.waypoints, example.seed, example.limits);
+    if(const std::optional<evaluation::case_result> refused = refusal_outcome(held, other))
+        return *refused;
+    if(held->size() != other->size())
+        return differing(configuration_kind);
+
+    return judged(schedule_residual(*held, *other), allowed);
+}
+
 evaluation::case_result over_pose_waypoints(pose_waypoint_factory held_by, pose_waypoint_factory bound_by, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed)
 {
     const pose_waypoint_case example = drawn_pose_waypoint_case(drawn);
@@ -76,6 +131,8 @@ evaluation::case_result compare_screw_pose_waypoints(const void *first, const vo
 // exactly as the descriptor table spells it.
 constexpr evaluation::tolerance_pair driven_pose_allowance{driven_pose_tolerance_radians, driven_pose_tolerance_metres};
 constexpr evaluation::tolerance_pair driven_configuration_allowance{driven_configuration_tolerance, driven_configuration_tolerance};
+constexpr evaluation::tolerance_pair via_point_allowance{via_point_run_tolerance, via_point_run_tolerance};
+constexpr evaluation::tolerance_pair schedule_allowance{via_point_schedule_tolerance, via_point_schedule_tolerance};
 
 constexpr std::array pose_trajectory_table{
         evaluation::slot_evaluation{"pose_trajectory.decoupled_pose_waypoints", pose_kind, driven_pose_allowance, &compare_decoupled_pose_waypoints},
@@ -85,6 +142,8 @@ constexpr std::array pose_trajectory_table{
 constexpr std::array trajectory_table{
         evaluation::slot_evaluation{"trajectory.joint_space_waypoints", configuration_kind, driven_configuration_allowance, &compare_joint_space_waypoints,
                                     driven_configuration_measured_to_cases},
+        evaluation::slot_evaluation{"trajectory.joint_space_via_points", configuration_kind, via_point_allowance, &compare_joint_space_via_points},
+        evaluation::slot_evaluation{"trajectory.via_point_schedule", configuration_kind, schedule_allowance, &compare_via_point_schedule, via_point_schedule_measured_to_cases},
 };
 
 static_assert(pose_trajectory_table.size() == static_cast<std::size_t>(pose_trajectory_slot::count));

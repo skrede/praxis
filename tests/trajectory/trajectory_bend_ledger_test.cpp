@@ -23,7 +23,7 @@ namespace {
 
 constexpr std::uint64_t recorded_seed = 0xC0FFEEu;
 constexpr std::size_t cases_per_row   = 24u;
-constexpr std::size_t compared_rows   = 12u;
+constexpr std::size_t compared_rows   = 14u;
 
 using displacement = std::array<double, static_cast<std::size_t>(fixture::bent::count)>;
 
@@ -34,18 +34,18 @@ struct judged_at
     displacement at;
 };
 
-// One entry per bound the twelve rows carry, standing exactly at it. A bound is a HALF and not a row:
+// One entry per bound the fourteen rows carry, standing exactly at it. A bound is a HALF and not a row:
 // a pose row is judged on its rotation in radians and its translation in metres separately, so a
 // displacement standing at one of them leaves the other at zero, or a half widened by a decade
 // hides behind whichever of the two the fold happened to report. Every number is written out rather
 // than derived from the bounds themselves, so a bound moved a decade in either direction fails here.
-constexpr std::array<judged_at, 16> every_bound{
+constexpr std::array<judged_at, 18> every_bound{
         judged_at{0u, {1.0e-12, 0.0, 0.0, 0.0, 0.0}},   judged_at{1u, {1.0e-11, 0.0, 0.0, 0.0, 0.0}},    judged_at{2u, {1.0e-12, 0.0, 0.0, 0.0, 0.0}},
         judged_at{3u, {1.0e-12, 0.0, 0.0, 0.0, 0.0}},   judged_at{4u, {1.0e-12, 0.0, 0.0, 0.0, 0.0}},    judged_at{5u, {1.0e-12, 0.0, 0.0, 0.0, 0.0}},
         judged_at{6u, {1.0e-13, 0.0, 0.0, 0.0, 0.0}},   judged_at{7u, {0.0, 1.0e-6, 0.0, 0.0, 0.0}},     judged_at{7u, {0.0, 0.0, 1.0e-5, 0.0, 0.0}},
         judged_at{8u, {0.0, 1.0e-6, 0.0, 0.0, 0.0}},    judged_at{8u, {0.0, 0.0, 1.0e-12, 0.0, 0.0}},    judged_at{9u, {0.0, 1.0e-3, 0.0, 1.0e-3, 0.0}},
         judged_at{9u, {0.0, 0.0, 1.0e-2, 0.0, 1.0e-2}}, judged_at{10u, {0.0, 1.0e-3, 0.0, 1.0e-3, 0.0}}, judged_at{10u, {0.0, 0.0, 1.0e-2, 0.0, 1.0e-2}},
-        judged_at{11u, {1.0e-8, 0.0, 0.0, 0.0, 0.0}},
+        judged_at{11u, {1.0e-8, 0.0, 0.0, 0.0, 0.0}},   judged_at{12u, {1.0e-10, 0.0, 0.0, 0.0, 0.0}},   judged_at{13u, {1.0e-8, 0.0, 0.0, 0.0, 0.0}},
 };
 
 // The same displacements a decade beneath, which the row must fail to report.
@@ -167,9 +167,9 @@ TEST_CASE("the_times_a_case_samples_at_reach_both_ends_of_the_motion")
     const evaluation_report early = reported_against(reference, at_the_start);
     const evaluation_report late  = reported_against(reference, at_the_finish);
 
-    REQUIRE(early.slots.back().slot == "trajectory.joint_space_waypoints");
+    REQUIRE(early.slots.at(11).slot == "trajectory.joint_space_waypoints");
     REQUIRE(disagreeing_slots(early) == std::vector<std::string_view>{"trajectory.joint_space_waypoints"});
     REQUIRE(disagreeing_slots(late) == std::vector<std::string_view>{"trajectory.joint_space_waypoints"});
-    REQUIRE(early.slots.back().outcomes.differed == cases_per_row);
-    REQUIRE(late.slots.back().outcomes.differed == cases_per_row);
+    REQUIRE(early.slots.at(11).outcomes.differed == cases_per_row);
+    REQUIRE(late.slots.at(11).outcomes.differed == cases_per_row);
 }

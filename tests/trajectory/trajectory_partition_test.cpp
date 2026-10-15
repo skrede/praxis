@@ -14,7 +14,7 @@ using namespace praxis::trajectory;
 namespace {
 
 // One pairing per slot of this extension: the slot's own enumerator beside whether the aggregate
-// member it names returns through the refusal channel. Nine slots in total, which is the sum of
+// member it names returns through the refusal channel. Fourteen slots in total, which is the sum of
 // the four enumerations this extension declares -- time_scaling_slot, path_slot,
 // pose_trajectory_slot and trajectory_slot -- each of which the descriptor table already holds to
 // its own size. Nothing else compares an enumerator against the type of the member it stands for,
@@ -58,6 +58,8 @@ constexpr std::array pose_trajectory_partition{
 
 constexpr std::array trajectory_partition{
         pairing{static_cast<std::size_t>(trajectory_slot::joint_space_waypoints), returns_refusal_v<decltype(trajectory_ops::joint_space_waypoints)>},
+        pairing{static_cast<std::size_t>(trajectory_slot::joint_space_via_points), returns_refusal_v<decltype(trajectory_ops::joint_space_via_points)>},
+        pairing{static_cast<std::size_t>(trajectory_slot::via_point_schedule), returns_refusal_v<decltype(trajectory_ops::via_point_schedule)>},
 };
 
 static_assert(time_scaling_partition.size() == static_cast<std::size_t>(time_scaling_slot::count));
@@ -85,6 +87,8 @@ static_assert(pose_trajectory_partition[static_cast<std::size_t>(pose_trajectory
 static_assert(pose_trajectory_partition[static_cast<std::size_t>(pose_trajectory_slot::screw_pose_waypoints)].carries_the_channel);
 
 static_assert(trajectory_partition[static_cast<std::size_t>(trajectory_slot::joint_space_waypoints)].carries_the_channel);
+static_assert(trajectory_partition[static_cast<std::size_t>(trajectory_slot::joint_space_via_points)].carries_the_channel);
+static_assert(trajectory_partition[static_cast<std::size_t>(trajectory_slot::via_point_schedule)].carries_the_channel);
 
 constexpr std::size_t counted(std::span<const pairing> partition)
 {
@@ -104,6 +108,6 @@ TEST_CASE("every_slot_of_this_extension_is_paired_with_its_enumerator_and_carrie
     const std::size_t paired   = time_scaling_partition.size() + path_partition.size() + pose_trajectory_partition.size() + trajectory_partition.size();
     const std::size_t fallible = counted(time_scaling_partition) + counted(path_partition) + counted(pose_trajectory_partition) + counted(trajectory_partition);
 
-    CHECK(paired == 12u);
-    CHECK(fallible == 12u);
+    CHECK(paired == 14u);
+    CHECK(fallible == 14u);
 }

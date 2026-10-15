@@ -31,7 +31,12 @@ double via_velocity(double before, double after);
 // Lynch & Park, Modern Robotics, sec. 9.3, eq. (9.26)-(9.29).
 Eigen::Vector4d segment_coefficients(double from, double to, double leaving, double arriving, double span);
 
-// The run through `waypoints` at `knots`, with interior velocities by eq. (2.3) and at rest at both ends.
+// `waypoints` at `knots`, with interior velocities by eq. (2.3) and at rest at both ends.
+std::vector<via_point> fitted_via_points(std::span<const configuration> waypoints, const std::vector<double> &knots);
+
+// The run through every via point at its time with its velocity.
+via_point_run run_through(std::span<const via_point> via_points);
+
 via_point_run fitted_run(std::span<const configuration> waypoints, const std::vector<double> &knots);
 
 // The largest speed degree of freedom `dof` reaches over the run, taken per segment at both of its

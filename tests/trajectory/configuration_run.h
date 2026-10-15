@@ -42,6 +42,22 @@ inline std::unique_ptr<trajectory_generator> commanded(std::span<const configura
     return std::move(*motion);
 }
 
+inline std::vector<via_point> scheduled(std::span<const configuration> positions, const configuration &j0, const configuration_limits &limits)
+{
+    auto schedule = via_point_schedule(positions, j0, limits);
+    REQUIRE(schedule);
+
+    return std::move(*schedule);
+}
+
+inline std::unique_ptr<trajectory_generator> joined(std::span<const via_point> via)
+{
+    auto motion = joint_space_via_points(via);
+    REQUIRE(motion);
+
+    return std::move(*motion);
+}
+
 inline trajectory_sample at(const trajectory_generator &motion, double t)
 {
     auto sampled = motion.sample(t);

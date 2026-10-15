@@ -70,7 +70,7 @@ TEST_CASE("a_displacement_of_a_sampled_rotation_moves_the_magnitude_half_and_lea
 {
     const evaluation_report reported = bent_in(fixture::bent::pose_radians, turned_by);
 
-    REQUIRE(reported.slots.size() == first_pose_row + pose_rows + 1u);
+    REQUIRE(reported.slots.size() == first_pose_row + pose_rows + 3u);
     for(std::size_t row = first_pose_row; row < first_pose_row + pose_rows; ++row)
     {
         INFO(reported.slots.at(row).slot);

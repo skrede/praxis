@@ -38,6 +38,16 @@ inline constexpr double driven_configuration_tolerance = 1.0e-8;
 // segment a run draws has no floor.
 inline constexpr std::size_t driven_configuration_measured_to_cases = 2000;
 
+// A driven configuration joined through drawn via points, in the same units as the bound above.
+inline constexpr double via_point_run_tolerance = 1.0e-10;
+
+// A chosen via point's time as a fraction of the larger of one and its magnitude, its position in
+// radians and its velocity in radians per second.
+inline constexpr double via_point_schedule_tolerance = 1.0e-8;
+
+// The run the bound above was measured over: the shortest segment a run draws has no floor.
+inline constexpr std::size_t via_point_schedule_measured_to_cases = 400000;
+
 // A driven pose and both its twists: the rotation and the two angular parts in radians, per second
 // and per second squared.
 inline constexpr double driven_pose_tolerance_radians = 1.0e-3;

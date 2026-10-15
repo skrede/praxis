@@ -12,6 +12,7 @@
 #include <span>
 #include <array>
 #include <memory>
+#include <vector>
 #include <cstddef>
 #include <utility>
 
@@ -83,6 +84,22 @@ displaced_joint_space_waypoints(std::span<const trajectory::configuration> waypo
     return wrapping<trajectory::trajectory_generator, trajectory::trajectory_sample>(trajectory::joint_space_waypoints(waypoints, j0, limits));
 }
 
+inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> displaced_joint_space_via_points(std::span<const trajectory::via_point> via_points)
+{
+    return wrapping<trajectory::trajectory_generator, trajectory::trajectory_sample>(trajectory::joint_space_via_points(via_points));
+}
+
+// The middle via point's first velocity, which is a moving one wherever the run has an interior row.
+inline expected<std::vector<trajectory::via_point>, refusal> displaced_via_point_schedule(std::span<const trajectory::configuration> positions, const trajectory::configuration &j0,
+                                                                                          const trajectory::configuration_limits &limits)
+{
+    expected<std::vector<trajectory::via_point>, refusal> chosen = trajectory::via_point_schedule(positions, j0, limits);
+    if(chosen)
+        (*chosen)[chosen->size() / 2u].velocity[0] += bent_by(bent::element_wise);
+
+    return chosen;
+}
+
 inline expected<std::unique_ptr<trajectory::pose_trajectory_generator>, refusal> displaced_decoupled_pose_waypoints(std::span<const transform> waypoints, const transform &seed,
                                                                                                                     double max_linear_speed, double max_angular_speed)
 {
@@ -110,10 +127,20 @@ inline void bend_joint_space_waypoints(trajectory::capabilities &shapes)
     shapes.trajectory.joint_space_waypoints = &displaced_joint_space_waypoints;
 }
 
+inline void bend_joint_space_via_points(trajectory::capabilities &shapes)
+{
+    shapes.trajectory.joint_space_via_points = &displaced_joint_space_via_points;
+}
+
+inline void bend_via_point_schedule(trajectory::capabilities &shapes)
+{
+    shapes.trajectory.via_point_schedule = &displaced_via_point_schedule;
+}
+
 // The index is the order the report lists slots in: the six time scalings in enumerator order, the
-// three paths, the two pose runs, then the configuration-space run. The function is total, so an
+// three paths, the two pose runs, then the three configuration-space slots. The function is total, so an
 // index past the last slot answers the reference unchanged and no visible difference.
-inline constexpr std::array<bend_applier, 12> bends{&bend_cubic,
+inline constexpr std::array<bend_applier, 14> bends{&bend_cubic,
                                                     &bend_quintic,
                                                     &bend_trapezoidal_from_velocity_acceleration,
                                                     &bend_trapezoidal_from_velocity_duration,
@@ -124,7 +151,9 @@ inline constexpr std::array<bend_applier, 12> bends{&bend_cubic,
                                                     &bend_decoupled,
                                                     &bend_decoupled_pose_waypoints,
                                                     &bend_screw_pose_waypoints,
-                                                    &bend_joint_space_waypoints};
+                                                    &bend_joint_space_waypoints,
+                                                    &bend_joint_space_via_points,
+                                                    &bend_via_point_schedule};
 
 inline trajectory::capabilities bent_at(std::size_t index)
 {

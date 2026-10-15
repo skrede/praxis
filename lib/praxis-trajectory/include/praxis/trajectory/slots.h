@@ -47,6 +47,8 @@ enum class pose_trajectory_slot : std::uint32_t
 enum class trajectory_slot : std::uint32_t
 {
     joint_space_waypoints,
+    joint_space_via_points,
+    via_point_schedule,
     count,
 };
 

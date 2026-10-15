@@ -99,6 +99,17 @@ expected<std::unique_ptr<trajectory_generator>, refusal> via_points(std::span<co
     return via_point_generator(std::move(run));
 }
 
+bool schedule_advances(std::size_t given, const std::vector<double> &times)
+{
+    if(given > 2u)
+        return rows_advance(times);
+    if(times.back() > 0.0)
+        return true;
+
+    spdlog::error("praxis: a run of one or two configurations that moves no joint whose velocity bound is positive does not move, and no via points are chosen for it");
+    return false;
+}
+
 }
 
 expected<std::unique_ptr<trajectory_generator>, refusal> joint_space_waypoints(std::span<const configuration> waypoints, const configuration &j0, const configuration_limits &limits)
@@ -113,6 +124,27 @@ expected<std::unique_ptr<trajectory_generator>, refusal> joint_space_waypoints(s
     spdlog::error("praxis: a run of waypoints joins at least one configuration and none were given");
 
     return unexpected(refusal::unsupported_input);
+}
+
+expected<std::vector<via_point>, refusal> via_point_schedule(std::span<const configuration> positions, const configuration &j0, const configuration_limits &limits)
+{
+    if(positions.empty())
+    {
+        spdlog::error("praxis: via points are chosen for at least one configuration and none were given");
+        return unexpected(refusal::unsupported_input);
+    }
+
+    std::vector<configuration> rows(positions.begin(), positions.end());
+    if(rows.size() == 1u)
+        rows.insert(rows.begin(), j0);
+    if(!widths_agree(rows) || !all_finite(rows))
+        return unexpected(refusal::unsupported_input);
+
+    const std::vector<double> apportioned = knot_times(rows, limits.velocity);
+    if(!schedule_advances(positions.size(), apportioned))
+        return unexpected(refusal::unsupported_input);
+
+    return fitted_via_points(rows, bounded_times(fitted_run(rows, apportioned), limits.velocity));
 }
 
 }

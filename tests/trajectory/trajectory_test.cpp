@@ -94,6 +94,37 @@ TEST_CASE("the_via_point_factory_slot_defaults_to_a_generator_that_refuses_to_sa
     }
 }
 
+TEST_CASE("the_via_point_slot_defaults_to_a_generator_that_refuses_to_sample")
+{
+    trajectory_ops ops{};
+    const configuration at_rest = configuration::Zero(2);
+    const std::vector<via_point> via{via_point{0.0, at_rest, at_rest}, via_point{1.0, configuration::Constant(2, 0.5), at_rest}};
+
+    REQUIRE(ops.joint_space_via_points != nullptr);
+
+    auto held = ops.joint_space_via_points(via);
+    REQUIRE(held);
+    REQUIRE(*held != nullptr);
+    REQUIRE(is_approx_equal((*held)->duration(), 0.0));
+
+    const expected<trajectory_sample, refusal> sampled = (*held)->sample(0.5);
+    REQUIRE(!sampled);
+    REQUIRE(sampled.error() == refusal::not_implemented);
+}
+
+TEST_CASE("the_via_point_schedule_slot_defaults_to_refusing_as_not_implemented")
+{
+    trajectory_ops ops{};
+    const configuration j0 = configuration::Constant(3, 0.25);
+    std::vector<configuration> configurations(3, configuration::Constant(3, 1.0));
+
+    REQUIRE(ops.via_point_schedule != nullptr);
+
+    const auto chosen = ops.via_point_schedule(configurations, j0, configuration_limits{});
+    REQUIRE(!chosen);
+    REQUIRE(chosen.error() == refusal::not_implemented);
+}
+
 TEST_CASE("sampling_by_absolute_time_is_repeatable_and_independent_of_the_order_of_the_calls")
 {
     composed_trajectory motion(configuration::Zero(3), configuration::Constant(3, 1.0), 2.0, &ramp);

@@ -26,12 +26,14 @@ praxis_add_module(trajectory
     src/evaluation_time_scaling.cpp
     src/evaluation_trapezoid_cases.cpp
     src/evaluation_waypoint_cases.cpp
+    src/evaluation_via_point_cases.cpp
     src/inert_path.cpp
     src/inert_trajectory.cpp
     src/inert_time_scaling.cpp
     src/inert_pose_trajectory.cpp
     src/baseline/path.cpp
     src/baseline/trajectory.cpp
+    src/baseline/via_points.cpp
     src/baseline/capabilities.cpp
     src/baseline/time_scaling.cpp
     src/baseline/swept_pose.h

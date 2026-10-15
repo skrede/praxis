@@ -120,6 +120,16 @@ inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> decl
     return answering_no_sample<trajectory::trajectory_generator, trajectory::trajectory_sample>();
 }
 
+inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> declining_joint_space_via_points(std::span<const trajectory::via_point>)
+{
+    return answering_no_sample<trajectory::trajectory_generator, trajectory::trajectory_sample>();
+}
+
+inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> unbuilt_joint_space_via_points(std::span<const trajectory::via_point>)
+{
+    return unexpected(refusal::degenerate);
+}
+
 inline expected<std::unique_ptr<trajectory::pose_trajectory_generator>, refusal> declining_pose_waypoints(std::span<const transform>, const transform &, double, double)
 {
     return answering_no_sample<trajectory::pose_trajectory_generator, trajectory::pose_sample>();

@@ -128,7 +128,7 @@ TEST_CASE("the_report_lists_its_rows_in_the_capabilitys_own_enumerator_order_and
     REQUIRE(reported_in_order(reported) == described_in_order(described));
     REQUIRE(reported_in_order(again) == reported_in_order(reported));
     REQUIRE(reported.slots.front().slot == "time_scaling.cubic");
-    REQUIRE(reported.slots.back().slot == "trajectory.joint_space_waypoints");
+    REQUIRE(reported.slots.back().slot == "trajectory.via_point_schedule");
 }
 
 TEST_CASE("the_residual_kinds_are_distributed_over_the_rows_as_the_four_tables_assign_them")
@@ -138,7 +138,7 @@ TEST_CASE("the_residual_kinds_are_distributed_over_the_rows_as_the_four_tables_a
     const std::size_t elements                    = carrying(compared, residual_kind::element_wise);
     const std::size_t poses                       = carrying(compared, residual_kind::pose);
 
-    REQUIRE(elements == 8u);
+    REQUIRE(elements == 10u);
     REQUIRE(poses == 4u);
     REQUIRE(carrying(compared, residual_kind::geodesic) == 0u);
     REQUIRE(carrying(compared, residual_kind::axis_up_to_sign) == 0u);

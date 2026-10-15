@@ -11,6 +11,7 @@
 
 #include <array>
 #include <memory>
+#include <vector>
 #include <cstddef>
 
 namespace {
@@ -25,12 +26,14 @@ struct reachable_types
     praxis::trajectory::pose_trajectory_ops pose_trajectory;
     praxis::trajectory::scaling_sample scaled;
     praxis::trajectory::trajectory_sample sampled;
+    praxis::trajectory::via_point passed;
     praxis::trajectory::pose_sample posed;
     praxis::trajectory::configuration_limits bounds;
     praxis::capability_view described;
     praxis::trajectory::capabilities composed;
     praxis::trajectory::path_slot_set expected;
     praxis::trajectory::path_slot named;
+    praxis::trajectory::trajectory_slot chosen;
 };
 
 }
@@ -41,6 +44,9 @@ std::size_t trajectory_surface()
 {
     reachable_types types{};
     expected<std::unique_ptr<trajectory_generator>, refusal> motion    = types.via_points.joint_space_waypoints({}, configuration(), types.bounds);
+    expected<std::vector<via_point>, refusal> schedule                 = types.via_points.via_point_schedule({}, configuration(), types.bounds);
+    expected<std::unique_ptr<trajectory_generator>, refusal> joined    = types.via_points.joint_space_via_points({&types.passed, 1u});
+    types.chosen                                                       = trajectory_slot::via_point_schedule;
     expected<std::unique_ptr<pose_trajectory_generator>, refusal> pose = types.pose_trajectory.decoupled_pose_waypoints({}, transform::Identity(), 1.0, 1.0);
     types.composed                                                     = baseline();
     types.named                                                        = path_slot::decoupled;
@@ -48,7 +54,7 @@ std::size_t trajectory_surface()
     types.expected.set(types.named);
     types.described = view_of(types.path);
     types.scaled    = types.time_scaling.quintic(0.0, 1.0).value_or(scaling_sample{});
-    if(!motion || !pose)
+    if(!motion || !pose || !joined)
         return 0;
 
     types.sampled = (*motion)->sample(types.scaled.s + types.scaled.ds + types.scaled.dds).value_or(trajectory_sample{});
@@ -60,7 +66,8 @@ std::size_t trajectory_surface()
             static_cast<std::size_t>(types.sampled.acceleration.size() + types.posed.velocity.size() + types.posed.position.size()) +
             static_cast<std::size_t>(types.path.screw(types.posed.position, transform::Identity(), 0.0).value_or(transform::Identity()).size()) +
             (types.expected.contains(types.named) ? 1u : 0u) + (holds_default(types.described, static_cast<std::size_t>(types.named)) ? 1u : 0u) +
-            (slot_name(types.described, 0).empty() ? 0u : 1u) + count_defaults(capability_views(types.composed));
+            (slot_name(types.described, 0).empty() ? 0u : 1u) + count_defaults(capability_views(types.composed)) + (schedule ? schedule->size() : 0u) +
+            static_cast<std::size_t>(types.chosen) + static_cast<std::size_t>(types.passed.position.size());
 }
 
 }

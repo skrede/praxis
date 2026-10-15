@@ -83,25 +83,42 @@ Eigen::Vector4d segment_coefficients(double from, double to, double leaving, dou
     return Eigen::Vector4d(from, leaving, a2, a3);
 }
 
-via_point_run fitted_run(std::span<const configuration> waypoints, const std::vector<double> &knots)
+std::vector<via_point> fitted_via_points(std::span<const configuration> waypoints, const std::vector<double> &knots)
 {
-    const Eigen::Index width = waypoints.front().size();
-    via_point_run run{knots, {}};
-    run.segments.reserve(waypoints.size() - 1u);
+    std::vector<via_point> fitted;
+    fitted.reserve(waypoints.size());
+    for(std::size_t k = 0u; k < waypoints.size(); ++k)
+        fitted.push_back(via_point{knots[k], waypoints[k], velocities_at(waypoints, knots, k)});
 
-    configuration leaving = velocities_at(waypoints, knots, 0u);
-    for(std::size_t j = 0u; j + 1u < waypoints.size(); ++j)
+    return fitted;
+}
+
+via_point_run run_through(std::span<const via_point> via_points)
+{
+    const Eigen::Index width = via_points.front().position.size();
+    via_point_run run;
+    run.knots.reserve(via_points.size());
+    run.segments.reserve(via_points.size() - 1u);
+
+    for(const via_point &at : via_points)
+        run.knots.push_back(at.time);
+    for(std::size_t j = 0u; j + 1u < via_points.size(); ++j)
     {
-        const configuration arriving = velocities_at(waypoints, knots, j + 1u);
+        const via_point &from = via_points[j];
+        const via_point &to   = via_points[j + 1u];
         segment_coefficient_block block(width, 4);
         for(Eigen::Index i = 0; i < width; ++i)
-            block.row(i) = segment_coefficients(waypoints[j][i], waypoints[j + 1u][i], leaving[i], arriving[i], knots[j + 1u] - knots[j]).transpose();
+            block.row(i) = segment_coefficients(from.position[i], to.position[i], from.velocity[i], to.velocity[i], to.time - from.time).transpose();
 
         run.segments.push_back(std::move(block));
-        leaving = arriving;
     }
 
     return run;
+}
+
+via_point_run fitted_run(std::span<const configuration> waypoints, const std::vector<double> &knots)
+{
+    return run_through(fitted_via_points(waypoints, knots));
 }
 
 double peak_speed(const via_point_run &run, Eigen::Index dof)

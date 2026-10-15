@@ -2,6 +2,7 @@
 #define HPP_GUARD_PRAXIS_TRAJECTORY_EVALUATION_CASES_H
 
 #include "praxis/trajectory/types.h"
+#include "praxis/trajectory/trajectory.h"
 
 #include "praxis/evaluation/generation.h"
 
@@ -150,6 +151,17 @@ pose_waypoint_case drawn_pose_waypoint_case(evaluation::case_source &drawn);
 // spreads, so the two consume the same values in the same order. Under `bulk` alone, a joint run of
 // at least three rows and two degrees of freedom holds one degree of freedom of one row after the
 // first exactly at the row before's; the three values deciding it are drawn under both spreads.
+
+// Via points in seconds, radians and radians per second, starting at time 0.
+struct via_point_case
+{
+    std::vector<via_point> via_points;
+};
+
+// Drawn from one source in this order and no other: the degree-of-freedom count, the via-point count
+// in [2, 7], then per via point after the first a segment duration log-uniform over [0.05, 2], then
+// per via point one position per degree of freedom and one velocity per degree of freedom in [-3, 3].
+via_point_case drawn_via_point_case(evaluation::case_source &drawn);
 
 // The uniform scalar every case here is built from. `angle_radians` is uniform over a full turn and
 // is the only uniform scalar a source draws, so an affine map of it is uniform over the range that

@@ -31,7 +31,9 @@ constexpr pose_trajectory_ops bound_pose_trajectory{
 };
 
 constexpr trajectory_ops bound_trajectory{
-        .joint_space_waypoints = &joint_space_waypoints,
+        .joint_space_waypoints  = &joint_space_waypoints,
+        .joint_space_via_points = &joint_space_via_points,
+        .via_point_schedule     = &via_point_schedule,
 };
 
 }
