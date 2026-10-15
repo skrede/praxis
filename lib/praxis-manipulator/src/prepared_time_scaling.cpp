@@ -131,7 +131,7 @@ expected<trajectory::scaling_sample, refusal> prepared_time_scaling::sample(doub
     if(!m_bounds)
         return unexpected(refusal::unsupported_input);
 
-    return m_scaling.trapezoidal(at, duration, m_bounds->max_rate, m_bounds->max_rate_change);
+    return m_scaling.trapezoidal_within_bounds(at, duration, m_bounds->max_rate, m_bounds->max_rate_change);
 }
 
 double prepared_time_scaling::duration(const joint_limits &bounds, const joint_vector &start, const joint_vector &target) const

@@ -26,7 +26,7 @@ constexpr std::size_t cases_per_row   = 24u;
 constexpr std::size_t wider_run       = 200u;
 
 // The rows answering a prepared generator are the last three the report lists.
-constexpr std::size_t first_generator_row = 6u;
+constexpr std::size_t first_generator_row = 9u;
 constexpr std::size_t generator_rows      = 3u;
 
 evaluation_report reported_against(const trajectory::capabilities &reference, const trajectory::capabilities &other, std::size_t cases)

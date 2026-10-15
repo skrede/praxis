@@ -13,7 +13,14 @@ namespace {
 constexpr std::array time_scaling_descriptors{
         slot_descriptor{"time_scaling.cubic", [](const void *value) -> bool { return static_cast<const time_scaling_ops *>(value)->cubic == &inert::cubic; }},
         slot_descriptor{"time_scaling.quintic", [](const void *value) -> bool { return static_cast<const time_scaling_ops *>(value)->quintic == &inert::quintic; }},
-        slot_descriptor{"time_scaling.trapezoidal", [](const void *value) -> bool { return static_cast<const time_scaling_ops *>(value)->trapezoidal == &inert::trapezoidal; }},
+        slot_descriptor{"time_scaling.trapezoidal_from_velocity_acceleration", [](const void *value) -> bool
+                        { return static_cast<const time_scaling_ops *>(value)->trapezoidal_from_velocity_acceleration == &inert::trapezoidal_from_velocity_acceleration; }},
+        slot_descriptor{"time_scaling.trapezoidal_from_velocity_duration", [](const void *value) -> bool
+                        { return static_cast<const time_scaling_ops *>(value)->trapezoidal_from_velocity_duration == &inert::trapezoidal_from_velocity_duration; }},
+        slot_descriptor{"time_scaling.trapezoidal_from_acceleration_duration", [](const void *value) -> bool
+                        { return static_cast<const time_scaling_ops *>(value)->trapezoidal_from_acceleration_duration == &inert::trapezoidal_from_acceleration_duration; }},
+        slot_descriptor{"time_scaling.trapezoidal_within_bounds",
+                        [](const void *value) -> bool { return static_cast<const time_scaling_ops *>(value)->trapezoidal_within_bounds == &inert::trapezoidal_within_bounds; }},
 };
 
 constexpr std::array path_descriptors{

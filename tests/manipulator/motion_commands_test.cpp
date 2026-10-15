@@ -246,8 +246,8 @@ TEST_CASE("the_trapezoidal_duration_stands_within_a_small_fraction_of_the_shorte
         const double span                = scaled.duration(bounds(), from, target);
         INFO("reach " << reach << " span " << span);
 
-        CHECK(reference.trapezoidal(0.0, span, held.max_rate, held.max_rate_change).has_value());
-        CHECK_FALSE(reference.trapezoidal(0.0, 0.999 * span, held.max_rate, held.max_rate_change).has_value());
+        CHECK(reference.trapezoidal_within_bounds(0.0, span, held.max_rate, held.max_rate_change).has_value());
+        CHECK_FALSE(reference.trapezoidal_within_bounds(0.0, 0.999 * span, held.max_rate, held.max_rate_change).has_value());
     }
 }
 

@@ -74,11 +74,11 @@ sides polynomial_sides(snapped_instant instant, double opening)
     return instant == snapped_instant::start ? sides{0.0, opening, opening} : sides{-opening, 0.0, 0.0};
 }
 
-// Where the coast is too short to part the ramp end from the coast end, both accept every phase.
-sides trapezoid_sides(const scaling_case &example)
+// Where the coast is too short to part the ramp end, in seconds, from the coast end, both accept
+// every phase.
+sides trapezoid_sides(const scaling_case &example, double ramp)
 {
     const double a     = example.acceleration_bound;
-    const double ramp  = trapezoid_ramp_duration(example.duration, a);
     const double ulp   = std::nextafter(example.duration, std::numeric_limits<double>::infinity()) - example.duration;
     const bool merged  = example.duration - ramp - ramp < 64.0 * ulp;
     const sides joined = sides{a, 0.0, -a};
@@ -114,12 +114,45 @@ evaluation::case_result compare_quintic(const void *first, const void *second, e
                     polynomial_sides(example.snapped, 0.0));
 }
 
-evaluation::case_result compare_trapezoidal(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed)
+// Lynch & Park, Modern Robotics, sec. 9.2.2.2: a book option's ramp lasts t_a = v/a.
+sides book_trapezoid_sides(const scaling_case &example)
+{
+    return trapezoid_sides(example, example.speed_bound / example.acceleration_bound);
+}
+
+evaluation::case_result compare_trapezoidal_from_velocity_acceleration(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed)
+{
+    const scaling_case example = drawn_velocity_acceleration_case(drawn);
+
+    return compared(time_scalings_of(first).trapezoidal_from_velocity_acceleration(example.at, example.speed_bound, example.acceleration_bound),
+                    time_scalings_of(second).trapezoidal_from_velocity_acceleration(example.at, example.speed_bound, example.acceleration_bound), allowed, example,
+                    book_trapezoid_sides(example));
+}
+
+evaluation::case_result compare_trapezoidal_from_velocity_duration(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed)
+{
+    const scaling_case example = drawn_velocity_duration_case(drawn);
+
+    return compared(time_scalings_of(first).trapezoidal_from_velocity_duration(example.at, example.duration, example.speed_bound),
+                    time_scalings_of(second).trapezoidal_from_velocity_duration(example.at, example.duration, example.speed_bound), allowed, example, book_trapezoid_sides(example));
+}
+
+evaluation::case_result compare_trapezoidal_from_acceleration_duration(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed)
+{
+    const scaling_case example = drawn_acceleration_duration_case(drawn);
+
+    return compared(time_scalings_of(first).trapezoidal_from_acceleration_duration(example.at, example.duration, example.acceleration_bound),
+                    time_scalings_of(second).trapezoidal_from_acceleration_duration(example.at, example.duration, example.acceleration_bound), allowed, example,
+                    book_trapezoid_sides(example));
+}
+
+evaluation::case_result compare_trapezoidal_within_bounds(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed)
 {
     const scaling_case example = drawn_trapezoid_case(drawn);
 
-    return compared(time_scalings_of(first).trapezoidal(example.at, example.duration, example.speed_bound, example.acceleration_bound),
-                    time_scalings_of(second).trapezoidal(example.at, example.duration, example.speed_bound, example.acceleration_bound), allowed, example, trapezoid_sides(example));
+    return compared(time_scalings_of(first).trapezoidal_within_bounds(example.at, example.duration, example.speed_bound, example.acceleration_bound),
+                    time_scalings_of(second).trapezoidal_within_bounds(example.at, example.duration, example.speed_bound, example.acceleration_bound), allowed, example,
+                    trapezoid_sides(example, trapezoid_ramp_duration(example.duration, example.acceleration_bound)));
 }
 
 constexpr evaluation::residual_kind sample_kind = evaluation::residual_kind::element_wise;
@@ -133,7 +166,10 @@ constexpr evaluation::tolerance_pair quintic_allowance{quintic_scaling_tolerance
 constexpr std::array time_scaling_table{
         evaluation::slot_evaluation{"time_scaling.cubic", sample_kind, sample_allowance, &compare_cubic},
         evaluation::slot_evaluation{"time_scaling.quintic", sample_kind, quintic_allowance, &compare_quintic},
-        evaluation::slot_evaluation{"time_scaling.trapezoidal", sample_kind, sample_allowance, &compare_trapezoidal},
+        evaluation::slot_evaluation{"time_scaling.trapezoidal_from_velocity_acceleration", sample_kind, sample_allowance, &compare_trapezoidal_from_velocity_acceleration},
+        evaluation::slot_evaluation{"time_scaling.trapezoidal_from_velocity_duration", sample_kind, sample_allowance, &compare_trapezoidal_from_velocity_duration},
+        evaluation::slot_evaluation{"time_scaling.trapezoidal_from_acceleration_duration", sample_kind, sample_allowance, &compare_trapezoidal_from_acceleration_duration},
+        evaluation::slot_evaluation{"time_scaling.trapezoidal_within_bounds", sample_kind, sample_allowance, &compare_trapezoidal_within_bounds},
 };
 
 static_assert(time_scaling_table.size() == static_cast<std::size_t>(time_scaling_slot::count));

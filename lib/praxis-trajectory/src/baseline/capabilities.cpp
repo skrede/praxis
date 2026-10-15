@@ -11,9 +11,12 @@ namespace praxis::trajectory {
 namespace {
 
 constexpr time_scaling_ops bound_time_scaling{
-        .cubic       = &cubic,
-        .quintic     = &quintic,
-        .trapezoidal = &trapezoidal,
+        .cubic                                  = &cubic,
+        .quintic                                = &quintic,
+        .trapezoidal_from_velocity_acceleration = &trapezoidal_from_velocity_acceleration,
+        .trapezoidal_from_velocity_duration     = &trapezoidal_from_velocity_duration,
+        .trapezoidal_from_acceleration_duration = &trapezoidal_from_acceleration_duration,
+        .trapezoidal_within_bounds              = &trapezoidal_within_bounds,
 };
 
 constexpr path_ops bound_path{

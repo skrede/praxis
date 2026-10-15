@@ -27,16 +27,21 @@ namespace {
 
 constexpr std::uint64_t recorded_seed = 0xC0FFEEu;
 constexpr std::size_t cases_per_row   = 24u;
-constexpr std::size_t compared_rows   = 9u;
+constexpr std::size_t compared_rows   = 12u;
 
-// The rows answering a value rather than a prepared generator are the first six the report lists.
+// The rows answering a value rather than a prepared generator are the first nine the report lists.
 // The three after them hand back an object and decline through it instead.
-constexpr std::size_t value_rows = 6u;
+constexpr std::size_t value_rows = 9u;
 
 // Wider than the run the other cases draw, so the bounded profile is drawn over many bound pairs.
 constexpr std::size_t wider_run = 200u;
 
 expected<trajectory::scaling_sample, refusal> degenerate_scaling(double, double)
+{
+    return praxis::unexpected(refusal::degenerate);
+}
+
+expected<trajectory::scaling_sample, refusal> degenerate_option(double, double, double)
 {
     return praxis::unexpected(refusal::degenerate);
 }
@@ -61,12 +66,15 @@ trajectory::capabilities declining_for_another_reason()
 {
     trajectory::capabilities shapes{};
 
-    shapes.time_scaling.cubic       = &degenerate_scaling;
-    shapes.time_scaling.quintic     = &degenerate_scaling;
-    shapes.time_scaling.trapezoidal = &degenerate_trapezoidal;
-    shapes.path.joint_straight_line = &degenerate_joint_path;
-    shapes.path.screw               = &degenerate_pose_path;
-    shapes.path.decoupled           = &degenerate_pose_path;
+    shapes.time_scaling.cubic                                  = &degenerate_scaling;
+    shapes.time_scaling.quintic                                = &degenerate_scaling;
+    shapes.time_scaling.trapezoidal_from_velocity_acceleration = &degenerate_option;
+    shapes.time_scaling.trapezoidal_from_velocity_duration     = &degenerate_option;
+    shapes.time_scaling.trapezoidal_from_acceleration_duration = &degenerate_option;
+    shapes.time_scaling.trapezoidal_within_bounds              = &degenerate_trapezoidal;
+    shapes.path.joint_straight_line                            = &degenerate_joint_path;
+    shapes.path.screw                                          = &degenerate_pose_path;
+    shapes.path.decoupled                                      = &degenerate_pose_path;
 
     return shapes;
 }
@@ -140,9 +148,9 @@ TEST_CASE("the_row_over_the_bounded_profile_draws_only_durations_its_bounds_can_
 {
     const trajectory::capabilities reference = trajectory::baseline();
     const evaluation_report reported         = evaluate(trajectory::evaluation_views(reference, reference), recorded_seed, wider_run);
-    const slot_report &bounded               = reported.slots.at(2);
+    const slot_report &bounded               = reported.slots.at(5);
 
-    REQUIRE(bounded.slot == "time_scaling.trapezoidal");
+    REQUIRE(bounded.slot == "time_scaling.trapezoidal_within_bounds");
     REQUIRE(bounded.outcomes.agreed == wider_run);
     REQUIRE(bounded.outcomes.both_refused == 0u);
 }

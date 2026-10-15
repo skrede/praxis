@@ -24,7 +24,7 @@ namespace {
 
 constexpr std::size_t cubic_row       = 0u;
 constexpr std::size_t quintic_row     = 1u;
-constexpr std::size_t trapezoidal_row = 2u;
+constexpr std::size_t trapezoidal_row = 5u;
 
 constexpr std::size_t fewest_draws_of_an_instant = 50u;
 
@@ -104,12 +104,12 @@ TEST_CASE("every_literal_trapezoid_is_judged_agreeing_by_the_trapezoidal_row")
     const auto trapezoids = book_trapezoids();
     for(std::size_t form = 0; form < trapezoids.size(); ++form)
     {
-        trajectory::capabilities literal = trajectory::baseline();
-        literal.time_scaling.trapezoidal = trapezoids.at(form);
-        const slot_report row            = judged(literal, trapezoidal_row);
+        trajectory::capabilities literal               = trajectory::baseline();
+        literal.time_scaling.trapezoidal_within_bounds = trapezoids.at(form);
+        const slot_report row                          = judged(literal, trapezoidal_row);
 
         INFO("form " << form);
-        REQUIRE(row.slot == "time_scaling.trapezoidal");
+        REQUIRE(row.slot == "time_scaling.trapezoidal_within_bounds");
         require_agreed(row);
     }
 }
@@ -128,7 +128,7 @@ TEST_CASE("each_instant_a_scaling_row_snaps_to_is_drawn_at_least_fifty_times_at_
         REQUIRE(drawn_at(counts, snapped_instant::ramp_end) + drawn_at(counts, snapped_instant::coast_end) == 0u);
     }
 
-    const instant_counts counts = snapped_counts("time_scaling.trapezoidal", &trajectory::drawn_trapezoid_case);
+    const instant_counts counts = snapped_counts("time_scaling.trapezoidal_within_bounds", &trajectory::drawn_trapezoid_case);
     for(const snapped_instant instant : {snapped_instant::start, snapped_instant::ramp_end, snapped_instant::coast_end, snapped_instant::finish})
         REQUIRE(drawn_at(counts, instant) >= fewest_draws_of_an_instant);
 }
@@ -137,7 +137,7 @@ TEST_CASE("the_trapezoidal_row_draws_no_duration_beneath_the_floor_its_bounds_se
 {
     for(std::size_t index = 0; index < default_cases_per_slot; ++index)
     {
-        case_source drawn                     = case_source::at_case(default_seed, "time_scaling.trapezoidal", spread::bulk, index);
+        case_source drawn                     = case_source::at_case(default_seed, "time_scaling.trapezoidal_within_bounds", spread::bulk, index);
         const trajectory::scaling_case sample = trajectory::drawn_trapezoid_case(drawn);
 
         REQUIRE(sample.duration >= trajectory::trapezoid_duration_floor(sample.speed_bound, sample.acceleration_bound));

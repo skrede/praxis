@@ -90,7 +90,7 @@ struct failure
 std::size_t failures_over(trapezoid_slot literal, failure at, const bounded_motion &bounded, std::optional<failure> &first)
 {
     trajectory::time_scaling_ops ops = trajectory::baseline().time_scaling;
-    ops.trapezoidal                  = literal;
+    ops.trapezoidal_within_bounds    = literal;
 
     const prepared_time_scaling scaled(ops, time_scaling_choice::trapezoidal, bounded.held);
     const auto motion = joint_space_motion(composing_path(), scaled, two_joint_limits(), from, bounded.target);
@@ -131,12 +131,12 @@ expected<trajectory::scaling_sample, refusal> recorded_trapezoidal(double t, dou
 {
     asked.push_back(t);
 
-    return trajectory::baseline().time_scaling.trapezoidal(t, duration, max_velocity, max_acceleration);
+    return trajectory::baseline().time_scaling.trapezoidal_within_bounds(t, duration, max_velocity, max_acceleration);
 }
 
 trajectory::time_scaling_ops recording_time_scaling()
 {
-    return trajectory::time_scaling_ops{.cubic = &recorded_cubic, .quintic = &recorded_quintic, .trapezoidal = &recorded_trapezoidal};
+    return trajectory::time_scaling_ops{.cubic = &recorded_cubic, .quintic = &recorded_quintic, .trapezoidal_within_bounds = &recorded_trapezoidal};
 }
 
 }

@@ -110,18 +110,21 @@ inline void bend_joint_space_waypoints(trajectory::capabilities &shapes)
     shapes.trajectory.joint_space_waypoints = &displaced_joint_space_waypoints;
 }
 
-// The index is the order the report lists slots in: the three time scalings in enumerator order, the
+// The index is the order the report lists slots in: the six time scalings in enumerator order, the
 // three paths, the two pose runs, then the configuration-space run. The function is total, so an
 // index past the last slot answers the reference unchanged and no visible difference.
-inline constexpr std::array<bend_applier, 9> bends{&bend_cubic,
-                                                   &bend_quintic,
-                                                   &bend_trapezoidal,
-                                                   &bend_joint_straight_line,
-                                                   &bend_screw,
-                                                   &bend_decoupled,
-                                                   &bend_decoupled_pose_waypoints,
-                                                   &bend_screw_pose_waypoints,
-                                                   &bend_joint_space_waypoints};
+inline constexpr std::array<bend_applier, 12> bends{&bend_cubic,
+                                                    &bend_quintic,
+                                                    &bend_trapezoidal_from_velocity_acceleration,
+                                                    &bend_trapezoidal_from_velocity_duration,
+                                                    &bend_trapezoidal_from_acceleration_duration,
+                                                    &bend_trapezoidal_within_bounds,
+                                                    &bend_joint_straight_line,
+                                                    &bend_screw,
+                                                    &bend_decoupled,
+                                                    &bend_decoupled_pose_waypoints,
+                                                    &bend_screw_pose_waypoints,
+                                                    &bend_joint_space_waypoints};
 
 inline trajectory::capabilities bent_at(std::size_t index)
 {

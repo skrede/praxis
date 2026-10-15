@@ -41,11 +41,17 @@ TEST_CASE("the_time_scaling_slots_default_to_refusing_rather_than_to_a_sample_re
 
     REQUIRE(ops.cubic != nullptr);
     REQUIRE(ops.quintic != nullptr);
-    REQUIRE(ops.trapezoidal != nullptr);
+    REQUIRE(ops.trapezoidal_from_velocity_acceleration != nullptr);
+    REQUIRE(ops.trapezoidal_from_velocity_duration != nullptr);
+    REQUIRE(ops.trapezoidal_from_acceleration_duration != nullptr);
+    REQUIRE(ops.trapezoidal_within_bounds != nullptr);
 
     CHECK(ops.cubic(0.25, 2.0).error() == refusal::not_implemented);
     CHECK(ops.quintic(0.25, 2.0).error() == refusal::not_implemented);
-    CHECK(ops.trapezoidal(0.25, 2.0, 1.0, 4.0).error() == refusal::not_implemented);
+    CHECK(ops.trapezoidal_from_velocity_acceleration(0.25, 1.0, 4.0).error() == refusal::not_implemented);
+    CHECK(ops.trapezoidal_from_velocity_duration(0.25, 1.5, 1.0).error() == refusal::not_implemented);
+    CHECK(ops.trapezoidal_from_acceleration_duration(0.25, 1.25, 4.0).error() == refusal::not_implemented);
+    CHECK(ops.trapezoidal_within_bounds(0.25, 2.0, 1.0, 4.0).error() == refusal::not_implemented);
 }
 
 TEST_CASE("a_scaling_bound_into_the_seam_reports_its_endpoint_conditions_and_both_derivatives")
@@ -77,12 +83,15 @@ TEST_CASE("a_scaling_bound_into_the_seam_is_monotone_over_its_duration")
     REQUIRE(is_approx_equal(previous, 1.0));
 }
 
-TEST_CASE("assigning_one_time_scaling_slot_leaves_the_other_two_on_their_defaults")
+TEST_CASE("assigning_one_time_scaling_slot_leaves_the_others_on_their_defaults")
 {
     time_scaling_ops ops{.quintic = &linear};
     time_scaling_ops defaults{};
 
     REQUIRE(ops.quintic == &linear);
     REQUIRE(ops.cubic == defaults.cubic);
-    REQUIRE(ops.trapezoidal == defaults.trapezoidal);
+    REQUIRE(ops.trapezoidal_from_velocity_acceleration == defaults.trapezoidal_from_velocity_acceleration);
+    REQUIRE(ops.trapezoidal_from_velocity_duration == defaults.trapezoidal_from_velocity_duration);
+    REQUIRE(ops.trapezoidal_from_acceleration_duration == defaults.trapezoidal_from_acceleration_duration);
+    REQUIRE(ops.trapezoidal_within_bounds == defaults.trapezoidal_within_bounds);
 }

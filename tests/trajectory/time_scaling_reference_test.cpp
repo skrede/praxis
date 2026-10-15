@@ -62,8 +62,8 @@ TEST_CASE("every_reference_time_scaling_runs_the_path_parameter_from_zero_to_one
     require_runs_from_zero_to_one(&cubic, 3.0);
     require_runs_from_zero_to_one(&quintic, 3.0);
 
-    CHECK(is_approx_equal(answered(trapezoidal(0.0, 3.0, 1.0, 4.0)).s, 0.0));
-    CHECK(is_approx_equal(answered(trapezoidal(3.0, 3.0, 1.0, 4.0)).s, 1.0, 1.0e-9));
+    CHECK(is_approx_equal(answered(trapezoidal_within_bounds(0.0, 3.0, 1.0, 4.0)).s, 0.0));
+    CHECK(is_approx_equal(answered(trapezoidal_within_bounds(3.0, 3.0, 1.0, 4.0)).s, 1.0, 1.0e-9));
 }
 
 // Lynch & Park, Modern Robotics, sec. 9.2.2: the cubic holds the endpoint velocities at zero and
@@ -104,8 +104,8 @@ TEST_CASE("every_reference_scaling_holds_its_end_values_outside_the_duration")
     require_same_sample(cubic(1.2 * duration, duration), cubic(duration, duration));
     require_same_sample(quintic(-0.1 * duration, duration), quintic(0.0, duration));
     require_same_sample(quintic(1.2 * duration, duration), quintic(duration, duration));
-    require_same_sample(trapezoidal(-0.1 * duration, duration, 1.0, 4.0), trapezoidal(0.0, duration, 1.0, 4.0));
-    require_same_sample(trapezoidal(1.2 * duration, duration, 1.0, 4.0), trapezoidal(duration, duration, 1.0, 4.0));
+    require_same_sample(trapezoidal_within_bounds(-0.1 * duration, duration, 1.0, 4.0), trapezoidal_within_bounds(0.0, duration, 1.0, 4.0));
+    require_same_sample(trapezoidal_within_bounds(1.2 * duration, duration, 1.0, 4.0), trapezoidal_within_bounds(duration, duration, 1.0, 4.0));
 }
 
 TEST_CASE("the_trapezoidal_answers_at_its_shortest_duration_and_refuses_one_step_below_it")
@@ -117,9 +117,9 @@ TEST_CASE("the_trapezoidal_answers_at_its_shortest_duration_and_refuses_one_step
     for(const auto &[rate, rate_change] : bounds)
     {
         const double natural = shortest_trapezoid(rate, rate_change);
-        const auto below     = trapezoidal(0.5 * natural, std::nextafter(natural, 0.0), rate, rate_change);
+        const auto below     = trapezoidal_within_bounds(0.5 * natural, std::nextafter(natural, 0.0), rate, rate_change);
 
-        CHECK(trapezoidal(0.5 * natural, natural, rate, rate_change).has_value());
+        CHECK(trapezoidal_within_bounds(0.5 * natural, natural, rate, rate_change).has_value());
         REQUIRE(!below);
         CHECK(below.error() == refusal::unsupported_input);
     }
@@ -132,8 +132,8 @@ TEST_CASE("at_its_shortest_duration_the_trapezoidal_cruises_at_the_bound_or_peak
     const double coasting = shortest_trapezoid(1.0, 4.0);
     const double triangle = shortest_trapezoid(3.0, 4.0);
 
-    CHECK(answered(trapezoidal(0.5 * coasting, coasting, 1.0, 4.0)).ds == 1.0);
-    CHECK(answered(trapezoidal(0.5 * triangle, triangle, 3.0, 4.0)).ds == 2.0);
+    CHECK(answered(trapezoidal_within_bounds(0.5 * coasting, coasting, 1.0, 4.0)).ds == 1.0);
+    CHECK(answered(trapezoidal_within_bounds(0.5 * triangle, triangle, 3.0, 4.0)).ds == 2.0);
 }
 
 // Lynch & Park, Modern Robotics, sec. 9.2.2.2: given a and T, v solves s(T) = 1.
@@ -141,21 +141,21 @@ TEST_CASE("a_longer_duration_holds_the_acceleration_bound_and_slows_the_cruise")
 {
     const double duration = 1.5 * shortest_trapezoid(1.0, 4.0);
 
-    CHECK(answered(trapezoidal(0.01 * duration, duration, 1.0, 4.0)).dds == 4.0);
-    CHECK(answered(trapezoidal(0.5 * duration, duration, 1.0, 4.0)).ds < 1.0);
-    CHECK(std::abs(answered(trapezoidal(duration, duration, 1.0, 4.0)).s - 1.0) <= 1.0e-12);
+    CHECK(answered(trapezoidal_within_bounds(0.01 * duration, duration, 1.0, 4.0)).dds == 4.0);
+    CHECK(answered(trapezoidal_within_bounds(0.5 * duration, duration, 1.0, 4.0)).ds < 1.0);
+    CHECK(std::abs(answered(trapezoidal_within_bounds(duration, duration, 1.0, 4.0)).s - 1.0) <= 1.0e-12);
 }
 
 TEST_CASE("the_trapezoidal_cruises_between_its_two_ramps_and_stays_under_the_velocity_bound")
 {
     const double duration = 3.0;
-    const double cruising = answered(trapezoidal(0.5 * duration, duration, 1.0, 4.0)).ds;
+    const double cruising = answered(trapezoidal_within_bounds(0.5 * duration, duration, 1.0, 4.0)).ds;
 
     CHECK(cruising > 0.0);
     CHECK(cruising <= 1.0);
-    CHECK(is_approx_equal(answered(trapezoidal(0.5 * duration, duration, 1.0, 4.0)).dds, 0.0));
-    CHECK(answered(trapezoidal(0.01 * duration, duration, 1.0, 4.0)).dds > 0.0);
-    CHECK(answered(trapezoidal(0.99 * duration, duration, 1.0, 4.0)).dds < 0.0);
+    CHECK(is_approx_equal(answered(trapezoidal_within_bounds(0.5 * duration, duration, 1.0, 4.0)).dds, 0.0));
+    CHECK(answered(trapezoidal_within_bounds(0.01 * duration, duration, 1.0, 4.0)).dds > 0.0);
+    CHECK(answered(trapezoidal_within_bounds(0.99 * duration, duration, 1.0, 4.0)).dds < 0.0);
 }
 
 // A duration or a bound the profile cannot be built or stretched to is a request shape the reference
@@ -172,12 +172,12 @@ TEST_CASE("a_degenerate_or_infeasible_request_is_refused_rather_than_answered_wi
             cubic(0.5, unbounded),
             quintic(0.5, 0.0),
             quintic(0.5, not_a_number),
-            trapezoidal(0.5, 3.0, 0.0, 4.0),
-            trapezoidal(0.5, 3.0, 1.0, -4.0),
-            trapezoidal(0.5, 0.5, 1.0, 4.0),
-            trapezoidal(0.5, not_a_number, 1.0, 4.0),
-            trapezoidal(0.5, 3.0, unbounded, 4.0),
-            trapezoidal(0.5, 3.0, 1.0, not_a_number),
+            trapezoidal_within_bounds(0.5, 3.0, 0.0, 4.0),
+            trapezoidal_within_bounds(0.5, 3.0, 1.0, -4.0),
+            trapezoidal_within_bounds(0.5, 0.5, 1.0, 4.0),
+            trapezoidal_within_bounds(0.5, not_a_number, 1.0, 4.0),
+            trapezoidal_within_bounds(0.5, 3.0, unbounded, 4.0),
+            trapezoidal_within_bounds(0.5, 3.0, 1.0, not_a_number),
     };
 
     for(const expected<scaling_sample, refusal> &sample : refused)

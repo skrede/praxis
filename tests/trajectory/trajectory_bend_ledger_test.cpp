@@ -23,7 +23,7 @@ namespace {
 
 constexpr std::uint64_t recorded_seed = 0xC0FFEEu;
 constexpr std::size_t cases_per_row   = 24u;
-constexpr std::size_t compared_rows   = 9u;
+constexpr std::size_t compared_rows   = 12u;
 
 using displacement = std::array<double, static_cast<std::size_t>(fixture::bent::count)>;
 
@@ -34,17 +34,18 @@ struct judged_at
     displacement at;
 };
 
-// One entry per bound the nine rows carry, standing exactly at it. A bound is a HALF and not a row:
+// One entry per bound the twelve rows carry, standing exactly at it. A bound is a HALF and not a row:
 // a pose row is judged on its rotation in radians and its translation in metres separately, so a
 // displacement standing at one of them leaves the other at zero, or a half widened by a decade
 // hides behind whichever of the two the fold happened to report. Every number is written out rather
 // than derived from the bounds themselves, so a bound moved a decade in either direction fails here.
-constexpr std::array<judged_at, 13> every_bound{
-        judged_at{0u, {1.0e-12, 0.0, 0.0, 0.0, 0.0}},   judged_at{1u, {1.0e-11, 0.0, 0.0, 0.0, 0.0}},   judged_at{2u, {1.0e-12, 0.0, 0.0, 0.0, 0.0}},
-        judged_at{3u, {1.0e-13, 0.0, 0.0, 0.0, 0.0}},   judged_at{4u, {0.0, 1.0e-6, 0.0, 0.0, 0.0}},    judged_at{4u, {0.0, 0.0, 1.0e-5, 0.0, 0.0}},
-        judged_at{5u, {0.0, 1.0e-6, 0.0, 0.0, 0.0}},    judged_at{5u, {0.0, 0.0, 1.0e-12, 0.0, 0.0}},   judged_at{6u, {0.0, 1.0e-3, 0.0, 1.0e-3, 0.0}},
-        judged_at{6u, {0.0, 0.0, 1.0e-2, 0.0, 1.0e-2}}, judged_at{7u, {0.0, 1.0e-3, 0.0, 1.0e-3, 0.0}}, judged_at{7u, {0.0, 0.0, 1.0e-2, 0.0, 1.0e-2}},
-        judged_at{8u, {1.0e-8, 0.0, 0.0, 0.0, 0.0}},
+constexpr std::array<judged_at, 16> every_bound{
+        judged_at{0u, {1.0e-12, 0.0, 0.0, 0.0, 0.0}},   judged_at{1u, {1.0e-11, 0.0, 0.0, 0.0, 0.0}},    judged_at{2u, {1.0e-12, 0.0, 0.0, 0.0, 0.0}},
+        judged_at{3u, {1.0e-12, 0.0, 0.0, 0.0, 0.0}},   judged_at{4u, {1.0e-12, 0.0, 0.0, 0.0, 0.0}},    judged_at{5u, {1.0e-12, 0.0, 0.0, 0.0, 0.0}},
+        judged_at{6u, {1.0e-13, 0.0, 0.0, 0.0, 0.0}},   judged_at{7u, {0.0, 1.0e-6, 0.0, 0.0, 0.0}},     judged_at{7u, {0.0, 0.0, 1.0e-5, 0.0, 0.0}},
+        judged_at{8u, {0.0, 1.0e-6, 0.0, 0.0, 0.0}},    judged_at{8u, {0.0, 0.0, 1.0e-12, 0.0, 0.0}},    judged_at{9u, {0.0, 1.0e-3, 0.0, 1.0e-3, 0.0}},
+        judged_at{9u, {0.0, 0.0, 1.0e-2, 0.0, 1.0e-2}}, judged_at{10u, {0.0, 1.0e-3, 0.0, 1.0e-3, 0.0}}, judged_at{10u, {0.0, 0.0, 1.0e-2, 0.0, 1.0e-2}},
+        judged_at{11u, {1.0e-8, 0.0, 0.0, 0.0, 0.0}},
 };
 
 // The same displacements a decade beneath, which the row must fail to report.
@@ -148,9 +149,9 @@ TEST_CASE("a_rows_inputs_do_not_move_when_the_table_around_it_is_cut_down_or_tur
 
     fixture::bend_every_row_by({});
 
-    REQUIRE(full.slots.at(5).slot == "path.decoupled");
-    REQUIRE(same(apart.slots.front(), full.slots.at(5)));
-    REQUIRE(same(other.slots.front(), full.slots.at(5)));
+    REQUIRE(full.slots.at(8).slot == "path.decoupled");
+    REQUIRE(same(apart.slots.front(), full.slots.at(8)));
+    REQUIRE(same(other.slots.front(), full.slots.at(8)));
 }
 
 TEST_CASE("the_times_a_case_samples_at_reach_both_ends_of_the_motion")

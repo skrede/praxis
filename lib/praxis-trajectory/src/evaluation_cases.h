@@ -7,6 +7,7 @@
 
 #include "praxis/rigid_motion/types.h"
 
+#include <span>
 #include <vector>
 #include <cstddef>
 #include <cstdint>
@@ -23,6 +24,17 @@ enum class snapped_instant : std::uint8_t
     coast_end,
     finish
 };
+
+// Seconds.
+inline constexpr double longest_duration = 4.0;
+
+// Path parameter per second and per second squared. A trapezoidal profile over a unit travel reaches
+// its cruise phase exactly where the speed bound squared stands under the acceleration bound, and
+// the two ranges here straddle that ratio.
+inline constexpr double slowest_speed_bound         = 0.4;
+inline constexpr double fastest_speed_bound         = 3.0;
+inline constexpr double gentlest_acceleration_bound = 0.5;
+inline constexpr double harshest_acceleration_bound = 10.0;
 
 // The duration and the time it is sampled at are in seconds. A time scaling carries the path
 // parameter from zero to one over that duration, so the two bounds a trapezoidal profile is built
@@ -62,6 +74,25 @@ scaling_case drawn_scaling_case(evaluation::case_source &drawn);
 // the ratio at which a trapezoidal profile stops reaching a cruise phase, so both shapes of that
 // profile are drawn.
 scaling_case drawn_trapezoid_case(evaluation::case_source &drawn);
+
+// Drawn from one source in this order and no other: the acceleration, the cruise rate, the fraction
+// of the duration the time is sampled at, then the instant the case is snapped to, the start, the
+// ramp end, the coast end or the finish. The acceleration lies in [0.5, 10] per second squared and
+// the cruise rate in [0.4, sqrt(a)) per second, so the case is a trapezoid choosing v and a; it
+// carries the rate as its speed bound, the acceleration as its acceleration bound, and the duration
+// (a + v^2)/(va) they give.
+scaling_case drawn_velocity_acceleration_case(evaluation::case_source &drawn);
+
+// Drawn as the case above, with the cruise rate drawn no lower than sqrt(0.05 a), so the duration it
+// carries has vT no nearer 1 than 1.05.
+scaling_case drawn_velocity_duration_case(evaluation::case_source &drawn);
+
+// Drawn from one source in this order and no other: the acceleration, the duration, the fraction of
+// the duration the time is sampled at, then the instant the case is snapped to, as above. The
+// acceleration lies in [0.5, 10] per second squared and the duration in seconds over (2/sqrt(a), 4],
+// so the case is a trapezoid choosing a and T; it carries the cruise rate those give as its speed
+// bound.
+scaling_case drawn_acceleration_duration_case(evaluation::case_source &drawn);
 
 // Seconds, under a speed bound per second and an acceleration bound per second squared.
 double trapezoid_duration_floor(double speed_bound, double acceleration_bound);
@@ -124,6 +155,16 @@ pose_waypoint_case drawn_pose_waypoint_case(evaluation::case_source &drawn);
 // is the only uniform scalar a source draws, so an affine map of it is uniform over the range that
 // map reaches.
 double over(evaluation::case_source &drawn, double from, double to);
+
+// The share of cases moved onto an instant where the second derivative steps.
+inline constexpr double snap_fraction = 0.25;
+
+// The instant a case is moved onto, among those given, or `drawn` for the share of cases past the
+// fraction given, which keep the time drawn for them.
+snapped_instant snapped_among(evaluation::case_source &drawn, std::span<const snapped_instant> instants, double fraction);
+
+// Seconds: the time an instant stands at in a profile of that duration and ramp.
+double snapped_time(snapped_instant instant, double drawn_at, double duration, double ramp);
 
 // One coordinate in radians per degree of freedom.
 configuration drawn_configuration(evaluation::case_source &drawn, std::size_t coordinates);

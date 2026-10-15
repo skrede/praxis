@@ -24,6 +24,7 @@ praxis_add_module(trajectory
     src/evaluation_driving.cpp
     src/evaluation_generators.cpp
     src/evaluation_time_scaling.cpp
+    src/evaluation_trapezoid_cases.cpp
     src/evaluation_waypoint_cases.cpp
     src/inert_path.cpp
     src/inert_trajectory.cpp

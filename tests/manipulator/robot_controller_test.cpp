@@ -203,12 +203,12 @@ expected<trajectory::scaling_sample, refusal> recorded_trapezoidal(double t, dou
 {
     commanded_span = duration;
 
-    return trajectory::baseline().time_scaling.trapezoidal(t, duration, max_velocity, max_acceleration);
+    return trajectory::baseline().time_scaling.trapezoidal_within_bounds(t, duration, max_velocity, max_acceleration);
 }
 
 trajectory::time_scaling_ops recording_time_scaling()
 {
-    return trajectory::time_scaling_ops{.cubic = &recorded_cubic, .quintic = &recorded_quintic, .trapezoidal = &recorded_trapezoidal};
+    return trajectory::time_scaling_ops{.cubic = &recorded_cubic, .quintic = &recorded_quintic, .trapezoidal_within_bounds = &recorded_trapezoidal};
 }
 
 double span_under(robot_controller &controller, scene_robot &robot, time_scaling_choice chosen)

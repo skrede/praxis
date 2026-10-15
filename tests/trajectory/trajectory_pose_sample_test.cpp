@@ -22,8 +22,8 @@ namespace {
 constexpr std::uint64_t recorded_seed = 0xC0FFEEu;
 constexpr std::size_t cases_per_row   = 24u;
 
-// The two pose rows are the seventh and eighth the report lists.
-constexpr std::size_t first_pose_row = 6u;
+// The two pose rows are the tenth and eleventh the report lists.
+constexpr std::size_t first_pose_row = 9u;
 constexpr std::size_t pose_rows      = 2u;
 
 // One displacement per half, each far enough above the bound its half is judged at that no rounding

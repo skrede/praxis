@@ -9,7 +9,10 @@ namespace praxis::trajectory {
 
 expected<scaling_sample, refusal> cubic(double t, double duration);
 expected<scaling_sample, refusal> quintic(double t, double duration);
-expected<scaling_sample, refusal> trapezoidal(double t, double duration, double max_velocity, double max_acceleration);
+expected<scaling_sample, refusal> trapezoidal_from_velocity_acceleration(double t, double velocity, double acceleration);
+expected<scaling_sample, refusal> trapezoidal_from_velocity_duration(double t, double duration, double velocity);
+expected<scaling_sample, refusal> trapezoidal_from_acceleration_duration(double t, double duration, double acceleration);
+expected<scaling_sample, refusal> trapezoidal_within_bounds(double t, double duration, double max_velocity, double max_acceleration);
 
 }
 

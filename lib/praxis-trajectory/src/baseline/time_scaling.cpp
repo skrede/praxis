@@ -94,9 +94,45 @@ expected<scaling_sample, refusal> quintic(double t, double duration)
     return scaling_sample{s, ds, dds};
 }
 
+// Lynch & Park, Modern Robotics, sec. 9.2.2.2, choosing v and a: s(T) = 1 by eq. (9.24) gives
+// T = (a + v^2)/(va). The end value is held outside [0, T].
+expected<scaling_sample, refusal> trapezoidal_from_velocity_acceleration(double t, double velocity, double acceleration)
+{
+    if(!finite_and_positive(velocity) || !finite_and_positive(acceleration) || !(velocity * velocity / acceleration <= 1.0))
+        return refused();
+
+    const double duration = (acceleration + velocity * velocity) / (velocity * acceleration);
+
+    return trapezoid_at(std::clamp(t, 0.0, duration), duration, velocity, acceleration);
+}
+
+// Lynch & Park, Modern Robotics, sec. 9.2.2.2, choosing v and T: s(T) = 1 by eq. (9.24) gives
+// a = v^2/(vT - 1). The end value is held outside [0, T].
+expected<scaling_sample, refusal> trapezoidal_from_velocity_duration(double t, double duration, double velocity)
+{
+    if(!finite_and_positive(duration) || !finite_and_positive(velocity) || !(velocity * duration > 1.0 && velocity * duration <= 2.0))
+        return refused();
+
+    const double acceleration = velocity * velocity / (velocity * duration - 1.0);
+
+    return trapezoid_at(std::clamp(t, 0.0, duration), duration, velocity, acceleration);
+}
+
+// Lynch & Park, Modern Robotics, sec. 9.2.2.2, choosing a and T: v = (aT - sqrt(a) sqrt(aT^2 - 4))/2,
+// evaluated as 2a/(aT + sqrt(a) sqrt(aT^2 - 4)). The end value is held outside [0, T].
+expected<scaling_sample, refusal> trapezoidal_from_acceleration_duration(double t, double duration, double acceleration)
+{
+    if(!finite_and_positive(duration) || !finite_and_positive(acceleration) || !(acceleration * duration * duration >= 4.0))
+        return refused();
+
+    const double velocity = 2.0 * acceleration / (acceleration * duration + std::sqrt(acceleration) * std::sqrt(acceleration * duration * duration - 4.0));
+
+    return trapezoid_at(std::clamp(t, 0.0, duration), duration, velocity, acceleration);
+}
+
 // Lynch & Park, Modern Robotics, sec. 9.2.2.2. A duration below the natural one is refused, and the
 // end value is held outside [0, T].
-expected<scaling_sample, refusal> trapezoidal(double t, double duration, double max_velocity, double max_acceleration)
+expected<scaling_sample, refusal> trapezoidal_within_bounds(double t, double duration, double max_velocity, double max_acceleration)
 {
     if(!finite_and_positive(duration) || !finite_and_positive(max_velocity) || !finite_and_positive(max_acceleration))
         return refused();

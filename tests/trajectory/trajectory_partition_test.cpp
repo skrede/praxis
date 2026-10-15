@@ -37,7 +37,12 @@ constexpr bool is_indexed_by_its_enumerator(std::span<const pairing> partition)
 constexpr std::array time_scaling_partition{
         pairing{static_cast<std::size_t>(time_scaling_slot::cubic), returns_refusal_v<decltype(time_scaling_ops::cubic)>},
         pairing{static_cast<std::size_t>(time_scaling_slot::quintic), returns_refusal_v<decltype(time_scaling_ops::quintic)>},
-        pairing{static_cast<std::size_t>(time_scaling_slot::trapezoidal), returns_refusal_v<decltype(time_scaling_ops::trapezoidal)>},
+        pairing{static_cast<std::size_t>(time_scaling_slot::trapezoidal_from_velocity_acceleration),
+                returns_refusal_v<decltype(time_scaling_ops::trapezoidal_from_velocity_acceleration)>},
+        pairing{static_cast<std::size_t>(time_scaling_slot::trapezoidal_from_velocity_duration), returns_refusal_v<decltype(time_scaling_ops::trapezoidal_from_velocity_duration)>},
+        pairing{static_cast<std::size_t>(time_scaling_slot::trapezoidal_from_acceleration_duration),
+                returns_refusal_v<decltype(time_scaling_ops::trapezoidal_from_acceleration_duration)>},
+        pairing{static_cast<std::size_t>(time_scaling_slot::trapezoidal_within_bounds), returns_refusal_v<decltype(time_scaling_ops::trapezoidal_within_bounds)>},
 };
 
 constexpr std::array path_partition{
@@ -67,7 +72,10 @@ static_assert(is_indexed_by_its_enumerator(trajectory_partition));
 
 static_assert(time_scaling_partition[static_cast<std::size_t>(time_scaling_slot::cubic)].carries_the_channel);
 static_assert(time_scaling_partition[static_cast<std::size_t>(time_scaling_slot::quintic)].carries_the_channel);
-static_assert(time_scaling_partition[static_cast<std::size_t>(time_scaling_slot::trapezoidal)].carries_the_channel);
+static_assert(time_scaling_partition[static_cast<std::size_t>(time_scaling_slot::trapezoidal_from_velocity_acceleration)].carries_the_channel);
+static_assert(time_scaling_partition[static_cast<std::size_t>(time_scaling_slot::trapezoidal_from_velocity_duration)].carries_the_channel);
+static_assert(time_scaling_partition[static_cast<std::size_t>(time_scaling_slot::trapezoidal_from_acceleration_duration)].carries_the_channel);
+static_assert(time_scaling_partition[static_cast<std::size_t>(time_scaling_slot::trapezoidal_within_bounds)].carries_the_channel);
 
 static_assert(path_partition[static_cast<std::size_t>(path_slot::joint_straight_line)].carries_the_channel);
 static_assert(path_partition[static_cast<std::size_t>(path_slot::screw)].carries_the_channel);
@@ -96,6 +104,6 @@ TEST_CASE("every_slot_of_this_extension_is_paired_with_its_enumerator_and_carrie
     const std::size_t paired   = time_scaling_partition.size() + path_partition.size() + pose_trajectory_partition.size() + trajectory_partition.size();
     const std::size_t fallible = counted(time_scaling_partition) + counted(path_partition) + counted(pose_trajectory_partition) + counted(trajectory_partition);
 
-    CHECK(paired == 9u);
-    CHECK(fallible == 9u);
+    CHECK(paired == 12u);
+    CHECK(fallible == 12u);
 }

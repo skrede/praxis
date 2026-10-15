@@ -22,7 +22,10 @@ enum class time_scaling_slot : std::uint32_t
 {
     cubic,
     quintic,
-    trapezoidal,
+    trapezoidal_from_velocity_acceleration,
+    trapezoidal_from_velocity_duration,
+    trapezoidal_from_acceleration_duration,
+    trapezoidal_within_bounds,
     count,
 };
 

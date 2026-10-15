@@ -84,9 +84,25 @@ inline expected<trajectory::scaling_sample, refusal> displaced_quintic(double t,
     return moved_or_refused(trajectory::quintic(t, duration), [](const trajectory::scaling_sample &point) { return displaced(point); });
 }
 
-inline expected<trajectory::scaling_sample, refusal> displaced_trapezoidal(double t, double duration, double max_velocity, double max_acceleration)
+inline expected<trajectory::scaling_sample, refusal> displaced_trapezoidal_from_velocity_acceleration(double t, double velocity, double acceleration)
 {
-    return moved_or_refused(trajectory::trapezoidal(t, duration, max_velocity, max_acceleration), [](const trajectory::scaling_sample &point) { return displaced(point); });
+    return moved_or_refused(trajectory::trapezoidal_from_velocity_acceleration(t, velocity, acceleration), [](const trajectory::scaling_sample &point) { return displaced(point); });
+}
+
+inline expected<trajectory::scaling_sample, refusal> displaced_trapezoidal_from_velocity_duration(double t, double duration, double velocity)
+{
+    return moved_or_refused(trajectory::trapezoidal_from_velocity_duration(t, duration, velocity), [](const trajectory::scaling_sample &point) { return displaced(point); });
+}
+
+inline expected<trajectory::scaling_sample, refusal> displaced_trapezoidal_from_acceleration_duration(double t, double duration, double acceleration)
+{
+    return moved_or_refused(trajectory::trapezoidal_from_acceleration_duration(t, duration, acceleration), [](const trajectory::scaling_sample &point) { return displaced(point); });
+}
+
+inline expected<trajectory::scaling_sample, refusal> displaced_trapezoidal_within_bounds(double t, double duration, double max_velocity, double max_acceleration)
+{
+    return moved_or_refused(trajectory::trapezoidal_within_bounds(t, duration, max_velocity, max_acceleration),
+                            [](const trajectory::scaling_sample &point) { return displaced(point); });
 }
 
 inline expected<trajectory::configuration, refusal> displaced_joint_straight_line(const trajectory::configuration &start, const trajectory::configuration &end, double s)
@@ -123,9 +139,24 @@ inline void bend_quintic(trajectory::capabilities &shapes)
     shapes.time_scaling.quintic = &displaced_quintic;
 }
 
-inline void bend_trapezoidal(trajectory::capabilities &shapes)
+inline void bend_trapezoidal_from_velocity_acceleration(trajectory::capabilities &shapes)
 {
-    shapes.time_scaling.trapezoidal = &displaced_trapezoidal;
+    shapes.time_scaling.trapezoidal_from_velocity_acceleration = &displaced_trapezoidal_from_velocity_acceleration;
+}
+
+inline void bend_trapezoidal_from_velocity_duration(trajectory::capabilities &shapes)
+{
+    shapes.time_scaling.trapezoidal_from_velocity_duration = &displaced_trapezoidal_from_velocity_duration;
+}
+
+inline void bend_trapezoidal_from_acceleration_duration(trajectory::capabilities &shapes)
+{
+    shapes.time_scaling.trapezoidal_from_acceleration_duration = &displaced_trapezoidal_from_acceleration_duration;
+}
+
+inline void bend_trapezoidal_within_bounds(trajectory::capabilities &shapes)
+{
+    shapes.time_scaling.trapezoidal_within_bounds = &displaced_trapezoidal_within_bounds;
 }
 
 inline void bend_joint_straight_line(trajectory::capabilities &shapes)

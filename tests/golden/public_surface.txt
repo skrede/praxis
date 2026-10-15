@@ -3108,7 +3108,10 @@ lib/praxis-trajectory/include/praxis/trajectory/baseline/time_scaling.h	praxis	n
 lib/praxis-trajectory/include/praxis/trajectory/baseline/time_scaling.h	trajectory	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/baseline/time_scaling.h	cubic	prototype	(double t,double duration)	typename:expected<scaling_sample,refusal>
 lib/praxis-trajectory/include/praxis/trajectory/baseline/time_scaling.h	quintic	prototype	(double t,double duration)	typename:expected<scaling_sample,refusal>
-lib/praxis-trajectory/include/praxis/trajectory/baseline/time_scaling.h	trapezoidal	prototype	(double t,double duration,double max_velocity,double max_acceleration)	typename:expected<scaling_sample,refusal>
+lib/praxis-trajectory/include/praxis/trajectory/baseline/time_scaling.h	trapezoidal_from_velocity_acceleration	prototype	(double t,double velocity,double acceleration)	typename:expected<scaling_sample,refusal>
+lib/praxis-trajectory/include/praxis/trajectory/baseline/time_scaling.h	trapezoidal_from_velocity_duration	prototype	(double t,double duration,double velocity)	typename:expected<scaling_sample,refusal>
+lib/praxis-trajectory/include/praxis/trajectory/baseline/time_scaling.h	trapezoidal_from_acceleration_duration	prototype	(double t,double duration,double acceleration)	typename:expected<scaling_sample,refusal>
+lib/praxis-trajectory/include/praxis/trajectory/baseline/time_scaling.h	trapezoidal_within_bounds	prototype	(double t,double duration,double max_velocity,double max_acceleration)	typename:expected<scaling_sample,refusal>
 lib/praxis-trajectory/include/praxis/trajectory/baseline/trajectory.h	praxis	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/baseline/trajectory.h	trajectory	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/baseline/trajectory.h	joint_space_waypoints	prototype	(std::span<const configuration> waypoints,const configuration & j0,const configuration_limits & limits)	typename:expected<std::unique_ptr<trajectory_generator>,refusal>
@@ -3172,7 +3175,10 @@ lib/praxis-trajectory/include/praxis/trajectory/slots.h	trajectory	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/slots.h	time_scaling_slot	enum	-	typename:std::uint32_t
 lib/praxis-trajectory/include/praxis/trajectory/slots.h	cubic	enumerator	-	-
 lib/praxis-trajectory/include/praxis/trajectory/slots.h	quintic	enumerator	-	-
-lib/praxis-trajectory/include/praxis/trajectory/slots.h	trapezoidal	enumerator	-	-
+lib/praxis-trajectory/include/praxis/trajectory/slots.h	trapezoidal_from_velocity_acceleration	enumerator	-	-
+lib/praxis-trajectory/include/praxis/trajectory/slots.h	trapezoidal_from_velocity_duration	enumerator	-	-
+lib/praxis-trajectory/include/praxis/trajectory/slots.h	trapezoidal_from_acceleration_duration	enumerator	-	-
+lib/praxis-trajectory/include/praxis/trajectory/slots.h	trapezoidal_within_bounds	enumerator	-	-
 lib/praxis-trajectory/include/praxis/trajectory/slots.h	count	enumerator	-	-
 lib/praxis-trajectory/include/praxis/trajectory/slots.h	path_slot	enum	-	typename:std::uint32_t
 lib/praxis-trajectory/include/praxis/trajectory/slots.h	joint_straight_line	enumerator	-	-
@@ -3218,13 +3224,19 @@ lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	praxis	namespace	
 lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	trajectory	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	cubic	prototype	(double t,double duration)	typename:expected<scaling_sample,refusal>
 lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	quintic	prototype	(double t,double duration)	typename:expected<scaling_sample,refusal>
-lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	trapezoidal	prototype	(double t,double duration,double max_velocity,double max_acceleration)	typename:expected<scaling_sample,refusal>
+lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	trapezoidal_from_velocity_acceleration	prototype	(double t,double velocity,double acceleration)	typename:expected<scaling_sample,refusal>
+lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	trapezoidal_from_velocity_duration	prototype	(double t,double duration,double velocity)	typename:expected<scaling_sample,refusal>
+lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	trapezoidal_from_acceleration_duration	prototype	(double t,double duration,double acceleration)	typename:expected<scaling_sample,refusal>
+lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	trapezoidal_within_bounds	prototype	(double t,double duration,double max_velocity,double max_acceleration)	typename:expected<scaling_sample,refusal>
 lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	praxis	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	trajectory	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	time_scaling_ops	struct	-	-
 lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	cubic	member	-	typename:expected<scaling_sample,refusal> (*)(double t,double duration)
 lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	quintic	member	-	typename:expected<scaling_sample,refusal> (*)(double t,double duration)
-lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	trapezoidal	member	-	typename:expected<scaling_sample,refusal> (*)(double t,double duration,double max_velocity,double max_acceleration)
+lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	trapezoidal_from_velocity_acceleration	member	-	typename:expected<scaling_sample,refusal> (*)(double t,double velocity,double acceleration)
+lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	trapezoidal_from_velocity_duration	member	-	typename:expected<scaling_sample,refusal> (*)(double t,double duration,double velocity)
+lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	trapezoidal_from_acceleration_duration	member	-	typename:expected<scaling_sample,refusal> (*)(double t,double duration,double acceleration)
+lib/praxis-trajectory/include/praxis/trajectory/time_scaling.h	trapezoidal_within_bounds	member	-	typename:expected<scaling_sample,refusal> (*)(double t,double duration,double max_velocity,double max_acceleration)
 lib/praxis-trajectory/include/praxis/trajectory/trajectory.h	praxis	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/trajectory.h	trajectory	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/trajectory.h	trajectory_sample	struct	-	-

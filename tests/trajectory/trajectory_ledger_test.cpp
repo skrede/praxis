@@ -138,7 +138,7 @@ TEST_CASE("the_residual_kinds_are_distributed_over_the_rows_as_the_four_tables_a
     const std::size_t elements                    = carrying(compared, residual_kind::element_wise);
     const std::size_t poses                       = carrying(compared, residual_kind::pose);
 
-    REQUIRE(elements == 5u);
+    REQUIRE(elements == 8u);
     REQUIRE(poses == 4u);
     REQUIRE(carrying(compared, residual_kind::geodesic) == 0u);
     REQUIRE(carrying(compared, residual_kind::axis_up_to_sign) == 0u);

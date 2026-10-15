@@ -24,7 +24,10 @@ namespace praxis::trajectory::inert {
 
 expected<scaling_sample, refusal> cubic(double t, double duration);
 expected<scaling_sample, refusal> quintic(double t, double duration);
-expected<scaling_sample, refusal> trapezoidal(double t, double duration, double max_velocity, double max_acceleration);
+expected<scaling_sample, refusal> trapezoidal_from_velocity_acceleration(double t, double velocity, double acceleration);
+expected<scaling_sample, refusal> trapezoidal_from_velocity_duration(double t, double duration, double velocity);
+expected<scaling_sample, refusal> trapezoidal_from_acceleration_duration(double t, double duration, double acceleration);
+expected<scaling_sample, refusal> trapezoidal_within_bounds(double t, double duration, double max_velocity, double max_acceleration);
 
 }
 
@@ -38,8 +41,12 @@ namespace praxis::trajectory {
 // not judged. Where the second derivative steps -- at both ends, and at a trapezoid's ramp and
 // coast boundaries -- either neighboring value is accepted; s and its first derivative are judged
 // there as everywhere. Lynch & Park, Modern Robotics, sec. 9.2.2.
-// The trapezoid holds max_acceleration and solves its cruise rate so that s reaches 1 at the
-// duration given (sec. 9.2.2.2, choosing a and T). A duration shorter than the shortest its two
+// The three book options solve s(T) = 1 by eq. (9.24) for the quantity not chosen (sec. 9.2.2.2).
+// Each is judged only inside the book's domain: v^2/a <= 1 choosing v and a, 1 < vT <= 2 choosing v
+// and T, and aT^2 >= 4 choosing a and T. Nothing outside that domain is judged; the reference refuses
+// it, and any input that is not finite and positive, as unsupported_input.
+// The trapezoid within bounds holds max_acceleration and solves its cruise rate so that s reaches 1
+// at the duration given (sec. 9.2.2.2, choosing a and T). A duration shorter than the shortest its two
 // bounds allow, a duration that is not finite and positive, or a bound that is not finite and
 // positive is refused as unsupported_input, and a refusal carries no sample.
 struct time_scaling_ops
@@ -47,7 +54,11 @@ struct time_scaling_ops
     expected<scaling_sample, refusal> (*cubic)(double t, double duration)   = &inert::cubic;
     expected<scaling_sample, refusal> (*quintic)(double t, double duration) = &inert::quintic;
 
-    expected<scaling_sample, refusal> (*trapezoidal)(double t, double duration, double max_velocity, double max_acceleration) = &inert::trapezoidal;
+    expected<scaling_sample, refusal> (*trapezoidal_from_velocity_acceleration)(double t, double velocity, double acceleration) = &inert::trapezoidal_from_velocity_acceleration;
+    expected<scaling_sample, refusal> (*trapezoidal_from_velocity_duration)(double t, double duration, double velocity)         = &inert::trapezoidal_from_velocity_duration;
+    expected<scaling_sample, refusal> (*trapezoidal_from_acceleration_duration)(double t, double duration, double acceleration) = &inert::trapezoidal_from_acceleration_duration;
+
+    expected<scaling_sample, refusal> (*trapezoidal_within_bounds)(double t, double duration, double max_velocity, double max_acceleration) = &inert::trapezoidal_within_bounds;
 };
 
 }
