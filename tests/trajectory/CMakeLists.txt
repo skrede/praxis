@@ -1,7 +1,7 @@
 praxis_add_test(path_test.cpp LIBS praxis::trajectory praxis_test_support)
 praxis_add_test(trajectory_test.cpp LIBS praxis::trajectory praxis_test_support)
 praxis_add_test(time_scaling_test.cpp LIBS praxis::trajectory praxis_test_support)
-praxis_add_test(pose_trajectory_test.cpp LIBS praxis::trajectory)
+praxis_add_test(pose_trajectory_test.cpp HEADERS literal_pose_run.h LIBS praxis::trajectory)
 praxis_add_test(finite_difference_test.cpp LIBS praxis::trajectory)
 praxis_add_test(path_reference_test.cpp LIBS praxis::trajectory praxis_test_support)
 praxis_add_test(trajectory_baseline_test.cpp LIBS praxis::trajectory)

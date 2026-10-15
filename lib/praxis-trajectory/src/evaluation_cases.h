@@ -1,11 +1,15 @@
 #ifndef HPP_GUARD_PRAXIS_TRAJECTORY_EVALUATION_CASES_H
 #define HPP_GUARD_PRAXIS_TRAJECTORY_EVALUATION_CASES_H
 
+#include "praxis/trajectory/path.h"
 #include "praxis/trajectory/types.h"
 #include "praxis/trajectory/trajectory.h"
+#include "praxis/trajectory/time_scaling.h"
 
 #include "praxis/evaluation/generation.h"
 
+#include "praxis/rigid_motion/frame.h"
+#include "praxis/rigid_motion/screw.h"
 #include "praxis/rigid_motion/types.h"
 
 #include <span>
@@ -180,6 +184,14 @@ double snapped_time(snapped_instant instant, double drawn_at, double duration, d
 
 // One coordinate in radians per degree of freedom.
 configuration drawn_configuration(evaluation::case_source &drawn, std::size_t coordinates);
+
+// One screw implementation, one frame implementation, one set of paths and one set of time scalings
+// serve every row in the module that needs them, so a row measures its own slot. Each is built once
+// on first use and outlives every caller.
+const rigid_motion::screw_ops &shared_screw();
+const rigid_motion::frame_ops &shared_frames();
+const path_ops &shared_paths();
+const time_scaling_ops &shared_time_scalings();
 
 }
 

@@ -47,7 +47,7 @@ std::unique_ptr<pose_trajectory_generator> commanded()
 {
     const std::array<transform, 1> via{waypoint()};
 
-    auto motion = decoupled_pose_waypoints(via, seed_frame(), 0.5, 0.5);
+    auto motion = referenced(&decoupled_pose_waypoints, via, seed_frame(), 0.5, 0.5);
 
     REQUIRE(motion);
     return std::move(*motion);
@@ -149,7 +149,7 @@ TEST_CASE("the_reported_derivatives_are_the_chain_rule_through_the_scalings_own_
 TEST_CASE("a_pair_of_poses_is_swept_between_them_at_the_speed_the_wider_of_the_two_bounds_allows")
 {
     const std::array<transform, 2> via{waypoint(), seed_frame()};
-    auto held = decoupled_pose_waypoints(via, assembled(rotation::Identity(), Eigen::Vector3d{-4.0, -4.0, -4.0}), 0.5, 0.5);
+    auto held = referenced(&decoupled_pose_waypoints, via, assembled(rotation::Identity(), Eigen::Vector3d{-4.0, -4.0, -4.0}), 0.5, 0.5);
     REQUIRE(held);
 
     const pose_trajectory_generator &motion = **held;
@@ -171,8 +171,8 @@ TEST_CASE("a_pair_of_poses_is_swept_between_them_at_the_speed_the_wider_of_the_t
 
 TEST_CASE("a_run_holding_no_pose_at_all_is_refused_rather_than_discarded")
 {
-    const auto empty = decoupled_pose_waypoints({}, seed_frame(), 0.5, 0.5);
-    const auto swept = screw_pose_waypoints({}, seed_frame(), 0.5, 0.5);
+    const auto empty = referenced(&decoupled_pose_waypoints, {}, seed_frame(), 0.5, 0.5);
+    const auto swept = referenced(&screw_pose_waypoints, {}, seed_frame(), 0.5, 0.5);
 
     REQUIRE(!empty);
     CHECK(empty.error() == refusal::unsupported_input);
@@ -184,8 +184,8 @@ TEST_CASE("a_traversal_that_takes_no_time_is_refused_rather_than_held_at_the_see
 {
     const std::array<transform, 1> via{waypoint()};
 
-    const auto unbounded  = decoupled_pose_waypoints(via, seed_frame(), 0.0, 0.0);
-    const auto motionless = decoupled_pose_waypoints(std::array<transform, 1>{seed_frame()}, seed_frame(), 0.5, 0.5);
+    const auto unbounded  = referenced(&decoupled_pose_waypoints, via, seed_frame(), 0.0, 0.0);
+    const auto motionless = referenced(&decoupled_pose_waypoints, std::array<transform, 1>{seed_frame()}, seed_frame(), 0.5, 0.5);
 
     REQUIRE(!unbounded);
     CHECK(unbounded.error() == refusal::unsupported_input);

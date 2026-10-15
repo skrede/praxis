@@ -1,10 +1,15 @@
 #ifndef HPP_GUARD_PRAXIS_TRAJECTORY_POSE_TRAJECTORY_H
 #define HPP_GUARD_PRAXIS_TRAJECTORY_POSE_TRAJECTORY_H
 
+#include "praxis/trajectory/path.h"
+#include "praxis/trajectory/time_scaling.h"
+
 #include "praxis/extension/refusal.h"
 
 #include "praxis/compat/expected.h"
 
+#include "praxis/rigid_motion/frame.h"
+#include "praxis/rigid_motion/screw.h"
 #include "praxis/rigid_motion/types.h"
 
 #include <span>
@@ -42,10 +47,12 @@ public:
 
 namespace praxis::trajectory::inert {
 
-expected<std::unique_ptr<pose_trajectory_generator>, refusal> decoupled_pose_waypoints(std::span<const transform> waypoints, const transform &seed, double max_linear_speed,
-                                                                                       double max_angular_speed);
-expected<std::unique_ptr<pose_trajectory_generator>, refusal> screw_pose_waypoints(std::span<const transform> waypoints, const transform &seed, double max_linear_speed,
-                                                                                   double max_angular_speed);
+expected<std::unique_ptr<pose_trajectory_generator>, refusal> decoupled_pose_waypoints(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const path_ops &path,
+                                                                                       const time_scaling_ops &time_scaling, std::span<const transform> waypoints, const transform &seed,
+                                                                                       double max_linear_speed, double max_angular_speed);
+expected<std::unique_ptr<pose_trajectory_generator>, refusal> screw_pose_waypoints(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const path_ops &path,
+                                                                                   const time_scaling_ops &time_scaling, std::span<const transform> waypoints, const transform &seed,
+                                                                                   double max_linear_speed, double max_angular_speed);
 
 }
 
@@ -53,13 +60,19 @@ namespace praxis::trajectory {
 
 // Declaration order is frozen: a designated initializer must name members in declaration order, so
 // reordering a slot breaks every project that already composes this aggregate. Appending is safe.
-// The generator's duration() is derived from the speed bounds passed here, and the two slots differ
-// only in which of the task-space paths of this same extension the motion traverses.
+// The run is swept along a path of the operations handed in under their quintic scaling, and its
+// twists are taken with the rigid-motion operations handed in. The generator's duration() is derived
+// from the speed bounds passed here, and the two slots differ only in which of the two task-space
+// paths the motion traverses.
 struct pose_trajectory_ops
 {
-    expected<std::unique_ptr<pose_trajectory_generator>, refusal> (*decoupled_pose_waypoints)(std::span<const transform> waypoints, const transform &seed, double max_linear_speed,
+    expected<std::unique_ptr<pose_trajectory_generator>, refusal> (*decoupled_pose_waypoints)(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames,
+                                                                                              const path_ops &path, const time_scaling_ops &time_scaling,
+                                                                                              std::span<const transform> waypoints, const transform &seed, double max_linear_speed,
                                                                                               double max_angular_speed) = &inert::decoupled_pose_waypoints;
-    expected<std::unique_ptr<pose_trajectory_generator>, refusal> (*screw_pose_waypoints)(std::span<const transform> waypoints, const transform &seed, double max_linear_speed,
+    expected<std::unique_ptr<pose_trajectory_generator>, refusal> (*screw_pose_waypoints)(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames,
+                                                                                          const path_ops &path, const time_scaling_ops &time_scaling,
+                                                                                          std::span<const transform> waypoints, const transform &seed, double max_linear_speed,
                                                                                           double max_angular_speed)     = &inert::screw_pose_waypoints;
 };
 

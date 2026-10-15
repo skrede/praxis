@@ -55,6 +55,7 @@ praxis::expected<praxis::transform, praxis::refusal> (*praxis_trajectory_path_sy
 
 #if __has_include("praxis/trajectory/pose_trajectory.h")
 praxis::expected<std::unique_ptr<praxis::trajectory::pose_trajectory_generator>, praxis::refusal> (*praxis_trajectory_inert_symbol)(
+        const praxis::rigid_motion::screw_ops &, const praxis::rigid_motion::frame_ops &, const praxis::trajectory::path_ops &, const praxis::trajectory::time_scaling_ops &,
         std::span<const praxis::transform>, const praxis::transform &, double, double) = &praxis::trajectory::inert::decoupled_pose_waypoints;
 #endif
 

@@ -1,10 +1,6 @@
 #include "swept_pose.h"
 
-#include "praxis/trajectory/baseline/time_scaling.h"
 #include "praxis/trajectory/detail/finite_difference.h"
-
-#include "praxis/rigid_motion/baseline/frame.h"
-#include "praxis/rigid_motion/baseline/screw.h"
 
 #include <spdlog/spdlog.h>
 
@@ -17,11 +13,12 @@ namespace praxis::trajectory {
 
 namespace {
 
-expected<double, refusal> traversal_time(const transform &from, const transform &to, double max_linear_speed, double max_angular_speed)
+expected<double, refusal> traversal_time(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &from, const transform &to,
+                                         double max_linear_speed, double max_angular_speed)
 {
-    const rotation turn = rigid_motion::rotation_matrix_from_transform(from).transpose() * rigid_motion::rotation_matrix_from_transform(to);
+    const rotation turn = frames.rotation_matrix_from_transform(from).transpose() * frames.rotation_matrix_from_transform(to);
 
-    const expected<std::pair<Eigen::Vector3d, double>, refusal> turned = rigid_motion::matrix_logarithm_so3(turn);
+    const expected<std::pair<Eigen::Vector3d, double>, refusal> turned = screw.matrix_logarithm_so3(turn);
     if(!turned)
         return unexpected(turned.error());
 
@@ -42,18 +39,22 @@ expected<double, refusal> traversal_time(const transform &from, const transform 
 class swept_pose_trajectory : public pose_trajectory_generator
 {
 public:
-    swept_pose_trajectory(task_space_path along, transform from, transform to, double span)
-            : m_span(span)
+    swept_pose_trajectory(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const time_scaling_ops &time_scaling, task_space_path along, transform from,
+                          transform to, double span)
+            : m_screw(screw)
+            , m_frames(frames)
+            , m_time_scaling(time_scaling)
+            , m_span(span)
             , m_to(std::move(to))
             , m_from(std::move(from))
-            , m_reversed(rigid_motion::inverse(m_from))
+            , m_reversed(m_frames.inverse(m_from))
             , m_along(along)
     {
     }
 
     expected<pose_sample, refusal> sample(double t) const override
     {
-        const expected<scaling_sample, refusal> scaled = quintic(t, m_span);
+        const expected<scaling_sample, refusal> scaled = m_time_scaling.quintic(t, m_span);
         if(!scaled)
             return unexpected(scaled.error());
 
@@ -76,6 +77,9 @@ public:
     }
 
 private:
+    rigid_motion::screw_ops m_screw;
+    rigid_motion::frame_ops m_frames;
+    time_scaling_ops m_time_scaling;
     double m_span;
     transform m_to;
     transform m_from;
@@ -88,7 +92,7 @@ private:
         if(!placed)
             return unexpected(placed.error());
 
-        const expected<std::pair<screw_axis, double>, refusal> logged = rigid_motion::matrix_logarithm_se3(m_reversed * *placed);
+        const expected<std::pair<screw_axis, double>, refusal> logged = m_screw.matrix_logarithm_se3(m_reversed * *placed);
         if(!logged)
             return unexpected(logged.error());
 
@@ -98,10 +102,11 @@ private:
 
 }
 
-expected<std::unique_ptr<pose_trajectory_generator>, refusal> swept_pose(task_space_path along, const transform &from, const transform &to, double max_linear_speed,
-                                                                         double max_angular_speed)
+expected<std::unique_ptr<pose_trajectory_generator>, refusal> swept_pose(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames,
+                                                                         const time_scaling_ops &time_scaling, task_space_path along, const transform &from, const transform &to,
+                                                                         double max_linear_speed, double max_angular_speed)
 {
-    const expected<double, refusal> span = traversal_time(from, to, max_linear_speed, max_angular_speed);
+    const expected<double, refusal> span = traversal_time(screw, frames, from, to, max_linear_speed, max_angular_speed);
     if(!span)
     {
         spdlog::error("praxis: the turn between the two poses given has no logarithm, so no traversal time follows from it");
@@ -113,7 +118,7 @@ expected<std::unique_ptr<pose_trajectory_generator>, refusal> swept_pose(task_sp
         return unexpected(refusal::unsupported_input);
     }
 
-    return std::make_unique<swept_pose_trajectory>(along, from, to, *span);
+    return std::make_unique<swept_pose_trajectory>(screw, frames, time_scaling, along, from, to, *span);
 }
 
 }

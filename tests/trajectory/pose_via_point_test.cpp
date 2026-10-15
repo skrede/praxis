@@ -26,8 +26,6 @@ using namespace praxis::trajectory;
 
 namespace {
 
-using pose_run = expected<std::unique_ptr<pose_trajectory_generator>, refusal> (*)(std::span<const transform>, const transform &, double, double);
-
 constexpr double linear_bound       = 0.5;
 constexpr double angular_bound      = 0.5;
 constexpr double pose_agreement     = 1.0e-9;
@@ -68,7 +66,7 @@ std::vector<double> boundaries(std::span<const transform> poses)
 
 std::unique_ptr<pose_trajectory_generator> carried_by(pose_run factory, std::span<const transform> poses)
 {
-    auto motion = factory(poses, distant_seed(), linear_bound, angular_bound);
+    auto motion = referenced(factory, poses, distant_seed(), linear_bound, angular_bound);
     REQUIRE(motion);
 
     return std::move(*motion);
@@ -155,7 +153,7 @@ TEST_CASE("a_run_repeating_the_pose_it_already_stands_at_is_refused_and_the_pair
     const std::vector<transform> poses = {all[0], all[1], all[1], all[2]};
 
     praxis::tests::captured_log captured;
-    const auto refused         = decoupled_pose_waypoints(poses, distant_seed(), linear_bound, angular_bound);
+    const auto refused         = referenced(&decoupled_pose_waypoints, poses, distant_seed(), linear_bound, angular_bound);
     const std::string reported = captured.text();
 
     REQUIRE(!refused);

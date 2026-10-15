@@ -77,19 +77,23 @@ expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> not_finite_
 }
 
 template<void (*Spoil)(trajectory::pose_sample &)>
-expected<std::unique_ptr<trajectory::pose_trajectory_generator>, refusal> not_finite_decoupled_pose_waypoints(std::span<const transform> waypoints, const transform &seed,
-                                                                                                              double max_linear_speed, double max_angular_speed)
+expected<std::unique_ptr<trajectory::pose_trajectory_generator>, refusal>
+not_finite_decoupled_pose_waypoints(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const trajectory::path_ops &path,
+                                    const trajectory::time_scaling_ops &time_scaling, std::span<const transform> waypoints, const transform &seed, double max_linear_speed,
+                                    double max_angular_speed)
 {
     return spoiling<trajectory::pose_trajectory_generator, trajectory::pose_sample, Spoil, &inside>(
-            trajectory::decoupled_pose_waypoints(waypoints, seed, max_linear_speed, max_angular_speed));
+            trajectory::decoupled_pose_waypoints(screw, frames, path, time_scaling, waypoints, seed, max_linear_speed, max_angular_speed));
 }
 
 template<void (*Spoil)(trajectory::pose_sample &)>
-expected<std::unique_ptr<trajectory::pose_trajectory_generator>, refusal> not_finite_screw_pose_waypoints(std::span<const transform> waypoints, const transform &seed,
-                                                                                                          double max_linear_speed, double max_angular_speed)
+expected<std::unique_ptr<trajectory::pose_trajectory_generator>, refusal>
+not_finite_screw_pose_waypoints(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const trajectory::path_ops &path,
+                                const trajectory::time_scaling_ops &time_scaling, std::span<const transform> waypoints, const transform &seed, double max_linear_speed,
+                                double max_angular_speed)
 {
     return spoiling<trajectory::pose_trajectory_generator, trajectory::pose_sample, Spoil, &inside>(
-            trajectory::screw_pose_waypoints(waypoints, seed, max_linear_speed, max_angular_speed));
+            trajectory::screw_pose_waypoints(screw, frames, path, time_scaling, waypoints, seed, max_linear_speed, max_angular_speed));
 }
 
 }

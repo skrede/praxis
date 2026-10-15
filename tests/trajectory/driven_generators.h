@@ -115,12 +115,16 @@ inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> unbu
     return unexpected(refusal::degenerate);
 }
 
-inline expected<std::unique_ptr<trajectory::pose_trajectory_generator>, refusal> declining_pose_waypoints(std::span<const transform>, const transform &, double, double)
+inline expected<std::unique_ptr<trajectory::pose_trajectory_generator>, refusal> declining_pose_waypoints(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &,
+                                                                                                          const trajectory::path_ops &, const trajectory::time_scaling_ops &,
+                                                                                                          std::span<const transform>, const transform &, double, double)
 {
     return answering_no_sample<trajectory::pose_trajectory_generator, trajectory::pose_sample>();
 }
 
-inline expected<std::unique_ptr<trajectory::pose_trajectory_generator>, refusal> unbuilt_pose_waypoints(std::span<const transform>, const transform &, double, double)
+inline expected<std::unique_ptr<trajectory::pose_trajectory_generator>, refusal> unbuilt_pose_waypoints(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &,
+                                                                                                        const trajectory::path_ops &, const trajectory::time_scaling_ops &,
+                                                                                                        std::span<const transform>, const transform &, double, double)
 {
     return unexpected(refusal::degenerate);
 }

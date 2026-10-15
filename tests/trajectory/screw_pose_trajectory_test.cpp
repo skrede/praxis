@@ -1,7 +1,11 @@
 #include "answered.h"
 
+#include "praxis/trajectory/capabilities.h"
+
 #include "praxis/trajectory/baseline/time_scaling.h"
 #include "praxis/trajectory/baseline/pose_trajectory.h"
+
+#include "praxis/rigid_motion/capabilities.h"
 
 #include "praxis/rigid_motion/baseline/frame.h"
 #include "praxis/rigid_motion/baseline/screw.h"
@@ -81,7 +85,10 @@ std::unique_ptr<pose_trajectory_generator> commanded(pose_waypoint_factory along
 {
     const std::array<transform, 1> via{waypoint()};
 
-    auto motion = along(via, seed_frame(), 0.5, 0.5);
+    const rigid_motion::capabilities rigid = rigid_motion::baseline();
+    const trajectory::capabilities shapes  = trajectory::baseline();
+
+    auto motion = along(rigid.screw, rigid.frame, shapes.path, shapes.time_scaling, via, seed_frame(), 0.5, 0.5);
 
     REQUIRE(motion);
     return std::move(*motion);

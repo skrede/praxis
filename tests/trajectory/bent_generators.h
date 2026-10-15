@@ -94,16 +94,23 @@ inline expected<std::vector<trajectory::via_point>, refusal> displaced_via_point
     return chosen;
 }
 
-inline expected<std::unique_ptr<trajectory::pose_trajectory_generator>, refusal> displaced_decoupled_pose_waypoints(std::span<const transform> waypoints, const transform &seed,
-                                                                                                                    double max_linear_speed, double max_angular_speed)
+inline expected<std::unique_ptr<trajectory::pose_trajectory_generator>, refusal>
+displaced_decoupled_pose_waypoints(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const trajectory::path_ops &path,
+                                   const trajectory::time_scaling_ops &time_scaling, std::span<const transform> waypoints, const transform &seed, double max_linear_speed,
+                                   double max_angular_speed)
 {
-    return wrapping<trajectory::pose_trajectory_generator, trajectory::pose_sample>(trajectory::decoupled_pose_waypoints(waypoints, seed, max_linear_speed, max_angular_speed));
+    return wrapping<trajectory::pose_trajectory_generator, trajectory::pose_sample>(
+            trajectory::decoupled_pose_waypoints(screw, frames, path, time_scaling, waypoints, seed, max_linear_speed, max_angular_speed));
 }
 
-inline expected<std::unique_ptr<trajectory::pose_trajectory_generator>, refusal> displaced_screw_pose_waypoints(std::span<const transform> waypoints, const transform &seed,
+inline expected<std::unique_ptr<trajectory::pose_trajectory_generator>, refusal> displaced_screw_pose_waypoints(const rigid_motion::screw_ops &screw,
+                                                                                                                const rigid_motion::frame_ops &frames, const trajectory::path_ops &path,
+                                                                                                                const trajectory::time_scaling_ops &time_scaling,
+                                                                                                                std::span<const transform> waypoints, const transform &seed,
                                                                                                                 double max_linear_speed, double max_angular_speed)
 {
-    return wrapping<trajectory::pose_trajectory_generator, trajectory::pose_sample>(trajectory::screw_pose_waypoints(waypoints, seed, max_linear_speed, max_angular_speed));
+    return wrapping<trajectory::pose_trajectory_generator, trajectory::pose_sample>(
+            trajectory::screw_pose_waypoints(screw, frames, path, time_scaling, waypoints, seed, max_linear_speed, max_angular_speed));
 }
 
 inline void bend_decoupled_pose_waypoints(trajectory::capabilities &shapes)

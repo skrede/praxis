@@ -19,8 +19,7 @@ namespace praxis::trajectory {
 
 namespace {
 
-using pose_waypoint_factory = expected<std::unique_ptr<pose_trajectory_generator>, refusal> (*)(std::span<const transform> waypoints, const transform &seed, double max_linear_speed,
-                                                                                                double max_angular_speed);
+using pose_waypoint_factory = decltype(pose_trajectory_ops::decoupled_pose_waypoints);
 
 const trajectory_ops &trajectories_of(const void *value)
 {
@@ -91,8 +90,10 @@ evaluation::case_result over_pose_waypoints(pose_waypoint_factory held_by, pose_
     if(!advances_at_every_row(example.seed, example.waypoints))
         return unusable_input(pose_kind);
 
-    const expected<std::unique_ptr<pose_trajectory_generator>, refusal> held  = held_by(example.waypoints, example.seed, example.max_linear_speed, example.max_angular_speed);
-    const expected<std::unique_ptr<pose_trajectory_generator>, refusal> other = bound_by(example.waypoints, example.seed, example.max_linear_speed, example.max_angular_speed);
+    const expected<std::unique_ptr<pose_trajectory_generator>, refusal> held =
+            held_by(shared_screw(), shared_frames(), shared_paths(), shared_time_scalings(), example.waypoints, example.seed, example.max_linear_speed, example.max_angular_speed);
+    const expected<std::unique_ptr<pose_trajectory_generator>, refusal> other =
+            bound_by(shared_screw(), shared_frames(), shared_paths(), shared_time_scalings(), example.waypoints, example.seed, example.max_linear_speed, example.max_angular_speed);
     if(const std::optional<evaluation::case_result> refused = refusal_outcome(held, other))
         return *refused;
     if(!both_named_a_motion(*held, *other))

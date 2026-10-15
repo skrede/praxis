@@ -43,12 +43,13 @@ namespace praxis::trajectory::probe {
 std::size_t trajectory_surface()
 {
     reachable_types types{};
-    expected<std::vector<via_point>, refusal> schedule                 = types.via_points.via_point_schedule({}, configuration(), types.bounds);
-    expected<std::unique_ptr<trajectory_generator>, refusal> joined    = types.via_points.joint_space_via_points({&types.passed, 1u});
-    types.chosen                                                       = trajectory_slot::via_point_schedule;
-    expected<std::unique_ptr<pose_trajectory_generator>, refusal> pose = types.pose_trajectory.decoupled_pose_waypoints({}, transform::Identity(), 1.0, 1.0);
-    types.composed                                                     = baseline();
-    types.named                                                        = path_slot::decoupled;
+    expected<std::vector<via_point>, refusal> schedule              = types.via_points.via_point_schedule({}, configuration(), types.bounds);
+    expected<std::unique_ptr<trajectory_generator>, refusal> joined = types.via_points.joint_space_via_points({&types.passed, 1u});
+    types.chosen                                                    = trajectory_slot::via_point_schedule;
+    expected<std::unique_ptr<pose_trajectory_generator>, refusal> pose =
+            types.pose_trajectory.decoupled_pose_waypoints(rigid_motion::screw_ops{}, rigid_motion::frame_ops{}, types.path, types.time_scaling, {}, transform::Identity(), 1.0, 1.0);
+    types.composed = baseline();
+    types.named    = path_slot::decoupled;
 
     types.expected.set(types.named);
     types.described = view_of(types.path);

@@ -1,6 +1,5 @@
 #include "swept_pose.h"
 
-#include "praxis/trajectory/baseline/path.h"
 #include "praxis/trajectory/baseline/pose_trajectory.h"
 
 #include <spdlog/spdlog.h>
@@ -53,14 +52,17 @@ private:
     std::vector<std::unique_ptr<pose_trajectory_generator>> m_segments;
 };
 
-expected<std::unique_ptr<pose_trajectory_generator>, refusal> chained(task_space_path along, std::span<const transform> waypoints, double max_linear_speed, double max_angular_speed)
+expected<std::unique_ptr<pose_trajectory_generator>, refusal> chained(task_space_path along, const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames,
+                                                                      const time_scaling_ops &time_scaling, std::span<const transform> waypoints, double max_linear_speed,
+                                                                      double max_angular_speed)
 {
     std::vector<std::unique_ptr<pose_trajectory_generator>> segments;
     segments.reserve(waypoints.size() - 1u);
 
     for(std::size_t k = 1u; k < waypoints.size(); ++k)
     {
-        expected<std::unique_ptr<pose_trajectory_generator>, refusal> segment = swept_pose(along, waypoints[k - 1u], waypoints[k], max_linear_speed, max_angular_speed);
+        expected<std::unique_ptr<pose_trajectory_generator>, refusal> segment =
+                swept_pose(screw, frames, time_scaling, along, waypoints[k - 1u], waypoints[k], max_linear_speed, max_angular_speed);
         if(!segment)
         {
             spdlog::error("praxis: the pair of poses ending at row {} carries no motion between them, and the run stands as it was given", k);
@@ -73,15 +75,16 @@ expected<std::unique_ptr<pose_trajectory_generator>, refusal> chained(task_space
     return std::make_unique<carried_pose_trajectory>(std::move(segments));
 }
 
-expected<std::unique_ptr<pose_trajectory_generator>, refusal> carried(task_space_path along, std::span<const transform> waypoints, const transform &seed, double max_linear_speed,
-                                                                      double max_angular_speed)
+expected<std::unique_ptr<pose_trajectory_generator>, refusal> carried(task_space_path along, const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames,
+                                                                      const time_scaling_ops &time_scaling, std::span<const transform> waypoints, const transform &seed,
+                                                                      double max_linear_speed, double max_angular_speed)
 {
     if(waypoints.size() == 1u)
-        return swept_pose(along, seed, waypoints.front(), max_linear_speed, max_angular_speed);
+        return swept_pose(screw, frames, time_scaling, along, seed, waypoints.front(), max_linear_speed, max_angular_speed);
     if(waypoints.size() == 2u)
-        return swept_pose(along, waypoints.front(), waypoints.back(), max_linear_speed, max_angular_speed);
+        return swept_pose(screw, frames, time_scaling, along, waypoints.front(), waypoints.back(), max_linear_speed, max_angular_speed);
     if(waypoints.size() >= 3u)
-        return chained(along, waypoints, max_linear_speed, max_angular_speed);
+        return chained(along, screw, frames, time_scaling, waypoints, max_linear_speed, max_angular_speed);
 
     spdlog::error("praxis: a task-space path carries at least one pose and none were given");
 
@@ -90,16 +93,18 @@ expected<std::unique_ptr<pose_trajectory_generator>, refusal> carried(task_space
 
 }
 
-expected<std::unique_ptr<pose_trajectory_generator>, refusal> decoupled_pose_waypoints(std::span<const transform> waypoints, const transform &seed, double max_linear_speed,
-                                                                                       double max_angular_speed)
+expected<std::unique_ptr<pose_trajectory_generator>, refusal> decoupled_pose_waypoints(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const path_ops &path,
+                                                                                       const time_scaling_ops &time_scaling, std::span<const transform> waypoints, const transform &seed,
+                                                                                       double max_linear_speed, double max_angular_speed)
 {
-    return carried(&decoupled, waypoints, seed, max_linear_speed, max_angular_speed);
+    return carried(path.decoupled, screw, frames, time_scaling, waypoints, seed, max_linear_speed, max_angular_speed);
 }
 
-expected<std::unique_ptr<pose_trajectory_generator>, refusal> screw_pose_waypoints(std::span<const transform> waypoints, const transform &seed, double max_linear_speed,
-                                                                                   double max_angular_speed)
+expected<std::unique_ptr<pose_trajectory_generator>, refusal> screw_pose_waypoints(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const path_ops &path,
+                                                                                   const time_scaling_ops &time_scaling, std::span<const transform> waypoints, const transform &seed,
+                                                                                   double max_linear_speed, double max_angular_speed)
 {
-    return carried(&screw, waypoints, seed, max_linear_speed, max_angular_speed);
+    return carried(path.screw, screw, frames, time_scaling, waypoints, seed, max_linear_speed, max_angular_speed);
 }
 
 }

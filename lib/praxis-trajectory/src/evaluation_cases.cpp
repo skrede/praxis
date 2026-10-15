@@ -1,5 +1,9 @@
 #include "evaluation_cases.h"
 
+#include "praxis/trajectory/capabilities.h"
+
+#include "praxis/rigid_motion/capabilities.h"
+
 #include <span>
 #include <array>
 #include <cstddef>
@@ -93,6 +97,34 @@ pose_path_case drawn_pose_path_case(evaluation::case_source &drawn)
     const transform end   = drawn.transform_member();
 
     return pose_path_case{start, end, over(drawn, 0.0, 1.0)};
+}
+
+const rigid_motion::screw_ops &shared_screw()
+{
+    static const rigid_motion::screw_ops screw = rigid_motion::baseline().screw;
+
+    return screw;
+}
+
+const rigid_motion::frame_ops &shared_frames()
+{
+    static const rigid_motion::frame_ops frames = rigid_motion::baseline().frame;
+
+    return frames;
+}
+
+const path_ops &shared_paths()
+{
+    static const path_ops paths = baseline().path;
+
+    return paths;
+}
+
+const time_scaling_ops &shared_time_scalings()
+{
+    static const time_scaling_ops scalings = baseline().time_scaling;
+
+    return scalings;
 }
 
 }
