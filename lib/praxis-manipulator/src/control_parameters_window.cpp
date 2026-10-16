@@ -24,9 +24,12 @@ namespace {
 
 constexpr const char *unpublished_arm = "The arm has published nothing yet.";
 
-float published_velocity_factor(const arm_reader &seen)
+control_parameters_window::settings published_settings(const arm_reader &seen)
 {
-    return static_cast<float>(held(seen.read(), "the control parameters window", "published arm state").velocity_factor);
+    const std::shared_ptr<const arm_snapshot> share = seen.read();
+    const arm_snapshot &published                   = held(share, "the control parameters window", "published arm state");
+
+    return control_parameters_window::settings{static_cast<float>(published.velocity_factor), published.time_scaling, published.trapezoid};
 }
 
 float rate_of(const std::optional<path_parameter_bounds> &held_to)
@@ -39,6 +42,13 @@ float rate_change_of(const std::optional<path_parameter_bounds> &held_to)
     return held_to ? static_cast<float>(held_to->max_rate_change) : 0.f;
 }
 
+void apply(robot_controller &control, const control_parameters_window::settings &shown)
+{
+    control.set_velocity_factor(static_cast<double>(shown.velocity));
+    control.set_time_scaling(shown.scaling);
+    control.set_trapezoid_bounds(shown.trapezoid);
+}
+
 }
 
 control_parameters_window::settings::settings(float chosen_velocity, time_scaling_choice chosen_scaling, std::optional<path_parameter_bounds> chosen_trapezoid)
@@ -49,7 +59,7 @@ control_parameters_window::settings::settings(float chosen_velocity, time_scalin
 }
 
 control_parameters_window::control_parameters_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, std::function<void()> changed)
-        : control_parameters_window(std::move(name), seen, std::move(arm), settings{published_velocity_factor(seen)}, std::string(), std::move(changed))
+        : control_parameters_window(std::move(name), seen, std::move(arm), published_settings(seen), std::string(), std::move(changed))
 {
 }
 
@@ -66,6 +76,7 @@ control_parameters_window::control_parameters_window(std::string name, arm_reade
         , m_changed_cb(std::move(changed))
         , m_scaling(state.scaling, time_scaling_options, time_scaling_labels)
 {
+    command(m_arm, [shown = this->state()](robot_controller &control, scene_robot &) { apply(control, shown); });
 }
 
 control_parameters_window::settings control_parameters_window::state() const

@@ -46,6 +46,8 @@ public:
     // `changed` is told where the time scaling or the trapezoid bounds are chosen anew, which are
     // the parameters a motion is composed under. The playback rate is not one of them: it scales a
     // motion already composed and leaves what was composed from these standing.
+    // Construction hands the arm the settings the window opens at; the form taking none opens at
+    // what the arm publishes, so it moves nothing.
     control_parameters_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, std::function<void()> changed = {});
     control_parameters_window(std::string name, arm_reader seen, std::weak_ptr<owned_arm> arm, const settings &state, std::string at = std::string(),
                               std::function<void()> changed = {});

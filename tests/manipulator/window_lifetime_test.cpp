@@ -82,6 +82,7 @@ TEST_CASE("a window whose observer has expired posts nothing and reads the publi
 
     const std::weak_ptr<owned_arm> observer = arm.owned;
     const control_parameters_window window("Control parameters", arm.seen, observer);
+    REQUIRE(loop.drain().has_value());
 
     const std::shared_ptr<const arm_snapshot> last = arm.seen.read();
     arm.owned.reset();
