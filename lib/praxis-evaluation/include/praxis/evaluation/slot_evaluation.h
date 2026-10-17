@@ -24,8 +24,8 @@ struct case_result
     residual difference;
 };
 
-// Declaration order is frozen: every table is written as a brace initializer, so reordering a member
-// silently changes what an existing table means. Appending is safe. `name` is the slot's name
+// Tables are written as positional brace initializers, so member order is part of what a row means.
+// `name` is the slot's name
 // spelled exactly as the describing table spells it -- the two cross-checks below compare the two
 // name sets byte for byte, so a difference in case or in whitespace is a mismatch.
 // `bound_measured_to_cases` is how many cases `allowed` was measured over, and so the longest run it

@@ -41,8 +41,6 @@ expected<std::pair<screw_axis, double>, refusal> matrix_logarithm_se3(const tran
 
 namespace praxis::rigid_motion {
 
-// Declaration order is frozen: a designated initializer must name members in declaration order, so
-// reordering a slot breaks every project that already composes this aggregate. Appending is safe.
 struct screw_ops
 {
     matrix3 (*skew_symmetric)(const Eigen::Vector3d &v)      = &inert::skew_symmetric;

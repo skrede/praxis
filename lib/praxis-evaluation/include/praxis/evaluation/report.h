@@ -29,8 +29,7 @@ struct outcome_counts
 
 // `worst` is the largest residual any of the `cases` produced and `worst_case_index` is where in the
 // run it came up, counting from zero; both stand at the kind's own zero when no case was run.
-// Declaration order is frozen: a table written as a brace initializer changes meaning if a member
-// moves. Appending is safe.
+// Tables are written as positional brace initializers, so member order is part of what a row means.
 struct slot_report
 {
     std::string_view extension;

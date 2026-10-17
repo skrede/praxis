@@ -29,8 +29,6 @@ expected<joint_vector, refusal> ik_solve_flange_pose(const kinematics &solver, c
 
 namespace praxis::manipulator {
 
-// Declaration order is frozen: a designated initializer must name members in declaration order, so
-// reordering a slot breaks every project that already composes this aggregate. Appending is safe.
 struct robot_ops
 {
     transform (*tool_pose_from_flange_pose)(const transform &flange_pose, const transform &tool_offset)                                      = &inert::tool_pose_from_flange_pose;

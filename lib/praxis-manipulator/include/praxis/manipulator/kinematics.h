@@ -73,8 +73,6 @@ expected<transform, refusal> body_forward_kinematics(const rigid_motion::screw_o
 
 namespace praxis::manipulator {
 
-// Declaration order is frozen: a designated initializer must name members in declaration order, so
-// reordering a slot breaks every project that already composes this aggregate. Appending is safe.
 // The two forward maps are here, both taken over the space screws, together with the derivation that
 // carries a chain from the first frame to the second. The body form is handed the home pose as well
 // and sees the screws through its inverse adjoint itself.
@@ -88,8 +86,6 @@ struct forward_kinematics_ops
                                                                          std::span<const screw_axis> space_screws)               = &inert::body_screws_from_space;
 };
 
-// Declaration order is frozen: a designated initializer must name members in declaration order, so
-// reordering a slot breaks every project that already composes this aggregate. Appending is safe.
 // The two Jacobians are here: each maps joint rates to a twist, one expressed in the space frame and
 // one in the body frame. Both are taken over the space screws; the body form is handed the home pose
 // and the forward maps as well, and derives the screws it is taken over through the derivation bound
@@ -113,8 +109,6 @@ expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &screw,
 
 namespace praxis::manipulator {
 
-// Declaration order is frozen: a designated initializer must name members in declaration order, so
-// reordering a slot breaks every project that already composes this aggregate. Appending is safe.
 // The solve is here, and it receives what its own mathematics consumes and nothing else: the chain
 // it is to solve over, the pose it is to reach, and the operations and maps it reads along the way.
 // Nothing it is handed carries a way to ask for a solve. A solve that does not converge refuses with

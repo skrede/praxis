@@ -428,12 +428,6 @@ make the next name easy to find.
 - **Downward waterfall.** When a signature or declaration wraps, each continuation line is *longer
   than or equal to* the one above it, so the wrapped arguments slope downward and the eye falls to
   the next one.
-- **Declaration order in a shipped injection aggregate is frozen**, and this is a rule rather than a
-  shape. A designated initializer must name members in declaration order, so reordering a slot breaks
-  every downstream project written against the previous tag, while appending or inserting one does
-  not. The member triangle below pushes toward exactly that reorder whenever a shorter declaration is
-  added, and here it yields: a new slot appends within its capability group and the existing order
-  does not move.
 - **Member triangle.** Order a class's members by overall declaration-line length, shortest first —
   the type name dictates the order — so the members form a downward slope. A **single space** precedes
   each name; names are *not* aligned into a column (only consecutive `=` assignments are aligned).

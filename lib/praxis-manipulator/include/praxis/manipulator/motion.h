@@ -23,8 +23,6 @@ expected<joint_vector, refusal> task_space_screw(const rigid_motion::screw_ops &
 
 namespace praxis::manipulator {
 
-// Declaration order is frozen: a designated initializer must name members in declaration order, so
-// reordering a slot breaks every project that already composes this aggregate. Appending is safe.
 struct motion_ops
 {
     expected<joint_vector, refusal> (*task_space_pose)(const kinematics &solver, const transform &pose, const joint_vector &j0)           = &inert::task_space_pose;

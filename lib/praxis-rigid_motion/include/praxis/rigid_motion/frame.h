@@ -28,8 +28,6 @@ transform inverse(const transform &tf);
 
 namespace praxis::rigid_motion {
 
-// Declaration order is frozen: a designated initializer must name members in declaration order, so
-// reordering a slot breaks every project that already composes this aggregate. Appending is safe.
 struct frame_ops
 {
     Eigen::Vector3d (*euler_from_rotation_matrix)(const rotation &r, axis_order order) = &inert::euler_from_rotation_matrix;
