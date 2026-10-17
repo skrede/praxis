@@ -95,6 +95,7 @@ path_comparison_window::path_comparison_window(std::string name, arm_reader seen
         , m_told(false)
         , m_told_offset(transform::Identity())
         , m_told_traversed()
+        , m_refused()
 {
     const std::shared_ptr<const arm_snapshot> share = seen.read();
     const std::size_t joints                        = static_cast<std::size_t>(held(share, "the path comparison window", "published arm state").joints.size());
@@ -175,17 +176,17 @@ void path_comparison_window::render_switches()
 // begins where the drawing does.
 void path_comparison_window::play()
 {
-    const std::vector<joint_vector> through = configurations_along(m_shapes, radians_of(m_first), radians_of(m_second));
-    if(through.size() < drawn_points)
+    const expected<std::vector<joint_vector>, refusal> through = configurations_along(m_shapes, radians_of(m_first), radians_of(m_second));
+    if(!through)
         return;
 
     if(m_played == compared_path::joint_space)
     {
         command(m_arm,
-                [through](robot_controller &control, scene_robot &driven)
+                [run = *through](robot_controller &control, scene_robot &driven)
                 {
-                    driven.set_joint_positions(through.front());
-                    control.joint_space_trajectory(std::span<const joint_vector>(through));
+                    driven.set_joint_positions(run.front());
+                    control.joint_space_trajectory(std::span<const joint_vector>(run));
                 });
 
         return;
@@ -193,7 +194,7 @@ void path_comparison_window::play()
 
     const std::vector<transform> poses = poses_along(m_played.value());
     if(poses.size() >= drawn_points)
-        play_poses(m_arm, through.front(), poses);
+        play_poses(m_arm, through->front(), poses);
 }
 
 }

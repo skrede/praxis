@@ -1,51 +1,47 @@
 #include "path_comparison_paths.h"
 
+#include "praxis/manipulator/slots.h"
 #include "praxis/manipulator/motion_commands.h"
-#include "praxis/manipulator/motion_drawings.h"
 
 #include "praxis/rigid_motion/frame.h"
 #include "praxis/rigid_motion/screw.h"
 #include "praxis/rigid_motion/angles.h"
 
-#include <threepp/math/Color.hpp>
+#include "praxis/trajectory/slots.h"
+
+#include "praxis/extension/coverage.h"
 
 #include <Eigen/Core>
 
 #include <array>
-#include <memory>
 #include <vector>
 #include <cstddef>
+#include <utility>
+#include <string_view>
 
 namespace praxis::manipulator {
 
 namespace {
-
-constexpr threepp::Color::ColorName decoupled_tone = threepp::Color::blue;
-constexpr threepp::Color::ColorName screw_tone     = threepp::Color::springgreen;
 
 // The second end a comparison opens at, per joint and in degrees. A joint beyond these opens where
 // the first end does, so the pair carries the arm's own width and only its first five values are
 // written out.
 constexpr std::array<double, 5> opening_offset{120.0, -45.0, 30.0, 90.0, 90.0};
 
-bool unchanged(const Eigen::VectorXf &one, const Eigen::VectorXf &other)
-{
-    return one.size() == other.size() && one == other;
-}
-
 double along(std::size_t step)
 {
     return static_cast<double>(step) / static_cast<double>(path_comparison_window::drawn_points - 1u);
 }
 
-std::vector<transform> mapped(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &fk, const screw_chain &chain, const std::vector<joint_vector> &through)
+expected<std::vector<transform>, refusal> mapped(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &fk, const screw_chain &chain,
+                                                 const std::vector<joint_vector> &through)
 {
     std::vector<transform> reached;
     for(const joint_vector &at : through)
     {
         const expected<transform, refusal> pose = fk.forward_kinematics(screw, chain.home, chain.space_screws, at);
         if(!pose)
-            return {};
+            return praxis::unexpected(pose.error());
 
         reached.push_back(*pose);
     }
@@ -53,30 +49,26 @@ std::vector<transform> mapped(const rigid_motion::screw_ops &screw, const forwar
     return reached;
 }
 
-// The forward map answers flange poses and all four polylines are drawn at the tool centre point.
-std::vector<transform> at_the_tool(const robot_ops &robot, const transform &tool_offset, const std::vector<transform> &flange_poses)
-{
-    std::vector<transform> standing;
-    standing.reserve(flange_poses.size());
-    for(const transform &pose : flange_poses)
-        standing.push_back(robot.tool_pose_from_flange_pose(pose, tool_offset));
-
-    return standing;
-}
-
-std::vector<transform> between(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, task_space_path shape, const transform &from, const transform &to)
+expected<std::vector<transform>, refusal> between(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, task_space_path shape, const transform &from,
+                                                  const transform &to)
 {
     std::vector<transform> through;
     for(std::size_t step = 0; step < path_comparison_window::drawn_points; ++step)
     {
         const expected<transform, refusal> pose = shape(screw, frames, from, to, along(step));
         if(!pose)
-            return {};
+            return praxis::unexpected(pose.error());
 
         through.push_back(*pose);
     }
 
     return through;
+}
+
+template<typename Ops>
+std::string_view slot_called(const Ops &described, capability_slots_t<Ops> which)
+{
+    return slot_name(view_of(described), static_cast<std::size_t>(which));
 }
 
 }
@@ -88,14 +80,14 @@ compared_path_cycle every_compared_path(compared_path chosen)
                                {path_comparison_window::joint_space_path, path_comparison_window::decoupled_path, path_comparison_window::screw_path}};
 }
 
-std::vector<joint_vector> configurations_along(const trajectory::path_ops &shapes, const joint_vector &from, const joint_vector &to)
+expected<std::vector<joint_vector>, refusal> configurations_along(const trajectory::path_ops &shapes, const joint_vector &from, const joint_vector &to)
 {
     std::vector<joint_vector> through;
     for(std::size_t step = 0; step < path_comparison_window::drawn_points; ++step)
     {
         const expected<trajectory::configuration, refusal> at = shapes.joint_straight_line(from, to, along(step));
         if(!at)
-            return {};
+            return praxis::unexpected(at.error());
 
         through.push_back(*at);
     }
@@ -120,60 +112,37 @@ joint_vector path_comparison_window::opening_second(std::size_t joints)
 // The two task-space shapes run between the poses the forward map answers at the two ends, and the
 // joint-space one is the forward map at each configuration along the straight line between them.
 // No solve enters any of the three.
-std::vector<transform> path_comparison_window::poses_along(compared_path shape) const
+expected<std::vector<transform>, path_comparison_window::refused_slot> path_comparison_window::sampled(compared_path shape) const
 {
     const joint_vector from = m_first.cast<double>() * radians_per_degree;
     const joint_vector to   = m_second.cast<double>() * radians_per_degree;
-    if(shape == compared_path::joint_space)
-        return mapped(m_screw_ops, m_fk, m_chain, configurations_along(m_shapes, from, to));
+    const bool joint_space  = shape == compared_path::joint_space;
 
-    const std::vector<transform> ends = mapped(m_screw_ops, m_fk, m_chain, {from, to});
-    if(ends.size() != 2u)
-        return {};
+    const expected<std::vector<joint_vector>, refusal> through = joint_space ? configurations_along(m_shapes, from, to) : std::vector<joint_vector>{from, to};
+    if(!through)
+        return praxis::unexpected(refused_slot{slot_called(m_shapes, trajectory::path_slot::joint_straight_line), through.error()});
 
-    return between(m_screw_ops, m_frame_ops, shape == compared_path::screw ? m_shapes.screw : m_shapes.decoupled, ends.front(), ends.back());
+    expected<std::vector<transform>, refusal> reached = mapped(m_screw_ops, m_fk, m_chain, *through);
+    if(!reached)
+        return praxis::unexpected(refused_slot{slot_called(m_fk, forward_kinematics_slot::forward_kinematics), reached.error()});
+
+    if(joint_space)
+        return std::move(*reached);
+
+    const trajectory::path_slot task_space = shape == compared_path::screw ? trajectory::path_slot::screw : trajectory::path_slot::decoupled;
+    expected<std::vector<transform>, refusal> run =
+            between(m_screw_ops, m_frame_ops, shape == compared_path::screw ? m_shapes.screw : m_shapes.decoupled, reached->front(), reached->back());
+    if(!run)
+        return praxis::unexpected(refused_slot{slot_called(m_shapes, task_space), run.error()});
+
+    return std::move(*run);
 }
 
-// Three polylines of sixty-five poses are rebuilt where an end or the tool offset they are carried to
-// moved, and not on every frame.
-void path_comparison_window::draw_paths()
+std::vector<transform> path_comparison_window::poses_along(compared_path shape) const
 {
-    const std::shared_ptr<const arm_snapshot> published = m_seen.read();
-    if(published == nullptr)
-        return;
+    expected<std::vector<transform>, refused_slot> run = sampled(shape);
 
-    if(m_told && unchanged(m_told_first, m_first) && unchanged(m_told_second, m_second) && m_told_offset == published->tool_offset)
-        return;
-
-    m_told_first  = m_first;
-    m_told_second = m_second;
-    m_told_offset = published->tool_offset;
-    m_told        = true;
-
-    static_cast<void>(m_drawn.set_pose_path(joint_space_path, at_the_tool(m_robot, m_told_offset, poses_along(compared_path::joint_space))));
-    static_cast<void>(m_drawn.set_pose_path(decoupled_path, at_the_tool(m_robot, m_told_offset, poses_along(compared_path::decoupled)), threepp::Color(decoupled_tone)));
-    static_cast<void>(m_drawn.set_pose_path(screw_path, at_the_tool(m_robot, m_told_offset, poses_along(compared_path::screw)), threepp::Color(screw_tone)));
-    show_paths();
-}
-
-// The run the tool traversed grows while a motion plays, so it is told on its own occasion rather
-// than behind the guard that holds the three commanded shapes still while neither end has moved.
-void path_comparison_window::draw_traversed()
-{
-    const std::shared_ptr<const arm_snapshot> published = m_seen.read();
-    if(published == nullptr || published->traversed.get() == m_told_traversed.get())
-        return;
-
-    m_told_traversed = published->traversed;
-    if(m_told_traversed != nullptr && m_told_traversed->size() >= least_drawn_poses)
-        static_cast<void>(m_drawn.set_pose_path(traversed_motion_path, *m_told_traversed, threepp::Color(traversed_motion_tone)));
-}
-
-void path_comparison_window::show_paths()
-{
-    static_cast<void>(m_drawn.set_pose_path_shown(joint_space_path, m_joint_space));
-    static_cast<void>(m_drawn.set_pose_path_shown(decoupled_path, m_decoupled));
-    static_cast<void>(m_drawn.set_pose_path_shown(screw_path, m_screw));
+    return run ? std::move(*run) : std::vector<transform>();
 }
 
 }

@@ -1178,6 +1178,9 @@ lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	screw
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	compared_path_cycle	typedef	-	typename:option_cycle<compared_path,3>
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	every_compared_path	prototype	(compared_path chosen)	typename:compared_path_cycle
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	path_comparison_window	class	-	-
+lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	refused_slot	struct	-	-
+lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	slot	member	-	typename:std::string_view
+lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	reason	member	-	typename:refusal
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	settings	struct	-	-
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	first	member	-	typename:joint_vector
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	second	member	-	typename:joint_vector
@@ -1221,11 +1224,14 @@ lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_tol
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_told	member	-	typename:bool
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_told_offset	member	-	typename:transform
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_told_traversed	member	-	typename:std::shared_ptr<const std::vector<transform>>
+lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	m_refused	member	-	typename:std::array<std::optional<refusal>,3>
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	accept	prototype	(const joint_vector & end,std::string_view named,std::size_t joints,Eigen::VectorXf & into)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	render_controls	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	render_ends	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	render_switches	prototype	()	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	sampled	prototype	(compared_path shape) const	typename:expected<std::vector<transform>,refused_slot>
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	draw_paths	prototype	()	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	draw_path	prototype	(compared_path shape)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	draw_traversed	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	show_paths	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/path_comparison_window.h	play	prototype	()	typename:void

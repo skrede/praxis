@@ -140,6 +140,7 @@ praxis_add_module(manipulator
     src/motion_commands.cpp
     src/option_cycle.cpp
     src/path_comparison_configuration.cpp
+    src/path_comparison_drawing.cpp
     src/path_comparison_paths.h
     src/path_comparison_paths.cpp
     src/path_comparison_window.cpp

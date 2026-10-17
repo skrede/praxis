@@ -175,6 +175,43 @@ robot_ops recording_the_conversion()
     return injected;
 }
 
+std::size_t occurrences(const std::string &within, const std::string &sought)
+{
+    std::size_t counted = 0;
+    for(std::size_t at = within.find(sought); at != std::string::npos; at = within.find(sought, at + sought.size()))
+        ++counted;
+
+    return counted;
+}
+
+bool &screw_refusing()
+{
+    static bool refusing = false;
+
+    return refusing;
+}
+
+expected<transform, refusal> refusing_screw(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &from, const transform &to, double s)
+{
+    if(screw_refusing())
+        return praxis::unexpected(refusal::degenerate);
+
+    return trajectory::baseline().path.screw(screw, frames, from, to, s);
+}
+
+trajectory::path_ops screw_coming_to_refuse()
+{
+    trajectory::path_ops shapes = trajectory::baseline().path;
+    shapes.screw                = &refusing_screw;
+
+    return shapes;
+}
+
+// Read by the same index as `drawn_names`.
+constexpr std::array<const char *, 3> not_implemented_lines{"'path.joint_straight_line' is not implemented, so the path told under \"Joint space\" is not drawn",
+                                                            "'path.decoupled' is not implemented, so the path told under \"Decoupled\" is not drawn",
+                                                            "'path.screw' is not implemented, so the path told under \"Screw\" is not drawn"};
+
 transform bent_tool_offset()
 {
     const rigid_motion::frame_ops frames = rigid_motion::baseline().frame;
@@ -239,14 +276,15 @@ double worst_gap(const std::vector<transform> &one, const std::vector<transform>
 struct stage
 {
     explicit stage(const path_comparison_window::settings &opened = ends_at(configuration(0.0, 0.0), configuration(1.0, 1.0)), std::weak_ptr<owned_arm> driving = {},
-                   const arm_snapshot &opening = tooled_with(transform::Identity()), const rigid_motion::frame_ops &framing = rigid_motion::baseline().frame)
+                   const arm_snapshot &opening = tooled_with(transform::Identity()), const rigid_motion::frame_ops &framing = rigid_motion::baseline().frame,
+                   const trajectory::path_ops &shapes = trajectory::baseline().path)
             : loop(inline_workers)
             , scene(threepp::Scene::create())
             , seen(opening)
             , published(publishing(seen))
             , stencil(two_joint_handle(), attachments{}, *scene, loop.main_strand(), published->reader(), rigid_motion::baseline().screw, rigid_motion::screw_slot_set{})
-            , panel(panel_title, published->reader(), std::move(driving), stencil, rigid_motion::baseline().screw, framing, baseline().fk, planar_chain(), trajectory::baseline().path,
-                    baseline().robot, opened, comparison_at)
+            , panel(panel_title, published->reader(), std::move(driving), stencil, rigid_motion::baseline().screw, framing, baseline().fk, planar_chain(), shapes, baseline().robot,
+                    opened, comparison_at)
     {
         REQUIRE(stencil.initialize().has_value());
     }
@@ -589,4 +627,52 @@ TEST_CASE("playing a task-space shape hands the controller flange poses and draw
     REQUIRE(carried_from_the_tool_frame().size() == drawn.size());
     CHECK(worst_gap(carried_from_the_tool_frame(), carried_to_the_tool_frame(drawn)) < read_back);
     CHECK(off_the_reach(over.path(path_comparison_window::screw_path), positions_of(drawn), reach_of(bent_tool_offset())) < read_back);
+}
+
+TEST_CASE("a comparison whose path slots do not implement the case names each slot once and draws none of the three", "[manipulator][comparison][refusal]")
+{
+    captured_log log;
+    stage over(ends_at(configuration(0.0, 0.0), configuration(1.0, 1.0)), {}, tooled_with(transform::Identity()), rigid_motion::baseline().frame, trajectory::path_ops{});
+    over.draw();
+    over.type_into_end(first_end, "35.5");
+    over.draw();
+    over.press_above_last(screw_switch);
+
+    REQUIRE_FALSE(over.panel.state().screw);
+
+    const std::string written = log.text();
+    for(std::size_t at = 0; at < drawn_names.size(); ++at)
+    {
+        INFO(drawn_names[at]);
+        CHECK(occurrences(written, not_implemented_lines[at]) == 1u);
+        CHECK(over.path_node(drawn_names[at]) == nullptr);
+    }
+    CHECK(occurrences(written, "[warning]") == 3u);
+    CHECK(occurrences(written, "[error]") == 0u);
+    CHECK(occurrences(written, "showing or hiding") == 0u);
+    CHECK(occurrences(written, "joins two tool poses") == 0u);
+}
+
+TEST_CASE("a drawn path whose slot comes to refuse is taken down and named once with its refusal", "[manipulator][comparison][refusal]")
+{
+    screw_refusing() = false;
+    captured_log log;
+    stage over(ends_at(configuration(0.0, 0.0), configuration(1.0, 1.0)), {}, tooled_with(transform::Identity()), rigid_motion::baseline().frame, screw_coming_to_refuse());
+    over.draw();
+
+    REQUIRE(over.path_node(path_comparison_window::screw_path) != nullptr);
+
+    screw_refusing() = true;
+    over.type_into_end(first_end, "35.5");
+    over.draw();
+    over.press_above_last(screw_switch);
+
+    const std::string written = log.text();
+    CHECK(over.path_node(path_comparison_window::screw_path) == nullptr);
+    CHECK(over.path_node(path_comparison_window::joint_space_path) != nullptr);
+    CHECK(over.path_node(path_comparison_window::decoupled_path) != nullptr);
+    CHECK(occurrences(written, "'path.screw' refused the path told under \"Screw\" as degenerate, so it is not drawn") == 1u);
+    CHECK(occurrences(written, "[error]") == 1u);
+    CHECK(occurrences(written, "showing or hiding") == 0u);
+    CHECK(occurrences(written, "joins two tool poses") == 0u);
 }

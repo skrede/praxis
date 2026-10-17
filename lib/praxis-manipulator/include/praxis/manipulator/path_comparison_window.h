@@ -20,13 +20,19 @@
 #include "praxis/rigid_motion/frame.h"
 #include "praxis/rigid_motion/screw.h"
 
+#include "praxis/extension/refusal.h"
+
+#include "praxis/compat/expected.h"
+
 #include <Eigen/Core>
 
+#include <array>
 #include <string>
 #include <memory>
 #include <vector>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <string_view>
 
 namespace praxis::manipulator {
@@ -49,6 +55,13 @@ compared_path_cycle every_compared_path(compared_path chosen);
 // published tool offset before it is drawn.
 class path_comparison_window : public scene::imgui_window, public config::configurable
 {
+    // The slot a run stopped at, as its descriptor table spells it, and the refusal it answered.
+    struct refused_slot
+    {
+        std::string_view slot;
+        refusal reason;
+    };
+
 public:
     struct settings
     {
@@ -138,12 +151,17 @@ private:
     // pointer identity: it is replaced whole and never appended to, so an unchanged handle is an
     // unchanged run and rebuilding a polyline from it would cost a thousand poses a frame.
     std::shared_ptr<const std::vector<transform>> m_told_traversed;
+    // Per drawing in `compared_path` order, the refusal its run last answered. Nothing stands under
+    // that name while one is held, and a refusal is reported only where it differs from the one held.
+    std::array<std::optional<refusal>, 3> m_refused;
 
     void accept(const joint_vector &end, std::string_view named, std::size_t joints, Eigen::VectorXf &into);
     void render_controls();
     void render_ends();
     void render_switches();
+    expected<std::vector<transform>, refused_slot> sampled(compared_path shape) const;
     void draw_paths();
+    void draw_path(compared_path shape);
     void draw_traversed();
     void show_paths();
     void play();
