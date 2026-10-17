@@ -60,6 +60,7 @@ public:
 
 private:
     arm_reader m_seen;
+    joint_vector m_seeded;
     std::string m_settings_at;
     std::weak_ptr<owned_arm> m_arm;
     Eigen::VectorXf m_joint_positions;
@@ -71,6 +72,7 @@ private:
     void render_joint_space(const arm_snapshot &seen);
     void render_joint_commands(const joint_vector &commanded, bool edited);
     void seed_fields(const arm_snapshot &seen);
+    joint_vector commanded_configuration() const;
     void preview_configuration(const joint_vector &commanded);
     void move_to_configuration(const joint_vector &commanded);
 };

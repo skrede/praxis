@@ -25,6 +25,11 @@ constexpr std::array<control_mode, 2> mode_options{control_mode::preview, contro
 
 constexpr const char *unpublished_arm = "The arm has published nothing yet.";
 
+Eigen::VectorXf in_field_degrees(const joint_vector &positions)
+{
+    return (positions * degrees_per_radian).cast<float>();
+}
+
 }
 
 joint_control_window::settings::settings(control_mode chosen)
@@ -110,7 +115,7 @@ void joint_control_window::render_joint_space(const arm_snapshot &seen)
         edited            = true;
     }
 
-    const joint_vector commanded = m_joint_positions.cast<double>() * radians_per_degree;
+    const joint_vector commanded = commanded_configuration();
     if(ImGui::Button("Reset to current"))
         seed_fields(seen);
 
@@ -134,8 +139,17 @@ void joint_control_window::render_joint_commands(const joint_vector &commanded, 
 
 void joint_control_window::seed_fields(const arm_snapshot &seen)
 {
+    m_seeded          = seen.joints;
     m_joint_labels    = named_joints(static_cast<std::size_t>(seen.joints.size()));
-    m_joint_positions = (seen.joints * degrees_per_radian).cast<float>();
+    m_joint_positions = in_field_degrees(m_seeded);
+}
+
+// A field still holding the value its seeding wrote stands for the configuration it was seeded from.
+joint_vector joint_control_window::commanded_configuration() const
+{
+    const joint_vector typed = m_joint_positions.cast<double>() * radians_per_degree;
+
+    return (m_joint_positions.array() == in_field_degrees(m_seeded).array()).select(m_seeded.array(), typed.array()).matrix();
 }
 
 void joint_control_window::preview_configuration(const joint_vector &commanded)

@@ -746,6 +746,7 @@ lib/praxis-manipulator/include/praxis/manipulator/joint_control_window.h	setting
 lib/praxis-manipulator/include/praxis/manipulator/joint_control_window.h	settings_edits	prototype	(const config::document &) const	typename:std::vector<config::edit>
 lib/praxis-manipulator/include/praxis/manipulator/joint_control_window.h	as_configurable	function	() const	typename:const config::configurable *
 lib/praxis-manipulator/include/praxis/manipulator/joint_control_window.h	m_seen	member	-	typename:arm_reader
+lib/praxis-manipulator/include/praxis/manipulator/joint_control_window.h	m_seeded	member	-	typename:joint_vector
 lib/praxis-manipulator/include/praxis/manipulator/joint_control_window.h	m_settings_at	member	-	typename:std::string
 lib/praxis-manipulator/include/praxis/manipulator/joint_control_window.h	m_arm	member	-	typename:std::weak_ptr<owned_arm>
 lib/praxis-manipulator/include/praxis/manipulator/joint_control_window.h	m_joint_positions	member	-	typename:Eigen::VectorXf
@@ -756,6 +757,7 @@ lib/praxis-manipulator/include/praxis/manipulator/joint_control_window.h	render_
 lib/praxis-manipulator/include/praxis/manipulator/joint_control_window.h	render_joint_space	prototype	(const arm_snapshot & seen)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/joint_control_window.h	render_joint_commands	prototype	(const joint_vector & commanded,bool edited)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/joint_control_window.h	seed_fields	prototype	(const arm_snapshot & seen)	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/joint_control_window.h	commanded_configuration	prototype	() const	typename:joint_vector
 lib/praxis-manipulator/include/praxis/manipulator/joint_control_window.h	preview_configuration	prototype	(const joint_vector & commanded)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/joint_control_window.h	move_to_configuration	prototype	(const joint_vector & commanded)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/joint_curve_window.h	manipulator	namespace	-	-

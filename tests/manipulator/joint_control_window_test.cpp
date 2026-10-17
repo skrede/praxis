@@ -1,5 +1,7 @@
 #include "window_stage.h"
 
+#include "captured_log.h"
+
 #include "praxis/manipulator/option_widgets.h"
 #include "praxis/manipulator/joint_control_window.h"
 
@@ -10,6 +12,7 @@
 #include "praxis/evaluation/tolerance.h"
 
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_string.hpp>
 #include <catch2/matchers/catch_matchers_exception.hpp>
 
 #include <Eigen/Core>
@@ -18,6 +21,7 @@
 
 #include <span>
 #include <memory>
+#include <string>
 #include <vector>
 #include <cstddef>
 #include <cstdint>
@@ -29,6 +33,7 @@ using namespace praxis::fixture;
 using namespace praxis::scheduler;
 using namespace praxis::manipulator;
 using Catch::Matchers::Message;
+using Catch::Matchers::ContainsSubstring;
 
 namespace {
 
@@ -59,6 +64,14 @@ constexpr double typed_joint_degrees      = 15.0;
 const joint_vector standing_configuration = configuration(0.9, -0.9);
 
 std::vector<joint_vector> requested;
+
+// No float in degrees spells these joints exactly.
+const joint_vector unspelled_joints = configuration(0.1, 0.1);
+
+bool exactly(const joint_vector &reached, const joint_vector &expected_joints)
+{
+    return reached.size() == expected_joints.size() && (reached.array() == expected_joints.array()).all();
+}
 
 // The waypoints a move hands the via-point step, taken without a motion having to play out: the step
 // answers a refusal, which commands no motion and is not one of the refusals that unload.
@@ -140,6 +153,25 @@ void press_command(imgui_frame &frames, const drawing &draw)
     reach(frames, draw, ImGuiKey_End);
     tap(frames, draw, ImGuiKey_RightArrow);
     tap(frames, draw, ImGuiKey_Space);
+}
+
+// The arm stood at `joints` and the publication read there, as a motion that ended there leaves both.
+void stand_at(const composed_arm &placed, praxis::scheduler::scheduler &loop, const joint_vector &joints)
+{
+    command(placed.owned, [joints](robot_controller &, scene_robot &driven) { driven.set_joint_positions(joints); });
+    static_cast<void>(loop.drain());
+    placed.publishing->publish(std::make_shared<const arm_snapshot>(upright(joints)));
+}
+
+// What the log took while the mode's command control was pressed and the command it issued ran.
+std::string reported_by_command(imgui_frame &frames, const drawing &draw, praxis::scheduler::scheduler &loop)
+{
+    return reported_by(
+            [&]
+            {
+                press_command(frames, draw);
+                static_cast<void>(loop.drain());
+            });
 }
 
 // A pane left to size itself keeps the extent the frame it first appeared on gave it, so one that
@@ -331,7 +363,7 @@ TEST_CASE("a joint control window in preview returns an arm moved elsewhere to i
     press_command(frames, draw);
     static_cast<void>(loop.drain());
 
-    CHECK(is_approx_equal(held_by(placed, loop), chosen_joints, round_trip));
+    CHECK(exactly(held_by(placed, loop), chosen_joints));
     CHECK(requested.empty());
 }
 
@@ -364,4 +396,66 @@ TEST_CASE("a joint control window in preview returns its fields to the publicati
     const char *const named[2]{"j1", "j2"};
 
     CHECK(typed_then_seeded(over(panel)) == seeded_over([&in_degrees, &named] { draw_reference(named, in_degrees, control_mode::preview); }));
+}
+
+TEST_CASE("an unedited move after the seeding control, to where the arm stands, commands nothing and says so at information level", "[manipulator][controls][seeded]")
+{
+    requested.clear();
+
+    praxis::scheduler::scheduler loop(inline_workers, clock_source{&reading});
+    const composed_arm placed = composing(loop);
+    placed.publishing->publish(std::make_shared<const arm_snapshot>(upright(configuration(0.0, 0.0))));
+    joint_control_window panel("Joint control", placed.seen, placed.owned, joint_control_window::settings{control_mode::simulation});
+    stand_at(placed, loop, unspelled_joints);
+
+    imgui_frame frames;
+    const drawing draw = over(panel);
+    start_navigating(frames, draw);
+    press_seed(frames, draw);
+    const std::string reported = reported_by_command(frames, draw, loop);
+
+    CHECK(requested.empty());
+    CHECK(exactly(held_by(placed, loop), unspelled_joints));
+    CHECK_THAT(reported, ContainsSubstring("the requested configuration, so no motion is commanded"));
+    CHECK(reported.find("[info]") != std::string::npos);
+    CHECK(reported.find("[error]") == std::string::npos);
+}
+
+TEST_CASE("a joint control window's unedited move hands over exactly the configuration it was seeded from", "[manipulator][controls][seeded]")
+{
+    requested.clear();
+
+    praxis::scheduler::scheduler loop(inline_workers, clock_source{&reading});
+    const composed_arm placed = composing(loop);
+    placed.publishing->publish(std::make_shared<const arm_snapshot>(upright(unspelled_joints)));
+    joint_control_window panel("Joint control", placed.seen, placed.owned, joint_control_window::settings{control_mode::simulation});
+
+    imgui_frame frames;
+    const drawing draw = over(panel);
+    start_navigating(frames, draw);
+    press_command(frames, draw);
+    static_cast<void>(loop.drain());
+
+    REQUIRE(requested.size() == 1u);
+    CHECK(exactly(requested.front(), unspelled_joints));
+}
+
+TEST_CASE("a joint control window's move hands over a typed value for the field typed into and the seeded one for the field beside it", "[manipulator][controls][seeded]")
+{
+    requested.clear();
+
+    praxis::scheduler::scheduler loop(inline_workers, clock_source{&reading});
+    const composed_arm placed = composing(loop);
+    placed.publishing->publish(std::make_shared<const arm_snapshot>(upright(unspelled_joints)));
+    joint_control_window panel("Joint control", placed.seen, placed.owned, joint_control_window::settings{control_mode::simulation});
+
+    imgui_frame frames;
+    const drawing draw = over(panel);
+    start_navigating(frames, draw);
+    enter_first_joint(frames, draw);
+    press_command(frames, draw);
+    static_cast<void>(loop.drain());
+
+    REQUIRE(requested.size() == 1u);
+    CHECK(exactly(requested.front(), configuration(to_radians(typed_joint_degrees), unspelled_joints[1])));
 }
