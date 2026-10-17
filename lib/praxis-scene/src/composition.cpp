@@ -62,23 +62,6 @@ private:
     detail::move_only_function<void()> m_concluded;
 };
 
-const char *refusal_name(refusal reason)
-{
-    switch(reason)
-    {
-        case refusal::unsupported_input:
-            return "unsupported input";
-        case refusal::degenerate:
-            return "degenerate";
-        case refusal::no_solution:
-            return "no solution";
-        case refusal::not_implemented:
-            return "not implemented";
-    }
-
-    return "unclassified";
-}
-
 // The settlement is settled by the last share of it being dropped, so a retirement the scheduler
 // refuses settles as this returns rather than on the strand.
 void settle_strand(scheduler::scheduler &loop, preset &held, detail::move_only_function<void()> concluded)
@@ -308,7 +291,7 @@ void composition::place_held()
     if(placed)
         return;
 
-    spdlog::error("praxis: the composition refused to initialize as {}, so it is unloaded again", refusal_name(placed.error()));
+    spdlog::error("praxis: the composition refused to initialize as {}, so it is unloaded again", refusal_text(placed.error()));
     release();
 }
 

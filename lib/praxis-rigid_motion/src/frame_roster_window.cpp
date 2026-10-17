@@ -12,26 +12,9 @@ namespace praxis::rigid_motion {
 
 namespace {
 
-const char *refusal_name(refusal reason)
-{
-    switch(reason)
-    {
-        case refusal::unsupported_input:
-            return "unsupported input";
-        case refusal::degenerate:
-            return "degenerate";
-        case refusal::no_solution:
-            return "no solution";
-        case refusal::not_implemented:
-            return "not implemented";
-    }
-
-    return "unclassified";
-}
-
 std::string refused(const std::string &named, const char *what, refusal reason)
 {
-    return "'" + named + "' " + what + " (" + refusal_name(reason) + ")";
+    return "'" + named + "' " + what + " (" + std::string(refusal_text(reason)) + ")";
 }
 
 }

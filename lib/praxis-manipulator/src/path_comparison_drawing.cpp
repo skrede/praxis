@@ -51,29 +51,12 @@ threepp::Color drawn_tone(compared_path shape)
     return threepp::Color(shape == compared_path::screw ? screw_tone : decoupled_tone);
 }
 
-const char *refusal_name(refusal reason)
-{
-    switch(reason)
-    {
-        case refusal::unsupported_input:
-            return "unsupported input";
-        case refusal::degenerate:
-            return "degenerate";
-        case refusal::no_solution:
-            return "no solution";
-        case refusal::not_implemented:
-            return "not implemented";
-    }
-
-    return "unclassified";
-}
-
 void report_refused(std::string_view slot, refusal reason, const char *named)
 {
     if(reason == refusal::not_implemented)
         spdlog::warn("praxis: '{}' is not implemented, so the path told under \"{}\" is not drawn", slot, named);
     else
-        spdlog::error("praxis: '{}' refused the path told under \"{}\" as {}, so it is not drawn", slot, named, refusal_name(reason));
+        spdlog::error("praxis: '{}' refused the path told under \"{}\" as {}, so it is not drawn", slot, named, refusal_text(reason));
 }
 
 }

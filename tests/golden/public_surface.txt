@@ -315,6 +315,7 @@ lib/praxis-extension/include/praxis/extension/refusal.h	unsupported_input	enumer
 lib/praxis-extension/include/praxis/extension/refusal.h	degenerate	enumerator	-	-
 lib/praxis-extension/include/praxis/extension/refusal.h	no_solution	enumerator	-	-
 lib/praxis-extension/include/praxis/extension/refusal.h	not_implemented	enumerator	-	-
+lib/praxis-extension/include/praxis/extension/refusal.h	refusal_text	function	(refusal reason)	typename:std::string_view
 lib/praxis-extension/include/praxis/extension/refusal.h	refusal_standing	enum	-	typename:std::uint8_t
 lib/praxis-extension/include/praxis/extension/refusal.h	per_request	enumerator	-	-
 lib/praxis-extension/include/praxis/extension/refusal.h	composition_wide	enumerator	-	-

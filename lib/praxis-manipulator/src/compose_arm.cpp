@@ -26,26 +26,9 @@ namespace praxis::manipulator {
 
 namespace {
 
-const char *refusal_name(refusal reason)
-{
-    switch(reason)
-    {
-        case refusal::unsupported_input:
-            return "unsupported input";
-        case refusal::degenerate:
-            return "degenerate";
-        case refusal::no_solution:
-            return "no solution";
-        case refusal::not_implemented:
-            return "not implemented";
-    }
-
-    return "unclassified";
-}
-
 std::shared_ptr<scene::preset> report_refusal(const char *builder, const std::string &model, refusal reason)
 {
-    spdlog::error("praxis: '{}' refused the description of model '{}' as {}; the preset is not composed", builder, model, refusal_name(reason));
+    spdlog::error("praxis: '{}' refused the description of model '{}' as {}; the preset is not composed", builder, model, refusal_text(reason));
 
     return nullptr;
 }
@@ -55,7 +38,7 @@ std::shared_ptr<scene::preset> report_refusal(const char *builder, const std::st
 // asked per frame or per sample refuses silently.
 unexpected<refusal> undrivable(const char *builder, const std::string &model, refusal reason)
 {
-    spdlog::error("praxis: '{}' refused the description of model '{}' as {}; the arm is shown and not driven", builder, model, refusal_name(reason));
+    spdlog::error("praxis: '{}' refused the description of model '{}' as {}; the arm is shown and not driven", builder, model, refusal_text(reason));
 
     return unexpected(reason);
 }
@@ -216,7 +199,7 @@ std::optional<joint_vector> opening_configuration(const std::string &model, cons
 
     spdlog::error("praxis: 'manipulator.compose_arm' refused the description of model '{}' as {}; its opening configuration has {} joint values and the arm has {} joints, so the "
                   "preset is not composed",
-                  model, refusal_name(refusal::unsupported_input), supplied.size(), joints);
+                  model, refusal_text(refusal::unsupported_input), supplied.size(), joints);
 
     return std::nullopt;
 }
