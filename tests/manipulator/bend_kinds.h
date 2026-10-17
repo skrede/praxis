@@ -17,7 +17,7 @@ enum class bent : std::size_t
     element_wise,
     geodesic,
     pose_radians,
-    pose_metres,
+    pose_meters,
     configuration,
     prepared_motion,
     count,
@@ -47,7 +47,7 @@ inline bool is_bent(bent which, std::string_view slot)
         case bent::geodesic:
             return slot == "robot.orientation_from_pose";
         case bent::pose_radians:
-        case bent::pose_metres:
+        case bent::pose_meters:
             return slot == "fk.forward_kinematics" || slot == "fk.body_forward_kinematics" || slot == "robot.tool_pose_from_flange_pose" || slot == "robot.flange_pose_from_tool_pose" ||
                     slot == "modeling.build_chain";
         case bent::prepared_motion:

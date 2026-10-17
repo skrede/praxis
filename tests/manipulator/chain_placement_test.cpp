@@ -29,9 +29,9 @@ using namespace praxis::manipulator;
 
 namespace {
 
-// Metres. The two deployed descriptions publish their dimensions to five decimals and write their
-// right angles as truncated decimals, so a folded point agrees to about a nanometre and no closer.
-constexpr double metre_scale = 1.0e-9;
+// Meters. The two deployed descriptions publish their dimensions to five decimals and write their
+// right angles as truncated decimals, so a folded point agrees to about a nanometer and no closer.
+constexpr double meter_scale = 1.0e-9;
 
 constexpr const char *universal = "ur_description/urdf/ur.urdf.xacro";
 constexpr const char *kuka      = "kuka_kr6_support/urdf/kr6r900sixx.xacro";
@@ -103,7 +103,7 @@ TEST_CASE("a universal arm's chain stands its published link dimensions apart at
 
     const std::vector<double> published{0.0, 0.15185, 0.24355, 0.21320, 0.13105, 0.08535, 0.09210};
     for(std::size_t at = 0; at < published.size(); ++at)
-        CHECK(std::abs((points[at + 1] - points[at]).norm() - published[at]) < metre_scale);
+        CHECK(std::abs((points[at + 1] - points[at]).norm() - published[at]) < meter_scale);
 }
 
 // The base structure the meshes carry below the first joint is in no screw, so the chain begins at
@@ -121,7 +121,7 @@ TEST_CASE("a kuka arm's chain stands at the joint origins its description publis
                                                  {0.48, 0.0, 0.435}, {0.9, 0.0, 0.435}, {0.9, 0.0, 0.435}, {0.98, 0.0, 0.435}};
 
     for(std::size_t at = 0; at < published.size(); ++at)
-        CHECK((points[at] - published[at]).norm() < metre_scale);
+        CHECK((points[at] - published[at]).norm() < meter_scale);
 }
 
 // A point-to-line projection is unique for every axis, which the foot of a common normal is not:
@@ -134,9 +134,9 @@ TEST_CASE("three mutually parallel consecutive axes fold without a degenerate ca
     const std::vector<Eigen::Vector3d> points = folded(told);
     REQUIRE(points.size() == 5u);
 
-    CHECK((points[1] - Eigen::Vector3d(0.0, 0.0, 0.0)).norm() < metre_scale);
-    CHECK((points[2] - Eigen::Vector3d(1.0, 0.0, 0.0)).norm() < metre_scale);
-    CHECK((points[3] - Eigen::Vector3d(2.0, 0.0, 0.0)).norm() < metre_scale);
+    CHECK((points[1] - Eigen::Vector3d(0.0, 0.0, 0.0)).norm() < meter_scale);
+    CHECK((points[2] - Eigen::Vector3d(1.0, 0.0, 0.0)).norm() < meter_scale);
+    CHECK((points[3] - Eigen::Vector3d(2.0, 0.0, 0.0)).norm() < meter_scale);
     for(const Eigen::Vector3d &at : points)
         CHECK(at.allFinite());
 }
@@ -152,12 +152,12 @@ TEST_CASE("a screw with no angular part names no axis to project onto and carrie
     const std::vector<Eigen::Vector3d> points = folded(told);
     REQUIRE(points.size() == 5u);
 
-    CHECK((points[1] - Eigen::Vector3d(0.3, 0.0, 0.0)).norm() < metre_scale);
-    CHECK((points[2] - points[1]).norm() < metre_scale);
-    CHECK((points[3] - Eigen::Vector3d(0.3, 0.7, 0.0)).norm() < metre_scale);
+    CHECK((points[1] - Eigen::Vector3d(0.3, 0.0, 0.0)).norm() < meter_scale);
+    CHECK((points[2] - points[1]).norm() < meter_scale);
+    CHECK((points[3] - Eigen::Vector3d(0.3, 0.7, 0.0)).norm() < meter_scale);
 }
 
-// The state an arm nobody has modelled yet opens at. Every point collapsing onto the origin is a
+// The state an arm nobody has modeled yet opens at. Every point collapsing onto the origin is a
 // figure no placement taken from the rendered arm could produce.
 TEST_CASE("every screw the unit z axis through the origin collapses the whole chain onto the origin", "[manipulator][chain]")
 {
@@ -165,7 +165,7 @@ TEST_CASE("every screw the unit z axis through the origin collapses the whole ch
     REQUIRE(points.size() == 8u);
 
     for(const Eigen::Vector3d &at : points)
-        CHECK(at.norm() < metre_scale);
+        CHECK(at.norm() < meter_scale);
 }
 
 // A pair of consecutive axes that meet folds to one point twice, and the polyline carries the
@@ -178,7 +178,7 @@ TEST_CASE("the polyline carries one point per joint beside the origin and the to
 
     const std::vector<Eigen::Vector3d> points = folded(told);
     REQUIRE(points.size() == told.size() + 2u);
-    CHECK((points[3] - points[2]).norm() < metre_scale);
+    CHECK((points[3] - points[2]).norm() < meter_scale);
 
     joint_vector turned(3);
     turned << 0.3, -0.6, 1.1;

@@ -107,7 +107,7 @@ rigid_motion::rotation_axis_window::axis_route drawings_into(rigid_motion::frame
 {
     return [&target, screw, start, unit, coordinate](const rigid_motion::rotation_axis_window::settings &shown, const std::optional<Eigen::Vector3d> &named)
     {
-        // Both arrows are drawn through the one length, in metres: the arrow standing for the axis
+        // Both arrows are drawn through the one length, in meters: the arrow standing for the axis
         // at the length the frame's own arrows are drawn at, the arrow standing for the coordinate
         // at that same length times the angle.
         const Eigen::Vector3d along = named.value_or(Eigen::Vector3d::Zero());

@@ -20,10 +20,10 @@ using rotation_logarithm = std::pair<Eigen::Vector3d, double>;
 using pose_logarithm     = std::pair<screw_axis, double>;
 
 constexpr double turn_widening_cap          = 5.0e-2; // radians
-constexpr double offset_widening_cap        = 2.0;    // metres per metre of position
+constexpr double offset_widening_cap        = 2.0;    // meters per meter of position
 constexpr double turn_roundoff_multiple     = 50.0;   // radians
 constexpr double turn_conditioning_multiple = 100.0;  // radians
-constexpr double offset_roundoff_multiple   = 50.0;   // metres per metre of position
+constexpr double offset_roundoff_multiple   = 50.0;   // meters per meter of position
 
 const screw_ops &screw_of(const void *value)
 {
@@ -66,7 +66,7 @@ evaluation::residual pose_logarithm_residual(const pose_logarithm &held, const p
 
 // A logarithm read from the trace answers less precisely as the turn nears none or a half turn (Lynch &
 // Park, section 3.2.3.3). The allowance is read from the drawn input, so neither answer can move it.
-evaluation::tolerance_pair widened(const evaluation::tolerance_pair &allowed, const rotation &turned, double position_metres)
+evaluation::tolerance_pair widened(const evaluation::tolerance_pair &allowed, const rotation &turned, double position_meters)
 {
     const double unit_roundoff = std::numeric_limits<double>::epsilon();
     const double theta_radians = Eigen::AngleAxisd(turned).angle();
@@ -75,7 +75,7 @@ evaluation::tolerance_pair widened(const evaluation::tolerance_pair &allowed, co
     const double turn          = std::fmin(turn_roundoff_multiple * unit_roundoff / sine + turn_conditioning_multiple * unit_roundoff / half_turn_gap, turn_widening_cap);
     const double lever         = std::fmin(offset_roundoff_multiple * unit_roundoff * (1.0 / sine + 1.0 / half_turn_gap), offset_widening_cap);
 
-    return evaluation::tolerance_pair{allowed.magnitude + turn, allowed.linear_metres + position_metres * lever};
+    return evaluation::tolerance_pair{allowed.magnitude + turn, allowed.linear_metres + position_meters * lever};
 }
 
 }
@@ -122,11 +122,11 @@ evaluation::case_result compare_matrix_logarithm_so3(const void *first, const vo
 evaluation::case_result compare_matrix_logarithm_se3_rp(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed)
 {
     const rotation turned                           = drawn.rotation_member();
-    const Eigen::Vector3d origin_metres             = drawn.position_metres();
-    const expected<pose_logarithm, refusal> held    = graded_se3_rp(screw_of(first), turned, origin_metres);
-    const expected<pose_logarithm, refusal> against = graded_se3_rp(screw_of(second), turned, origin_metres);
+    const Eigen::Vector3d origin_meters             = drawn.position_metres();
+    const expected<pose_logarithm, refusal> held    = graded_se3_rp(screw_of(first), turned, origin_meters);
+    const expected<pose_logarithm, refusal> against = graded_se3_rp(screw_of(second), turned, origin_meters);
 
-    return evaluation::agreed_or_refused(held, against, pose_logarithm_residual, widened(allowed, turned, origin_metres.norm()));
+    return evaluation::agreed_or_refused(held, against, pose_logarithm_residual, widened(allowed, turned, origin_meters.norm()));
 }
 
 evaluation::case_result compare_matrix_logarithm_se3(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed)

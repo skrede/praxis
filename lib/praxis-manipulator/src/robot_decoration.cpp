@@ -42,9 +42,9 @@ bool loadable_robot_stencil::holds_chain() const
     return m_chain != nullptr;
 }
 
-void loadable_robot_stencil::set_decoration_reach(double metres)
+void loadable_robot_stencil::set_decoration_reach(double meters)
 {
-    m_reach = metres;
+    m_reach = meters;
     rebuild_decoration();
 }
 

@@ -13,7 +13,7 @@ namespace praxis::manipulator {
 namespace {
 
 constexpr const char *nothing_previewed = "Ask for a preview to see the motion it would play.";
-constexpr const char *nothing_travelled = "This motion stands where it began, so there is no timing to draw.";
+constexpr const char *nothing_traveled  = "This motion stands where it began, so there is no timing to draw.";
 constexpr const char *nothing_chosen    = "Choose a curve to draw.";
 
 // What the one curve is named where the motion answers for no choice, and so carries no marker
@@ -82,7 +82,7 @@ scene::plot_reading plotted_preview(const preview_run *shown, time_scaling_choic
     }
     if(!stands_beside(*shown) && shown->parameter.empty())
     {
-        plotted.message = nothing_travelled;
+        plotted.message = nothing_traveled;
 
         return plotted;
     }

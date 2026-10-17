@@ -10,7 +10,7 @@
 namespace praxis::manipulator {
 
 // The whole chain's own two lines: how far the pose the supplied chain reaches stands from the pose
-// the derived one reaches, as a rotation in radians and a distance in metres carried apart and never
+// the derived one reaches, as a rotation in radians and a distance in meters carried apart and never
 // summed. Each is one labeled cell, drawn as this window has always drawn it.
 scene::readout whole_chain_lines(const evaluation::residual &apart);
 
@@ -22,7 +22,7 @@ scene::readout whole_chain_without_pose(const char *said);
 // rows it was given are left exactly where they are, and the home line, one line per joint and a
 // surplus line where there is one stand after them. Every appended cell is unlabeled, so the run
 // reads as aligned columns; a line's first cell states which line it is and the cells after it carry
-// that line's terms, one unit to a column -- radians, then metres, then a defect carrying none. A
+// that line's terms, one unit to a column -- radians, then meters, then a defect carrying none. A
 // line answering no number at all carries one statement in place of its terms. A term with no number
 // and a value that is not finite are each stated rather than printed, so no cell ever carries a
 // number the comparison did not measure.

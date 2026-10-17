@@ -27,7 +27,7 @@ namespace praxis::manipulator {
 
 // A motion along and about one screw axis, taken from the start pose the composer shares in. The
 // axis is named the way the screw parameters are named: `q` a point on it, `w` its direction and `h`
-// the pitch in metres per radian; the angle is in degrees and the point in metres.
+// the pitch in meters per radian; the angle is in degrees and the point in meters.
 class screw_jog_window : public scene::imgui_window, public config::configurable
 {
 public:

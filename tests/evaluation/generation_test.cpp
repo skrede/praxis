@@ -21,10 +21,10 @@ constexpr std::uint64_t recorded_seed = 0x5EEDu;
 constexpr int draws                   = 10000;
 constexpr double half_turn            = std::numbers::pi_v<double>;
 
-// Metres.
+// Meters.
 constexpr double position_extent = 2.0;
 
-// Metres per radian.
+// Meters per radian.
 constexpr double pitch_extent = 2.25;
 
 // The ends of the axis-count range the header states.
@@ -47,7 +47,7 @@ double four_errors_of(double variance)
 
 // Archimedes' hat-box theorem: one component of a point drawn uniformly on the sphere is itself
 // uniform over the closed interval from minus one to one. A box draw normalized is not, because the
-// cube's diagonals stand further from its centre than its faces do.
+// cube's diagonals stand further from its center than its faces do.
 TEST_CASE("a_drawn_unit_direction_is_uniform_over_the_sphere_rather_than_a_normalized_box_draw")
 {
     case_source drawn     = case_source::for_slot(recorded_seed, "unit_direction");

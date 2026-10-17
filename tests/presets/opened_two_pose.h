@@ -80,13 +80,13 @@ inline two_pose_window::settings opening()
 
 inline two_pose_window::path_route path_into(frame_stencil &target, std::size_t object)
 {
-    return [&target, object](std::span<const transform> travelled)
+    return [&target, object](std::span<const transform> traveled)
     {
-        if(travelled.empty())
+        if(traveled.empty())
             return target.set_body(object, object_body{body_shape::none, 0.0, nullptr});
 
         std::vector<threepp::Vector3> points;
-        for(const transform &put : travelled)
+        for(const transform &put : traveled)
             points.emplace_back(static_cast<float>(put(0, 3)), static_cast<float>(put(1, 3)), static_cast<float>(put(2, 3)));
 
         auto drawn = threepp::BufferGeometry::create();

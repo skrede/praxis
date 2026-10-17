@@ -54,7 +54,7 @@ struct list_row_traits<joint_vector>
 template<>
 struct list_row_traits<edited_pose>
 {
-    // Metres and degrees, which the row already holds, so a pose is shown in the unit it is kept in.
+    // Meters and degrees, which the row already holds, so a pose is shown in the unit it is kept in.
     using shown_row = edited_pose;
 
     static shown_row shown(const edited_pose &row, const rigid_motion::frame_ops &frames);

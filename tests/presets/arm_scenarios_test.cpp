@@ -575,7 +575,7 @@ TEST_CASE("every window the supplied-chain scenario composes with a tool opens e
     each_window_opens_one_panel(built.open(chosen, presets::arm_windows_modeling(chosen, presets::screw_table_source{}, presets::modeling_beside::pose_and_tool)));
 }
 
-// The opening state is the one nobody has modelled, and it is asserted in the scene rather than in a
+// The opening state is the one nobody has modeled, and it is asserted in the scene rather than in a
 // struct: every joint's line is the same line through the origin, which no derived chain gives.
 TEST_CASE("a scenario keeping no chain opens with every drawn axis coincident at the origin", "[presets][windows]")
 {

@@ -21,9 +21,9 @@ using namespace manipulator;
 
 // How far from the pose it was asked for a displaced solve lands. The two halves are independent: the
 // angular half turns the request about x and the linear half moves it along x, so the pose residual
-// between the two is exactly the first in radians and exactly the second in metres.
+// between the two is exactly the first in radians and exactly the second in meters.
 inline double off_target_radians = 0.0;
-inline double off_target_metres  = 0.0;
+inline double off_target_meters  = 0.0;
 
 inline transform off_target(const transform &desired)
 {
@@ -31,7 +31,7 @@ inline transform off_target(const transform &desired)
     transform moved = desired;
 
     moved.block<3, 3>(0, 0) = rotation(desired.block<3, 3>(0, 0) * further);
-    moved(0, 3) += off_target_metres;
+    moved(0, 3) += off_target_meters;
 
     return moved;
 }

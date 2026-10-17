@@ -35,7 +35,7 @@ struct judged_at
 };
 
 // One entry per bound the thirteen rows carry, standing exactly at it. A bound is a HALF and not a row:
-// a pose row is judged on its rotation in radians and its translation in metres separately, so a
+// a pose row is judged on its rotation in radians and its translation in meters separately, so a
 // displacement standing at one of them leaves the other at zero, or a half widened by a decade
 // hides behind whichever of the two the fold happened to report. Every number is written out rather
 // than derived from the bounds themselves, so a bound moved a decade in either direction fails here.

@@ -248,7 +248,7 @@ TEST_CASE("an arm's path comparison is read back out from under the path that wi
     CHECK(read.path_comparison.played == manipulator::compared_path::decoupled);
 }
 
-// The spellings stand in the enumeration's own order, so one answered at its neighbour's place would
+// The spellings stand in the enumeration's own order, so one answered at its neighbor's place would
 // compose some other scenario than the one the document names.
 TEST_CASE("every scenario spelling resolves to its own enumerator", "[presets][documents]")
 {

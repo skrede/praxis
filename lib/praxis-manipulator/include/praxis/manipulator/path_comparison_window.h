@@ -50,7 +50,7 @@ compared_path_cycle every_compared_path(compared_path chosen);
 
 // Three paths over one pair of configurations, drawn at once. The ends are configurations, so the
 // two poses the task-space shapes run between come from the forward map and no solve enters any of
-// the three drawings. All four polylines trace the tool centre point: the forward map answers flange
+// the three drawings. All four polylines trace the tool center point: the forward map answers flange
 // poses, and each of the three drawings is carried through the bound flange-to-tool conversion at the
 // published tool offset before it is drawn.
 class path_comparison_window : public scene::imgui_window, public config::configurable

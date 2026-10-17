@@ -111,7 +111,7 @@ inline threepp::Color drawn_tone(threepp::Scene &target, const char *name)
     return lit->color;
 }
 
-// The renderer stores a placement in single precision, so a metre written in double reads back
+// The renderer stores a placement in single precision, so a meter written in double reads back
 // within a float's resolution of it rather than exactly.
 inline bool same_place(const threepp::Vector3 &put, const threepp::Vector3 &expected)
 {

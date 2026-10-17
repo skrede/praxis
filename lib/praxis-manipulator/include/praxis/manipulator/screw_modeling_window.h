@@ -96,7 +96,7 @@ public:
     settings state() const;
 
     // How far the supplied chain stands from the derived one. Two lines carry the whole chain's
-    // rotation in radians and its distance in metres at the published configuration, apart and never
+    // rotation in radians and its distance in meters at the published configuration, apart and never
     // summed; beneath them stand one line for the home pose and one per joint of the derived chain.
     // A joint nobody supplied says so in place of its terms, and a surplus of supplied screws is a
     // line of its own naming both counts. Where either chain declines to pose the first two lines

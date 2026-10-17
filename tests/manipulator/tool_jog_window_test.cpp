@@ -95,7 +95,7 @@ arm_snapshot poseless_snapshot()
 }
 
 // A publication carrying a tool pose the arm derived before it was handed its tool offset, so the pose
-// stands at the flange rather than at the tool centre point.
+// stands at the flange rather than at the tool center point.
 arm_snapshot unknown_offset_snapshot()
 {
     arm_snapshot seen      = at_rest(configuration(0.0, 0.0), flange_position, chosen_orientation);

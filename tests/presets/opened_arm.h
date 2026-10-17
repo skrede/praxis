@@ -48,7 +48,7 @@
 namespace praxis::fixture {
 
 // What a point read back out of a float buffer and turned out of the renderer's world is comparable
-// at, in metres.
+// at, in meters.
 inline constexpr double read_back = 1.0e-4;
 
 // The universal machine's description is one document parameterized over a whole product line, so

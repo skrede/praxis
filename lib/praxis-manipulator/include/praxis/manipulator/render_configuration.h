@@ -16,7 +16,7 @@ namespace praxis::manipulator {
 // above it. A document carrying some of them leaves the rest where the settings struct opens them.
 // A length at or below zero is read back as absent, so a value the document does not name and a
 // value it names as nothing are the same thing: the stencil keeps whatever it opened at. Lengths
-// are in drawn metres and the cut is a multiple of the block's own ellipsoid scale.
+// are in drawn meters and the cut is a multiple of the block's own ellipsoid scale.
 void declare_render_controls(config::declaration &shape, std::string_view at);
 render_controls_window::settings read_render_controls(const config::document &values, std::string_view at);
 std::vector<config::edit> write_render_controls(const render_controls_window::settings &state, std::string_view at);

@@ -59,7 +59,7 @@ threepp::Vector3 world_position(threepp::Object3D &node)
     return put;
 }
 
-// The renderer stores a node's placement in single precision, so a metre written in double reads
+// The renderer stores a node's placement in single precision, so a meter written in double reads
 // back within a float's resolution of it rather than exactly.
 bool same_place(const threepp::Vector3 &put, const threepp::Vector3 &expected)
 {

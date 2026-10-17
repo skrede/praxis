@@ -122,10 +122,10 @@ void pool::admit(strand_id on, detail::move_only_function<void()> &&work)
 bool pool::publish()
 {
     ++m_generation;
-    if(m_waiting == 0 || m_signalled)
+    if(m_waiting == 0 || m_signaled)
         return false;
 
-    m_signalled = true;
+    m_signaled = true;
 
     return true;
 }

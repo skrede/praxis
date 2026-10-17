@@ -86,7 +86,7 @@ public:
 
     // What the window opens the arm at. An absent reach leaves the decoration at the reach the
     // stencil opened at, which is proportioned to the rendered arm's own size; a value names how far
-    // a drawn axis runs either way of its anchor, in metres.
+    // a drawn axis runs either way of its anchor, in meters.
     struct settings
     {
         tool_render tool;

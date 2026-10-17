@@ -38,10 +38,10 @@ enum class bent : std::size_t
     element_wise,
     geodesic,
     pose_radians,
-    pose_metres,
+    pose_meters,
     axis_up_to_sign,
     log_radians,
-    log_metres,
+    log_meters,
     count,
 };
 
@@ -74,7 +74,7 @@ inline transform turned_pose(const rotation &r)
 
 inline transform displaced_pose(const Eigen::Vector3d &p)
 {
-    return rigid_motion::transformation_matrix_from_position(Eigen::Vector3d(p + bent_by(bent::pose_metres) * Eigen::Vector3d::UnitX()));
+    return rigid_motion::transformation_matrix_from_position(Eigen::Vector3d(p + bent_by(bent::pose_meters) * Eigen::Vector3d::UnitX()));
 }
 
 inline screw_axis moved_axis(const Eigen::Vector3d &w, const Eigen::Vector3d &v)
@@ -101,7 +101,7 @@ inline expected<std::pair<screw_axis, double>, refusal> displaced_logarithm(cons
         return read;
 
     screw_axis axis = read.value().first;
-    axis[3] += bent_by(bent::log_metres);
+    axis[3] += bent_by(bent::log_meters);
 
     return std::pair<screw_axis, double>{axis, read.value().second};
 }

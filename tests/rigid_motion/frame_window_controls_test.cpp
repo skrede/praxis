@@ -36,7 +36,7 @@ constexpr std::string_view at = "arrangement";
 frame_window::controls panels_from(std::size_t first)
 {
     frame_window::controls asked;
-    asked.first_panelled_object = first;
+    asked.first_paneled_object = first;
 
     return asked;
 }
@@ -92,7 +92,7 @@ TEST_CASE("a window composed without the parent control draws no parent selectio
 
     REQUIRE(geometry_of(narrow.panel) != geometry_of(wide.panel));
 
-    // The wider composition draws one parent selection per panelled object, and this one draws none.
+    // The wider composition draws one parent selection per paneled object, and this one draws none.
     REQUIRE(items_offered(wide.panel) - items_offered(narrow.panel) == three_objects().size());
 
     drive(narrow.panel);

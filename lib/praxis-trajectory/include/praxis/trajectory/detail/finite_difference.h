@@ -37,10 +37,10 @@ using differenced_t = typename differenced<std::invoke_result_t<const Sample &, 
 template<typename Sample>
 expected<differenced_t<Sample>, refusal> central_differences(const Sample &sampled, double s)
 {
-    const double centre = std::clamp(s, parameter_step, 1.0 - parameter_step);
-    const auto ahead    = sampled(centre + parameter_step);
-    const auto here     = sampled(centre);
-    const auto behind   = sampled(centre - parameter_step);
+    const double center = std::clamp(s, parameter_step, 1.0 - parameter_step);
+    const auto ahead    = sampled(center + parameter_step);
+    const auto here     = sampled(center);
+    const auto behind   = sampled(center - parameter_step);
 
     if(!ahead)
         return unexpected(ahead.error());

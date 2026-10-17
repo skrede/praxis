@@ -235,7 +235,7 @@ double axes_departure(threepp::Object3D &drawn, const threepp::Matrix4 &rule)
     return worst;
 }
 
-// In metres of position and in the worst component of any axis direction.
+// In meters of position and in the worst component of any axis direction.
 double placement_departure(threepp::Object3D &drawn, const threepp::Matrix4 &rule)
 {
     threepp::Vector3 place;

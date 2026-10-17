@@ -44,9 +44,9 @@ constexpr std::array screw_table{
                                     [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result
                                     {
                                         const rotation turned                    = drawn.rotation_member();
-                                        const Eigen::Vector3d origin_metres      = drawn.position_metres();
-                                        const expected<adjoint, refusal> held    = screw_of(first).adjoint_matrix_from_rotation_position(turned, origin_metres);
-                                        const expected<adjoint, refusal> against = screw_of(second).adjoint_matrix_from_rotation_position(turned, origin_metres);
+                                        const Eigen::Vector3d origin_meters      = drawn.position_metres();
+                                        const expected<adjoint, refusal> held    = screw_of(first).adjoint_matrix_from_rotation_position(turned, origin_meters);
+                                        const expected<adjoint, refusal> against = screw_of(second).adjoint_matrix_from_rotation_position(turned, origin_meters);
 
                                         return evaluation::agreed_or_refused(held, against, evaluation::element_wise_residual, allowed);
                                     }},
@@ -83,12 +83,12 @@ constexpr std::array screw_table{
         evaluation::slot_evaluation{"screw.twist_from_screw", evaluation::residual_kind::element_wise, evaluation::tolerance_of(evaluation::residual_kind::element_wise),
                                     [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result
                                     {
-                                        const Eigen::Vector3d point_metres     = drawn.position_metres();
+                                        const Eigen::Vector3d point_meters     = drawn.position_metres();
                                         const Eigen::Vector3d direction        = drawn.unit_direction();
                                         const double pitch                     = drawn.pitch();
                                         const double angular_velocity          = drawn.angle_radians();
-                                        const expected<twist, refusal> held    = screw_of(first).twist_from_screw(point_metres, direction, pitch, angular_velocity);
-                                        const expected<twist, refusal> against = screw_of(second).twist_from_screw(point_metres, direction, pitch, angular_velocity);
+                                        const expected<twist, refusal> held    = screw_of(first).twist_from_screw(point_meters, direction, pitch, angular_velocity);
+                                        const expected<twist, refusal> against = screw_of(second).twist_from_screw(point_meters, direction, pitch, angular_velocity);
 
                                         return evaluation::agreed_or_refused(held, against, evaluation::element_wise_residual, allowed);
                                     }},
@@ -126,11 +126,11 @@ constexpr std::array screw_table{
                                     evaluation::tolerance_of(evaluation::residual_kind::axis_up_to_sign),
                                     [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result
                                     {
-                                        const Eigen::Vector3d point_metres          = drawn.position_metres();
+                                        const Eigen::Vector3d point_meters          = drawn.position_metres();
                                         const Eigen::Vector3d direction             = drawn.unit_direction();
                                         const double pitch                          = drawn.pitch();
-                                        const expected<screw_axis, refusal> held    = screw_of(first).screw_axis_from_point_direction_pitch(point_metres, direction, pitch);
-                                        const expected<screw_axis, refusal> against = screw_of(second).screw_axis_from_point_direction_pitch(point_metres, direction, pitch);
+                                        const expected<screw_axis, refusal> held    = screw_of(first).screw_axis_from_point_direction_pitch(point_meters, direction, pitch);
+                                        const expected<screw_axis, refusal> against = screw_of(second).screw_axis_from_point_direction_pitch(point_meters, direction, pitch);
 
                                         return evaluation::agreed_or_refused(held, against, evaluation::axis_up_to_sign_residual, allowed);
                                     }},

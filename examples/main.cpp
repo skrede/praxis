@@ -34,7 +34,7 @@
 
 namespace {
 
-// Below the 128 a shell adds to a signal number, so a refusal does not read as a signalled end.
+// Below the 128 a shell adds to a signal number, so a refusal does not read as a signaled end.
 constexpr int renderer_unavailable = 3;
 
 // Where the application keeps what it writes for itself. It is created here because a save against a

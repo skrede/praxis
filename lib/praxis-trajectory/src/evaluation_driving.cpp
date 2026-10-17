@@ -87,7 +87,7 @@ evaluation::residual folded_at_an_end(const trajectory_sample &held, const traje
 
 // The two units stay apart. Every angle among them -- the transform's geodesic distance and the two
 // twists' angular parts -- goes in the magnitude half in radians, and every length -- the transform's
-// origin distance and the two twists' linear parts -- goes in the linear half in metres. Neither half
+// origin distance and the two twists' linear parts -- goes in the linear half in meters. Neither half
 // is ever added to the other.
 evaluation::residual folded(const pose_sample &held, const pose_sample &against)
 {

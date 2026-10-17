@@ -63,7 +63,7 @@ transform still(const screw_axis &, double)
 }
 
 // The angle control carries three decimals, so the angle it can be typed to stands a thousandth of
-// a radian inside the limit it reaches; this is what that is worth in metres, with room over.
+// a radian inside the limit it reaches; this is what that is worth in meters, with room over.
 constexpr double typed_angle_slack = 1.0e-3;
 
 frame_stencil &placed_in(const std::shared_ptr<scene::preset> &composed)

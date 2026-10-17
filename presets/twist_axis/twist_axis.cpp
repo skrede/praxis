@@ -35,12 +35,12 @@ constexpr float resting_height         = 0.5f;
 constexpr float initial_pitch          = 0.12f;
 constexpr std::size_t samples_per_turn = 48;
 
-// The object carrying the travelled curve, which stands after the two the controls address by index.
+// The object carrying the traveled curve, which stands after the two the controls address by index.
 constexpr std::size_t path_object = 2;
 
 // A screw axis carries its direction and, in its second three components, the moment of that
 // direction about the origin: for an axis through the point q along the unit direction s with a
-// pitch h metres per radian, that moment is -s x q + h s. The components below are what the world
+// pitch h meters per radian, that moment is -s x q + h s. The components below are what the world
 // z-direction through the point (resting_height, 0, 0) at that pitch spells.
 rigid_motion::twist_axis_window::settings opening()
 {
@@ -117,7 +117,7 @@ std::shared_ptr<threepp::Object3D> traversed_path(const rigid_motion::screw_ops 
 }
 
 // Both drawn objects are rebuilt from the one call, so the line naming the axis and the curve
-// travelled about it cannot disagree about which axis that is.
+// traveled about it cannot disagree about which axis that is.
 rigid_motion::twist_axis_window::axis_route axis_into(rigid_motion::frame_stencil &target, const rigid_motion::screw_ops &screw, const transform &start)
 {
     return [&target, screw, start](const std::optional<screw_axis> &named)

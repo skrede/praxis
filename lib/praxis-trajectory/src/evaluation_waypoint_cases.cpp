@@ -21,7 +21,7 @@ constexpr double fastest_joint_speed         = 3.0;
 constexpr double gentlest_joint_acceleration = 0.5;
 constexpr double harshest_joint_acceleration = 10.0;
 
-// Metres per second and radians per second. A pair of poses traverses in the longer of the time its
+// Meters per second and radians per second. A pair of poses traverses in the longer of the time its
 // distance needs at the first and the time its turn needs at the second.
 constexpr double slowest_linear_speed  = 0.4;
 constexpr double fastest_linear_speed  = 6.0;

@@ -23,7 +23,7 @@ namespace praxis::rigid_motion {
 class two_pose_window : public scene::imgui_window
 {
 public:
-    // One pose in the frame the stencil's poses are written in: a position in metres and the three
+    // One pose in the frame the stencil's poses are written in: a position in meters and the three
     // Euler angles in degrees, taken in the order named beside them.
     struct pose_controls
     {
@@ -32,7 +32,7 @@ public:
         axis_order order;
     };
 
-    // The parameter is the share of the screw's magnitude the moving object has travelled, in the
+    // The parameter is the share of the screw's magnitude the moving object has traveled, in the
     // closed unit range: zero leaves it at the start pose and one carries it to the end pose.
     struct settings
     {
@@ -41,10 +41,10 @@ public:
         float parameter;
     };
 
-    // The route the geometry standing for the travelled path is rebuilt through, invoked with the
+    // The route the geometry standing for the traveled path is rebuilt through, invoked with the
     // poses sampled along that path and with an empty span where there is no path to draw. These
     // controls own no geometry: what the scenario is made of is the scenario's own.
-    using path_route = std::function<void(std::span<const transform> travelled)>;
+    using path_route = std::function<void(std::span<const transform> traveled)>;
 
     // The four objects these controls drive, in the order the scenario composes them. The path
     // object is the scenario's to fill through the route; the other three are placed here.

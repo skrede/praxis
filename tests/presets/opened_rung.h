@@ -98,9 +98,9 @@ inline threepp::Vector3 marked_place(opened_rung &rung)
 inline rigid_motion::frame_window::controls asking(bool parent, std::size_t first)
 {
     rigid_motion::frame_window::controls asked;
-    asked.parent                = parent;
-    asked.visibility            = false;
-    asked.first_panelled_object = first;
+    asked.parent               = parent;
+    asked.visibility           = false;
+    asked.first_paneled_object = first;
 
     return asked;
 }

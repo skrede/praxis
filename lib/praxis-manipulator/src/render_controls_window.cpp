@@ -14,7 +14,7 @@ namespace praxis::manipulator {
 namespace {
 
 // A body of no extent draws nothing while still reporting a length, so no field admits a value below
-// this. In drawn metres.
+// this. In drawn meters.
 constexpr float smallest_length = 0.001f;
 
 // A cut of no extent draws nothing while still reporting a value, so no field admits a multiple

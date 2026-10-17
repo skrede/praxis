@@ -13,7 +13,7 @@
 
 namespace praxis::fixture {
 
-// A serial arm of the named width, every joint a decimetre above the one before it and turning about
+// A serial arm of the named width, every joint a decimeter above the one before it and turning about
 // an axis alternating between two of the frame's own, written into a scratch directory of its own
 // that it removes as a tree. The axes are not all parallel, so a placement taken from anything but
 // the derived chain misses them.

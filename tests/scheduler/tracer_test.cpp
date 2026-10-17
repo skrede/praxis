@@ -150,7 +150,7 @@ TEST_CASE("a catch-up task decomposes the interval into the period it was given"
     REQUIRE(each.count() < 0.6);
 }
 
-TEST_CASE("cancelling the receipt retires the task", "[scheduler]")
+TEST_CASE("canceling the receipt retires the task", "[scheduler]")
 {
     scheduler loop(inline_workers, dictating());
     const strand main = loop.main_strand();

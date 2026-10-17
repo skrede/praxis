@@ -18,7 +18,7 @@ residual geodesic_residual(const Eigen::Matrix3d &first, const Eigen::Matrix3d &
 
 // The two halves of a pose discrepancy, carried apart and never summed: the geodesic angle between
 // the two rotation blocks in radians as the magnitude, and the distance between the two origins in
-// metres as the linear half. Each half is judged against its own tolerance.
+// meters as the linear half. Each half is judged against its own tolerance.
 residual pose_residual(const Eigen::Matrix4d &first, const Eigen::Matrix4d &second);
 
 // The distance between two axes read up to their sign, so an axis and its exact negation answer
@@ -33,7 +33,7 @@ residual axis_up_to_sign_residual(const Eigen::Vector<double, 6> &first, const E
 // length is a translation and is taken as given, and one within a bound of unit length is taken as
 // the unit direction it names, at the angle stated. Beyond that bound the axis names no element, so
 // the magnitude is unbounded and the comparison differs at every bound -- in radians for the
-// rotation form, which leaves its linear half at zero, and in radians and metres for the pose form,
+// rotation form, which leaves its linear half at zero, and in radians and meters for the pose form,
 // which answers unbounded in both halves.
 residual log_up_to_branch_rotation_residual(const Eigen::Vector3d &first_axis, double first_theta_radians, const Eigen::Vector3d &second_axis, double second_theta_radians);
 

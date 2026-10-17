@@ -94,7 +94,7 @@ inline rotation one_direction_only()
 
 // A unit shear leaves the determinant where it was and stands exactly its own off-diagonal entry
 // from orthonormality, so the block below carries the rigidity defect it was asked for rather than a
-// rounded neighbour of it.
+// rounded neighbor of it.
 inline rotation block_whose_rigidity_defect_is(double defect)
 {
     rotation sheared = rotation::Identity();

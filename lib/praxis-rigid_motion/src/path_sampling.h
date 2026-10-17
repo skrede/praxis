@@ -16,7 +16,7 @@ inline double sampled_share(std::size_t at, std::size_t points)
     return static_cast<double>(at) / static_cast<double>(points - 1);
 }
 
-// The length in metres of the polyline through the translation columns of the sampled poses.
+// The length in meters of the polyline through the translation columns of the sampled poses.
 inline double path_length(const std::vector<transform> &path)
 {
     double along = 0.0;

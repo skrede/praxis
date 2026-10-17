@@ -48,7 +48,7 @@ public:
 
     // Which controls a composition offers. A control this does not ask for is not drawn, so the
     // feature behind it stays wherever the composition set it and nothing in the running
-    // application can move it. The first panelled object is the first one the window offers a panel
+    // application can move it. The first paneled object is the first one the window offers a panel
     // for: an object before it is drawn by the stencil, is choosable as a parent, and has no
     // control here at all.
     struct controls
@@ -56,13 +56,13 @@ public:
         controls()
                 : parent(true)
                 , visibility(false)
-                , first_panelled_object(0)
+                , first_paneled_object(0)
         {
         }
 
         bool parent;
         bool visibility;
-        std::size_t first_panelled_object;
+        std::size_t first_paneled_object;
     };
 
     // A composition that names a selection source has this window draw the panel that source names

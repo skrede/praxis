@@ -55,7 +55,7 @@ static_assert(!praxis::returns_refusal_v<decltype(praxis::rigid_motion::screw_op
 // that the predicate is read telling the two kinds apart rather than answering false everywhere.
 static_assert(praxis::returns_refusal_v<decltype(praxis::rigid_motion::screw_ops::adjoint_map)>);
 
-// The half-length the decoration opens at against an arm carrying no drawn geometry, in metres, and
+// The half-length the decoration opens at against an arm carrying no drawn geometry, in meters, and
 // what a point read back out of a float buffer and turned out of the renderer's world is comparable
 // at.
 constexpr double opening_reach = 1.0;

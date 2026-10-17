@@ -354,7 +354,7 @@ TEST_CASE("a document carrying only some of the chain's rows leaves the rest uns
 
 // The screw a row nobody supplied opens at is one somebody could plausibly have written down, so
 // the two entries carry equal numbers and only where each came from tells them apart.
-TEST_CASE("a row naming exactly the numbers a row nobody supplied opens at is supplied, and its neighbour is not", "[presets][configuration]")
+TEST_CASE("a row naming exactly the numbers a row nobody supplied opens at is supplied, and its neighbor is not", "[presets][configuration]")
 {
     const manipulator::screw_chain derived = derived_six();
     const screw_axis padding               = manipulator::screw_modeling_window::opening_screw(motions().screw, derived.space_screws.front());

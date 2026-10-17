@@ -23,7 +23,7 @@ namespace praxis::fixture {
 // behind those bounds still reports as a difference.
 inline constexpr double bend_element = 10.0 * evaluation::element_wise_tolerance;
 inline constexpr double bend_radians = 10.0 * evaluation::geodesic_tolerance_radians;
-inline constexpr double bend_metres  = 10.0 * evaluation::pose_tolerance_metres;
+inline constexpr double bend_meters  = 10.0 * evaluation::pose_tolerance_metres;
 inline constexpr double bend_axis    = 10.0 * evaluation::axis_up_to_sign_tolerance;
 
 using bend_applier = void (*)(rigid_motion::capabilities &spatial);
@@ -51,7 +51,7 @@ inline screw_axis moved_in_the_angular_half(const screw_axis &axis)
 inline screw_axis moved_in_the_linear_half(const screw_axis &axis)
 {
     screw_axis shifted = axis;
-    shifted[3] += bend_metres;
+    shifted[3] += bend_meters;
 
     return shifted;
 }
@@ -74,7 +74,7 @@ inline transform turned(const transform &tf)
 inline transform displaced(const transform &tf)
 {
     transform moved_pose = tf;
-    moved_pose(0, 3) += bend_metres;
+    moved_pose(0, 3) += bend_meters;
 
     return moved_pose;
 }

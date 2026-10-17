@@ -30,13 +30,13 @@ constexpr std::size_t cases_per_row   = 24u;
 // How far off the pose it was asked for the bindings below stand. The displacement post-multiplies
 // the target, so a turn leaves the origin where it was and a travel leaves the orientation.
 double off_target_radians = 0.0;
-double off_target_metres  = 0.0;
+double off_target_meters  = 0.0;
 
 transform standing_off(const transform &asked_for)
 {
     const rotation turned(Eigen::AngleAxisd(off_target_radians, Eigen::Vector3d::UnitX()).toRotationMatrix());
 
-    return transform(asked_for * rigid_motion::transformation_matrix_from_rotation_position(turned, off_target_metres * Eigen::Vector3d::UnitX()));
+    return transform(asked_for * rigid_motion::transformation_matrix_from_rotation_position(turned, off_target_meters * Eigen::Vector3d::UnitX()));
 }
 
 expected<joint_vector, refusal> pose_standing_off(const kinematics &solver, const transform &pose, const joint_vector &j0)
@@ -108,7 +108,7 @@ TEST_CASE("each_motion_row_reports_a_pose_standing_above_the_bound_it_carries_an
         {
             const double displaced = above ? above_the_bound : beneath_the_bound;
             off_target_radians     = angular ? displaced : 0.0;
-            off_target_metres      = angular ? 0.0 : displaced;
+            off_target_meters      = angular ? 0.0 : displaced;
 
             for(const slot_evaluation &row : motion_evaluations().slots)
             {
@@ -130,7 +130,7 @@ TEST_CASE("each_motion_row_reports_a_pose_standing_above_the_bound_it_carries_an
         }
 
     off_target_radians = 0.0;
-    off_target_metres  = 0.0;
+    off_target_meters  = 0.0;
 }
 
 // The bound governs only the cases both sides answered. On the row asked for a pose from a drawn

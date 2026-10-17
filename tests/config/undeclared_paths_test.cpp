@@ -113,13 +113,13 @@ struct same_but_undeclared
 };
 
 constexpr std::array same_but_undeclared_paths{
-        same_but_undeclared{"attributes", "<probe><window titel=\"b\" width=\"3\" colour=\"red\"/></probe>", "<probe><window width=\"3\"/></probe>"},
+        same_but_undeclared{"attributes", "<probe><window titel=\"b\" width=\"3\" color=\"red\"/></probe>", "<probe><window width=\"3\"/></probe>"},
         same_but_undeclared{"element", "<probe><window width=\"3\"><extra x=\"1\"/></window><extra/></probe>", "<probe><window width=\"3\"></window></probe>"},
-        same_but_undeclared{"instance", "<probe><stations><station colour=\"red\"/><station name=\"b\" width=\"4\"/></stations></probe>",
+        same_but_undeclared{"instance", "<probe><stations><station color=\"red\"/><station name=\"b\" width=\"4\"/></stations></probe>",
                             "<probe><stations><station/><station name=\"b\" width=\"4\"/></stations></probe>"},
         same_but_undeclared{"only", "<probe><extra/></probe>", "<probe/>"},
         same_but_undeclared{"beside-text", "<probe><window><title lang=\"en\">abc</title></window></probe>", "<probe><window><title>abc</title></window></probe>"},
-        same_but_undeclared{"beside-nothing", "<probe><window><title colour=\"red\"/></window></probe>", "<probe><window><title/></window></probe>"},
+        same_but_undeclared{"beside-nothing", "<probe><window><title color=\"red\"/></window></probe>", "<probe><window><title/></window></probe>"},
         same_but_undeclared{"mixed", "<probe><junk>note<x/></junk></probe>", "<probe/>"},
         same_but_undeclared{"text-and-attribute", "<probe><junk a=\"1\">note</junk></probe>", "<probe/>"},
         same_but_undeclared{"repeated-attribute", "<probe><junk a=\"1\" a=\"2\"/></probe>", "<probe/>"},

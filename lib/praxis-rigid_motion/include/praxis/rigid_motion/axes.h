@@ -9,7 +9,7 @@
 
 namespace praxis::rigid_motion {
 
-// Lengths are metres, in the z-up frame the object's pose is expressed in. The axis length is the
+// Lengths are meters, in the z-up frame the object's pose is expressed in. The axis length is the
 // whole arrow, tip included.
 struct axes_settings
 {

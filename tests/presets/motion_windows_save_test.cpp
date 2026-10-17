@@ -44,7 +44,7 @@ constexpr std::size_t reset_start_row    = 4;
 // The screw's point, direction and pitch follow Reset start, one row each.
 constexpr std::size_t screw_pitch_row = reset_start_row + 3;
 
-// A position saved as text and read back as floats, compared in metres.
+// A position saved as text and read back as floats, compared in meters.
 constexpr double saved_position_tolerance = 1.0e-4;
 
 config::location every_window_document(const char *named, const std::string &beside = std::string())

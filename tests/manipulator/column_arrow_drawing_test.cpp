@@ -25,7 +25,7 @@ namespace {
 const Eigen::Vector3d elsewhere(0.3, -0.2, 0.7);
 
 // What the geometry of one arrow is built at: the diameter of its shaft, the length of its head and
-// the radius of that head, all in metres.
+// the radius of that head, all in meters.
 constexpr double built_shaft_girth = 0.008;
 constexpr double built_head_length = 0.02;
 constexpr double built_head_radius = 0.01;

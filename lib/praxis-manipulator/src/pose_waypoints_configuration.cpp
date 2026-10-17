@@ -19,7 +19,7 @@ namespace {
 
 constexpr std::string_view pose_leaf = "pose";
 
-// Three metres of position and then three degrees of orientation.
+// Three meters of position and then three degrees of orientation.
 constexpr std::size_t pose_numbers = 6;
 
 edited_pose posed(const std::vector<double> &values)

@@ -67,7 +67,7 @@ constexpr std::array robot_table{
 
                                         return judged(evaluation::geodesic_residual(robot_of(first).orientation_from_pose(pose), robot_of(second).orientation_from_pose(pose)), allowed);
                                     }},
-        evaluation::slot_evaluation{"robot.ik_solve_pose", evaluation::residual_kind::pose, evaluation::tolerance_pair{solved_pose_tolerance_radians, solved_pose_tolerance_metres},
+        evaluation::slot_evaluation{"robot.ik_solve_pose", evaluation::residual_kind::pose, evaluation::tolerance_pair{solved_pose_tolerance_radians, solved_pose_tolerance_meters},
                                     [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result
                                     {
                                         const std::optional<solve_case> solved = drawn_solve(drawn);
@@ -85,7 +85,7 @@ constexpr std::array robot_table{
                                         return reaching_what_was_asked(reached_at_the_tool(*solved, *held, offset), reached_at_the_tool(*solved, *against, offset), tool, allowed);
                                     }},
         evaluation::slot_evaluation{"robot.ik_solve_flange_pose", evaluation::residual_kind::pose,
-                                    evaluation::tolerance_pair{solved_pose_tolerance_radians, solved_pose_tolerance_metres},
+                                    evaluation::tolerance_pair{solved_pose_tolerance_radians, solved_pose_tolerance_meters},
                                     [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result
                                     {
                                         const std::optional<solve_case> solved = drawn_solve(drawn);

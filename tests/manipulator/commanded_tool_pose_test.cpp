@@ -245,21 +245,21 @@ double the_two_routes_apart(const transform &tool_offset)
 
 }
 
-TEST_CASE("a tick along a bent tool's own x moves the tool centre point by the tick", "[manipulator]")
+TEST_CASE("a tick along a bent tool's own x moves the tool center point by the tick", "[manipulator]")
 {
     commanded_arm placed(bent_tool());
 
     CHECK(travel_of(placed, along_the_tool_x(), rotation::Identity()) == Catch::Approx(jog_tick()).margin(solved_tolerance));
 }
 
-TEST_CASE("a tick along a straight tool's own x moves the tool centre point by the tick", "[manipulator]")
+TEST_CASE("a tick along a straight tool's own x moves the tool center point by the tick", "[manipulator]")
 {
     commanded_arm placed(straight_tool());
 
     CHECK(travel_of(placed, along_the_tool_x(), rotation::Identity()) == Catch::Approx(jog_tick()).margin(solved_tolerance));
 }
 
-TEST_CASE("a tick along the tool x of an arm wearing no tool moves the tool centre point by the tick", "[manipulator]")
+TEST_CASE("a tick along the tool x of an arm wearing no tool moves the tool center point by the tick", "[manipulator]")
 {
     commanded_arm placed(no_tool());
 
@@ -276,7 +276,7 @@ TEST_CASE("a jog of no offset and no turn leaves a tooled arm's configuration wh
     CHECK((placed.driven().joint_positions() - stood).cwiseAbs().maxCoeff() < solved_tolerance);
 }
 
-TEST_CASE("turning a bent tool's jog thirty degrees about z leaves the tool centre point where it stood", "[manipulator]")
+TEST_CASE("turning a bent tool's jog thirty degrees about z leaves the tool center point where it stood", "[manipulator]")
 {
     commanded_arm placed(bent_tool());
 

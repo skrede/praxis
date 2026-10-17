@@ -126,7 +126,7 @@ struct joint_waypoint_case
 };
 
 // A run of poses reached from a starting one, and the two bounds its duration is derived from, in
-// metres per second and radians per second.
+// meters per second and radians per second.
 struct pose_waypoint_case
 {
     std::vector<transform> waypoints;
@@ -150,8 +150,8 @@ joint_waypoint_case drawn_joint_waypoint_case(evaluation::case_source &drawn);
 pose_waypoint_case drawn_pose_waypoint_case(evaluation::case_source &drawn);
 
 // Both runs above stand still at one row under `near_singular` and at none under `bulk`: a segment
-// traversed in no time is the neighbourhood in which the duration rule and the fit through the run
-// degenerate, and that is the neighbourhood the spread names. The row index is drawn under both
+// traversed in no time is the neighborhood in which the duration rule and the fit through the run
+// degenerate, and that is the neighborhood the spread names. The row index is drawn under both
 // spreads, so the two consume the same values in the same order. Under `bulk` alone, a joint run of
 // at least three rows and two degrees of freedom holds one degree of freedom of one row after the
 // first exactly at the row before's; the three values deciding it are drawn under both spreads.

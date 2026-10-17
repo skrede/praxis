@@ -31,9 +31,9 @@ namespace praxis::fixture {
 // one float round trip and no closer.
 inline constexpr double read_back = 1.0e-6;
 
-// Drawn metres per unit semi-axis, and the cut as a multiple of a block's own scale, told to the
+// Drawn meters per unit semi-axis, and the cut as a multiple of a block's own scale, told to the
 // stencil by every case so that no case depends on the value the stencil opens at. A block's cut in
-// drawn metres is that multiple times that block's scale: 0.15 for the angular block and 0.3 for the
+// drawn meters is that multiple times that block's scale: 0.15 for the angular block and 0.3 for the
 // linear one.
 inline constexpr double angular_scale = 0.25;
 inline constexpr double linear_scale  = 0.5;

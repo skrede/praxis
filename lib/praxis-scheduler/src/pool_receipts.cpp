@@ -38,7 +38,7 @@ void pool::withdraw(std::uint64_t id, withdrawal mode)
             if(discarded.has_value())
                 break;
         }
-        if(!discarded.has_value() && mark_cancelled(id) && mode == withdrawal::joined)
+        if(!discarded.has_value() && mark_canceled(id) && mode == withdrawal::joined)
             await_completion(held, id);
         notify = publish();
     }
@@ -48,13 +48,13 @@ void pool::withdraw(std::uint64_t id, withdrawal mode)
 }
 
 // True when an invocation was in flight and has now been marked, so the strand refuses its rearm.
-bool pool::mark_cancelled(std::uint64_t id)
+bool pool::mark_canceled(std::uint64_t id)
 {
     const auto found = std::find_if(m_running.begin(), m_running.end(), [id](const running_entry &entry) { return entry.id == id; });
     if(found == m_running.end())
         return false;
 
-    found->cancelled = true;
+    found->canceled = true;
 
     return true;
 }

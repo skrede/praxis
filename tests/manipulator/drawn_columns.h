@@ -38,7 +38,7 @@ namespace praxis::fixture {
 // return with the rounding of one float round trip.
 inline constexpr double placed_back = 1.0e-6;
 
-// Drawn metres per unit column part, told to the stencil by every case, so that no case depends on
+// Drawn meters per unit column part, told to the stencil by every case, so that no case depends on
 // the value the stencil opens at.
 inline constexpr double angular_column_scale = 0.4;
 inline constexpr double linear_column_scale  = 0.8;

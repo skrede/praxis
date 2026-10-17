@@ -82,7 +82,7 @@ TEST_CASE("a_displacement_of_a_sampled_rotation_moves_the_magnitude_half_and_lea
 
 TEST_CASE("a_displacement_of_a_sampled_translation_moves_the_linear_half_and_leaves_the_magnitude_where_it_was")
 {
-    const evaluation_report reported = bent_in(fixture::bent::pose_metres, moved_by);
+    const evaluation_report reported = bent_in(fixture::bent::pose_meters, moved_by);
 
     for(std::size_t row = first_pose_row; row < first_pose_row + pose_rows; ++row)
     {
@@ -108,7 +108,7 @@ TEST_CASE("a_displacement_of_a_sampled_twists_angular_part_is_reported_in_the_ma
 
 TEST_CASE("a_displacement_of_a_sampled_twists_linear_part_is_reported_in_the_linear_half_alone")
 {
-    const evaluation_report reported = bent_in(fixture::bent::twist_metres, moved_by);
+    const evaluation_report reported = bent_in(fixture::bent::twist_meters, moved_by);
 
     for(std::size_t row = first_pose_row; row < first_pose_row + pose_rows; ++row)
     {

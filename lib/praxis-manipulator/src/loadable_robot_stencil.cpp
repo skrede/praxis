@@ -31,14 +31,14 @@ std::vector<float> to_renderer(const joint_vector &positions)
     return values;
 }
 
-// Drawn metres per unit semi-axis.
+// Drawn meters per unit semi-axis.
 constexpr double opening_angular_scale = 0.04;
 constexpr double opening_linear_scale  = 0.125;
 
 // Dimensionless: a multiple of the block's own ellipsoid scale.
 constexpr double opening_force_cap_ratio = 2.4;
 
-// Drawn metres per unit of a Jacobian column's angular part and of its linear part.
+// Drawn meters per unit of a Jacobian column's angular part and of its linear part.
 constexpr double opening_angular_column_scale = 0.1;
 constexpr double opening_linear_column_scale  = 0.6;
 

@@ -21,7 +21,7 @@ void two_pose_window::render()
     render_pose(m_shown.start, 0);
     ImGui::Text("End pose");
     render_pose(m_shown.end, 1);
-    ImGui::SliderFloat("Travelled", &m_shown.parameter, 0.f, 1.f);
+    ImGui::SliderFloat("Traveled", &m_shown.parameter, 0.f, 1.f);
     render_reading();
     ImGui::End();
 
@@ -46,7 +46,7 @@ void two_pose_window::render_reading()
     if(!shown.message.empty())
         return ImGui::TextUnformatted(shown.message.c_str());
 
-    ImGui::Text("Travelled %.3f m", static_cast<double>(shown.rows.front().front().value));
+    ImGui::Text("Traveled %.3f m", static_cast<double>(shown.rows.front().front().value));
 }
 
 }

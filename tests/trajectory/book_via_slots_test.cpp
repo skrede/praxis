@@ -101,7 +101,7 @@ TEST_CASE("the_printed_schedule_in_both_short_run_spellings_is_judged_agreeing_b
         }
 }
 
-TEST_CASE("a_schedule_whose_sign_test_gives_a_zero_slope_the_sign_of_a_neighbour_is_judged_differing_by_the_schedule_row")
+TEST_CASE("a_schedule_whose_sign_test_gives_a_zero_slope_the_sign_of_a_neighbor_is_judged_differing_by_the_schedule_row")
 {
     const auto slots = literal_schedules<schedule_sign_controls>();
     for(std::size_t control = 0; control < slots.size(); ++control)

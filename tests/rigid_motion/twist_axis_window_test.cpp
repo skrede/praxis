@@ -34,7 +34,7 @@ std::vector<stencil_object> two_objects()
             stencil_object{"Body", axes_settings{}, object_body{body_shape::cube, 0.25, nullptr}}};
 }
 
-// The world z-direction through the point (0.5, 0, 0) at a pitch of 0.12 metres per radian, which
+// The world z-direction through the point (0.5, 0, 0) at a pitch of 0.12 meters per radian, which
 // is what the linear part -s x q + h s spells for that point, direction and pitch.
 const twist_axis_window::settings opening{Eigen::Vector3f{0.f, 0.f, 1.f}, Eigen::Vector3f{0.f, -0.5f, 0.12f}, 0.75f};
 
@@ -305,4 +305,3 @@ TEST_CASE("the_reading_is_one_unlabeled_row_of_the_six_components_the_derived_ax
     CHECK(frames.has_draw_data());
     CHECK(frames.vertices() > 0);
 }
-

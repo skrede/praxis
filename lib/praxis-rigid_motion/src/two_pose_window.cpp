@@ -74,7 +74,7 @@ scene::readout two_pose_window::reading() const
     if(!m_message.empty())
         return scene::readout{m_message, {}};
 
-    return scene::readout{std::string(), {{scene::labeled_value{static_cast<float>(m_length), "Travelled (m)"}}}};
+    return scene::readout{std::string(), {{scene::labeled_value{static_cast<float>(m_length), "Traveled (m)"}}}};
 }
 
 void two_pose_window::initialize()

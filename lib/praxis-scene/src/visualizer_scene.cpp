@@ -51,7 +51,7 @@ void visualizer::add_camera()
 
 void visualizer::add_scene_lights()
 {
-    m_scene->add(threepp::HemisphereLight::create(threepp::Color::aliceblue, threepp::Color::grey));
+    m_scene->add(threepp::HemisphereLight::create(threepp::Color::aliceblue, threepp::Color::gray));
 }
 
 void visualizer::add_imgui_windows(const windows &stood)

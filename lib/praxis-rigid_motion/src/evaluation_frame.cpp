@@ -113,9 +113,9 @@ constexpr std::array frame_table{
         evaluation::slot_evaluation{"frame.transformation_matrix_from_position", evaluation::residual_kind::pose, evaluation::tolerance_of(evaluation::residual_kind::pose),
                                     [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result
                                     {
-                                        const Eigen::Vector3d origin_metres = drawn.position_metres();
-                                        const transform held                = frame_of(first).transformation_matrix_from_position(origin_metres);
-                                        const transform against             = frame_of(second).transformation_matrix_from_position(origin_metres);
+                                        const Eigen::Vector3d origin_meters = drawn.position_metres();
+                                        const transform held                = frame_of(first).transformation_matrix_from_position(origin_meters);
+                                        const transform against             = frame_of(second).transformation_matrix_from_position(origin_meters);
 
                                         return judged(evaluation::pose_residual(held, against), allowed);
                                     }},
@@ -132,9 +132,9 @@ constexpr std::array frame_table{
                                     [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result
                                     {
                                         const rotation turned               = drawn.rotation_member();
-                                        const Eigen::Vector3d origin_metres = drawn.position_metres();
-                                        const transform held                = frame_of(first).transformation_matrix_from_rotation_position(turned, origin_metres);
-                                        const transform against             = frame_of(second).transformation_matrix_from_rotation_position(turned, origin_metres);
+                                        const Eigen::Vector3d origin_meters = drawn.position_metres();
+                                        const transform held                = frame_of(first).transformation_matrix_from_rotation_position(turned, origin_meters);
+                                        const transform against             = frame_of(second).transformation_matrix_from_rotation_position(turned, origin_meters);
 
                                         return judged(evaluation::pose_residual(held, against), allowed);
                                     }},

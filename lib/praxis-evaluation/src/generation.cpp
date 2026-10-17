@@ -12,10 +12,10 @@ namespace {
 constexpr double half_turn    = std::numbers::pi_v<double>;
 constexpr double quarter_turn = 0.5 * std::numbers::pi_v<double>;
 
-// Metres.
+// Meters.
 constexpr double position_extent = 2.0;
 
-// Metres per radian.
+// Meters per radian.
 constexpr double pitch_extent = 2.25;
 
 // Six orderings name three distinct axes and six repeat the first, which is the whole set.

@@ -31,7 +31,7 @@ namespace praxis::manipulator {
 namespace {
 
 constexpr double axis_reach_fraction          = 1.0;
-constexpr double bare_arm_extent              = 1.0; // metres
+constexpr double bare_arm_extent              = 1.0; // meters
 constexpr threepp::Color::ColorName axis_tone = threepp::Color::orange;
 
 // A drawn axis in the configuration the arm stands at: the direction it runs along and one point it

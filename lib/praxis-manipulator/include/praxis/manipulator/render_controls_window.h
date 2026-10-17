@@ -34,7 +34,7 @@ public:
     };
 
     // What the window opens the drawings at. An absent value leaves it wherever the stencil opened
-    // it, which is proportioned to the rendered arm; a length names it in drawn metres, the same
+    // it, which is proportioned to the rendered arm; a length names it in drawn meters, the same
     // meaning `robot_view_window::settings::axis_reach` carries, and the cut names a multiple of the
     // block's own ellipsoid scale.
     struct settings

@@ -47,7 +47,7 @@ auto blocking(std::shared_ptr<held_handler> state, std::promise<void> &inside, s
 
 }
 
-TEST_CASE("a handler cancelling a task running on another strand returns before that handler does", "[scheduler][cancellation]")
+TEST_CASE("a handler canceling a task running on another strand returns before that handler does", "[scheduler][cancellation]")
 {
     scheduler loop(2);
     auto state          = std::make_shared<held_handler>();

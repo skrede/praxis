@@ -10,7 +10,7 @@ namespace praxis::scheduler {
 pool::pool(std::uint32_t workers, clock_source clock)
         : m_stopped(false)
         , m_threaded(workers != 0)
-        , m_signalled(false)
+        , m_signaled(false)
         , m_clock(clock)
         , m_waiting(0)
         , m_sequence(0)
@@ -91,7 +91,7 @@ expected<void, rejection> pool::drain()
 
         const std::uint64_t observed = m_generation;
         ++m_waiting;
-        m_signalled = false;
+        m_signaled = false;
         while(!m_stopped && m_generation == observed)
             m_wakeup.wait(held);
         --m_waiting;
@@ -108,8 +108,8 @@ void pool::stop()
     std::size_t count = 0;
     {
         const std::lock_guard held(m_mutex);
-        m_stopped   = true;
-        m_signalled = true;
+        m_stopped  = true;
+        m_signaled = true;
         ++m_generation;
         count = m_strands.size();
     }

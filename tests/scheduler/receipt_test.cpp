@@ -50,7 +50,7 @@ auto holding(std::shared_ptr<captured_state> state, std::promise<void> &entered,
 
 }
 
-TEST_CASE("joining waits out the invocation already inside the handler and cancelling does not", "[scheduler][receipt]")
+TEST_CASE("joining waits out the invocation already inside the handler and canceling does not", "[scheduler][receipt]")
 {
     scheduler loop(2);
     auto waited         = std::make_shared<captured_state>();
@@ -92,7 +92,7 @@ TEST_CASE("a stopped pool still reports a handler that is running", "[scheduler]
     release.set_value();
 }
 
-TEST_CASE("a handler cancelling its own task stops it after the invocation it is inside", "[scheduler][receipt]")
+TEST_CASE("a handler canceling its own task stops it after the invocation it is inside", "[scheduler][receipt]")
 {
     scheduler loop(inline_workers, dictating());
     std::uint32_t calls = 0;

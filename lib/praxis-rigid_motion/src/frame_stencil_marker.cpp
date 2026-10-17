@@ -14,7 +14,7 @@ namespace {
 // The tone the mark's lines are drawn in.
 const threepp::Color mark_tone = threepp::Color::purple;
 
-// How far the mark stands off what it marks, in metres, in every direction.
+// How far the mark stands off what it marks, in meters, in every direction.
 constexpr float mark_standoff = 0.030f;
 
 // The mark tells one object from the others, so a set smaller than this has nothing to tell one

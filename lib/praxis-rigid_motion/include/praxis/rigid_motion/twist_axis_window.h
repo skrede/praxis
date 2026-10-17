@@ -21,8 +21,8 @@ namespace praxis::rigid_motion {
 class twist_axis_window : public scene::imgui_window
 {
 public:
-    // The angular part is in radians per unit of the angle below and the linear part in metres per
-    // that same unit, so the two together name a screw axis whose pitch is metres per radian.
+    // The angular part is in radians per unit of the angle below and the linear part in meters per
+    // that same unit, so the two together name a screw axis whose pitch is meters per radian.
     struct settings
     {
         Eigen::Vector3f angular_part;

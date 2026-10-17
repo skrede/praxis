@@ -15,7 +15,7 @@ namespace {
 // than by subtracting its members.
 constexpr std::array modeling_table{
         evaluation::slot_evaluation{"modeling.build_chain", evaluation::residual_kind::pose,
-                                    evaluation::tolerance_pair{accumulated_pose_tolerance_radians, accumulated_pose_tolerance_metres}, &compare_build_chain},
+                                    evaluation::tolerance_pair{accumulated_pose_tolerance_radians, accumulated_pose_tolerance_meters}, &compare_build_chain},
 };
 
 static_assert(modeling_table.size() == static_cast<std::size_t>(modeling_slot::count));

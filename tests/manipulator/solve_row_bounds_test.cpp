@@ -39,7 +39,7 @@ constexpr double tool_margin    = 2.0;
 struct solved_at_the_tool
 {
     residual against_the_request;
-    double lever_arm_metres;
+    double lever_arm_meters;
 };
 
 std::optional<solved_at_the_tool> reference_solve(std::size_t index)
@@ -84,7 +84,7 @@ TEST_CASE("the_reference_solve_lands_within_the_criterion_the_solver_publishes_a
         if(!seen)
             continue;
 
-        const double allowed_here = criterion.position_tol + criterion.orientation_tol * seen->lever_arm_metres;
+        const double allowed_here = criterion.position_tol + criterion.orientation_tol * seen->lever_arm_meters;
 
         INFO("case " << index);
         REQUIRE(seen->against_the_request.magnitude <= criterion.orientation_tol);
@@ -96,7 +96,7 @@ TEST_CASE("the_reference_solve_lands_within_the_criterion_the_solver_publishes_a
 
     REQUIRE(solved > 0u);
     REQUIRE(criterion.orientation_tol * angular_margin <= solved_pose_tolerance_radians);
-    REQUIRE(worst_allowed * tool_margin <= solved_pose_tolerance_metres);
+    REQUIRE(worst_allowed * tool_margin <= solved_pose_tolerance_meters);
 }
 
 // The displacement a decade above the bound and the one a decade beneath it, written out rather than
@@ -130,7 +130,7 @@ TEST_CASE("each_solve_row_reports_a_pose_a_decade_above_the_bound_it_carries_and
             {
                 const double displaced = displacement_for(under_test, angular, above);
                 off_target_radians     = angular ? displaced : 0.0;
-                off_target_metres      = angular ? 0.0 : displaced;
+                off_target_meters      = angular ? 0.0 : displaced;
 
                 INFO("row " << under_test.row.name << ", angular " << angular << ", above " << above);
                 const std::vector<agreement> seen = over_the_run(under_test.row, under_test.first, under_test.second);
@@ -140,5 +140,5 @@ TEST_CASE("each_solve_row_reports_a_pose_a_decade_above_the_bound_it_carries_and
             }
 
     off_target_radians = 0.0;
-    off_target_metres  = 0.0;
+    off_target_meters  = 0.0;
 }

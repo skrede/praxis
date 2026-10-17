@@ -20,7 +20,7 @@ namespace praxis::manipulator {
 namespace {
 
 // A line of no length draws nothing while still reporting a reach, so the control admits no value
-// below this. In metres.
+// below this. In meters.
 constexpr float smallest_reach = 0.001f;
 
 // A marker drawn at no size is not drawn, so the control admits no multiple below this.

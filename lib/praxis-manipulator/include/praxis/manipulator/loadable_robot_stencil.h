@@ -98,7 +98,7 @@ inline constexpr double opening_marker_extent_fraction = 0.15;
 // far the rendered arm's bounding box is across so that one call serves machines of different size.
 // An arm carrying no drawn geometry has no extent to take a proportion of, and the stand-in praxis
 // uses there is stated rather than derived. A fraction at or below zero builds nothing measurable and
-// is declined in favour of the opening one.
+// is declined in favor of the opening one.
 std::shared_ptr<threepp::Object3D> make_flange_marker(threepp::Object3D &arm);
 std::shared_ptr<threepp::Object3D> make_flange_marker(threepp::Object3D &arm, double of_the_arms_extent);
 
@@ -242,19 +242,19 @@ public:
         return m_inert;
     }
 
-    void set_decoration_reach(double metres);
+    void set_decoration_reach(double meters);
 
-    // How far each drawn axis reaches either way of its anchor, in metres.
+    // How far each drawn axis reaches either way of its anchor, in meters.
     double decoration_reach() const;
 
     // The drawn length one unit of an ellipsoid's semi-axis takes, one multiplier per block: an
-    // angular semi-axis is per unit joint rate and a linear one is metres per unit joint rate, so one
+    // angular semi-axis is per unit joint rate and a linear one is meters per unit joint rate, so one
     // multiplier cannot serve both.
-    void set_ellipsoid_scale(jacobian_block which, double drawn_metres_per_unit);
+    void set_ellipsoid_scale(jacobian_block which, double drawn_meters_per_unit);
     double ellipsoid_scale(jacobian_block which) const;
 
     // Where a force ellipsoid's body is cut flat, as a multiple of that block's own ellipsoid scale:
-    // a block's cut in drawn metres is that multiple times that block's scale, so under the force
+    // a block's cut in drawn meters is that multiple times that block's scale, so under the force
     // reading an axis is cut where its singular value falls below the multiple's reciprocal. Whether
     // the cut is taken at all is a separate question.
     void set_force_cap_ratio(double of_the_ellipsoid_scale);
@@ -302,9 +302,9 @@ public:
     void clear_jacobian_columns();
 
     // The drawn length one unit of a column part takes, one multiplier per block: an angular part is
-    // per unit joint rate and a linear one is metres per unit joint rate, so one multiplier cannot
+    // per unit joint rate and a linear one is meters per unit joint rate, so one multiplier cannot
     // serve both.
-    void set_column_scale(jacobian_block which, double drawn_metres_per_unit);
+    void set_column_scale(jacobian_block which, double drawn_meters_per_unit);
     double column_scale(jacobian_block which) const;
 
     // One rate per drawn column, in its joint's own unit per second: rad/s for a revolute joint, m/s
@@ -440,9 +440,9 @@ private:
     // arrow of that column's angular part and the arrow of its linear part.
     std::vector<std::array<drawn_column, jacobian_block_count>> m_column_arrows;
     std::vector<double> m_rates;
-    // Drawn metres per unit semi-axis, one per block.
+    // Drawn meters per unit semi-axis, one per block.
     std::array<double, jacobian_block_count> m_ellipsoid_scale;
-    // Drawn metres per unit column part, one per block.
+    // Drawn meters per unit column part, one per block.
     std::array<double, jacobian_block_count> m_column_scale;
     // A multiple of the block's own ellipsoid scale.
     double m_force_cap_ratio;

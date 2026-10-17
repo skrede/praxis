@@ -31,7 +31,7 @@ inline transform displaced(const transform &pose)
     transform moved = pose;
 
     moved.block<3, 3>(0, 0) = further * pose.block<3, 3>(0, 0);
-    moved(0, 3) += bent_by(bent::pose_metres);
+    moved(0, 3) += bent_by(bent::pose_meters);
 
     return moved;
 }

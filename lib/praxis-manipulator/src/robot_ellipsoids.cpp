@@ -103,9 +103,9 @@ expected<rotation, refusal> loadable_robot_stencil::carried_into_space(const arm
     return seen.tool_orientation;
 }
 
-void loadable_robot_stencil::set_ellipsoid_scale(jacobian_block which, double drawn_metres_per_unit)
+void loadable_robot_stencil::set_ellipsoid_scale(jacobian_block which, double drawn_meters_per_unit)
 {
-    m_ellipsoid_scale[block_of(which)] = drawn_metres_per_unit;
+    m_ellipsoid_scale[block_of(which)] = drawn_meters_per_unit;
 }
 
 double loadable_robot_stencil::ellipsoid_scale(jacobian_block which) const

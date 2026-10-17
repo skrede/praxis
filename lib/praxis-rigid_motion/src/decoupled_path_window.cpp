@@ -46,7 +46,7 @@ scene::readout decoupled_path_window::reading() const
     if(!m_message.empty())
         return scene::readout{m_message, {}};
 
-    return scene::readout{std::string(), {{scene::labeled_value{static_cast<float>(m_length), "Travelled (m)"}}}};
+    return scene::readout{std::string(), {{scene::labeled_value{static_cast<float>(m_length), "Traveled (m)"}}}};
 }
 
 void decoupled_path_window::render()
@@ -56,7 +56,7 @@ void decoupled_path_window::render()
     if(!m_message.empty())
         ImGui::TextUnformatted(m_message.c_str());
     else
-        ImGui::Text("Travelled %.3f m", m_length);
+        ImGui::Text("Traveled %.3f m", m_length);
     ImGui::End();
 
     settle();

@@ -31,6 +31,6 @@
     <trajectory_preview parameter="true" rate="true" rate_change="true"/>
 
     <!-- A reach of zero names no reach, and the axes then run as far as the arm's own size gives
-         them. Any other value is a half-length in metres. -->
+         them. Any other value is a half-length in meters. -->
     <robot_view model="Meshes" screw_axes="false" axis_reach="0"/>
 </arm>

@@ -44,7 +44,7 @@ struct preview_run
     double span;
     std::vector<preview_sample> samples;
     std::vector<std::vector<trajectory::scaling_sample>> scaling;
-    // The path parameter the motion itself realizes: the distance travelled along the
+    // The path parameter the motion itself realizes: the distance traveled along the
     // configuration-space path it traces, normalized to the whole and dimensionless, with its two
     // derivatives with respect to time, sampled at the samples' own times. A motion composed from a
     // chosen scaling realizes that scaling, so this repeats the chosen curve above; a motion whose
@@ -56,7 +56,7 @@ struct preview_run
 // The ellipsoid one 3-by-n block of a Jacobian traces out over the unit ball of joint rates. The
 // semi-axis lengths stand in descending order and the columns of the basis are the axes they lie
 // along, expressed in the space frame and right-handed. An angular block's lengths are per unit
-// joint rate and a linear block's are metres per unit joint rate. The measure is the product of the
+// joint rate and a linear block's are meters per unit joint rate. The measure is the product of the
 // three lengths and the condition number is the first over the last, absent where the last is zero.
 // Lynch & Park, Modern Robotics, section 5.4.
 struct manipulability_ellipsoid

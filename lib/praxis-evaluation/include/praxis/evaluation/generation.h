@@ -11,10 +11,10 @@
 namespace praxis::evaluation {
 
 // Which part of a role's range a draw comes from. Under `near_singular` a routine whose role has a
-// neighbourhood where the mathematics degenerates draws from that neighbourhood instead of from the
+// neighborhood where the mathematics degenerates draws from that neighborhood instead of from the
 // bulk of the range. `unit_direction`, `position_metres`, `angular_part`, `linear_part`,
 // `normal_triple`, `skew_symmetric_member`, `twist_member` and `axis_order_index` have no such
-// neighbourhood and draw from the same distribution under both.
+// neighborhood and draw from the same distribution under both.
 enum class spread : std::uint8_t
 {
     bulk,
@@ -44,16 +44,16 @@ public:
     // half turn and no nearer either than the comparison tolerance.
     double angle_radians();
 
-    // Axial travel per radian, in metres, uniform over a range straddling zero, so a motion the
+    // Axial travel per radian, in meters, uniform over a range straddling zero, so a motion the
     // rotation dominates and one the travel dominates are both drawn. Under `near_singular`, within
-    // one metre per radian of zero and no nearer it than the comparison tolerance.
+    // one meter per radian of zero and no nearer it than the comparison tolerance.
     double pitch();
 
     // Uniform over the sphere: three standard normals normalized, redrawn while the norm stands
     // under the comparison tolerance. Normalizing a draw from a box would crowd the cube's corners.
     Eigen::Vector3d unit_direction();
 
-    // Every component uniform over the same range, in metres.
+    // Every component uniform over the same range, in meters.
     Eigen::Vector3d position_metres();
 
     // Three angles in radians, the outer two uniform over a full turn. Under `near_singular` the

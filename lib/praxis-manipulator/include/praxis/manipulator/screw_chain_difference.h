@@ -29,7 +29,7 @@ enum class chain_joint_reading : std::uint8_t
 
 // One joint's three terms, each taken after both screws have been divided by their own angular norm
 // and none of them summed with another: the angle between the two directions in radians, the greater
-// of the two length defects, and the distance between the two moments in metres. Dividing first is
+// of the two length defects, and the distance between the two moments in meters. Dividing first is
 // what keeps the three independent, so an axis of twice the length standing on exactly the right
 // line reads its length alone rather than reporting one mistake as three.
 //
@@ -50,7 +50,7 @@ struct chain_joint_difference
 // How far the supplied home pose stands from the derived one, as three terms carried apart: the
 // rotation between them in radians, read after the nearest rotation to the supplied block so that a
 // pose written out to a few decimals is answered rather than refused; the distance between their
-// origins in metres; and how far either block stands from being a rotation at all, as the greatest
+// origins in meters; and how far either block stands from being a rotation at all, as the greatest
 // defect against orthonormality and unit determinant either of them carries.
 //
 // The turn is answered only while that defect stands within a bound: beyond it the nearest rotation

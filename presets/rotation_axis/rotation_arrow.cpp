@@ -20,7 +20,7 @@ namespace praxis::presets {
 
 namespace {
 
-constexpr double head_length           = 0.05; // in metres, whatever the arrow's own length
+constexpr double head_length           = 0.05; // in meters, whatever the arrow's own length
 constexpr double head_radius_multiple  = 1.5;  // of the stem's diameter
 constexpr unsigned int radial_segments = 24;
 

@@ -22,7 +22,7 @@ constexpr int draws                   = 10000;
 constexpr double half_turn            = std::numbers::pi_v<double>;
 constexpr double quarter_turn         = 0.5 * std::numbers::pi_v<double>;
 
-// Metres.
+// Meters.
 constexpr double position_extent = 2.0;
 
 // The widest a near-singular draw stands from the value it crowds.
@@ -141,7 +141,7 @@ TEST_CASE("a_near_singular_unit_twist_is_unit_and_reaches_both_branches")
     REQUIRE(sliding > 0);
 }
 
-TEST_CASE("a_role_with_no_singular_neighbourhood_draws_from_the_same_distribution_under_both_spreads")
+TEST_CASE("a_role_with_no_singular_neighborhood_draws_from_the_same_distribution_under_both_spreads")
 {
     case_source crowded   = case_source::for_slot(recorded_seed, "position_metres", spread::near_singular);
     Eigen::Vector3d total = Eigen::Vector3d::Zero();

@@ -29,7 +29,7 @@ namespace {
 
 constexpr double body_edge = 0.30;
 
-// The opening pair, in the frame the stencil's poses are written in: metres and degrees taken in
+// The opening pair, in the frame the stencil's poses are written in: meters and degrees taken in
 // the order named. The two paths it gives stand a fifth of the default view apart at their widest,
 // so what the scenario is for is on screen before anything is touched.
 rigid_motion::two_pose_window::settings opening()
@@ -41,11 +41,11 @@ rigid_motion::two_pose_window::settings opening()
 
 // Built where the path runs, in the frame the stencil's poses are written in: the object carrying
 // the line is never placed, so what the line says about the path is what was built into it.
-std::shared_ptr<threepp::Object3D> path_line(std::span<const transform> travelled, const threepp::Color &tone)
+std::shared_ptr<threepp::Object3D> path_line(std::span<const transform> traveled, const threepp::Color &tone)
 {
     std::vector<threepp::Vector3> points;
-    points.reserve(travelled.size());
-    for(const transform &put : travelled)
+    points.reserve(traveled.size());
+    for(const transform &put : traveled)
         points.emplace_back(static_cast<float>(put(0, 3)), static_cast<float>(put(1, 3)), static_cast<float>(put(2, 3)));
 
     auto drawn = threepp::BufferGeometry::create();
@@ -56,11 +56,11 @@ std::shared_ptr<threepp::Object3D> path_line(std::span<const transform> travelle
 
 rigid_motion::two_pose_window::path_route path_into(rigid_motion::frame_stencil &target, std::size_t object, const threepp::Color &tone)
 {
-    return [&target, object, tone](std::span<const transform> travelled)
+    return [&target, object, tone](std::span<const transform> traveled)
     {
         target.set_body(object,
-                        travelled.empty() ? rigid_motion::object_body{rigid_motion::body_shape::none, 0.0, nullptr}
-                                          : rigid_motion::object_body{rigid_motion::body_shape::mesh, 0.0, path_line(travelled, tone)});
+                        traveled.empty() ? rigid_motion::object_body{rigid_motion::body_shape::none, 0.0, nullptr}
+                                         : rigid_motion::object_body{rigid_motion::body_shape::mesh, 0.0, path_line(traveled, tone)});
     };
 }
 

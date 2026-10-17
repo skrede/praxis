@@ -15,7 +15,7 @@ namespace praxis::manipulator {
 
 namespace {
 
-// How far a continuation line reaches past the face its axis was cut at, in drawn metres.
+// How far a continuation line reaches past the face its axis was cut at, in drawn meters.
 constexpr double continuation_length = 0.05;
 
 void wear_step(threepp::Object3D &drawn, std::span<const std::shared_ptr<threepp::Material>> ramp, std::size_t step)

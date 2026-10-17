@@ -53,7 +53,7 @@ frame_tree chained(frame_ops motions)
     return arranged;
 }
 
-// The renderer stores a node's placement in single precision, so a metre written in double reads
+// The renderer stores a node's placement in single precision, so a meter written in double reads
 // back within a float's resolution of it rather than exactly.
 float away_from(threepp::Object3D &node, const threepp::Vector3 &expected)
 {

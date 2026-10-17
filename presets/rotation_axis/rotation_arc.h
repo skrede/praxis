@@ -14,7 +14,7 @@
 
 namespace praxis::presets {
 
-// The arc the point `carried` has already travelled, from no turn at all to the turn of
+// The arc the point `carried` has already traveled, from no turn at all to the turn of
 // `angle_radians` about `unit_axis` that is now commanded. `carried` is that point in the moving
 // object's own coordinates and `start` the pose that object is turned from; the two are carried in
 // the order the driving controls apply them, and the points answered are in the z-up frame the

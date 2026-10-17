@@ -37,7 +37,7 @@ constexpr std::size_t drawn_examples  = 16u;
 
 using fixture::compared_slots;
 
-// A millimetre and a milliradian, nine decades and more above every bound the tables carry.
+// A millimeter and a milliradian, nine decades and more above every bound the tables carry.
 constexpr std::array<double, static_cast<std::size_t>(fixture::bent::count)> plainly_wrong{1.0e-3, 1.0e-3, 1.0e-3, 1.0e-3, 1.0e-3, 1.0e-3};
 
 std::size_t carrying(std::span<const evaluation_view> compared, residual_kind kind)

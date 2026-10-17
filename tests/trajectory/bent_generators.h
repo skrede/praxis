@@ -35,7 +35,7 @@ inline trajectory::pose_sample displaced(const trajectory::pose_sample &point)
 
     moved.position = displaced(point.position);
     moved.velocity.head<3>()[0] += bent_by(bent::twist_radians);
-    moved.velocity.tail<3>()[0] += bent_by(bent::twist_metres);
+    moved.velocity.tail<3>()[0] += bent_by(bent::twist_meters);
 
     return moved;
 }

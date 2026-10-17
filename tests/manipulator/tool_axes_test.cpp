@@ -50,7 +50,7 @@ constexpr float link_edge   = 0.8f;
 constexpr double marker_axis_length_fraction = 0.15;
 constexpr double single_precision_tolerance  = 1.0e-5;
 
-// The extent an arm carrying no drawn geometry is given in place of one, in metres.
+// The extent an arm carrying no drawn geometry is given in place of one, in meters.
 constexpr double bare_arm_extent = 1.0;
 
 // Far enough that a marker left where it stood and a marker carried along cannot be confused, and
@@ -186,7 +186,7 @@ double turn_departure(const threepp::Quaternion &left, const threepp::Quaternion
                      std::abs(static_cast<double>(left.w - right.w))});
 }
 
-// How far the pose written onto a node stands from the pose the rule names, in metres of position
+// How far the pose written onto a node stands from the pose the rule names, in meters of position
 // and in the worst component of any axis direction.
 double placement_departure(threepp::Object3D &drawn, const threepp::Matrix4 &rule)
 {

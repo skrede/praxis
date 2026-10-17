@@ -56,7 +56,7 @@ value_row home_row(const chain_home_difference &home)
 }
 
 // The joint is named from one, the way the window's own list of them counts. The moment stands in
-// the metres column and the length in the defect column, so every column carries one unit whichever
+// the meters column and the length in the defect column, so every column carries one unit whichever
 // line is read across it.
 value_row joint_row(const chain_joint_difference &line, std::size_t joint)
 {

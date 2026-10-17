@@ -114,7 +114,7 @@ evaluation::case_result compare_screw_pose_waypoints(const void *first, const vo
 
 // The rows are in the enumerator order of their own slot enumeration, and each name is spelled
 // exactly as the descriptor table spells it.
-constexpr evaluation::tolerance_pair driven_pose_allowance{driven_pose_tolerance_radians, driven_pose_tolerance_metres};
+constexpr evaluation::tolerance_pair driven_pose_allowance{driven_pose_tolerance_radians, driven_pose_tolerance_meters};
 constexpr evaluation::tolerance_pair via_point_allowance{via_point_run_tolerance, via_point_run_tolerance};
 constexpr evaluation::tolerance_pair schedule_allowance{via_point_schedule_tolerance, via_point_schedule_tolerance};
 

@@ -53,7 +53,7 @@ using opening  = robot_view_window::settings;
 constexpr const char *panel_title  = "Arm view";
 constexpr std::string_view view_at = "machine/view";
 
-// The half-length an arm carrying no drawn geometry opens at, in metres, and what a point read back
+// The half-length an arm carrying no drawn geometry opens at, in meters, and what a point read back
 // out of a float buffer is comparable at.
 constexpr double opening_reach = 1.0;
 constexpr double read_back     = 1.0e-4;

@@ -118,8 +118,8 @@ void press(scene::imgui_window &panel, int row)
     tap(frames, draw, ImGuiKey_Space);
 }
 
-// Every colour the panel put on screen, so a case reads the tones a drawing carries rather than the
-// count of what it drew: a vertex costs the same whatever colour it wears.
+// Every color the panel put on screen, so a case reads the tones a drawing carries rather than the
+// count of what it drew: a vertex costs the same whatever color it wears.
 std::vector<ImU32> tones_drawn(scene::imgui_window &panel)
 {
     imgui_frame frames;
@@ -141,8 +141,8 @@ bool carries(const std::vector<ImU32> &seen, ImU32 tone)
     return std::find(seen.begin(), seen.end(), tone) != seen.end();
 }
 
-// The tone an arrow standing in the scene wears, taken to the colour space the renderer encodes to on
-// output, which is the space a panel writes its own colours in.
+// The tone an arrow standing in the scene wears, taken to the color space the renderer encodes to on
+// output, which is the space a panel writes its own colors in.
 ImU32 as_written(threepp::Object3D *arrow)
 {
     threepp::Object3D *const shaft = shaft_of(arrow);
@@ -410,7 +410,7 @@ TEST_CASE("each of the four switches writes its own thing about what is drawn an
     }
 }
 
-// The two tones are neighbours by construction, so which part is which is not answerable from the
+// The two tones are neighbors by construction, so which part is which is not answerable from the
 // picture. The key answers it, in the tones the arrows themselves wear rather than in a pair of
 // literals that happen to agree with them. It stands beside the switch over that part, so it is drawn
 // wherever that switch is, whatever the switch over the columns says.

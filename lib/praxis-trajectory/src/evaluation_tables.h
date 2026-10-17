@@ -18,13 +18,13 @@ inline constexpr double scaling_sample_tolerance = 1.0e-12;
 // The same sample, where the scaling carrying it is a quintic.
 inline constexpr double quintic_scaling_tolerance = 1.0e-11;
 
-// The bounds the screw path row is judged at: a rotation in radians and a distance in metres.
+// The bounds the screw path row is judged at: a rotation in radians and a distance in meters.
 inline constexpr double screw_path_tolerance_radians = 1.0e-6;
-inline constexpr double screw_path_tolerance_metres  = 1.0e-5;
+inline constexpr double screw_path_tolerance_meters  = 1.0e-5;
 
-// The bounds the decoupled path row is judged at: a rotation in radians and a distance in metres.
+// The bounds the decoupled path row is judged at: a rotation in radians and a distance in meters.
 inline constexpr double decoupled_path_tolerance_radians = 1.0e-6;
-inline constexpr double decoupled_path_tolerance_metres  = 1.0e-12;
+inline constexpr double decoupled_path_tolerance_meters  = 1.0e-12;
 
 // The dimensionless bound, element by element, at which the two path rows hold the rotation between
 // their answers to orthonormality and its determinant to one.
@@ -45,9 +45,9 @@ inline constexpr std::size_t via_point_schedule_measured_to_cases = 400000;
 // and per second squared.
 inline constexpr double driven_pose_tolerance_radians = 1.0e-3;
 
-// The same sample's translation and the two linear parts, in metres, per second and per second
+// The same sample's translation and the two linear parts, in meters, per second and per second
 // squared.
-inline constexpr double driven_pose_tolerance_metres = 1.0e-2;
+inline constexpr double driven_pose_tolerance_meters = 1.0e-2;
 
 const evaluation::capability_evaluations<path_ops> &path_evaluations();
 const evaluation::capability_evaluations<trajectory_ops> &trajectory_evaluations();

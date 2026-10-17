@@ -70,10 +70,10 @@ inline rigid_motion::two_pose_window::settings slide_only()
 
 inline rigid_motion::two_pose_window::path_route recording_into(std::size_t &invocations, std::vector<transform> &sampled)
 {
-    return [&invocations, &sampled](std::span<const transform> travelled)
+    return [&invocations, &sampled](std::span<const transform> traveled)
     {
         ++invocations;
-        sampled.assign(travelled.begin(), travelled.end());
+        sampled.assign(traveled.begin(), traveled.end());
     };
 }
 
@@ -113,14 +113,14 @@ struct staged
     staged(const rigid_motion::capabilities &motions, const rigid_motion::two_pose_window::settings &chosen)
             : invocations(0)
             , decoupled_invocations(0)
-            , travelled()
-            , decoupled_travelled()
+            , traveled()
+            , decoupled_traveled()
             , scene()
             , body(scene, five_objects(), motions.frame)
-            , panel("Two poses", body, motions, recording_into(invocations, travelled), chosen)
+            , panel("Two poses", body, motions, recording_into(invocations, traveled), chosen)
             , decoupled(
                       "Decoupled path", motions, [this] { return std::pair<transform, transform>{panel.start_pose(), panel.end_pose()}; },
-                      recording_into(decoupled_invocations, decoupled_travelled))
+                      recording_into(decoupled_invocations, decoupled_traveled))
     {
         REQUIRE(body.initialize().has_value());
     }
@@ -155,8 +155,8 @@ struct staged
 
     std::size_t invocations;
     std::size_t decoupled_invocations;
-    std::vector<transform> travelled;
-    std::vector<transform> decoupled_travelled;
+    std::vector<transform> traveled;
+    std::vector<transform> decoupled_traveled;
     threepp::Scene scene;
     rigid_motion::frame_stencil body;
     rigid_motion::two_pose_window panel;

@@ -34,7 +34,7 @@ constexpr std::array<double, static_cast<std::size_t>(fixture::bent::count)> abo
         10.0 * axis_up_to_sign_tolerance, 10.0 * log_up_to_branch_tolerance_radians, 10.0 * log_up_to_branch_tolerance_metres};
 
 // `evaluate` draws from the bulk of each argument role's range; this is the same walk over the same
-// tables through the neighbourhood of the singular values instead.
+// tables through the neighborhood of the singular values instead.
 evaluation_report evaluated_near_the_singular(std::span<const evaluation_view> compared, std::uint64_t seed, std::size_t cases)
 {
     evaluation_report reported{{}, seed, cases};

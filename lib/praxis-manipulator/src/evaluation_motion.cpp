@@ -87,9 +87,9 @@ evaluation::case_result compare_task_space_screw(const void *first, const void *
 // The rows are in the enumerator order of motion_slot, and each name is spelled exactly as the
 // descriptor table spells it.
 constexpr std::array motion_table{
-        evaluation::slot_evaluation{"motion.task_space_pose", motion_kind, evaluation::tolerance_pair{solved_pose_tolerance_radians, solved_pose_tolerance_metres},
+        evaluation::slot_evaluation{"motion.task_space_pose", motion_kind, evaluation::tolerance_pair{solved_pose_tolerance_radians, solved_pose_tolerance_meters},
                                     &compare_task_space_pose},
-        evaluation::slot_evaluation{"motion.task_space_screw", motion_kind, evaluation::tolerance_pair{solved_pose_tolerance_radians, solved_pose_tolerance_metres},
+        evaluation::slot_evaluation{"motion.task_space_screw", motion_kind, evaluation::tolerance_pair{solved_pose_tolerance_radians, solved_pose_tolerance_meters},
                                     &compare_task_space_screw},
 };
 

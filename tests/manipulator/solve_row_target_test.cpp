@@ -33,7 +33,7 @@ constexpr double a_long_way_off = 1.0e-3;
 TEST_CASE("two_solves_reaching_the_same_pose_other_than_the_one_asked_for_differ_on_every_row_that_runs_one")
 {
     off_target_radians                   = a_long_way_off;
-    off_target_metres                    = a_long_way_off;
+    off_target_meters                    = a_long_way_off;
     const inverse_kinematics_ops astray  = chain_bound_to(&solves_for_a_displaced_target);
     const robot_ops astray_at_both_poses = robot_bound_to(&solve_pose_for_a_displaced_target, &solve_flange_pose_for_a_displaced_target);
 
@@ -47,7 +47,7 @@ TEST_CASE("two_solves_reaching_the_same_pose_other_than_the_one_asked_for_differ
     }
 
     off_target_radians = 0.0;
-    off_target_metres  = 0.0;
+    off_target_meters  = 0.0;
 }
 
 TEST_CASE("two_solves_reaching_the_pose_that_was_asked_for_agree_whatever_configurations_they_reached_it_from")

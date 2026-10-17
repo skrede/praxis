@@ -171,7 +171,7 @@ void save_joint_waypoint(const demo::documents &mine, const std::filesystem::pat
 
 }
 
-// A spelling routed to its neighbour in the composer table would still register, still compose and
+// A spelling routed to its neighbor in the composer table would still register, still compose and
 // still load; what it would open is the other preset's windows. Nothing else in the tree reads the
 // order of that table, so this is where an entry standing one place over is caught.
 TEST_CASE("each shipped document opens the windows its own scenario names", "[examples][registry]")

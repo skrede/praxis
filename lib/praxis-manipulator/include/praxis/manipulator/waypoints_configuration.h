@@ -26,7 +26,7 @@ void declare_joint_waypoints(config::declaration &shape, std::string_view at);
 joint_waypoint_list::settings read_joint_waypoints(const config::document &values, std::string_view at, std::size_t joints);
 std::vector<config::edit> write_joint_waypoints(const config::document &values, const joint_waypoint_list::settings &state, std::string_view at);
 
-// The same, each row carrying three metres of position and then three degrees of orientation, both
+// The same, each row carrying three meters of position and then three degrees of orientation, both
 // in the space frame and the angles read in the axis order an edited pose opens at. Six numbers are
 // six numbers whatever the arm is, so no joint count enters.
 void declare_pose_waypoints(config::declaration &shape, std::string_view at);

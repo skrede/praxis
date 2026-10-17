@@ -32,7 +32,7 @@ const differential_kinematics_ops &differential_kinematics_of(const void *value)
 // measures.
 constexpr std::array forward_kinematics_table{
         evaluation::slot_evaluation{"fk.forward_kinematics", evaluation::residual_kind::pose,
-                                    evaluation::tolerance_pair{accumulated_pose_tolerance_radians, accumulated_pose_tolerance_metres},
+                                    evaluation::tolerance_pair{accumulated_pose_tolerance_radians, accumulated_pose_tolerance_meters},
                                     [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result
                                     {
                                         const evaluation_case example = drawn_case(drawn);
@@ -44,7 +44,7 @@ constexpr std::array forward_kinematics_table{
                                         return evaluation::agreed_or_refused(held, against, evaluation::pose_residual, allowed);
                                     }},
         evaluation::slot_evaluation{
-                "fk.body_forward_kinematics", evaluation::residual_kind::pose, evaluation::tolerance_pair{accumulated_pose_tolerance_radians, accumulated_pose_tolerance_metres},
+                "fk.body_forward_kinematics", evaluation::residual_kind::pose, evaluation::tolerance_pair{accumulated_pose_tolerance_radians, accumulated_pose_tolerance_meters},
                 [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result
                 {
                     const evaluation_case example = drawn_case(drawn);
@@ -103,7 +103,7 @@ constexpr evaluation::capability_evaluations<differential_kinematics_ops> evalua
 // by `unevaluated_slots`.
 constexpr std::array inverse_kinematics_table{
         evaluation::slot_evaluation{"ik.inverse_kinematics", evaluation::residual_kind::pose,
-                                    evaluation::tolerance_pair{inverse_kinematics_tolerance_radians, inverse_kinematics_tolerance_metres}, &compare_inverse_kinematics},
+                                    evaluation::tolerance_pair{inverse_kinematics_tolerance_radians, inverse_kinematics_tolerance_meters}, &compare_inverse_kinematics},
 };
 
 static_assert(inverse_kinematics_table.size() <= static_cast<std::size_t>(inverse_kinematics_slot::count));

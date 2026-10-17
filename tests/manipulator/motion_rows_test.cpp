@@ -37,7 +37,7 @@ constexpr std::size_t cases_per_row   = 24u;
 // far above the step either solve stops within and far beneath a turn onto another branch.
 constexpr double branches_apart_radians = 1.0e-3;
 
-constexpr tolerance_pair solved_pose_bound{solved_pose_tolerance_radians, solved_pose_tolerance_metres};
+constexpr tolerance_pair solved_pose_bound{solved_pose_tolerance_radians, solved_pose_tolerance_meters};
 
 // A second seed, so a binding answering from it lands where the reference does only by reaching the
 // same pose and not by taking the same path to it.

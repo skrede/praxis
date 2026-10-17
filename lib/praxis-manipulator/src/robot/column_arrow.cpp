@@ -20,8 +20,8 @@ namespace praxis::manipulator {
 
 namespace {
 
-constexpr double shaft_girth           = 0.008; // the diameter of a shaft, in metres
-constexpr double tip_length            = 0.02;  // in metres, whatever the arrow's own length
+constexpr double shaft_girth           = 0.008; // the diameter of a shaft, in meters
+constexpr double tip_length            = 0.02;  // in meters, whatever the arrow's own length
 constexpr double tip_radius_multiple   = 1.25;  // of the shaft's diameter
 constexpr unsigned int radial_segments = 24;
 

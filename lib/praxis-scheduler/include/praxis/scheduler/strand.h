@@ -23,7 +23,7 @@ enum class strand_id : std::uint32_t
 
 // A serialization guarantee multiplexed over the workers, not a thread. The handle is a cheap
 // copyable value because a holder keeps one as a member and hands one on by value; the owning
-// pointer is the modelled absence a default-constructed handle carries and reports through valid(),
+// pointer is the modeled absence a default-constructed handle carries and reports through valid(),
 // never an ownership claim, since whoever built the scheduler outlives every handle to it.
 class strand
 {

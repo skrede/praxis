@@ -20,7 +20,7 @@ constexpr std::size_t opening_waypoints = 4;
 constexpr double sweep_degrees = 75.0;
 constexpr double dip_degrees   = 60.0;
 
-// The position is metres in the space frame and the angles are degrees, read in the axis order an
+// The position is meters in the space frame and the angles are degrees, read in the axis order an
 // edited pose opens at.
 struct opening_pose
 {

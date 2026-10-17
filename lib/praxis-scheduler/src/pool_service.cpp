@@ -122,7 +122,7 @@ void pool::finish_due(std::unique_lock<std::mutex> &held, strand_id on, armed_ta
     held.lock();
     const std::uint64_t id = entry.id;
     const auto found       = std::find_if(m_running.begin(), m_running.end(), [id](const running_entry &candidate) { return candidate.id == id; });
-    const bool rearms      = found != m_running.end() && !found->cancelled;
+    const bool rearms      = found != m_running.end() && !found->canceled;
     if(rearms && !m_stopped && !m_strands[seat(on)].retired() && entry.repeats() && entry.due() != time_point::max())
         m_strands[seat(on)].arm(std::move(entry));
     if(found != m_running.end())

@@ -53,7 +53,7 @@ evaluation::residual path_pose_residual(const transform &held, const transform &
 
 // A small element-wise difference over a matrix that need not be a group member says nothing about
 // the pose it stands for, so both task-space rows are judged as poses: a rotation in radians and a
-// distance in metres, each against its own bound and never summed.
+// distance in meters, each against its own bound and never summed.
 evaluation::case_result compare_screw(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed)
 {
     const pose_path_case example = drawn_pose_path_case(drawn);
@@ -78,8 +78,8 @@ constexpr evaluation::residual_kind pose_kind          = evaluation::residual_ki
 // the assertion below the table holds.
 constexpr std::array path_table{
         evaluation::slot_evaluation{"path.joint_straight_line", configuration_kind, evaluation::tolerance_of(configuration_kind), &compare_joint_straight_line},
-        evaluation::slot_evaluation{"path.screw", pose_kind, evaluation::tolerance_pair{screw_path_tolerance_radians, screw_path_tolerance_metres}, &compare_screw},
-        evaluation::slot_evaluation{"path.decoupled", pose_kind, evaluation::tolerance_pair{decoupled_path_tolerance_radians, decoupled_path_tolerance_metres}, &compare_decoupled},
+        evaluation::slot_evaluation{"path.screw", pose_kind, evaluation::tolerance_pair{screw_path_tolerance_radians, screw_path_tolerance_meters}, &compare_screw},
+        evaluation::slot_evaluation{"path.decoupled", pose_kind, evaluation::tolerance_pair{decoupled_path_tolerance_radians, decoupled_path_tolerance_meters}, &compare_decoupled},
 };
 
 static_assert(path_table.size() == static_cast<std::size_t>(path_slot::count));

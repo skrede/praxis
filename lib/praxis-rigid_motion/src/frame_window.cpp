@@ -38,7 +38,7 @@ void frame_window::render()
     if(m_selecting)
         render_told_object();
     else
-        for(std::size_t index = m_controls.first_panelled_object; index < m_objects.size(); ++index)
+        for(std::size_t index = m_controls.first_paneled_object; index < m_objects.size(); ++index)
             render_panel(index);
     render_refusal();
     ImGui::End();

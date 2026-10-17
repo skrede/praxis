@@ -158,7 +158,7 @@ std::optional<Eigen::Vector3d> arrow_head(fixture::stage &headless, const std::s
 }
 
 // How far the arrow reaches, tip included. The stem stands from the origin to its own top and the
-// head stands centred on what is left, so twice the gap between where the two parts stand is the
+// head stands centered on what is left, so twice the gap between where the two parts stand is the
 // whole drawn arrow.
 double reach_of(fixture::stage &headless, const std::shared_ptr<scene::preset> &composed, std::size_t index)
 {
@@ -322,7 +322,7 @@ double off_axis(const Eigen::Vector3d &at, const Eigen::Vector3d &axis)
     return (at - at.dot(axis) * axis).norm();
 }
 
-// The furthest a point of the travelled arc can stand from the polyline drawn through samples of it:
+// The furthest a point of the traveled arc can stand from the polyline drawn through samples of it:
 // the sagitta of one sampled step, which the drawn geometry and the commanded angle together say,
 // floored at the tolerance a point read back out of a float buffer is comparable at.
 double arc_resolution(const std::vector<Eigen::Vector3d> &arc, const Eigen::Vector3d &axis, double angle_radians)
@@ -341,7 +341,7 @@ double subtended(const std::vector<Eigen::Vector3d> &arc, const Eigen::Vector3d 
     return std::atan2(axis.dot(first.cross(last)), first.dot(last));
 }
 
-// What says an arc is the one its arrow has travelled is that the arrow's end stands on it, within
+// What says an arc is the one its arrow has traveled is that the arrow's end stands on it, within
 // the sagitta of one sampled step, at whatever the controls now hold.
 void every_arrow_stands_on_its_arc(fixture::stage &headless, const std::shared_ptr<scene::preset> &composed)
 {
@@ -592,7 +592,7 @@ TEST_CASE("the_unit_arrow_reaches_the_same_distance_however_far_the_angle_is_dri
     CHECK(is_approx_equal(reach_of(headless, composed, coordinate_object), rising.back().radians * reaches.back(), 1.0e-5));
 }
 
-// At no turn at all the rotation is the identity and the frame has travelled nowhere, so the arcs go
+// At no turn at all the rotation is the identity and the frame has traveled nowhere, so the arcs go
 // the way the coordinate arrow does rather than being padded to something drawable.
 TEST_CASE("at_no_angle_at_all_neither_the_coordinate_arrow_nor_any_arc_is_drawn_and_the_unit_arrow_is")
 {

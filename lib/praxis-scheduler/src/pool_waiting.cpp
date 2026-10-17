@@ -41,7 +41,7 @@ void pool::park(std::unique_lock<std::mutex> &held, bool worker)
             until = std::min(until, m_strands[index].earliest());
 
     ++m_waiting;
-    m_signalled = false;
+    m_signaled = false;
     if(until == time_point::max())
         m_wakeup.wait(held);
     else

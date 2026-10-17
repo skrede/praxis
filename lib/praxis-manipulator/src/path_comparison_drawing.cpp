@@ -32,7 +32,7 @@ bool unchanged(const Eigen::VectorXf &one, const Eigen::VectorXf &other)
     return one.size() == other.size() && one == other;
 }
 
-// The forward map answers flange poses and all four polylines are drawn at the tool centre point.
+// The forward map answers flange poses and all four polylines are drawn at the tool center point.
 std::vector<transform> at_the_tool(const robot_ops &robot, const transform &tool_offset, const std::vector<transform> &flange_poses)
 {
     std::vector<transform> standing;

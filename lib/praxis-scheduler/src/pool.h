@@ -43,7 +43,7 @@ enum class withdrawal : std::uint8_t
 // the mutex a reader holds is released.
 struct running_entry
 {
-    bool cancelled;
+    bool canceled;
     std::uint64_t id;
     task_counters tally;
 };
@@ -118,7 +118,7 @@ public:
 private:
     bool m_stopped;
     bool m_threaded;
-    bool m_signalled;
+    bool m_signaled;
     clock_source m_clock;
     std::uint32_t m_waiting;
     std::uint64_t m_sequence;
@@ -148,7 +148,7 @@ private:
     void abandon(std::unique_lock<std::mutex> &held, strand_id on, std::uint64_t running);
     void finish_ready(std::unique_lock<std::mutex> &held, strand_id on);
     void finish_due(std::unique_lock<std::mutex> &held, strand_id on, armed_task &entry);
-    bool mark_cancelled(std::uint64_t id);
+    bool mark_canceled(std::uint64_t id);
     void await_completion(std::unique_lock<std::mutex> &held, std::uint64_t id);
     void park(std::unique_lock<std::mutex> &held, bool worker);
     void admit(strand_id on, detail::move_only_function<void()> &&work);

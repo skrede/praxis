@@ -60,7 +60,7 @@ TEST_CASE("the_moving_object_reaches_the_start_pose_at_zero_and_the_end_pose_at_
 
     // In between, the moving object stands at the sample of the drawn path that shares its
     // parameter: the placement and the path are the one expression.
-    const std::vector<transform> path = midway.travelled;
+    const std::vector<transform> path = midway.traveled;
 
     REQUIRE(path.size() == two_pose_window::path_points);
     CHECK(is_approx_equal(midway.placed(), path[(two_pose_window::path_points - 1) / 2], 1.0e-9));
@@ -80,7 +80,7 @@ TEST_CASE("a_substituted_exponential_carries_the_body_where_it_says_and_takes_th
     driven.open();
 
     CHECK_FALSE(is_approx_equal(driven.placed(), reference.placed()));
-    CHECK_FALSE(fixture::alike(driven.travelled, reference.travelled));
+    CHECK_FALSE(fixture::alike(driven.traveled, reference.traveled));
 
     // What the substituted exponential answers is where the body goes, rather than the window
     // arriving at the same place by an expression of its own.
@@ -103,11 +103,11 @@ TEST_CASE("a_substituted_logarithm_names_a_different_screw_and_the_body_and_the_
     derived.open();
 
     CHECK_FALSE(is_approx_equal(derived.placed(), reference.placed()));
-    CHECK_FALSE(fixture::alike(derived.travelled, reference.travelled));
+    CHECK_FALSE(fixture::alike(derived.traveled, reference.traveled));
 
     // Both ends still land where the controls say, because the substitution is a different route
     // between the same two poses rather than a different pair.
-    CHECK(is_approx_equal(derived.travelled.front(), derived.panel.start_pose(), 1.0e-9));
+    CHECK(is_approx_equal(derived.traveled.front(), derived.panel.start_pose(), 1.0e-9));
 }
 
 TEST_CASE("two_equal_poses_name_no_motion_and_draw_a_path_of_no_extent")
@@ -121,8 +121,8 @@ TEST_CASE("two_equal_poses_name_no_motion_and_draw_a_path_of_no_extent")
     arrived.open();
 
     REQUIRE(resting.invocations == 1u);
-    CHECK(resting.travelled.empty());
-    CHECK(resting.decoupled_travelled.empty());
+    CHECK(resting.traveled.empty());
+    CHECK(resting.decoupled_traveled.empty());
     CHECK_FALSE(resting.panel.reading().message.empty());
     CHECK(resting.panel.reading().rows.empty());
     CHECK_FALSE(resting.decoupled.reading().message.empty());
@@ -166,7 +166,7 @@ TEST_CASE("a_refused_logarithm_leaves_the_moving_object_where_it_was_and_draws_n
     arrived.open();
 
     REQUIRE(resting.invocations == 1u);
-    CHECK(resting.travelled.empty());
+    CHECK(resting.traveled.empty());
     CHECK_FALSE(resting.panel.reading().message.empty());
     CHECK(is_approx_equal(resting.placed(), before));
     CHECK(is_approx_equal(arrived.placed(), before));
@@ -209,16 +209,16 @@ TEST_CASE("the_two_paths_coincide_for_a_slide_and_part_for_a_turn_off_the_line_b
     slid.open();
     turned.open();
 
-    REQUIRE(slid.travelled.size() == two_pose_window::path_points);
-    REQUIRE(slid.decoupled_travelled.size() == two_pose_window::path_points);
-    CHECK(fixture::alike(slid.travelled, slid.decoupled_travelled));
-    CHECK_FALSE(fixture::alike(turned.travelled, turned.decoupled_travelled));
+    REQUIRE(slid.traveled.size() == two_pose_window::path_points);
+    REQUIRE(slid.decoupled_traveled.size() == two_pose_window::path_points);
+    CHECK(fixture::alike(slid.traveled, slid.decoupled_traveled));
+    CHECK_FALSE(fixture::alike(turned.traveled, turned.decoupled_traveled));
 
     // They part in between and meet again at both ends, because both are the same two poses carried
     // between.
-    CHECK(is_approx_equal(turned.travelled.front(), turned.decoupled_travelled.front(), 1.0e-9));
-    CHECK(is_approx_equal(turned.travelled.back(), turned.decoupled_travelled.back(), 1.0e-9));
-    CHECK(fixture::apart(turned.travelled, turned.decoupled_travelled) > 0.1);
+    CHECK(is_approx_equal(turned.traveled.front(), turned.decoupled_traveled.front(), 1.0e-9));
+    CHECK(is_approx_equal(turned.traveled.back(), turned.decoupled_traveled.back(), 1.0e-9));
+    CHECK(fixture::apart(turned.traveled, turned.decoupled_traveled) > 0.1);
 }
 
 TEST_CASE("each_path_follows_the_operations_it_is_drawn_from_and_leaves_the_other_path_alone")
@@ -237,9 +237,9 @@ TEST_CASE("each_path_follows_the_operations_it_is_drawn_from_and_leaves_the_othe
     displaced.open();
     rotated.open();
 
-    CHECK_FALSE(fixture::alike(displaced.travelled, reference.travelled));
-    CHECK(fixture::alike(displaced.decoupled_travelled, reference.decoupled_travelled));
+    CHECK_FALSE(fixture::alike(displaced.traveled, reference.traveled));
+    CHECK(fixture::alike(displaced.decoupled_traveled, reference.decoupled_traveled));
 
-    CHECK(fixture::alike(rotated.travelled, reference.travelled));
-    CHECK_FALSE(fixture::alike(rotated.decoupled_travelled, reference.decoupled_travelled));
+    CHECK(fixture::alike(rotated.traveled, reference.traveled));
+    CHECK_FALSE(fixture::alike(rotated.decoupled_traveled, reference.decoupled_traveled));
 }

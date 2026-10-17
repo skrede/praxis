@@ -283,7 +283,7 @@ TEST_CASE("a reading carrying three frames draws three plots stacked in the orde
     CHECK(geometry_of([&panel] { panel.render(); }) != geometry_of(panel_of(one_curve())));
 }
 
-TEST_CASE("each of three frames carries its own ordinate label and none of them its neighbour's", "[scene]")
+TEST_CASE("each of three frames carries its own ordinate label and none of them its neighbor's", "[scene]")
 {
     scene::plot_window panel(title, nullptr, answering(three_frames()));
 

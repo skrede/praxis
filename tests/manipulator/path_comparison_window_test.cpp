@@ -60,7 +60,7 @@ constexpr std::size_t joint_space_switch = 4;
 constexpr std::size_t first_end          = 6;
 constexpr std::size_t play_button        = 0;
 
-// How far apart the poses of a published traversed run stand, in metres along one axis.
+// How far apart the poses of a published traversed run stand, in meters along one axis.
 constexpr double traversed_step = 0.05;
 
 // The three commanded drawings in one order: the name each stands under on the stencil and the shape
@@ -554,7 +554,7 @@ TEST_CASE("the chosen shape is the one the settings named", "[manipulator][compa
 // A drawing standing the bent tool's own reach from the flange poses the window answers is a drawing
 // something converted; one agreeing with the bound conversion of those same poses is a drawing that
 // conversion made.
-TEST_CASE("the three commanded shapes are drawn at the tool centre point the published offset names", "[manipulator][comparison]")
+TEST_CASE("the three commanded shapes are drawn at the tool center point the published offset names", "[manipulator][comparison]")
 {
     stage over(ends_at(configuration(0.0, 0.0), configuration(1.0, 1.0)), {}, tooled_with(bent_tool_offset()));
     over.draw();
@@ -604,7 +604,7 @@ TEST_CASE("an offset arriving after the first drawing rebuilds the three shapes 
 // The two poses the factory is handed at the ends are named through the forward map rather than
 // through `poses_along`, so a conversion moved into that accessor or applied a second time on the way
 // to the controller fails here while the drawing beside it stands the offset away.
-TEST_CASE("playing a task-space shape hands the controller flange poses and draws at the tool centre point", "[manipulator][comparison]")
+TEST_CASE("playing a task-space shape hands the controller flange poses and draws at the tool center point", "[manipulator][comparison]")
 {
     captured_log log;
     driven_by_the_window arm;

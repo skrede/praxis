@@ -45,9 +45,9 @@ rotation turn_step(const rigid_motion::frame_ops &frames, int axis, double radia
     return frames.rotation_matrix_from_euler(Eigen::Vector3d::Unit(axis) * radians, order);
 }
 
-transform stepped_along(const rigid_motion::frame_ops &frames, const transform &start, int axis, float metres)
+transform stepped_along(const rigid_motion::frame_ops &frames, const transform &start, int axis, float meters)
 {
-    return start * frames.transformation_matrix_from_rotation_position(rotation::Identity(), Eigen::Vector3d::Unit(axis) * metres);
+    return start * frames.transformation_matrix_from_rotation_position(rotation::Identity(), Eigen::Vector3d::Unit(axis) * meters);
 }
 
 transform stepped_about(const rigid_motion::frame_ops &frames, const transform &start, int axis, float degrees, axis_order order)

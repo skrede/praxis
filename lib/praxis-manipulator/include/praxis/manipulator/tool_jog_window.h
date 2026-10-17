@@ -24,7 +24,7 @@
 namespace praxis::manipulator {
 
 // Each slider steps the shared pose within its own frame by the one component it carries, previewed
-// while held; letting go makes the stepped pose the shared pose. Steps are metres and degrees.
+// while held; letting go makes the stepped pose the shared pose. Steps are meters and degrees.
 class tool_jog_window : public scene::imgui_window, public config::configurable
 {
 public:

@@ -64,7 +64,7 @@ constexpr std::size_t shape_control = 5;
 constexpr std::size_t play_control  = 6;
 
 // How far a played run's traversed path may stand from the polyline it was commanded along and still
-// be said to lie on it. A millimetre at the tool is three orders below the arm's own reach and two
+// be said to lie on it. A millimeter at the tool is three orders below the arm's own reach and two
 // above what a position read back out of a float buffer is comparable at.
 constexpr double lying_on_it = 1.0e-3;
 

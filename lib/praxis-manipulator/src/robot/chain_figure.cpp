@@ -23,7 +23,7 @@ namespace praxis::manipulator {
 
 namespace {
 
-constexpr double segment_girth                 = 0.008; // the diameter of a segment, in metres
+constexpr double segment_girth                 = 0.008; // the diameter of a segment, in meters
 constexpr double mark_radius_multiple          = 1.75;  // of the segment's radius
 constexpr threepp::Color::ColorName chain_tone = threepp::Color::black;
 

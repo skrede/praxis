@@ -125,8 +125,8 @@ TEST_CASE("a stencil built with a tool and a world reference object holds both i
 // A world object's placement is written into an arm document beside the tool's offset, the initial
 // joint values and the screw axes the chain is derived from, all of which are the robot's. The
 // rendered world is y-up and the robot is z-up, so the reading is only the robot's if what the
-// object hangs from carries the same quarter turn the robot does. A metre along the robot's third
-// axis is therefore a metre along the renderer's second.
+// object hangs from carries the same quarter turn the robot does. A meter along the robot's third
+// axis is therefore a meter along the renderer's second.
 TEST_CASE("a world reference object's placement is read in the robot's frame and not the renderer's", "[manipulator][stencil]")
 {
     scheduler loop(inline_workers, dictating());

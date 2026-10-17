@@ -17,7 +17,7 @@ enum class residual_kind : std::uint8_t
 // The unit of `magnitude` is fixed by the kind: the greatest absolute element difference for
 // `element_wise`, and a rotation measured in radians for `geodesic`, `axis_up_to_sign` and
 // `log_up_to_branch`. A `pose` discrepancy takes two numbers -- `magnitude` is its rotational half
-// in radians and `linear_error_metres` its translational half in metres. A `log_up_to_branch`
+// in radians and `linear_error_metres` its translational half in meters. A `log_up_to_branch`
 // discrepancy carries the second field too, since a logarithm may name a pose; its rotation form
 // leaves that half at zero. No other kind reads it.
 struct residual

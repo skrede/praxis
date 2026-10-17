@@ -19,7 +19,7 @@ namespace {
 
 constexpr double marker_axis_thickness_fraction = 0.10;
 
-// The extent stood in for where the arm has none of its own, in metres.
+// The extent stood in for where the arm has none of its own, in meters.
 constexpr double bare_arm_extent = 1.0;
 
 std::size_t slot_of(flange_attachment which)

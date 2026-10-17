@@ -125,7 +125,7 @@ public:
     void set_trapezoid_bounds(std::optional<path_parameter_bounds> held_to);
     std::optional<path_parameter_bounds> trapezoid_bounds() const;
 
-    // A pose parameter named tool_pose or tool_poses is where the tool centre point is commanded to
+    // A pose parameter named tool_pose or tool_poses is where the tool center point is commanded to
     // stand; the flange pose that reaches it is derived on the way to the solver.
     void preview_task_space_pose(const transform &tool_pose);
     void preview_task_space_screw(const transform &tool_pose, const Eigen::Vector3d &w, const Eigen::Vector3d &q, double theta_radians, double pitch);

@@ -12,7 +12,7 @@
 
 namespace praxis::manipulator {
 
-// The pose is one group at `at` holding its Euler order, its position in metres and its angles in
+// The pose is one group at `at` holding its Euler order, its position in meters and its angles in
 // degrees; it reads held where the document carries any of the six numbers.
 void declare_shared_pose(config::declaration &shape, std::string_view at);
 edited_pose read_shared_pose(const config::document &values, std::string_view at);

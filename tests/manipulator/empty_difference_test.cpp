@@ -100,7 +100,7 @@ TEST_CASE("no_manipulator_row_reports_a_difference_with_nothing_in_it_at_any_cas
     const capabilities reference = baseline();
 
     off_target_radians = 1.0e-3;
-    off_target_metres  = 1.0e-3;
+    off_target_meters  = 1.0e-3;
     bend_every_row_by(plainly_wrong);
 
     const std::array<capabilities, 7> swept{reference,
@@ -117,7 +117,7 @@ TEST_CASE("no_manipulator_row_reports_a_difference_with_nothing_in_it_at_any_cas
 
     bend_every_row_by({});
     off_target_radians = 0.0;
-    off_target_metres  = 0.0;
+    off_target_meters  = 0.0;
 
     for(std::size_t pass = 0; pass < empty.size(); ++pass)
     {

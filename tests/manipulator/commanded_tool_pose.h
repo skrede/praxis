@@ -38,7 +38,7 @@ inline transform no_tool()
     return transform::Identity();
 }
 
-// Metres.
+// Meters.
 inline double jog_tick()
 {
     return 0.005;
