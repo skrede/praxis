@@ -58,8 +58,6 @@ expected<std::vector<via_point>, refusal> via_point_schedule(std::span<const con
 
 namespace praxis::trajectory {
 
-// Declaration order is frozen: a designated initializer must name members in declaration order, so
-// reordering a slot breaks every project that already composes this aggregate. Appending is safe.
 // Only the via-point factory and the step choosing its via points are here: a run's coefficients are
 // solved once and sampled many times. A point-to-point motion is a path composed with a time scaling
 // and needs no prepared object. The kinematic limits enter only the step, where a duration is derived

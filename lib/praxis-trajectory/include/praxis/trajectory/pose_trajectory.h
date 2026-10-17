@@ -58,8 +58,6 @@ expected<std::unique_ptr<pose_trajectory_generator>, refusal> screw_pose_waypoin
 
 namespace praxis::trajectory {
 
-// Declaration order is frozen: a designated initializer must name members in declaration order, so
-// reordering a slot breaks every project that already composes this aggregate. Appending is safe.
 // The run is swept along a path of the operations handed in under their quintic scaling, and its
 // twists are taken with the rigid-motion operations handed in. The generator's duration() is derived
 // from the speed bounds passed here, and the two slots differ only in which of the two task-space

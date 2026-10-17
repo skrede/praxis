@@ -22,8 +22,6 @@ expected<transform, refusal> decoupled(const rigid_motion::screw_ops &screw, con
 
 namespace praxis::trajectory {
 
-// Declaration order is frozen: a designated initializer must name members in declaration order, so
-// reordering a slot breaks every project that already composes this aggregate. Appending is safe.
 // A path is a pure function of the path parameter s in [0,1] and holds no state: Lynch & Park,
 // Modern Robotics, eq. (9.3), (9.6), (9.7) and (9.8). The two task-space paths differ in whether
 // the rotation is coupled to the translation -- the screw path holds a constant screw axis and its

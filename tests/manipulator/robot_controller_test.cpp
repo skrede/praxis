@@ -433,6 +433,53 @@ TEST_CASE("a_move_to_the_configuration_the_arm_stands_at_commands_nothing_and_is
         CHECK(reported.find("[info]") != std::string::npos);
         CHECK(reported.find("[error]") == std::string::npos);
     }
+    CHECK_THAT(once, Catch::Matchers::ContainsSubstring("the requested configuration, so no motion is commanded"));
+    CHECK_THAT(twice, Catch::Matchers::ContainsSubstring("both requested configurations, so no motion is commanded"));
+    CHECK(once.find("the 1 requested") == std::string::npos);
+}
+
+TEST_CASE("a_move_to_where_a_finished_move_left_the_arm_commands_nothing_and_is_reported_as_information")
+{
+    scene_robot robot = adapter(manipulator::baseline().robot);
+    robot_controller controller(robot, motion_ops{}, trajectory::path_ops{}, task_trajectory_ops{}, trajectory::time_scaling_ops{}, trajectory::baseline().trajectory,
+                                rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
+    controller.set_velocity_factor(8.0);
+    robot.set_joint_positions(configuration(0.15, 0.25));
+    const joint_vector target = configuration(0.9, -0.9);
+
+    controller.joint_space_trajectory(std::array<joint_vector, 1>{target});
+    REQUIRE(played_out(controller));
+
+    // A finished Move ends within rounding of its target rather than on it.
+    const auto held_through = [&](const joint_vector &left, const char *worded, auto request)
+    {
+        robot.set_joint_positions(left);
+        const std::string reported = reported_by(request);
+
+        CHECK_FALSE(controller.executing());
+        CHECK(controller.preview() == nullptr);
+        CHECK((robot.joint_positions().array() == left.array()).all());
+        CHECK(reported.find("[info]") != std::string::npos);
+        CHECK(reported.find("[error]") == std::string::npos);
+        CHECK_THAT(reported, Catch::Matchers::ContainsSubstring(worded));
+        if(controller.executing())
+            REQUIRE(played_out(controller));
+        controller.clear_preview();
+    };
+
+    const joint_vector finished = robot.joint_positions();
+    held_through(finished, "the requested configuration, so no motion is commanded", [&] { controller.joint_space_trajectory(std::array<joint_vector, 1>{target}); });
+    held_through(finished, "both requested configurations, so no motion is commanded", [&] { controller.joint_space_trajectory(std::array<joint_vector, 2>{target, target}); });
+    held_through(finished, "the requested configuration, so no preview stands",
+                 [&] { controller.preview_trajectory(std::span<const joint_vector>(std::array<joint_vector, 1>{target})); });
+
+    joint_vector nudged = target;
+    for(int step = 0; step < 4; ++step)
+    {
+        nudged[0] = std::nextafter(nudged[0], 2.0);
+        nudged[1] = std::nextafter(nudged[1], -2.0);
+    }
+    held_through(nudged, "the requested configuration, so no motion is commanded", [&] { controller.joint_space_trajectory(std::array<joint_vector, 1>{target}); });
 }
 
 TEST_CASE("a_preview_of_the_configuration_the_arm_stands_at_stands_nothing_and_is_reported_as_information")
@@ -449,6 +496,63 @@ TEST_CASE("a_preview_of_the_configuration_the_arm_stands_at_stands_nothing_and_i
     CHECK((robot.joint_positions().array() == held.array()).all());
     CHECK(reported.find("[info]") != std::string::npos);
     CHECK(reported.find("[error]") == std::string::npos);
+    CHECK_THAT(reported, Catch::Matchers::ContainsSubstring("the requested configuration, so no preview stands"));
+    CHECK(reported.find("the 1 requested") == std::string::npos);
+}
+
+TEST_CASE("a_task_space_run_to_the_pose_the_arm_stands_at_commands_nothing_and_is_reported_as_information")
+{
+    scene_robot robot = adapter(manipulator::baseline().robot);
+    robot_controller controller(robot, composing_motion(), trajectory::path_ops{}, manipulator::baseline().trajectory, trajectory::time_scaling_ops{}, trajectory::baseline().trajectory,
+                                rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
+
+    const auto held_through = [&](const joint_vector &left, const char *worded, auto request)
+    {
+        robot.set_joint_positions(left);
+        const std::string reported = reported_by(request);
+
+        CHECK_FALSE(controller.executing());
+        CHECK(controller.preview() == nullptr);
+        CHECK((robot.joint_positions().array() == left.array()).all());
+        CHECK(reported.find("[info]") != std::string::npos);
+        CHECK(reported.find("[error]") == std::string::npos);
+        CHECK_THAT(reported, Catch::Matchers::ContainsSubstring(worded));
+        if(controller.executing())
+            REQUIRE(played_out(controller));
+        controller.clear_preview();
+    };
+
+    const transform held = planar_pose(0.3, 0.0);
+    held_through(configuration(0.3, 0.0), "the requested pose, so no motion is commanded", [&] { controller.task_space_trajectory(std::array<transform, 1>{held}); });
+    held_through(configuration(0.3, 0.0), "both requested poses, so no motion is commanded", [&] { controller.task_space_trajectory(std::array<transform, 2>{held, held}); });
+    held_through(configuration(0.3, 0.0), "the requested pose, so no preview stands",
+                 [&] { controller.preview_trajectory(std::span<const transform>(std::array<transform, 1>{held})); });
+
+    controller.set_velocity_factor(8.0);
+    robot.set_joint_positions(configuration(0.15, 0.0));
+    const transform reached = planar_pose(0.6, 0.0);
+    controller.task_space_trajectory(std::array<transform, 1>{reached});
+    REQUIRE(played_out(controller));
+
+    held_through(robot.joint_positions(), "the requested pose, so no motion is commanded", [&] { controller.task_space_trajectory(std::array<transform, 1>{reached}); });
+}
+
+TEST_CASE("a_request_a_thousand_tolerances_from_the_held_one_still_commands_a_motion")
+{
+    scene_robot robot = adapter(manipulator::baseline().robot);
+    robot_controller controller(robot, composing_motion(), trajectory::path_ops{}, manipulator::baseline().trajectory, trajectory::time_scaling_ops{}, trajectory::baseline().trajectory,
+                                rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
+    controller.set_velocity_factor(8.0);
+
+    robot.set_joint_positions(configuration(0.15, 0.25));
+    controller.joint_space_trajectory(std::array<joint_vector, 1>{configuration(0.15 + 1.0e-9, 0.25)});
+    CHECK(controller.executing());
+    REQUIRE(played_out(controller));
+
+    robot.set_joint_positions(configuration(0.3, 0.0));
+    controller.task_space_trajectory(std::array<transform, 1>{planar_pose(0.3 + 1.0e-2, 0.0)});
+    CHECK(controller.executing());
+    REQUIRE(played_out(controller));
 }
 
 TEST_CASE("a_refused_move_to_a_configuration_the_arm_does_not_stand_at_is_still_reported_as_an_error")

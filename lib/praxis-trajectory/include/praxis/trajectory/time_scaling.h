@@ -33,8 +33,6 @@ expected<scaling_sample, refusal> trapezoidal_within_bounds(double t, double dur
 
 namespace praxis::trajectory {
 
-// Declaration order is frozen: a designated initializer must name members in declaration order, so
-// reordering a slot breaks every project that already composes this aggregate. Appending is safe.
 // A time scaling is scalar mathematics: this header names no configuration, no pose and no solver.
 //
 // A scaling is judged over 0 <= t <= duration, and what it reports outside that interval is

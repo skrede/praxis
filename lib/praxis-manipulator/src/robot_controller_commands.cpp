@@ -6,6 +6,8 @@
 #include "trajectory_preview.h"
 #include "trajectory_executor.h"
 
+#include "praxis/evaluation/tolerance.h"
+
 #include <spdlog/spdlog.h>
 
 #include <span>
@@ -26,6 +28,12 @@ namespace {
 // where every one of them is written to the number of distinct configurations the command found.
 constexpr std::size_t reached_nothing = static_cast<std::size_t>(-1);
 
+// Per joint, in that joint's unit.
+constexpr double held_configuration_tolerance = 1.0e-12;
+
+// Per element of the flange pose: the rotation entries, and the translation in meters.
+constexpr double held_pose_tolerance = 1.0e-5;
+
 // The samples and the curves beside them stand in step, a curve being drawn against the time of the
 // sample at its own place, so a curve that has not kept up with the samples is emptied for the whole
 // run rather than drawn against the times of the legs before it. Each leg is a path of its own, so
@@ -43,7 +51,25 @@ bool stands_at_every(std::span<const joint_vector> positions, const joint_vector
     if(positions.empty() || positions.size() > 2u)
         return false;
 
-    return std::ranges::all_of(positions, [&held](const joint_vector &position) { return position.size() == held.size() && position == held; });
+    return std::ranges::all_of(positions, [&held](const joint_vector &position) { return is_approx_equal(position, held, held_configuration_tolerance); });
+}
+
+bool stands_at_every(std::span<const transform> flange_poses, const scene_robot &robot)
+{
+    if(flange_poses.empty() || flange_poses.size() > 2u)
+        return false;
+
+    const expected<transform, refusal> held = robot.flange_pose();
+    if(!held)
+        return false;
+
+    return std::ranges::all_of(flange_poses, [&held](const transform &pose) { return is_approx_equal(pose, *held, held_pose_tolerance); });
+}
+
+void report_held(std::size_t requested, std::string_view noun, std::string_view outcome)
+{
+    const bool one = requested == 1u;
+    spdlog::info("praxis: the arm already stands at {} requested {}{}, so {}", one ? "the" : "both", noun, one ? "" : "s", outcome);
 }
 
 void report_via_point_refusal(refusal reason, std::size_t positions, std::string_view outcome)
@@ -224,8 +250,11 @@ void robot_controller::task_space_trajectory(std::span<const transform> tool_pos
     if(executing())
         return;
 
-    asking();
     const std::vector<transform> reaching = flange_poses_from(tool_poses);
+    if(stands_at_every(reaching, m_robot))
+        return report_held(tool_poses.size(), "pose", "no motion is commanded");
+
+    asking();
     auto motion = m_task_trajectory.task_space_waypoints(m_joint_trajectory, m_motion, m_robot.solver(), reaching, m_robot.joint_positions(), m_robot.limits());
     if(!motion)
     {
@@ -242,10 +271,7 @@ void robot_controller::joint_space_trajectory(std::span<const joint_vector> posi
         return;
 
     if(stands_at_every(positions, m_robot.joint_positions()))
-    {
-        spdlog::info("praxis: the arm already stands at the {} requested configurations, so no motion is commanded", positions.size());
-        return;
-    }
+        return report_held(positions.size(), "configuration", "no motion is commanded");
 
     auto motion = via_point_motion(m_joint_trajectory, positions, m_robot.joint_positions(), m_robot.limits());
     if(!motion)
@@ -304,10 +330,7 @@ void robot_controller::preview_trajectory(std::span<const joint_vector> position
         return;
 
     if(stands_at_every(positions, m_robot.joint_positions()))
-    {
-        spdlog::info("praxis: the arm already stands at the {} requested configurations, so no preview stands", positions.size());
-        return;
-    }
+        return report_held(positions.size(), "configuration", "no preview stands");
 
     auto motion = via_point_motion(m_joint_trajectory, positions, m_robot.joint_positions(), m_robot.limits());
     if(!motion)
@@ -322,6 +345,9 @@ void robot_controller::preview_trajectory(std::span<const transform> tool_poses)
         return;
 
     const std::vector<transform> reaching = flange_poses_from(tool_poses);
+    if(stands_at_every(reaching, m_robot))
+        return report_held(tool_poses.size(), "pose", "no preview stands");
+
     auto motion = m_task_trajectory.task_space_waypoints(m_joint_trajectory, m_motion, m_robot.solver(), reaching, m_robot.joint_positions(), m_robot.limits());
     if(!motion)
     {

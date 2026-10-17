@@ -26,8 +26,6 @@ expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> task_space_
 
 namespace praxis::manipulator {
 
-// Declaration order is frozen: a designated initializer must name members in declaration order, so
-// reordering a slot breaks every project that already composes this aggregate. Appending is safe.
 // Only the via-point factory is here: its coefficients are solved once and sampled many times. A
 // point-to-point motion is a path composed with a time scaling and needs no prepared object. The
 // kinematic limits enter at construction, since the duration is derived from them.
