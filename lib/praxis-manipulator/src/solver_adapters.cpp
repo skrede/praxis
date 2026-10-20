@@ -1,6 +1,6 @@
 #include "praxis/manipulator/solver_adapters.h"
 
-#include "baseline/chain_maps.h"
+#include "iterated_solve.h"
 
 #include "praxis/optimization/problem.h"
 
@@ -16,7 +16,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <numbers>
-#include <utility>
 #include <optional>
 #include <algorithm>
 
@@ -42,23 +41,13 @@ expected<transform, refusal> reached(const arm_residual &arm, const joint_vector
     return arm.forward.forward_kinematics(arm.screw, arm.chain.home, arm.chain.space_screws, theta);
 }
 
-// V_b = log(T_sb^-1 T_sd), angular half first.
-expected<twist, refusal> body_twist(const arm_residual &arm, const transform &tsb)
-{
-    const expected<std::pair<screw_axis, double>, refusal> logarithm = arm.screw.matrix_logarithm_se3(transform(arm.frames.inverse(tsb) * arm.desired));
-    if(!logarithm)
-        return unexpected(logarithm.error());
-
-    return twist(logarithm->first * logarithm->second);
-}
-
 expected<twist, refusal> body_frame_error(const arm_residual &arm, const joint_vector &theta)
 {
     const expected<transform, refusal> tsb = reached(arm, theta);
     if(!tsb)
         return unexpected(tsb.error());
 
-    return body_twist(arm, *tsb);
+    return body_twist(arm.screw, arm.frames, *tsb, arm.desired);
 }
 
 // V_s = [Ad_T_sb] V_b.
@@ -67,7 +56,7 @@ expected<twist, refusal> space_frame_error(const arm_residual &arm, const joint_
     const expected<transform, refusal> tsb = reached(arm, theta);
     if(!tsb)
         return unexpected(tsb.error());
-    const expected<twist, refusal> vb = body_twist(arm, *tsb);
+    const expected<twist, refusal> vb = body_twist(arm.screw, arm.frames, *tsb, arm.desired);
     if(!vb)
         return vb;
     const expected<adjoint, refusal> ad = arm.screw.adjoint_matrix_from_transform(*tsb);
@@ -164,18 +153,6 @@ void mapped(const optimization::problem &p, const std::vector<Eigen::VectorXd> &
     }
 }
 
-std::optional<refusal> refused_at_entry(const arm_residual &arm, const joint_vector &j0)
-{
-    if(j0.size() != static_cast<Eigen::Index>(arm.chain.joint_count()))
-        return refusal::unsupported_input;
-    if(!is_admitted(arm.chain) || !is_a_rigid_motion(arm.frames, arm.desired))
-        return refusal::degenerate;
-    if(!j0.allFinite())
-        return refusal::no_solution;
-
-    return std::nullopt;
-}
-
 // A solve that did not converge is no_solution at the slot; one that could not be run passes as it came.
 refusal answered(const optimization::solver_ops &solver, refusal refused)
 {
@@ -198,7 +175,7 @@ bool converged_at(const optimization::problem &p, const Eigen::VectorXd &root, E
 expected<void, refusal> solved(const std::shared_ptr<const arm_residual> &arm, residual_map error, columns_map columns, const optimization::solver_ops &solver, const joint_vector &j0,
                                const solver_parameters &parameters, ik_result &answer)
 {
-    if(const std::optional<refusal> refused = refused_at_entry(*arm, j0))
+    if(const std::optional<refusal> refused = refused_at_entry(arm->frames, arm->chain, arm->desired, j0))
         return unexpected(*refused);
 
     const optimization::problem p = residual_problem(arm, error, columns, parameters);

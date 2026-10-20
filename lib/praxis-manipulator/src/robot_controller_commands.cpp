@@ -5,6 +5,7 @@
 #include "fatality.h"
 #include "trajectory_preview.h"
 #include "trajectory_executor.h"
+#include "path_comparison_paths.h"
 
 #include "praxis/evaluation/tolerance.h"
 
@@ -623,17 +624,7 @@ void robot_controller::run_along(const transform &tool_pose, task_space_path sha
 
 expected<std::vector<transform>, refusal> robot_controller::flange_poses_from(std::span<const transform> tool_poses) const
 {
-    std::vector<transform> reaching;
-    reaching.reserve(tool_poses.size());
-    for(const transform &pose : tool_poses)
-    {
-        const expected<transform, refusal> converted = m_robot.flange_pose_from_tool_pose(pose);
-        if(!converted)
-            return unexpected(converted.error());
-        reaching.push_back(*converted);
-    }
-
-    return reaching;
+    return each_converted(tool_poses, [this](const transform &pose) { return m_robot.flange_pose_from_tool_pose(pose); });
 }
 
 }

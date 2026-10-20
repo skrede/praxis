@@ -46,7 +46,7 @@ void play_poses(const std::weak_ptr<owned_arm> &arm, const joint_vector &first, 
             {
                 const expected<std::vector<transform>, refusal> standing = tool_poses_of(driven, poses);
                 if(!standing)
-                    return control.report_refusal("robot.tool_pose_from_flange_pose", standing.error());
+                    return control.report_refusal(tool_converting_slot, standing.error());
 
                 driven.set_joint_positions(first);
                 control.task_space_trajectory(std::span<const transform>(*standing));

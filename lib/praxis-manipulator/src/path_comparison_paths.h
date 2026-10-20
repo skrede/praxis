@@ -10,9 +10,13 @@
 
 #include "praxis/compat/expected.h"
 
+#include <span>
 #include <vector>
+#include <string_view>
 
 namespace praxis::manipulator {
+
+constexpr std::string_view tool_converting_slot = "robot.tool_pose_from_flange_pose";
 
 // The configurations the joint-space shape passes through, at the shared count and the shared path
 // parameters, or the refusal the shape answered, so a caller runs what it was given rather than a
@@ -21,7 +25,7 @@ expected<std::vector<joint_vector>, refusal> configurations_along(const trajecto
 
 // Every pose carried through `convert`, or the first refusal it answered.
 template<typename Convert>
-expected<std::vector<transform>, refusal> each_converted(const std::vector<transform> &poses, Convert convert)
+expected<std::vector<transform>, refusal> each_converted(std::span<const transform> poses, Convert convert)
 {
     std::vector<transform> converted;
     converted.reserve(poses.size());

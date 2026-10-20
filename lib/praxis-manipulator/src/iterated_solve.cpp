@@ -32,29 +32,13 @@ void record(ik_result &answer, const joint_vector &theta, const twist &error, do
     answer.iterations.push_back(iteration_state{theta, error.head<3>().norm(), error.tail<3>().norm(), step, static_cast<std::uint32_t>(answer.iterations.size())});
 }
 
-// The angular half of V_b leads.
 expected<twist, refusal> body_error(const handed &ops, const joint_vector &theta)
 {
     const expected<transform, refusal> tsb = ops.forward.body_forward_kinematics(ops.screw, ops.frames, ops.chain.home, ops.chain.space_screws, theta);
     if(!tsb)
         return unexpected(tsb.error());
-    const expected<std::pair<screw_axis, double>, refusal> logarithm = ops.screw.matrix_logarithm_se3(transform(ops.frames.inverse(*tsb) * ops.desired));
-    if(!logarithm)
-        return unexpected(logarithm.error());
 
-    return twist(logarithm->first * logarithm->second);
-}
-
-std::optional<refusal> refused_at_entry(const handed &ops, const joint_vector &j0)
-{
-    if(j0.size() != static_cast<Eigen::Index>(ops.chain.joint_count()))
-        return refusal::unsupported_input;
-    if(!is_admitted(ops.chain) || !is_a_rigid_motion(ops.frames, ops.desired))
-        return refusal::degenerate;
-    if(!j0.allFinite())
-        return refusal::no_solution;
-
-    return std::nullopt;
+    return body_twist(ops.screw, ops.frames, *tsb, ops.desired);
 }
 
 // The stop test runs before each step and once after the last; the step is eq. (6.6) in the body frame.
@@ -84,12 +68,33 @@ expected<joint_vector, refusal> stepped(const handed &ops, const joint_vector &j
 
 }
 
+expected<twist, refusal> body_twist(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &tsb, const transform &desired)
+{
+    const expected<std::pair<screw_axis, double>, refusal> logarithm = screw.matrix_logarithm_se3(transform(frames.inverse(tsb) * desired));
+    if(!logarithm)
+        return unexpected(logarithm.error());
+
+    return twist(logarithm->first * logarithm->second);
+}
+
+std::optional<refusal> refused_at_entry(const rigid_motion::frame_ops &frames, const screw_chain &chain, const transform &desired, const joint_vector &j0)
+{
+    if(j0.size() != static_cast<Eigen::Index>(chain.joint_count()))
+        return refusal::unsupported_input;
+    if(!is_admitted(chain) || !is_a_rigid_motion(frames, desired))
+        return refusal::degenerate;
+    if(!j0.allFinite())
+        return refusal::no_solution;
+
+    return std::nullopt;
+}
+
 expected<void, refusal> iterated(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward,
                                  const differential_kinematics_ops &differential, const screw_chain &chain, const transform &desired, const joint_vector &j0,
                                  const solver_parameters &parameters, ik_result &answer)
 {
     const handed ops{screw, frames, forward, differential, chain, desired};
-    if(const std::optional<refusal> refused = refused_at_entry(ops, j0))
+    if(const std::optional<refusal> refused = refused_at_entry(frames, chain, desired, j0))
         return unexpected(*refused);
 
     const expected<joint_vector, refusal> converged = stepped(ops, j0, parameters, answer);

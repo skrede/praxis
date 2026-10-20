@@ -34,8 +34,6 @@ bool unchanged(const Eigen::VectorXf &one, const Eigen::VectorXf &other)
     return one.size() == other.size() && one == other;
 }
 
-constexpr std::string_view converting_slot = "robot.tool_pose_from_flange_pose";
-
 // The forward map answers flange poses and all four polylines are drawn at the tool center point.
 expected<std::vector<transform>, refusal> at_the_tool(const robot_ops &robot, const transform &tool_offset, const std::vector<transform> &flange_poses)
 {
@@ -95,7 +93,7 @@ void path_comparison_window::draw_path(compared_path shape)
 
             return;
         }
-        run = praxis::unexpected(refused_slot{converting_slot, standing.error()});
+        run = praxis::unexpected(refused_slot{tool_converting_slot, standing.error()});
     }
 
     m_drawn.clear_pose_path(drawn_names[at]);
