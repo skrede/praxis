@@ -7,25 +7,32 @@
 
 #include "praxis/scheduler/ownership.h"
 
+#include <Eigen/Core>
+
+#include <span>
 #include <memory>
 #include <string>
 #include <vector>
+#include <cstddef>
 #include <cstdint>
 #include <utility>
+#include <concepts>
 
 namespace praxis::optimization {
 
+// `step` is the step k selected, from x_k to x_(k+1).
 struct scenario_settings
 {
     std::string selected;
     interval range;
     double seed;
     std::uint32_t limit;
-    double tolerance;
+    std::uint32_t step;
 };
 
 // The registered functions and the bound solver are called here and only here, on the strand that
-// owns this state, so a function or a solve that is slow or never returns stalls no frame.
+// owns this state, so a function or a solve that is slow or never returns stalls no frame. A request
+// naming a seed or a range the function cannot take is logged and changes nothing.
 class scenario_state
 {
 public:
@@ -40,17 +47,36 @@ public:
     }
 
     void run();
+    void run(const Eigen::VectorXd &seed, std::uint32_t limit);
+
+    // Solves again from `seed` with one step more than the shown run took from it, or with one step
+    // from a seed it did not start at, never past the iteration limit; the newest step is selected.
+    void step_once(const Eigen::VectorXd &seed);
+
+    // Held to the steps the shown run took, and published without solving again.
+    void select_step(std::uint32_t step);
+
+    // Taken by the next run; nothing is solved again.
+    void set_limit(std::uint32_t limit);
+
+    void select(std::size_t index);
+    void set_range(std::span<const interval> ranges);
 
 private:
     capabilities m_solving;
     scenario_settings m_settings;
     std::vector<registered_curve> m_curves;
     std::shared_ptr<scenario_publisher> m_published;
+    std::shared_ptr<const scenario_snapshot> m_shown;
+
+    void solve(std::uint32_t steps, std::uint32_t selecting);
+    bool takes(const Eigen::VectorXd &seed) const;
 };
 
 using owned_scenario = scheduler::strand_owned<scenario_state>;
 
 // An expired observer means the preset is gone, so the command is not sent and nothing is reported.
+// An operation taking the state is a request made of it; one taking the settings edits them and runs.
 template<typename operation>
 void command(const std::weak_ptr<owned_scenario> &scenario, operation work)
 {
@@ -58,7 +84,14 @@ void command(const std::weak_ptr<owned_scenario> &scenario, operation work)
     if(gated == nullptr)
         return;
 
-    static_cast<void>(gated->with([work = std::move(work)](scenario_state &state) mutable { state.mutate(std::move(work)); }));
+    static_cast<void>(gated->with(
+            [work = std::move(work)](scenario_state &state) mutable
+            {
+                if constexpr(std::invocable<operation &, scenario_state &>)
+                    work(state);
+                else
+                    state.mutate(std::move(work));
+            }));
 }
 
 }

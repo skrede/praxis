@@ -81,10 +81,15 @@ struct drawn
     int after;
 };
 
-int vertices_of(scene::imgui_window &window)
+int vertices_of(const std::vector<std::shared_ptr<scene::imgui_window>> &windows)
 {
     tests::imgui_frame frames;
-    frames.draw([&window] { window.render(); });
+    frames.draw(
+            [&windows]
+            {
+                for(const std::shared_ptr<scene::imgui_window> &window : windows)
+                    window->render();
+            });
 
     return frames.vertices();
 }
@@ -104,9 +109,9 @@ drawn composed_and_drawn(scene::preset_registry &registry, const std::string &na
     for(const std::shared_ptr<scene::imgui_window> &window : composed->windows)
         seen.windows.push_back(window->display_name());
     REQUIRE_FALSE(composed->windows.empty());
-    seen.before = vertices_of(*composed->windows.front());
+    seen.before = vertices_of(composed->windows);
     REQUIRE(loop.drain().has_value());
-    seen.after = vertices_of(*composed->windows.front());
+    seen.after = vertices_of(composed->windows);
 
     composed->tear_down();
     REQUIRE(loop.retire_strand(composed->work, std::move(composed->release_cb)).has_value());
@@ -151,7 +156,7 @@ TEST_CASE("every shipped optimization preset composes over the demonstration's f
     {
         INFO(named);
         const drawn seen = composed_and_drawn(*shipped.registry, named);
-        CHECK(seen.windows == std::vector<std::string>{"Graph"});
+        CHECK(seen.windows == std::vector<std::string>{"Function", "Graph", "Solve"});
         CHECK(seen.after > seen.before);
     }
 }

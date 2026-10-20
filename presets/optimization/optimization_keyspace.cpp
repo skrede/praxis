@@ -30,6 +30,7 @@ constexpr const char *x_lower_key       = "range/x_lower";
 constexpr const char *x_upper_key       = "range/x_upper";
 constexpr const char *seed_x_key        = "seed/x";
 constexpr const char *limit_key         = "solve/limit";
+constexpr const char *step_key          = "solve/step";
 
 void declare_preset(config::declaration &shape)
 {
@@ -45,23 +46,21 @@ void declare_preset(config::declaration &shape)
 void declare_solve(config::declaration &shape)
 {
     shape.group("range");
-    shape.field(x_lower_key, config::field_kind::real, "-4");
-    shape.field(x_upper_key, config::field_kind::real, "4");
+    shape.field(x_lower_key, config::field_kind::real, "-3");
+    shape.field(x_upper_key, config::field_kind::real, "3");
     shape.field("range/y_lower", config::field_kind::real, "-4");
     shape.field("range/y_upper", config::field_kind::real, "4");
     shape.group("seed");
-    shape.field(seed_x_key, config::field_kind::real, "1");
+    shape.field(seed_x_key, config::field_kind::real, "0.75");
     shape.field("seed/y", config::field_kind::real, "1");
     shape.group("solve");
-    shape.field(limit_key, config::field_kind::integer, "70");
-    shape.field("solve/step", config::field_kind::integer, "0");
+    shape.field(limit_key, config::field_kind::integer, "200");
+    shape.field(step_key, config::field_kind::integer, "0");
 }
 
 std::string selected_name(const config::document &values)
 {
-    const expected<std::string, config::error> read = values.text(function_name_key);
-
-    return read ? read.value() : std::string();
+    return values.text(function_name_key).value_or(std::string());
 }
 
 double real_at(const config::document &values, const char *key)
@@ -94,11 +93,11 @@ config::binding optimization_binding(const std::filesystem::path &named, const s
     return config::binding{optimization_keyspace(), config::resolve(named, beside), config::expectation::partial};
 }
 
-optimization::scenario_settings keys::curve_settings(const config::document &values, double tolerance)
+optimization::scenario_settings keys::curve_settings(const config::document &values)
 {
     const optimization::interval range{real_at(values, x_lower_key), real_at(values, x_upper_key)};
 
-    return optimization::scenario_settings{selected_name(values), range, real_at(values, seed_x_key), count_at(values, limit_key), tolerance};
+    return optimization::scenario_settings{selected_name(values), range, real_at(values, seed_x_key), count_at(values, limit_key), count_at(values, step_key)};
 }
 
 }

@@ -136,15 +136,15 @@ TEST_CASE("a curve document opens the curve scenario and its run is published", 
 
     REQUIRE(taken.named == std::vector<std::string>{"Root finding: a cubic"});
     REQUIRE(taken.composed);
-    CHECK(taken.windows == std::vector<std::string>{"Graph"});
+    CHECK(taken.windows == std::vector<std::string>{"Function", "Graph", "Solve"});
 
     const std::vector<double> &sloped = taken.seen->sloped;
     REQUIRE(sloped.size() >= 3u);
-    CHECK(sloped[0] == 3.0);
-    CHECK(sloped[1] == newton_step(3.0));
-    CHECK(std::abs(cubic(sloped.back())) < 1.0e-9);
-    CHECK(*std::ranges::min_element(taken.seen->valued) == -4.0);
-    CHECK(taken.seen->valued.back() == 4.0);
+    CHECK(sloped[0] == -2.25);
+    CHECK(sloped[1] == newton_step(-2.25));
+    CHECK(std::abs(cubic(sloped.back())) < 1.0e-12);
+    CHECK(std::ranges::find(taken.seen->valued, -3.0) != taken.seen->valued.end());
+    CHECK(taken.seen->valued.back() == 3.0);
 }
 
 TEST_CASE("the document's seed, range and iteration limit are the run's", "[presets][optimization]")
@@ -167,10 +167,10 @@ TEST_CASE("a document that leaves the range, seed and limit out opens at the key
 
     REQUIRE(taken.composed);
     REQUIRE_FALSE(taken.seen->sloped.empty());
-    CHECK(taken.seen->sloped.front() == 1.0);
-    CHECK(std::ranges::find(taken.seen->valued, -4.0) != taken.seen->valued.end());
-    CHECK(taken.seen->valued.back() == 4.0);
-    CHECK(std::abs(cubic(taken.seen->sloped.back())) < 1.0e-9);
+    CHECK(taken.seen->sloped.front() == 0.75);
+    CHECK(std::ranges::find(taken.seen->valued, -3.0) != taken.seen->valued.end());
+    CHECK(taken.seen->valued.back() == 3.0);
+    CHECK(std::abs(cubic(taken.seen->sloped.back())) < 1.0e-12);
 }
 
 TEST_CASE("a document selecting a function the registration does not carry composes nothing", "[presets][optimization]")

@@ -12,7 +12,7 @@ inline constexpr const char *preset_scenario = "preset/scenario";
 
 // The selected function, its range, the seed and the limit as the document carries them, each one
 // the document leaves out at the keyspace's fallback.
-optimization::scenario_settings curve_settings(const config::document &values, double tolerance);
+optimization::scenario_settings curve_settings(const config::document &values);
 
 }
 

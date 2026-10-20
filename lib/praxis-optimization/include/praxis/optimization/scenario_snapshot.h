@@ -36,9 +36,13 @@ struct scenario_run
 };
 
 // The selected function sampled evenly over the range, ends included; a sample the function did not
-// answer finitely is NaN, which breaks the drawn line there.
+// answer finitely is NaN, which breaks the drawn line there. `step` is the step k selected, from x_k
+// to x_(k+1), and `stepped` says the run was stopped by stepping once short of the iteration limit,
+// so a refusal it carries says only that its steps ran out.
 struct scenario_snapshot
 {
+    bool stepped;
+    std::uint32_t step;
     std::size_t selected;
     interval range;
     std::vector<double> abscissa;

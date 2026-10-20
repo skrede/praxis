@@ -8,7 +8,9 @@
 #include "praxis/optimization/registered.h"
 #include "praxis/optimization/curve_graph.h"
 #include "praxis/optimization/capabilities.h"
+#include "praxis/optimization/solve_window.h"
 #include "praxis/optimization/scenario_state.h"
+#include "praxis/optimization/function_window.h"
 #include "praxis/optimization/compose_scenario.h"
 #include "praxis/optimization/scenario_snapshot.h"
 

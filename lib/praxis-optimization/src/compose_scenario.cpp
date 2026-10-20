@@ -74,7 +74,7 @@ std::shared_ptr<scene::preset> compose_curve_scenario(const scene::preset_site &
     if(!owned->with([](scenario_state &state) { state.run(); }))
         return refused("its work strand admits no run");
 
-    const scenario_window_inputs built{published->reader(), 1u, registered, owned};
+    const scenario_window_inputs built{published->reader(), 1u, opened, registered, owned};
     std::vector<std::shared_ptr<scene::imgui_window>> windows = composed.windows ? composed.windows(built) : std::vector<std::shared_ptr<scene::imgui_window>>{};
 
     auto preset        = std::make_shared<scene::preset>(std::make_shared<empty_stencil>(), std::move(windows), site.add_window, site.remove_window);

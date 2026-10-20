@@ -6,6 +6,8 @@
 #include "praxis/optimization/registered.h"
 #include "praxis/optimization/curve_graph.h"
 #include "praxis/optimization/capabilities.h"
+#include "praxis/optimization/solve_window.h"
+#include "praxis/optimization/function_window.h"
 #include "praxis/optimization/compose_scenario.h"
 
 #include "praxis/scene/preset.h"
@@ -40,18 +42,16 @@ namespace {
 // relies on.
 constexpr std::array<const char *, 1> scenario_spellings{"curve"};
 
-// The residual |g(x)| a curve's solve stops below.
-constexpr double curve_tolerance = 1.0e-10;
-
 std::vector<std::shared_ptr<scene::imgui_window>> curve_windows(const optimization::scenario_window_inputs &inputs)
 {
-    return {optimization::curve_graph(inputs, "Graph")};
+    return {std::make_shared<optimization::function_window>("Function", inputs), optimization::curve_graph(inputs, "Graph"),
+            std::make_shared<optimization::solve_window>("Solve", inputs)};
 }
 
 optimization_composer curve_composer(const optimization::capabilities &solving, std::vector<optimization::registered_curve> curves)
 {
     return [solving, curves = std::move(curves)](const scene::preset_site &site, const config::document &carried)
-    { return optimization::compose_curve_scenario(site, curves, solving, keys::curve_settings(carried, curve_tolerance), optimization::scenario_composition{&curve_windows}); };
+    { return optimization::compose_curve_scenario(site, curves, solving, keys::curve_settings(carried), optimization::scenario_composition{&curve_windows}); };
 }
 
 using composer_factory = optimization_composer (*)(const optimization::capabilities &, std::vector<optimization::registered_curve>);

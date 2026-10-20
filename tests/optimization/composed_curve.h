@@ -46,7 +46,7 @@ inline registered_curve cubic()
 
 inline scenario_settings opening(std::string selected = "cubic")
 {
-    return scenario_settings{std::move(selected), interval{-4.0, 4.0}, 3.0, 70u, 1.0e-10};
+    return scenario_settings{std::move(selected), interval{-4.0, 4.0}, 3.0, 70u, 0u};
 }
 
 // A scene is created headlessly and the scheduler services every strand inline, so a drain runs
@@ -77,21 +77,33 @@ struct opened
 
 // The composer keeps what it was offered, so a case reads the publication whether or not it composed
 // a window.
-inline opened open_with(const scene::preset_site &site, std::vector<registered_curve> curves, const capabilities &solving, const scenario_settings &settings, bool graphed = true)
+inline opened open_composing(const scene::preset_site &site, std::vector<registered_curve> curves, const capabilities &solving, const scenario_settings &settings,
+                             const scenario_window_composer &windows)
 {
     opened taken;
-    const scenario_window_composer graphing = [&taken, graphed](const scenario_window_inputs &offered)
+    const scenario_window_composer kept = [&taken, &windows](const scenario_window_inputs &offered)
     {
         taken.inputs = offered;
+
+        return windows(offered);
+    };
+
+    taken.composed = compose_curve_scenario(site, std::move(curves), solving, settings, scenario_composition{kept});
+
+    return taken;
+}
+
+inline opened open_with(const scene::preset_site &site, std::vector<registered_curve> curves, const capabilities &solving, const scenario_settings &settings, bool graphed = true)
+{
+    const scenario_window_composer graphing = [graphed](const scenario_window_inputs &offered)
+    {
         if(!graphed)
             return std::vector<std::shared_ptr<scene::imgui_window>>{};
 
         return std::vector<std::shared_ptr<scene::imgui_window>>{curve_graph(offered, "Graph")};
     };
 
-    taken.composed = compose_curve_scenario(site, std::move(curves), solving, settings, scenario_composition{graphing});
-
-    return taken;
+    return open_composing(site, std::move(curves), solving, settings, graphing);
 }
 
 inline std::shared_ptr<const scenario_snapshot> settled(scheduler::scheduler &loop, const opened &taken)

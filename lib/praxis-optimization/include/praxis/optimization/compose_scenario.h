@@ -20,11 +20,13 @@ namespace praxis::optimization {
 
 // What a window of one composed scenario is built from. It carries no function and no solver, so a
 // window has nothing it could evaluate or solve on the render strand: it reads the publication and
-// asks for a run through the gate.
+// asks for a run through the gate. `opened` is what the composition opened at, which a window holding
+// settings of its own starts from.
 struct scenario_window_inputs
 {
     scenario_reader seen;
     std::size_t dimension;
+    scenario_settings opened;
     std::vector<std::string> registered;
     std::weak_ptr<owned_scenario> scenario;
 };
