@@ -58,6 +58,11 @@ double relative_difference(const Eigen::MatrixXd &given, const Eigen::MatrixXd &
 
 }
 
+std::uint32_t steps_taken(const scenario_run &ran)
+{
+    return static_cast<std::uint32_t>(ran.iterates.size() - 1u);
+}
+
 double evenly(const interval &range, std::size_t at, std::size_t count)
 {
     if(at + 1 == count)

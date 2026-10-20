@@ -9,6 +9,7 @@ praxis_add_module(optimization
     include/praxis/optimization/curve_graph.h
     include/praxis/optimization/capabilities.h
     include/praxis/optimization/solve_window.h
+    include/praxis/optimization/settings_keys.h
     include/praxis/optimization/scenario_state.h
     include/praxis/optimization/surface_stencil.h
     include/praxis/optimization/surface_graph_window.h

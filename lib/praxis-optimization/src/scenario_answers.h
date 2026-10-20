@@ -16,6 +16,11 @@
 
 namespace praxis::optimization {
 
+// What a window shows before the first publication.
+inline constexpr const char *nothing_published = "The function has not been evaluated yet.";
+
+std::uint32_t steps_taken(const scenario_run &ran);
+
 // The point `at` of `count` evenly spaced over the range, its ends exactly the range's.
 double evenly(const interval &range, std::size_t at, std::size_t count);
 

@@ -1,3 +1,5 @@
+#include "scenario_answers.h"
+
 #include "praxis/optimization/curve_graph.h"
 
 #include <Eigen/Core>
@@ -19,8 +21,6 @@ namespace {
 
 constexpr const char *abscissa_axis = "x";
 constexpr const char *ordinate_axis = "g(x)";
-
-constexpr const char *nothing_published = "The function has not been evaluated yet.";
 
 constexpr double unanswered = std::numeric_limits<double>::quiet_NaN();
 

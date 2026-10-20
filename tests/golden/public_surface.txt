@@ -2268,6 +2268,14 @@ lib/praxis-optimization/include/praxis/optimization/scenario_state.h	admits	prot
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	owned_scenario	typedef	-	typename:scheduler::strand_owned<scenario_state>
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	command	function	(const std::weak_ptr<owned_scenario> & scenario,operation work)	typename:void
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	__anon02515bbe0102	function	(scenario_state &state) 	-
+lib/praxis-optimization/include/praxis/optimization/settings_keys.h	optimization	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/settings_keys.h	praxis	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/settings_keys.h	function_name_key	variable	-	typename:const char *
+lib/praxis-optimization/include/praxis/optimization/settings_keys.h	limit_key	variable	-	typename:const char *
+lib/praxis-optimization/include/praxis/optimization/settings_keys.h	step_key	variable	-	typename:const char *
+lib/praxis-optimization/include/praxis/optimization/settings_keys.h	range_lower_keys	variable	-	typename:std::array<const char *,2>
+lib/praxis-optimization/include/praxis/optimization/settings_keys.h	range_upper_keys	variable	-	typename:std::array<const char *,2>
+lib/praxis-optimization/include/praxis/optimization/settings_keys.h	seed_keys	variable	-	typename:std::array<const char *,2>
 lib/praxis-optimization/include/praxis/optimization/slots.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/slots.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/slots.h	solver_slot	enum	-	typename:std::uint32_t

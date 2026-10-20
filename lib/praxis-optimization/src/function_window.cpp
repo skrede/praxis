@@ -1,3 +1,4 @@
+#include "praxis/optimization/settings_keys.h"
 #include "praxis/optimization/function_window.h"
 
 #include "praxis/scene/widgets.h"
@@ -22,10 +23,7 @@ constexpr std::array<const char *, 1> source_labels{"Registered"};
 
 constexpr std::array<const char *, 2> lower_labels{"x min", "y min"};
 constexpr std::array<const char *, 2> upper_labels{"x max", "y max"};
-constexpr std::array<const char *, 2> lower_keys{"range/x_lower", "range/y_lower"};
-constexpr std::array<const char *, 2> upper_keys{"range/x_upper", "range/y_upper"};
 
-constexpr const char *function_key    = "function/name";
 constexpr const char *unaskable_range = "The minimum and the maximum must be finite, and the minimum must lie below the maximum.";
 
 std::size_t position_of(const std::vector<std::string> &names, const std::string &named)
@@ -62,11 +60,11 @@ std::vector<config::edit> function_window::settings_edits(const config::document
 {
     std::vector<config::edit> edits;
     if(m_selected < m_registered.size())
-        edits.emplace_back(function_key, m_registered[m_selected]);
+        edits.emplace_back(function_name_key, m_registered[m_selected]);
     for(std::size_t at = 0; at < m_posted.size(); ++at)
     {
-        edits.emplace_back(lower_keys.at(at), config::exact_text(m_posted[at].lower));
-        edits.emplace_back(upper_keys.at(at), config::exact_text(m_posted[at].upper));
+        edits.emplace_back(range_lower_keys.at(at), config::exact_text(m_posted[at].lower));
+        edits.emplace_back(range_upper_keys.at(at), config::exact_text(m_posted[at].upper));
     }
 
     return config::unsaved_edits(carried, edits);

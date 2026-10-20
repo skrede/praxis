@@ -1,4 +1,7 @@
+#include "scenario_answers.h"
+
 #include "praxis/optimization/solve_window.h"
+#include "praxis/optimization/settings_keys.h"
 
 #include "praxis/extension/refusal.h"
 
@@ -19,12 +22,6 @@ namespace praxis::optimization {
 namespace {
 
 constexpr std::array<const char *, 2> seed_labels{"Seed x", "Seed y"};
-constexpr std::array<const char *, 2> seed_keys{"seed/x", "seed/y"};
-
-constexpr const char *limit_key = "solve/limit";
-constexpr const char *step_key  = "solve/step";
-
-constexpr const char *nothing_published = "The function has not been evaluated yet.";
 
 constexpr std::initializer_list<const char *> columns{"k", "x_k", "e_k"};
 
@@ -60,11 +57,6 @@ void render_row(const iterate_row &shown)
     ImGui::TextUnformatted(shown.e.c_str());
 }
 
-std::uint32_t steps_of(const scenario_run &run)
-{
-    return static_cast<std::uint32_t>(run.iterates.size() - 1u);
-}
-
 }
 
 std::vector<iterate_row> iterate_rows(const scenario_run &run)
@@ -78,7 +70,7 @@ std::vector<iterate_row> iterate_rows(const scenario_run &run)
 
 std::string run_status(const scenario_snapshot &shown)
 {
-    const std::uint32_t taken = steps_of(shown.run);
+    const std::uint32_t taken = steps_taken(shown.run);
     if(!shown.run.refused)
         return std::format("Converged. Steps taken: {}.", taken);
     if(shown.run.answer)
@@ -158,7 +150,7 @@ void solve_window::render_run(const std::shared_ptr<const scenario_snapshot> &sh
 
 void solve_window::render_slider(const scenario_run &run)
 {
-    const std::uint32_t taken = steps_of(run);
+    const std::uint32_t taken = steps_taken(run);
     if(taken == 0u)
         return;
 

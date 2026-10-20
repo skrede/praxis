@@ -21,11 +21,6 @@ namespace praxis::optimization {
 
 namespace {
 
-std::uint32_t steps_taken(const scenario_run &ran)
-{
-    return static_cast<std::uint32_t>(ran.iterates.size() - 1u);
-}
-
 std::uint32_t held_to(std::uint32_t step, const scenario_run &ran)
 {
     const std::uint32_t taken = steps_taken(ran);

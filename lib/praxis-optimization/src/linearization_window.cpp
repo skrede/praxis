@@ -1,3 +1,5 @@
+#include "scenario_answers.h"
+
 #include "praxis/optimization/linearization_window.h"
 
 #include "praxis/extension/refusal.h"
@@ -19,8 +21,6 @@
 namespace praxis::optimization {
 
 namespace {
-
-constexpr const char *nothing_published = "The function has not been evaluated yet.";
 
 constexpr std::array<const char *, 2> point_labels{"Point x", "Point y"};
 constexpr std::array<const char *, 2> slider_labels{"##along the range of x", "##along the range of y"};
