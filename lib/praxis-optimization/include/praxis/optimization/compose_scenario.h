@@ -2,9 +2,9 @@
 #define HPP_GUARD_PRAXIS_OPTIMIZATION_COMPOSE_SCENARIO_H
 
 #include "praxis/optimization/registered.h"
-#include "praxis/optimization/surface_stencil.h"
 #include "praxis/optimization/capabilities.h"
 #include "praxis/optimization/scenario_state.h"
+#include "praxis/optimization/surface_stencil.h"
 #include "praxis/optimization/scenario_snapshot.h"
 
 #include "praxis/scene/preset.h"

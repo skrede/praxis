@@ -9,8 +9,8 @@
 #include "praxis/optimization/solve_window.h"
 #include "praxis/optimization/function_window.h"
 #include "praxis/optimization/compose_scenario.h"
-#include "praxis/optimization/surface_graph_window.h"
 #include "praxis/optimization/linearization_window.h"
+#include "praxis/optimization/surface_graph_window.h"
 
 #include "praxis/scene/preset.h"
 #include "praxis/scene/preset_site.h"
@@ -117,7 +117,7 @@ std::nullopt_t not_offered(const config::location &at, const std::string &why)
     return std::nullopt;
 }
 
-// The registry assigns into a map, so a second registration under one name would replace the first.
+// The registry replaces the factory already registered under a name, so a name already carried is left out here rather than replacing it.
 std::optional<std::string> offered_name(scene::preset_registry &registry, const config::location &at, const config::outcome &read)
 {
     if(read.failure)

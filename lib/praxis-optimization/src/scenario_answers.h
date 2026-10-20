@@ -1,10 +1,9 @@
 #ifndef HPP_GUARD_PRAXIS_OPTIMIZATION_SCENARIO_ANSWERS_H
 #define HPP_GUARD_PRAXIS_OPTIMIZATION_SCENARIO_ANSWERS_H
 
+#include "praxis/optimization/solver.h"
 #include "praxis/optimization/problem.h"
 #include "praxis/optimization/scenario_snapshot.h"
-
-#include "praxis/optimization/solver.h"
 
 #include <Eigen/Core>
 

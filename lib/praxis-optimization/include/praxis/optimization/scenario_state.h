@@ -17,8 +17,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <utility>
-#include <optional>
 #include <concepts>
+#include <optional>
 
 namespace praxis::optimization {
 
