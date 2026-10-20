@@ -12,6 +12,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/evaluation/generation.h"
 
 #include "praxis/compat/expected.h"
@@ -100,7 +102,8 @@ std::vector<manipulator::joint_vector> solved_by(const manipulator::capabilities
                                                  const transform &target, const manipulator::joint_vector &seed)
 {
     manipulator::ik_result answer;
-    static_cast<void>(solving.inverse_kinematics(shared_motions().screw, shared_motions().frame, held.fk, held.dk, chain, target, seed, manipulator::solver_parameters(), answer));
+    static_cast<void>(solving.inverse_kinematics(shared_motions().screw, shared_motions().frame, held.fk, held.dk, optimization::baseline().solver, chain, target, seed,
+                                                 manipulator::solver_parameters(), answer));
 
     return answer.solutions;
 }
@@ -114,7 +117,7 @@ void note_answers_apart(const manipulator::capabilities &held, const manipulator
     const transform pose                       = drawn.transform_member();
     const transform offset                     = drawn.transform_member();
     const meios::model<> machine               = manipulator::drawn_model(drawn);
-    auto composed                              = manipulator::kinematics::compose(example.chain, held.fk, held.dk, held.ik, shared_motions().screw, shared_motions().frame);
+    auto composed = manipulator::kinematics::compose(example.chain, held.fk, held.dk, held.ik, shared_motions().screw, shared_motions().frame, optimization::baseline().solver);
 
     seen[0] = seen[0] ||
             answers_apart(held.fk.forward_kinematics(shared_motions().screw, example.chain.home, example.chain.space_screws, example.joints),

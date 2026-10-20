@@ -35,6 +35,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <meios/urdf/load.h>
 
 #include <array>
@@ -184,7 +186,8 @@ manipulator::arm_composition arm_windows_velocity_kinematics(arm_scenario chosen
 // composition opens and what it draws are both the caller's, so one factory serves every scenario
 // built on an arm and none of them is named here.
 std::shared_ptr<scene::preset> arm_preset(const scene::preset_site &site, const manipulator::capabilities &arm, const trajectory::capabilities &shapes,
-                                          const rigid_motion::capabilities &motions, const arm_scenario &chosen, const manipulator::arm_composition &composed);
+                                          const rigid_motion::capabilities &motions, const optimization::capabilities &solving, const arm_scenario &chosen,
+                                          const manipulator::arm_composition &composed);
 
 }
 

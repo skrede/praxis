@@ -24,6 +24,8 @@
 #include "praxis/config/binding.h"
 #include "praxis/config/configurable.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <Eigen/Core>
@@ -1081,7 +1083,7 @@ TEST_CASE("the supplied chain and tool composition composes every window with a 
     unbound.robot.position_from_pose   = &manipulator::inert::position_from_pose;
 
     opened_arm built;
-    const std::shared_ptr<scene::preset> composed = presets::arm_preset(built.site(), unbound, trajectory::baseline(), rigid_motion::baseline(), chosen,
+    const std::shared_ptr<scene::preset> composed = presets::arm_preset(built.site(), unbound, trajectory::baseline(), rigid_motion::baseline(), optimization::baseline(), chosen,
                                                                         presets::arm_windows_modeling(chosen, presets::screw_table_source{}, presets::modeling_beside::pose_and_tool));
     REQUIRE(composed != nullptr);
     REQUIRE(composed->initialize().has_value());

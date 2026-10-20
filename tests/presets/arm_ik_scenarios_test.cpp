@@ -10,6 +10,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/scene/preset.h"
 #include "praxis/scene/preset_site.h"
 #include "praxis/scene/imgui_window.h"
@@ -52,7 +54,7 @@ manipulator::capabilities bound_except(bool solves)
 
 std::shared_ptr<scene::preset> composed_arm(const scene::preset_site &site, const presets::arm_scenario &chosen, const manipulator::arm_composition &opened, bool solves = true)
 {
-    return presets::arm_preset(site, bound_except(solves), trajectory::baseline(), rigid_motion::baseline(), chosen, opened);
+    return presets::arm_preset(site, bound_except(solves), trajectory::baseline(), rigid_motion::baseline(), optimization::baseline(), chosen, opened);
 }
 
 // Where each window of one composition keeps its settings, with the windows keeping none left out. A

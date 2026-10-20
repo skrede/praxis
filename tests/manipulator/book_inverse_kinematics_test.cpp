@@ -5,6 +5,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <set>
@@ -74,7 +76,7 @@ expected<transform, refusal> only_at_the_seed(const rigid_motion::screw_ops &scr
 kinematics composed(const literal_form &form, forward_kinematics_ops forward = manipulator::baseline().fk, double bound = 10.0)
 {
     return kinematics::compose(documented_chain(bound), forward, manipulator::baseline().dk, inverse_kinematics_ops{form.solve}, rigid_motion::baseline().screw,
-                               rigid_motion::baseline().frame)
+                               rigid_motion::baseline().frame, optimization::baseline().solver)
             .value();
 }
 

@@ -11,6 +11,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <span>
@@ -33,11 +35,11 @@ constexpr std::size_t cases_per_seed = default_cases_per_slot;
 // The form, refusing an answer at which its own error twist is not finite.
 template<std::size_t I>
 expected<void, refusal> refusing_a_non_finite_stop(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward,
-                                                   const differential_kinematics_ops &differential, const screw_chain &chain, const transform &desired, const joint_vector &j0,
-                                                   const solver_parameters &parameters, ik_result &answer)
+                                                   const differential_kinematics_ops &differential, const optimization::solver_ops &solver, const screw_chain &chain,
+                                                   const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer)
 {
     constexpr literal_form form          = literal_forms[I];
-    const expected<void, refusal> solved = form.solve(screw, frames, forward, differential, chain, desired, j0, parameters, answer);
+    const expected<void, refusal> solved = form.solve(screw, frames, forward, differential, solver, chain, desired, j0, parameters, answer);
     if(!solved || answer.solutions.empty())
         return solved;
     const expected<twist, refusal> own = error_twist<form.frame, form.source>(handed_maps{screw, forward, differential, chain}, desired, answer.solutions.front());
@@ -71,8 +73,8 @@ expected<twist, refusal> body_error(const rigid_motion::screw_ops &screw, const 
 // Lynch & Park, Modern Robotics, sec. 6.2.2, the body-frame iteration with the step of eq. (6.6) and
 // J_b asked of the differential maps it is handed.
 expected<void, refusal> body_frame_literal(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward,
-                                           const differential_kinematics_ops &differential, const screw_chain &chain, const transform &desired, const joint_vector &j0,
-                                           const solver_parameters &parameters, ik_result &answer)
+                                           const differential_kinematics_ops &differential, const optimization::solver_ops &, const screw_chain &chain, const transform &desired,
+                                           const joint_vector &j0, const solver_parameters &parameters, ik_result &answer)
 {
     joint_vector theta         = j0;
     expected<twist, refusal> v = body_error(screw, frames, forward, chain, desired, theta);
@@ -183,8 +185,10 @@ TEST_CASE("the_literal_body_frame_solve_handed_default_frame_operations_does_not
 
     ik_result composed;
     ik_result defaulted;
-    const expected<void, refusal> reached = body_frame_literal(spatial.screw, spatial.frame, maps.fk, maps.dk, chain, *target, seed, solver_parameters(), composed);
-    const expected<void, refusal> missed  = body_frame_literal(spatial.screw, rigid_motion::frame_ops{}, maps.fk, maps.dk, chain, *target, seed, solver_parameters(), defaulted);
+    const expected<void, refusal> reached =
+            body_frame_literal(spatial.screw, spatial.frame, maps.fk, maps.dk, optimization::baseline().solver, chain, *target, seed, solver_parameters(), composed);
+    const expected<void, refusal> missed =
+            body_frame_literal(spatial.screw, rigid_motion::frame_ops{}, maps.fk, maps.dk, optimization::baseline().solver, chain, *target, seed, solver_parameters(), defaulted);
 
     REQUIRE(reached);
     REQUIRE(composed.solutions.size() == 1u);

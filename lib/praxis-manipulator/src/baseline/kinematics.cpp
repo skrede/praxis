@@ -19,13 +19,14 @@ expected<joint_vector, refusal> newton_step(const body_target &, const joint_vec
 }
 
 expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &,
-                                           const screw_chain &chain, const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer)
+                                           const optimization::solver_ops &, const screw_chain &chain, const transform &desired, const joint_vector &j0,
+                                           const solver_parameters &parameters, ik_result &answer)
 {
     return iterated(chain, desired, j0, parameters, &newton_step, answer);
 }
 
 expected<kinematics, refusal> make_kinematics(const screw_chain &chain, forward_kinematics_ops forward, differential_kinematics_ops differential, inverse_kinematics_ops inverse,
-                                              const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames)
+                                              const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const optimization::solver_ops &solver)
 {
     if(!is_admitted(chain))
     {
@@ -36,7 +37,7 @@ expected<kinematics, refusal> make_kinematics(const screw_chain &chain, forward_
         return unexpected(refusal::degenerate);
     }
 
-    expected<kinematics, refusal> composed = kinematics::compose(chain, forward, differential, inverse, screw, frames);
+    expected<kinematics, refusal> composed = kinematics::compose(chain, forward, differential, inverse, screw, frames, solver);
     if(!composed)
         spdlog::error("praxis: 'manipulator.make_kinematics' was given a chain of {} joints whose limits carry {}, {}, {} and {} entries, so no solver is composed", chain.joint_count(),
                       chain.limits.velocity.size(), chain.limits.acceleration.size(), chain.limits.lower_position.size(), chain.limits.upper_position.size());

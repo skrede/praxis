@@ -3,6 +3,9 @@
 #include "praxis/manipulator/slots.h"
 #include "praxis/manipulator/kinematics.h"
 
+#include "praxis/optimization/solver.h"
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/evaluation/tolerance.h"
 
 #include "praxis/rigid_motion/capabilities.h"
@@ -29,8 +32,8 @@ transform marked_inverse(const transform &)
 transform (*handed_inverse)(const transform &) = nullptr;
 
 expected<void, refusal> frames_recording_inverse_kinematics(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &,
-                                                            const differential_kinematics_ops &, const screw_chain &, const transform &, const joint_vector &j0,
-                                                            const solver_parameters &, ik_result &answer)
+                                                            const differential_kinematics_ops &, const optimization::solver_ops &, const screw_chain &, const transform &,
+                                                            const joint_vector &j0, const solver_parameters &, ik_result &answer)
 {
     handed_inverse = frames.inverse;
     answer.solutions.emplace_back(j0);
@@ -38,6 +41,37 @@ expected<void, refusal> frames_recording_inverse_kinematics(const rigid_motion::
     return {};
 }
 
+expected<Eigen::VectorXd, refusal> marked_solve(const optimization::problem &, const Eigen::VectorXd &, std::uint32_t, std::vector<Eigen::VectorXd> &)
+{
+    return unexpected(refusal::not_implemented);
+}
+
+decltype(optimization::solver_ops::solve) handed_solve = nullptr;
+
+expected<void, refusal> solver_recording_inverse_kinematics(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const forward_kinematics_ops &,
+                                                            const differential_kinematics_ops &, const optimization::solver_ops &solver, const screw_chain &, const transform &,
+                                                            const joint_vector &j0, const solver_parameters &, ik_result &answer)
+{
+    handed_solve = solver.solve;
+    answer.solutions.emplace_back(j0);
+
+    return {};
+}
+
+}
+
+TEST_CASE("a solve is handed the solver operations its composition was composed with")
+{
+    handed_solve = nullptr;
+
+    const expected<kinematics, refusal> composed = kinematics::compose(two_joint_chain(), {}, {}, inverse_kinematics_ops{&solver_recording_inverse_kinematics},
+                                                                       rigid_motion::baseline().screw, rigid_motion::baseline().frame, optimization::solver_ops{.solve = &marked_solve});
+    REQUIRE(composed.has_value());
+
+    const expected<joint_vector, refusal> solved = composed->ik_solve(transform::Identity(), joint_vector::Constant(2, 0.25), solver_parameters());
+
+    REQUIRE(solved.has_value());
+    CHECK(handed_solve == &marked_solve);
 }
 
 TEST_CASE("a solve is handed the frame operations its composition was composed with")
@@ -46,8 +80,8 @@ TEST_CASE("a solve is handed the frame operations its composition was composed w
     frames.inverse                 = &marked_inverse;
     handed_inverse                 = nullptr;
 
-    const expected<kinematics, refusal> composed =
-            kinematics::compose(two_joint_chain(), {}, {}, inverse_kinematics_ops{&frames_recording_inverse_kinematics}, rigid_motion::baseline().screw, frames);
+    const expected<kinematics, refusal> composed = kinematics::compose(two_joint_chain(), {}, {}, inverse_kinematics_ops{&frames_recording_inverse_kinematics},
+                                                                       rigid_motion::baseline().screw, frames, optimization::baseline().solver);
     REQUIRE(composed.has_value());
 
     const expected<joint_vector, refusal> solved = composed->ik_solve(transform::Identity(), joint_vector::Constant(2, 0.25), solver_parameters());
@@ -68,8 +102,8 @@ TEST_CASE("every slot of a value-initialized composition refuses rather than ans
     const expected<jacobian, refusal> space_frame            = differential.space_jacobian(rigid_motion::screw_ops{}, {}, j0);
     const expected<jacobian, refusal> body_frame             = differential.body_jacobian(rigid_motion::screw_ops{}, rigid_motion::frame_ops{}, forward, transform::Identity(), {}, j0);
     const expected<std::vector<screw_axis>, refusal> derived = forward.body_screws_from_space(rigid_motion::screw_ops{}, rigid_motion::frame_ops{}, transform::Identity(), {});
-    const expected<void, refusal> solved = inverse.inverse_kinematics(rigid_motion::screw_ops{}, rigid_motion::frame_ops{}, forward, differential, screw_chain(), transform::Identity(),
-                                                                      j0, solver_parameters(), answer);
+    const expected<void, refusal> solved            = inverse.inverse_kinematics(rigid_motion::screw_ops{}, rigid_motion::frame_ops{}, forward, differential, optimization::solver_ops{},
+                                                                                 screw_chain(), transform::Identity(), j0, solver_parameters(), answer);
     const expected<transform, refusal> body_reached = forward.body_forward_kinematics(rigid_motion::screw_ops{}, rigid_motion::frame_ops{}, transform::Identity(), {}, j0);
 
     REQUIRE_FALSE(reached.has_value());
@@ -172,13 +206,13 @@ TEST_CASE("a chain whose limits do not carry one entry per joint is refused")
 
     for(const joint_limits &bounds : {absent_velocity, short_acceleration, long_lower, absent_upper})
     {
-        const expected<kinematics, refusal> composed =
-                kinematics::compose(screw_chain(transform::Identity(), screws, bounds), {}, {}, {}, rigid_motion::baseline().screw, rigid_motion::baseline().frame);
+        const expected<kinematics, refusal> composed = kinematics::compose(screw_chain(transform::Identity(), screws, bounds), {}, {}, {}, rigid_motion::baseline().screw,
+                                                                           rigid_motion::baseline().frame, optimization::baseline().solver);
         REQUIRE_FALSE(composed.has_value());
         CHECK(composed.error() == refusal::unsupported_input);
     }
 
-    CHECK(kinematics::compose(two_joint_chain(), {}, {}, {}, rigid_motion::baseline().screw, rigid_motion::baseline().frame).has_value());
+    CHECK(kinematics::compose(two_joint_chain(), {}, {}, {}, rigid_motion::baseline().screw, rigid_motion::baseline().frame, optimization::baseline().solver).has_value());
 }
 
 TEST_CASE("the holder names the slots it routes to and says which of them nobody bound")

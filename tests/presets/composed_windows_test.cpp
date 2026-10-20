@@ -16,6 +16,8 @@
 #include "praxis/rigid_motion/capabilities.h"
 #include "praxis/rigid_motion/frame_stencil.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/scene/preset.h"
 #include "praxis/scene/preset_site.h"
 
@@ -55,7 +57,7 @@ std::size_t composed_objects(const std::shared_ptr<scene::preset> &composed)
 // caller's.
 std::shared_ptr<scene::preset> composed_arm(const scene::preset_site &site, const presets::arm_scenario &chosen, const manipulator::arm_composition &opened)
 {
-    return presets::arm_preset(site, manipulator::baseline(), trajectory::baseline(), rigid_motion::baseline(), chosen, opened);
+    return presets::arm_preset(site, manipulator::baseline(), trajectory::baseline(), rigid_motion::baseline(), optimization::baseline(), chosen, opened);
 }
 
 // The velocity window a composition opened, found among its windows by what it is.

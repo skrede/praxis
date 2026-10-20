@@ -7,6 +7,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <span>
@@ -124,7 +126,7 @@ TEST_CASE("a solver composed against a rebound rotation extractor composes and c
     const capabilities arm                       = manipulator::baseline();
     const rigid_motion::capabilities perturbed   = only_the_rotation();
     const joint_vector at                        = posed_arm();
-    const expected<kinematics, refusal> composed = kinematics::compose(three_link_arm(), arm.fk, arm.dk, arm.ik, perturbed.screw, perturbed.frame);
+    const expected<kinematics, refusal> composed = kinematics::compose(three_link_arm(), arm.fk, arm.dk, arm.ik, perturbed.screw, perturbed.frame, optimization::baseline().solver);
 
     REQUIRE(composed.has_value());
     REQUIRE(composed->fk_solve(at).has_value());
@@ -166,7 +168,7 @@ TEST_CASE("the body form a solver answers is taken under the frame operations it
 
     const rigid_motion::capabilities perturbed   = only_the_rotation();
     const joint_vector at                        = posed_arm();
-    const expected<kinematics, refusal> composed = kinematics::compose(three_link_arm(), arm.fk, arm.dk, arm.ik, perturbed.screw, perturbed.frame);
+    const expected<kinematics, refusal> composed = kinematics::compose(three_link_arm(), arm.fk, arm.dk, arm.ik, perturbed.screw, perturbed.frame, optimization::baseline().solver);
 
     REQUIRE(composed.has_value());
     REQUIRE(composed->body_chain().has_value());

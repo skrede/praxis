@@ -20,7 +20,7 @@ target_include_directories(praxis_manipulator_presets PUBLIC $<BUILD_INTERFACE:$
 # arrive transitively.
 target_link_libraries(praxis_rigid_presets PUBLIC praxis::praxis praxis::rigid_motion praxis::config
     PRIVATE spdlog::spdlog)
-target_link_libraries(praxis_manipulator_presets PUBLIC praxis::praxis praxis::rigid_motion praxis::trajectory praxis::manipulator praxis::config
+target_link_libraries(praxis_manipulator_presets PUBLIC praxis::praxis praxis::optimization praxis::rigid_motion praxis::trajectory praxis::manipulator praxis::config
     PRIVATE spdlog::spdlog)
 
 target_sources(praxis_rigid_presets PRIVATE include/praxis/presets/screw.h include/praxis/presets/routes.h include/praxis/presets/euler_rungs.h

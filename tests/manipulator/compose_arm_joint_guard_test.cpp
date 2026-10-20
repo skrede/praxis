@@ -12,6 +12,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/scheduler/scheduler.h"
 
 #include <catch2/catch_test_macros.hpp>
@@ -80,8 +82,10 @@ scene_robot bare_holder(std::uint32_t joints)
 
     const capabilities arm = baseline();
 
-    return scene_robot::compose(kinematics::compose(std::move(chain), arm.fk, arm.dk, arm.ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame).value(), arm.robot,
-                                rigid_motion::baseline().frame, joints)
+    return scene_robot::compose(
+                   kinematics::compose(std::move(chain), arm.fk, arm.dk, arm.ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame, optimization::baseline().solver)
+                           .value(),
+                   arm.robot, rigid_motion::baseline().frame, joints)
             .value();
 }
 
@@ -139,7 +143,8 @@ opened open_named(stage &built, std::string name, const joint_vector &initial)
     };
 
     captured_log captured;
-    taken.composed  = compose_arm(elbowed_arm(std::move(name)), built.site, attachments{}, baseline(), trajectory::baseline(), rigid_motion::baseline(), initial, capturing);
+    taken.composed  = compose_arm(elbowed_arm(std::move(name)), built.site, attachments{}, baseline(), trajectory::baseline(), rigid_motion::baseline(), optimization::baseline(),
+                                  initial, capturing);
     taken.diagnosis = captured.text();
 
     return taken;

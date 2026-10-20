@@ -9,6 +9,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <span>
@@ -48,8 +50,8 @@ praxis::expected<praxis::transform, praxis::refusal> counting_forward_kinematics
 // The answer is the desired pose's own translation, so a command reaches a configuration the case
 // can name, and the one recorded step is what the published trace is compared against.
 praxis::expected<void, praxis::refusal> recording_inverse_kinematics(const praxis::rigid_motion::screw_ops &, const praxis::rigid_motion::frame_ops &, const forward_kinematics_ops &,
-                                                                     const differential_kinematics_ops &, const screw_chain &, const praxis::transform &desired, const joint_vector &j0,
-                                                                     const solver_parameters &, ik_result &answer)
+                                                                     const differential_kinematics_ops &, const praxis::optimization::solver_ops &, const screw_chain &,
+                                                                     const praxis::transform &desired, const joint_vector &j0, const solver_parameters &, ik_result &answer)
 {
     answer.iterations.push_back(iteration_state{j0, 0.5, 0.25, 0.125, 7u});
     answer.solutions.push_back(configuration(desired(0, 3), desired(1, 3)));
@@ -115,11 +117,11 @@ arm_pipe pipe(scheduler &loop, const forward_kinematics_ops &forward = counting(
               const inverse_kinematics_ops &inverse = solving())
 {
     const strand work = *loop.make_strand();
-    auto robot        = std::make_shared<scene_robot>(
-            scene_robot::compose(
-                    kinematics::compose(sliding_chain(), forward, differential, inverse, praxis::rigid_motion::baseline().screw, praxis::rigid_motion::baseline().frame).value(),
-                    praxis::manipulator::baseline().robot, praxis::rigid_motion::baseline().frame, 2u)
-                    .value());
+    auto robot        = std::make_shared<scene_robot>(scene_robot::compose(kinematics::compose(sliding_chain(), forward, differential, inverse, praxis::rigid_motion::baseline().screw,
+                                                                                               praxis::rigid_motion::baseline().frame, praxis::optimization::baseline().solver)
+                                                                                   .value(),
+                                                                           praxis::manipulator::baseline().robot, praxis::rigid_motion::baseline().frame, 2u)
+                                                              .value());
     robot->set_joint_positions(configuration(0.25, -0.5));
 
     auto controller =

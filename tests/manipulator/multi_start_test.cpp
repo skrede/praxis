@@ -8,6 +8,8 @@
 
 #include "praxis/scheduler/scheduler.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
 
@@ -64,7 +66,8 @@ screw_chain reaching_chain()
 // posture found, the magnitude of the second names how many iterates the search reported, and a
 // negative second value is a start that entered the solve and converged on nothing.
 expected<void, refusal> the_posture_the_seed_names(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &,
-                                                   const screw_chain &, const transform &, const joint_vector &seed, const solver_parameters &, ik_result &answer)
+                                                   const optimization::solver_ops &, const screw_chain &, const transform &, const joint_vector &seed, const solver_parameters &,
+                                                   ik_result &answer)
 {
     const std::uint32_t iterates = static_cast<std::uint32_t>(std::lround(std::abs(seed[1])));
     for(std::uint32_t taken = 0; taken < iterates; ++taken)
@@ -87,7 +90,7 @@ struct standing_arm
 {
     explicit standing_arm(const inverse_kinematics_ops &inverse)
             : driven(scene_robot::compose(kinematics::compose(reaching_chain(), forward_kinematics_ops{.forward_kinematics = &sliding_forward_kinematics}, differential_kinematics_ops{},
-                                                              inverse, rigid_motion::baseline().screw, rigid_motion::baseline().frame)
+                                                              inverse, rigid_motion::baseline().screw, rigid_motion::baseline().frame, optimization::baseline().solver)
                                                   .value(),
                                           robot_ops{}, rigid_motion::baseline().frame, 2u)
                              .value())

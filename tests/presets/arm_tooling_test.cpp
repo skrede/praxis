@@ -25,6 +25,8 @@
 
 #include "praxis/rigid_motion/axis_order.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <Eigen/Core>
@@ -110,7 +112,8 @@ manipulator::capabilities without(manipulator::capabilities composed, manipulato
 // what one composition was handed instead of them.
 std::shared_ptr<scene::preset> open_with(opened_arm &stage, const presets::arm_scenario &chosen, const manipulator::capabilities &arm)
 {
-    std::shared_ptr<scene::preset> composed = presets::arm_preset(stage.site(), arm, trajectory::baseline(), rigid_motion::baseline(), chosen, presets::arm_windows_tooling(chosen));
+    std::shared_ptr<scene::preset> composed =
+            presets::arm_preset(stage.site(), arm, trajectory::baseline(), rigid_motion::baseline(), optimization::baseline(), chosen, presets::arm_windows_tooling(chosen));
     if(composed != nullptr)
         REQUIRE(composed->initialize().has_value());
 

@@ -21,8 +21,8 @@ expected<std::vector<screw_axis>, refusal> body_screws_from_space(const rigid_mo
                                                                   std::span<const screw_axis> space_screws);
 
 expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward,
-                                           const differential_kinematics_ops &differential, const screw_chain &chain, const transform &desired, const joint_vector &j0,
-                                           const solver_parameters &parameters, ik_result &answer);
+                                           const differential_kinematics_ops &differential, const optimization::solver_ops &solver, const screw_chain &chain, const transform &desired,
+                                           const joint_vector &j0, const solver_parameters &parameters, ik_result &answer);
 
 expected<transform, refusal> body_forward_kinematics(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
                                                      std::span<const screw_axis> space_screws, const joint_vector &theta);
@@ -31,7 +31,7 @@ expected<transform, refusal> body_forward_kinematics(const rigid_motion::screw_o
 // is called. A chain with no joints, a value that is not finite, a home pose that is not a rigid
 // motion, or a screw axis that is not of unit length is refused rather than held.
 expected<kinematics, refusal> make_kinematics(const screw_chain &chain, forward_kinematics_ops forward, differential_kinematics_ops differential, inverse_kinematics_ops inverse,
-                                              const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames);
+                                              const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const optimization::solver_ops &solver);
 
 }
 

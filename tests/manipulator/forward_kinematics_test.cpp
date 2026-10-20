@@ -6,6 +6,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <functional>
@@ -20,7 +22,7 @@ using namespace praxis::fixture;
 TEST_CASE("a composition binding forward kinematics alone answers with it and refuses elsewhere")
 {
     const expected<kinematics, refusal> composed = kinematics::compose(two_joint_chain(), forward_kinematics_ops{.forward_kinematics = &lifting_forward_kinematics}, {}, {},
-                                                                       rigid_motion::baseline().screw, rigid_motion::baseline().frame);
+                                                                       rigid_motion::baseline().screw, rigid_motion::baseline().frame, optimization::baseline().solver);
     const joint_vector theta                     = joint_vector::Constant(2, 0.5);
 
     REQUIRE(composed.has_value());
@@ -105,7 +107,7 @@ TEST_CASE("a chain with no screws answers the body form rather than refusing it"
 {
     const expected<kinematics, refusal> composed = kinematics::compose(
             screw_chain(), forward_kinematics_ops{.body_forward_kinematics = &screw_reading_body_forward_kinematics, .body_screws_from_space = &unreadable_body_screws}, {}, {},
-            rigid_motion::baseline().screw, rigid_motion::baseline().frame);
+            rigid_motion::baseline().screw, rigid_motion::baseline().frame, optimization::baseline().solver);
 
     REQUIRE(composed.has_value());
 
@@ -141,7 +143,7 @@ TEST_CASE("every refusal is the one its own answer produced, not one invented fo
 TEST_CASE("a chain with no screws is composed without asking for a derivation")
 {
     const expected<kinematics, refusal> composed = kinematics::compose(screw_chain(), forward_kinematics_ops{.body_screws_from_space = &unreadable_body_screws}, {}, {},
-                                                                       rigid_motion::baseline().screw, rigid_motion::baseline().frame);
+                                                                       rigid_motion::baseline().screw, rigid_motion::baseline().frame, optimization::baseline().solver);
 
     REQUIRE(composed.has_value());
     CHECK(composed->joint_count() == 0u);

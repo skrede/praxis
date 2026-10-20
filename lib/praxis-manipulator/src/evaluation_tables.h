@@ -7,6 +7,8 @@
 #include "praxis/manipulator/kinematics.h"
 #include "praxis/manipulator/task_trajectory.h"
 
+#include "praxis/optimization/solver.h"
+
 #include "praxis/evaluation/comparators.h"
 #include "praxis/evaluation/slot_evaluation.h"
 
@@ -60,6 +62,7 @@ const rigid_motion::frame_ops &shared_frames();
 const forward_kinematics_ops &shared_forward();
 const differential_kinematics_ops &shared_differential();
 const inverse_kinematics_ops &shared_inverse();
+const optimization::solver_ops &shared_solver();
 const motion_ops &shared_motion();
 const trajectory::trajectory_ops &shared_trajectory();
 

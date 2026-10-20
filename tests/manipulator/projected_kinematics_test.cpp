@@ -11,6 +11,8 @@
 #include "praxis/rigid_motion/baseline/frame.h"
 #include "praxis/rigid_motion/baseline/screw.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/evaluation/tolerance.h"
 
 #include <Eigen/Cholesky>
@@ -74,7 +76,8 @@ const solver_parameters tight_parameters(1.0e-10, 1.0e-10, 400u);
 
 kinematics composed(const screw_chain &chain, inverse_kinematics_ops inverse)
 {
-    expected<kinematics, refusal> solver = manipulator::make_kinematics(chain, manipulator::baseline().fk, manipulator::baseline().dk, inverse, reference_screw, reference_frames);
+    expected<kinematics, refusal> solver =
+            manipulator::make_kinematics(chain, manipulator::baseline().fk, manipulator::baseline().dk, inverse, reference_screw, reference_frames, optimization::baseline().solver);
     REQUIRE(solver);
 
     return std::move(*solver);
@@ -89,7 +92,8 @@ kinematics projected_solver(const screw_chain &chain)
 expected<void, refusal> solved_through(inverse_kinematics_ops inverse, const screw_chain &chain, const transform &target, const joint_vector &seed, const solver_parameters &parameters,
                                        ik_result &answer)
 {
-    return inverse.inverse_kinematics(reference_screw, reference_frames, manipulator::baseline().fk, manipulator::baseline().dk, chain, target, seed, parameters, answer);
+    return inverse.inverse_kinematics(reference_screw, reference_frames, manipulator::baseline().fk, manipulator::baseline().dk, optimization::baseline().solver, chain, target, seed,
+                                      parameters, answer);
 }
 
 transform pose_of(const screw_chain &chain, const joint_vector &q)

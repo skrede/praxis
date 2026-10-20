@@ -14,6 +14,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <vector>
@@ -48,7 +50,8 @@ std::optional<solved_at_the_tool> reference_solve(std::size_t index)
     const evaluation_case example = drawn_case(drawn);
     const joint_vector seed       = drawn_joints(drawn, example.chain.joint_count());
     const transform offset        = drawn.transform_member();
-    const auto composed           = kinematics::compose(example.chain, baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame);
+    const auto composed           = kinematics::compose(example.chain, baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame,
+                                                        optimization::baseline().solver);
     if(!composed)
         return std::nullopt;
 

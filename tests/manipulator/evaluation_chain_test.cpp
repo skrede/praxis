@@ -8,6 +8,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/evaluation/report.h"
 #include "praxis/evaluation/residual.h"
 #include "praxis/evaluation/generation.h"
@@ -159,7 +161,7 @@ TEST_CASE("the_inverse_kinematics_row_reports_a_solve_naming_no_configuration_wi
     case_source drawn             = case_source::at_case(recorded_seed, "ik.inverse_kinematics", spread::bulk, 0u);
     const evaluation_case example = drawn_case(drawn);
     const expected<kinematics, refusal> composed =
-            kinematics::compose(example.chain, reference.fk, reference.dk, silently, rigid_motion::baseline().screw, rigid_motion::baseline().frame);
+            kinematics::compose(example.chain, reference.fk, reference.dk, silently, rigid_motion::baseline().screw, rigid_motion::baseline().frame, optimization::baseline().solver);
     REQUIRE(composed.has_value());
     const expected<transform, refusal> target = composed->fk_solve(example.joints);
     REQUIRE(target.has_value());

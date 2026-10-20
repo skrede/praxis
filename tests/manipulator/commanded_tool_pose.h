@@ -14,6 +14,8 @@
 #include "praxis/rigid_motion/capabilities.h"
 #include "praxis/rigid_motion/baseline/frame.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <Eigen/Core>
 
 #include <chrono>
@@ -89,9 +91,9 @@ private:
 
     static scene_robot composed(const robot_ops &injected, const inverse_kinematics_ops &solving)
     {
-        const kinematics solver =
-                kinematics::compose(three_link_arm(), manipulator::baseline().fk, manipulator::baseline().dk, solving, rigid_motion::baseline().screw, rigid_motion::baseline().frame)
-                        .value();
+        const kinematics solver = kinematics::compose(three_link_arm(), manipulator::baseline().fk, manipulator::baseline().dk, solving, rigid_motion::baseline().screw,
+                                                      rigid_motion::baseline().frame, optimization::baseline().solver)
+                                          .value();
 
         return scene_robot::compose(solver, injected, rigid_motion::baseline().frame, static_cast<std::uint32_t>(3)).value();
     }

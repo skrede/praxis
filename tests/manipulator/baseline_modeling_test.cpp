@@ -8,6 +8,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <meios/model.h>
@@ -96,7 +98,8 @@ TEST_CASE("forward_kinematics_through_the_derived_chain_reproduces_the_recorded_
     REQUIRE(derived.has_value());
 
     const screw_chain &chain = *derived;
-    const kinematics solver  = make_kinematics(chain, baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame).value();
+    const kinematics solver =
+            make_kinematics(chain, baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame, optimization::baseline().solver).value();
 
     REQUIRE(solver.joint_count() == recorded_joint_count);
     CHECK(is_approx_equal(solver.fk_solve(joint_vector::Zero(recorded_joint_count)).value(), recorded_home(), 1.0e-12));

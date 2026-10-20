@@ -6,6 +6,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_exception.hpp>
 
@@ -97,8 +99,8 @@ expected<std::vector<trajectory::via_point>, refusal> recorded_waypoints(std::sp
 // The steps one solve reports: as many as the target's second component names, both errors halving
 // each step, and the posture the first component names.
 expected<void, refusal> stepping_inverse_kinematics(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const forward_kinematics_ops &,
-                                                    const differential_kinematics_ops &, const screw_chain &, const transform &desired, const joint_vector &, const solver_parameters &,
-                                                    ik_result &answer)
+                                                    const differential_kinematics_ops &, const optimization::solver_ops &, const screw_chain &, const transform &desired,
+                                                    const joint_vector &, const solver_parameters &, ik_result &answer)
 {
     answer.iterations = stepping(desired(0, 3), static_cast<std::uint32_t>(std::lround(desired(1, 3))));
     answer.solutions.push_back(configuration(desired(0, 3), 0.0));
@@ -126,7 +128,7 @@ composed_arm solving_arm(praxis::scheduler::scheduler &loop)
     const auto driven = std::make_shared<scene_robot>(
             scene_robot::compose(kinematics::compose(sliding_chain(), forward_kinematics_ops{.forward_kinematics = &sliding_forward_kinematics}, differential_kinematics_ops{},
                                                      inverse_kinematics_ops{.inverse_kinematics = &stepping_inverse_kinematics}, rigid_motion::baseline().screw,
-                                                     rigid_motion::baseline().frame)
+                                                     rigid_motion::baseline().frame, optimization::baseline().solver)
                                          .value(),
                                  manipulator::baseline().robot, rigid_motion::baseline().frame, 2u)
                     .value());

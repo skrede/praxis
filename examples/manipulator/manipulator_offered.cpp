@@ -12,6 +12,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/config/store.h"
 
 #include <array>
@@ -31,11 +33,12 @@ struct composed_capabilities
     manipulator::capabilities arm;
     trajectory::capabilities shapes;
     rigid_motion::capabilities motions;
+    optimization::capabilities solving;
 };
 
 // The report is over what this scenario composed and nothing else, so its width is the number of
 // capabilities above rather than anything the library fixes.
-std::array<capability_view, 13> composed_views(const composed_capabilities &composed)
+std::array<capability_view, 14> composed_views(const composed_capabilities &composed)
 {
     return {view_of(composed.arm.fk),
             view_of(composed.arm.dk),
@@ -49,19 +52,20 @@ std::array<capability_view, 13> composed_views(const composed_capabilities &comp
             view_of(composed.shapes.pose_trajectory),
             view_of(composed.shapes.trajectory),
             view_of(composed.motions.frame),
-            view_of(composed.motions.screw)};
+            view_of(composed.motions.screw),
+            view_of(composed.solving.solver)};
 }
 
 // The views point into the value passed, so a temporary would leave every one of them dangling at the
 // end of the full expression.
-std::array<capability_view, 13> composed_views(composed_capabilities &&) = delete;
+std::array<capability_view, 14> composed_views(composed_capabilities &&) = delete;
 
 composed_capabilities bound_capabilities()
 {
     manipulator::capabilities arm = manipulator::baseline();
     arm.ik.inverse_kinematics     = &manipulator::projected::inverse_kinematics;
 
-    return composed_capabilities{arm, trajectory::baseline(), rigid_motion::baseline()};
+    return composed_capabilities{arm, trajectory::baseline(), rigid_motion::baseline(), optimization::baseline()};
 }
 
 }
@@ -76,8 +80,8 @@ std::vector<std::string> register_offered(const std::shared_ptr<scene::preset_re
     const std::array<std::filesystem::path, 1> roots{packages};
 
     return presets::register_arms(
-            registry, reading, roots, [mine](const std::filesystem::path &named) { return mine.composing(named); },
-            [writing](const config::binding &at, const config::document &carried) { writing->composing(at, carried); }, composed.arm, composed.shapes, composed.motions);
+            registry, reading, roots, [mine](const std::filesystem::path &named) { return mine.composing(named); }, [writing](const config::binding &at, const config::document &carried)
+            { writing->composing(at, carried); }, composed.arm, composed.shapes, composed.motions, composed.solving);
 }
 
 }

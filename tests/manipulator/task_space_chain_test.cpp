@@ -11,6 +11,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <span>
@@ -63,7 +65,7 @@ screw_chain planar_arm()
 kinematics reference()
 {
     auto solver = manipulator::make_kinematics(planar_arm(), manipulator::baseline().fk, manipulator::baseline().dk, manipulator::baseline().ik, rigid_motion::baseline().screw,
-                                               rigid_motion::baseline().frame);
+                                               rigid_motion::baseline().frame, optimization::baseline().solver);
     REQUIRE(solver);
 
     return std::move(*solver);

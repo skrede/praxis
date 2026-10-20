@@ -13,6 +13,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/config/store.h"
 #include "praxis/config/binding.h"
 #include "praxis/config/document.h"
@@ -37,9 +39,10 @@ arm_scenario read_arm(const config::document &values, std::span<const std::files
 std::vector<std::string> register_arms(const std::shared_ptr<scene::preset_registry> &registry, std::span<const config::location> documents,
                                        std::span<const std::filesystem::path> roots, document_route located, composed_route announced);
 
+// Each registered composer holds its own copy of the capabilities, so none of them need outlive this call.
 std::vector<std::string> register_arms(const std::shared_ptr<scene::preset_registry> &registry, std::span<const config::location> documents,
                                        std::span<const std::filesystem::path> roots, document_route located, composed_route announced, const manipulator::capabilities &arm,
-                                       const trajectory::capabilities &shapes, const rigid_motion::capabilities &motions);
+                                       const trajectory::capabilities &shapes, const rigid_motion::capabilities &motions, const optimization::capabilities &solving);
 
 }
 

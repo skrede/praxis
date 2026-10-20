@@ -16,6 +16,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <meios/model.h>
 
 #include <memory>
@@ -68,8 +70,8 @@ struct arm_composition
 };
 
 std::shared_ptr<scene::preset> compose_arm(const meios::model<> &description, const scene::preset_site &site, attachments attached, const capabilities &arm,
-                                           const trajectory::capabilities &shapes, const rigid_motion::capabilities &motions, const joint_vector &initial,
-                                           const arm_window_composer &windows);
+                                           const trajectory::capabilities &shapes, const rigid_motion::capabilities &motions, const optimization::capabilities &solving,
+                                           const joint_vector &initial, const arm_window_composer &windows);
 
 }
 

@@ -11,6 +11,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/scheduler/scheduler.h"
 
 #include "praxis/evaluation/tolerance.h"
@@ -99,7 +101,7 @@ scene_robot adapter(const robot_ops &injected)
 kinematics unsolved_arm()
 {
     return kinematics::compose(sliding_chain(), forward_kinematics_ops{}, differential_kinematics_ops{}, inverse_kinematics_ops{}, rigid_motion::baseline().screw,
-                               rigid_motion::baseline().frame)
+                               rigid_motion::baseline().frame, optimization::baseline().solver)
             .value();
 }
 
@@ -113,7 +115,8 @@ kinematics three_joint_solver()
 
     const screw_chain chain(transform::Identity(), {screw_axis::Zero(), screw_axis::Zero(), screw_axis::Zero()}, bounds);
 
-    return kinematics::compose(chain, forward_kinematics_ops{}, differential_kinematics_ops{}, inverse_kinematics_ops{}, rigid_motion::baseline().screw, rigid_motion::baseline().frame)
+    return kinematics::compose(chain, forward_kinematics_ops{}, differential_kinematics_ops{}, inverse_kinematics_ops{}, rigid_motion::baseline().screw, rigid_motion::baseline().frame,
+                               optimization::baseline().solver)
             .value();
 }
 
@@ -137,7 +140,8 @@ std::string composition_diagnosis(const meios::model<> &description, const scene
 {
     captured_log captured;
 
-    composed = compose_arm(description, site, attachments{}, baseline(), trajectory::baseline(), rigid_motion::baseline(), configuration(0.0, 0.0), no_windows());
+    composed =
+            compose_arm(description, site, attachments{}, baseline(), trajectory::baseline(), rigid_motion::baseline(), optimization::baseline(), configuration(0.0, 0.0), no_windows());
 
     return captured.text();
 }

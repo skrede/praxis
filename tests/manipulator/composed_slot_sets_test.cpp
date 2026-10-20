@@ -11,6 +11,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/scheduler/scheduler.h"
 
 #include <catch2/catch_test_macros.hpp>
@@ -65,7 +67,7 @@ seen observe(stage &built, const capabilities &arm)
     };
 
     const std::shared_ptr<scene::preset> composed =
-            compose_arm(well_formed_arm(), built.site, attachments{}, arm, trajectory::baseline(), rigid_motion::baseline(), joint_vector{}, capturing);
+            compose_arm(well_formed_arm(), built.site, attachments{}, arm, trajectory::baseline(), rigid_motion::baseline(), optimization::baseline(), joint_vector{}, capturing);
 
     REQUIRE(composed != nullptr);
 

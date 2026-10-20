@@ -5,6 +5,8 @@
 #include "praxis/rigid_motion/baseline/screw.h"
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/evaluation/tolerance.h"
 
 #include <catch2/catch_test_macros.hpp>
@@ -67,8 +69,8 @@ const solver_parameters tight_parameters(1.0e-10, 1.0e-10, 400u);
 
 kinematics reference(const screw_chain &chain)
 {
-    expected<kinematics, refusal> solver =
-            manipulator::make_kinematics(chain, manipulator::baseline().fk, manipulator::baseline().dk, manipulator::baseline().ik, reference_screw, reference_frames);
+    expected<kinematics, refusal> solver = manipulator::make_kinematics(chain, manipulator::baseline().fk, manipulator::baseline().dk, manipulator::baseline().ik, reference_screw,
+                                                                        reference_frames, optimization::baseline().solver);
     REQUIRE(solver);
 
     return std::move(*solver);
@@ -430,8 +432,8 @@ TEST_CASE("a_solver_composed_against_defaulted_screw_operations_refuses_only_the
     const screw_chain chain = planar_arm();
     const joint_vector q    = configuration(0.3, -0.6);
 
-    const expected<kinematics, refusal> composed =
-            manipulator::make_kinematics(chain, manipulator::baseline().fk, manipulator::baseline().dk, manipulator::baseline().ik, rigid_motion::screw_ops{}, reference_frames);
+    const expected<kinematics, refusal> composed = manipulator::make_kinematics(chain, manipulator::baseline().fk, manipulator::baseline().dk, manipulator::baseline().ik,
+                                                                                rigid_motion::screw_ops{}, reference_frames, optimization::baseline().solver);
 
     REQUIRE(composed.has_value());
     CHECK(composed->fk_solve(q).has_value());
@@ -600,9 +602,10 @@ TEST_CASE("a_chain_with_no_joints_or_a_screw_off_unit_length_is_refused_rather_t
 
     const capabilities bindings = manipulator::baseline();
 
-    const expected<kinematics, refusal> blunted =
-            manipulator::make_kinematics(screw_chain(transform::Identity(), {degenerate}, joint_limits{}), bindings.fk, bindings.dk, bindings.ik, reference_screw, reference_frames);
-    const expected<kinematics, refusal> empty = manipulator::make_kinematics(screw_chain(), bindings.fk, bindings.dk, bindings.ik, reference_screw, reference_frames);
+    const expected<kinematics, refusal> blunted = manipulator::make_kinematics(screw_chain(transform::Identity(), {degenerate}, joint_limits{}), bindings.fk, bindings.dk, bindings.ik,
+                                                                               reference_screw, reference_frames, optimization::baseline().solver);
+    const expected<kinematics, refusal> empty =
+            manipulator::make_kinematics(screw_chain(), bindings.fk, bindings.dk, bindings.ik, reference_screw, reference_frames, optimization::baseline().solver);
 
     REQUIRE_FALSE(blunted.has_value());
     REQUIRE_FALSE(empty.has_value());
@@ -618,12 +621,14 @@ TEST_CASE("a_screw_whose_angular_half_is_off_unit_length_by_more_than_the_defaul
     stretched << 0.0, 0.0, 1.0 + 1.0e-9, 0.0, -upper_arm, 0.0;
     const screw_axis normalized = stretched / stretched.head<3>().norm();
 
-    screw_chain off_unit                         = planar_arm();
-    off_unit.space_screws[1]                     = stretched;
-    screw_chain on_unit                          = planar_arm();
-    on_unit.space_screws[1]                      = normalized;
-    const expected<kinematics, refusal> refused  = manipulator::make_kinematics(off_unit, bindings.fk, bindings.dk, bindings.ik, reference_screw, reference_frames);
-    const expected<kinematics, refusal> admitted = manipulator::make_kinematics(on_unit, bindings.fk, bindings.dk, bindings.ik, reference_screw, reference_frames);
+    screw_chain off_unit     = planar_arm();
+    off_unit.space_screws[1] = stretched;
+    screw_chain on_unit      = planar_arm();
+    on_unit.space_screws[1]  = normalized;
+    const expected<kinematics, refusal> refused =
+            manipulator::make_kinematics(off_unit, bindings.fk, bindings.dk, bindings.ik, reference_screw, reference_frames, optimization::baseline().solver);
+    const expected<kinematics, refusal> admitted =
+            manipulator::make_kinematics(on_unit, bindings.fk, bindings.dk, bindings.ik, reference_screw, reference_frames, optimization::baseline().solver);
 
     REQUIRE_FALSE(refused.has_value());
     CHECK(refused.error() == refusal::degenerate);
@@ -635,8 +640,9 @@ TEST_CASE("a_chain_whose_home_pose_every_forward_map_refuses_is_refused_rather_t
     screw_chain sheared = planar_arm();
     sheared.home(0, 1)  = 1.0e-9;
 
-    const capabilities bindings              = manipulator::baseline();
-    const expected<kinematics, refusal> held = manipulator::make_kinematics(sheared, bindings.fk, bindings.dk, bindings.ik, reference_screw, reference_frames);
+    const capabilities bindings = manipulator::baseline();
+    const expected<kinematics, refusal> held =
+            manipulator::make_kinematics(sheared, bindings.fk, bindings.dk, bindings.ik, reference_screw, reference_frames, optimization::baseline().solver);
 
     REQUIRE_FALSE(held.has_value());
     CHECK(held.error() == refusal::degenerate);
@@ -651,8 +657,8 @@ TEST_CASE("a_chain_whose_limits_do_not_cover_its_joints_is_refused_with_the_mism
 
     const capabilities bindings            = manipulator::baseline();
     expected<kinematics, refusal> composed = praxis::unexpected(refusal::not_implemented);
-    const std::string reported =
-            praxis::tests::reported_by([&] { composed = manipulator::make_kinematics(uncovered, bindings.fk, bindings.dk, bindings.ik, reference_screw, reference_frames); });
+    const std::string reported             = praxis::tests::reported_by(
+            [&] { composed = manipulator::make_kinematics(uncovered, bindings.fk, bindings.dk, bindings.ik, reference_screw, reference_frames, optimization::baseline().solver); });
 
     REQUIRE_FALSE(composed.has_value());
     CHECK(composed.error() == refusal::unsupported_input);

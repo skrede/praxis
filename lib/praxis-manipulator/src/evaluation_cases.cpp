@@ -5,6 +5,8 @@
 
 #include "praxis/trajectory/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/rigid_motion/capabilities.h"
 
 #include <string>
@@ -103,6 +105,13 @@ const inverse_kinematics_ops &shared_inverse()
     return inverse;
 }
 
+const optimization::solver_ops &shared_solver()
+{
+    static const optimization::solver_ops solver = optimization::baseline().solver;
+
+    return solver;
+}
+
 const motion_ops &shared_motion()
 {
     static const motion_ops motion = baseline().motion;
@@ -142,9 +151,10 @@ evaluation_case drawn_case(evaluation::case_source &drawn)
 
 std::optional<solve_case> drawn_solve(evaluation::case_source &drawn)
 {
-    const evaluation_case example        = drawn_case(drawn);
-    const joint_vector seed              = drawn_joints(drawn, example.chain.joint_count());
-    expected<kinematics, refusal> solver = kinematics::compose(example.chain, shared_forward(), shared_differential(), shared_inverse(), shared_screw(), shared_frames());
+    const evaluation_case example = drawn_case(drawn);
+    const joint_vector seed       = drawn_joints(drawn, example.chain.joint_count());
+    expected<kinematics, refusal> solver =
+            kinematics::compose(example.chain, shared_forward(), shared_differential(), shared_inverse(), shared_screw(), shared_frames(), shared_solver());
     if(!solver)
         return std::nullopt;
 

@@ -70,8 +70,9 @@ struct solve_request
 
 std::optional<solve_request> drawn_request(evaluation::case_source &drawn, const evaluation_case &example)
 {
-    const joint_vector seed                = drawn_joints(drawn, example.chain.joint_count());
-    expected<kinematics, refusal> composed = kinematics::compose(example.chain, shared_forward(), shared_differential(), shared_inverse(), shared_screw(), shared_frames());
+    const joint_vector seed = drawn_joints(drawn, example.chain.joint_count());
+    expected<kinematics, refusal> composed =
+            kinematics::compose(example.chain, shared_forward(), shared_differential(), shared_inverse(), shared_screw(), shared_frames(), shared_solver());
     if(!composed)
         return std::nullopt;
 
@@ -84,7 +85,7 @@ std::optional<solve_request> drawn_request(evaluation::case_source &drawn, const
 
 expected<void, refusal> solved_by(const inverse_kinematics_ops &bound, const screw_chain &chain, const solve_request &asked, ik_result &answer)
 {
-    return bound.inverse_kinematics(shared_screw(), shared_frames(), asked.forward, asked.differential, chain, asked.target, asked.seed, solver_parameters(), answer);
+    return bound.inverse_kinematics(shared_screw(), shared_frames(), asked.forward, asked.differential, shared_solver(), chain, asked.target, asked.seed, solver_parameters(), answer);
 }
 
 expected<void, refusal> answered_with_a_configuration(const expected<void, refusal> &solved, const ik_result &answer)

@@ -180,7 +180,7 @@ meios_declare_resource(
 add_executable(my_workbench main.cpp)
 target_link_libraries(my_workbench PRIVATE
     praxis::praxis praxis::manipulator_presets praxis::manipulator
-    praxis::trajectory praxis::rigid_motion praxis::config)
+    praxis::trajectory praxis::rigid_motion praxis::optimization praxis::config)
 
 meios_target_deploy_resources(my_workbench
     RESOURCES my_arm_description
@@ -256,16 +256,17 @@ reads the location its preset was registered with. A `composed_route` is told wh
 built from once it has been answered, which is where an edit is written back; a caller with nowhere to
 write passes nothing. Both are `std::function`, and an empty one means "no route", not "an error".
 
-The five-argument form binds the library's own reference implementations. The eight-argument form
-takes the three capability sets explicitly, which is how you bind your own:
+The five-argument form binds the library's own reference implementations. The nine-argument form
+takes the four capability sets explicitly, which is how you bind your own:
 
 ```cpp
-const praxis::manipulator::capabilities arm     = my_arm_capabilities();
-const praxis::trajectory::capabilities shapes   = praxis::trajectory::baseline();
-const praxis::rigid_motion::capabilities motion = praxis::rigid_motion::baseline();
+const praxis::manipulator::capabilities arm      = my_arm_capabilities();
+const praxis::trajectory::capabilities shapes    = praxis::trajectory::baseline();
+const praxis::rigid_motion::capabilities motion  = praxis::rigid_motion::baseline();
+const praxis::optimization::capabilities solving = praxis::optimization::baseline();
 
 const std::vector<std::string> registered =
-        praxis::presets::register_arms(registry, documents, roots, {}, {}, arm, shapes, motion);
+        praxis::presets::register_arms(registry, documents, roots, {}, {}, arm, shapes, motion, solving);
 ```
 
 `register_arms` returns the names it registered, in the order it registered them, so a caller that

@@ -9,6 +9,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <meios/model.h>
@@ -91,7 +93,7 @@ TEST_CASE("forward kinematics at the zero configuration reproduces the chain's o
 
     const manipulator::screw_chain &chain = *derived;
     const manipulator::kinematics solver  = manipulator::make_kinematics(chain, manipulator::baseline().fk, manipulator::baseline().dk, manipulator::baseline().ik,
-                                                                         rigid_motion::baseline().screw, rigid_motion::baseline().frame)
+                                                                         rigid_motion::baseline().screw, rigid_motion::baseline().frame, optimization::baseline().solver)
                                                     .value();
 
     const Eigen::Index count = static_cast<Eigen::Index>(chain.joint_count());

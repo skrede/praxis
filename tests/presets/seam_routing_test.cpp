@@ -10,6 +10,8 @@
 
 #include "praxis/trajectory/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <memory>
@@ -31,7 +33,7 @@ kinematics arm_solver()
 {
     const capabilities arm = manipulator::baseline();
 
-    return kinematics::compose(three_link_arm(), arm.fk, arm.dk, arm.ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame).value();
+    return kinematics::compose(three_link_arm(), arm.fk, arm.dk, arm.ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame, optimization::baseline().solver).value();
 }
 
 transform tool_offset()

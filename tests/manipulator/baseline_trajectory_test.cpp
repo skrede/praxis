@@ -7,6 +7,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <span>
@@ -50,8 +52,8 @@ transform at_height(double z)
 std::vector<joint_vector> recorded_seeds;
 
 expected<void, refusal> recording_inverse_kinematics(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const forward_kinematics_ops &,
-                                                     const differential_kinematics_ops &, const screw_chain &, const transform &desired_pose, const joint_vector &j0,
-                                                     const solver_parameters &, ik_result &answer)
+                                                     const differential_kinematics_ops &, const optimization::solver_ops &, const screw_chain &, const transform &desired_pose,
+                                                     const joint_vector &j0, const solver_parameters &, ik_result &answer)
 {
     recorded_seeds.push_back(j0);
     answer.solutions.push_back(j0 + joint_vector::Constant(j0.size(), desired_pose(2, 3)));
@@ -82,7 +84,7 @@ kinematics recording_solver()
     recorded_seeds.clear();
 
     return kinematics::compose(two_joint_chain(), {}, {}, inverse_kinematics_ops{.inverse_kinematics = &recording_inverse_kinematics}, rigid_motion::baseline().screw,
-                               rigid_motion::baseline().frame)
+                               rigid_motion::baseline().frame, optimization::baseline().solver)
             .value();
 }
 

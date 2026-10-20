@@ -91,7 +91,8 @@ praxis::expected<praxis::manipulator::screw_chain, praxis::refusal> (*praxis_man
 
 praxis::expected<praxis::manipulator::kinematics, praxis::refusal> (*praxis_manipulator_reference_symbol)(
         const praxis::manipulator::screw_chain &, praxis::manipulator::forward_kinematics_ops, praxis::manipulator::differential_kinematics_ops,
-        praxis::manipulator::inverse_kinematics_ops, const praxis::rigid_motion::screw_ops &, const praxis::rigid_motion::frame_ops &) = &praxis::manipulator::make_kinematics;
+        praxis::manipulator::inverse_kinematics_ops, const praxis::rigid_motion::screw_ops &, const praxis::rigid_motion::frame_ops &,
+        const praxis::optimization::solver_ops &) = &praxis::manipulator::make_kinematics;
 
 std::uint32_t (praxis::manipulator::robot_controller::*praxis_manipulator_control_symbol)() const = &praxis::manipulator::robot_controller::joint_count;
 #endif

@@ -15,6 +15,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/scene/preset.h"
 #include "praxis/scene/preset_site.h"
 #include "praxis/scene/imgui_window.h"
@@ -129,7 +131,8 @@ struct opened_arm
 
     std::shared_ptr<scene::preset> open(const presets::arm_scenario &chosen, const manipulator::arm_composition &opened)
     {
-        std::shared_ptr<scene::preset> composed = presets::arm_preset(site(), manipulator::baseline(), trajectory::baseline(), rigid_motion::baseline(), chosen, opened);
+        std::shared_ptr<scene::preset> composed =
+                presets::arm_preset(site(), manipulator::baseline(), trajectory::baseline(), rigid_motion::baseline(), optimization::baseline(), chosen, opened);
         if(composed != nullptr)
             REQUIRE(composed->initialize().has_value());
 

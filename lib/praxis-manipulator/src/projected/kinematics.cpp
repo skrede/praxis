@@ -50,7 +50,8 @@ expected<joint_vector, refusal> projected_step(const body_target &target, const 
 
 // A seed the entry checks would refuse reaches them unprojected, so its refusal is the book solve's.
 expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &,
-                                           const screw_chain &chain, const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer)
+                                           const optimization::solver_ops &, const screw_chain &chain, const transform &desired, const joint_vector &j0,
+                                           const solver_parameters &parameters, ik_result &answer)
 {
     const bool projectable = j0.size() == static_cast<Eigen::Index>(chain.joint_count()) && j0.allFinite();
 

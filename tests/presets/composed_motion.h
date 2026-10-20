@@ -18,6 +18,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/scene/preset.h"
 #include "praxis/scene/plot_window.h"
 #include "praxis/scene/preset_site.h"
@@ -78,7 +80,7 @@ struct composed_motion
         const scene::window_route nowhere  = [](const std::shared_ptr<scene::imgui_window> &) {};
         const scene::preset_site site{*scene, loop.main_strand(), *loop.make_strand(), [this](std::string) { unloaded = true; }, opening_route(), nowhere, {}};
 
-        composed = presets::arm_preset(site, manipulator::baseline(), bound, rigid_motion::baseline(), chosen, one.compose(chosen));
+        composed = presets::arm_preset(site, manipulator::baseline(), bound, rigid_motion::baseline(), optimization::baseline(), chosen, one.compose(chosen));
         REQUIRE(composed != nullptr);
         REQUIRE(composed->initialize().has_value());
     }

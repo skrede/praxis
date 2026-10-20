@@ -13,6 +13,8 @@
 #include "praxis/rigid_motion/screw.h"
 #include "praxis/rigid_motion/types.h"
 
+#include "praxis/optimization/solver.h"
+
 #include <span>
 #include <vector>
 #include <cstddef>
@@ -102,22 +104,22 @@ struct differential_kinematics_ops
 namespace praxis::manipulator::inert {
 
 expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward,
-                                           const differential_kinematics_ops &differential, const screw_chain &chain, const transform &desired, const joint_vector &j0,
-                                           const solver_parameters &parameters, ik_result &answer);
+                                           const differential_kinematics_ops &differential, const optimization::solver_ops &solver, const screw_chain &chain, const transform &desired,
+                                           const joint_vector &j0, const solver_parameters &parameters, ik_result &answer);
 
 }
 
 namespace praxis::manipulator {
 
 // The solve is here, and it receives what its own mathematics consumes and nothing else: the chain
-// it is to solve over, the pose it is to reach, and the operations and maps it reads along the way.
-// Nothing it is handed carries a way to ask for a solve. A solve that does not converge refuses with
-// `no_solution` and names no configuration.
+// it is to solve over, the pose it is to reach, and the operations and maps it reads along the way,
+// among them a solver of residual problems. Nothing it is handed reaches back into inverse kinematics.
+// A solve that does not converge refuses with `no_solution` and names no configuration.
 struct inverse_kinematics_ops
 {
     expected<void, refusal> (*inverse_kinematics)(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward,
-                                                  const differential_kinematics_ops &differential, const screw_chain &chain, const transform &desired, const joint_vector &j0,
-                                                  const solver_parameters &parameters, ik_result &answer) = &inert::inverse_kinematics;
+                                                  const differential_kinematics_ops &differential, const optimization::solver_ops &solver, const screw_chain &chain,
+                                                  const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer) = &inert::inverse_kinematics;
 };
 
 // Holds the chain the bound implementations are asked about and routes every question to them. It is
@@ -132,7 +134,7 @@ public:
     // thing it needs of the chain itself. An unbound slot is not refused here: a capability refuses
     // where it is asked for, so binding one is never a precondition of binding another.
     static expected<kinematics, refusal> compose(screw_chain chain, forward_kinematics_ops forward, differential_kinematics_ops differential, inverse_kinematics_ops inverse,
-                                                 const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames);
+                                                 const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const optimization::solver_ops &solver);
 
     std::uint32_t joint_count() const;
 
@@ -187,7 +189,7 @@ public:
 
 private:
     kinematics(screw_chain chain, forward_kinematics_ops forward, differential_kinematics_ops differential, inverse_kinematics_ops inverse, const rigid_motion::screw_ops &screw,
-               const rigid_motion::frame_ops &frames);
+               const rigid_motion::frame_ops &frames, const optimization::solver_ops &solver);
 
     screw_chain m_space;
     screw_chain m_body;
@@ -197,6 +199,7 @@ private:
     inverse_kinematics_ops m_ik;
     rigid_motion::screw_ops m_screw;
     rigid_motion::frame_ops m_frames;
+    optimization::solver_ops m_solver;
     mutable ik_result m_last;
     mutable std::uint64_t m_solve_tally;
 

@@ -15,6 +15,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/scene/preset.h"
 #include "praxis/scene/preset_site.h"
 #include "praxis/scene/imgui_window.h"
@@ -90,8 +92,8 @@ scheduler::clock_source dictating()
 std::size_t solves_entered = 0;
 
 expected<void, refusal> recorded_search(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const manipulator::forward_kinematics_ops &,
-                                        const manipulator::differential_kinematics_ops &, const manipulator::screw_chain &, const transform &, const manipulator::joint_vector &,
-                                        const manipulator::solver_parameters &, manipulator::ik_result &)
+                                        const manipulator::differential_kinematics_ops &, const optimization::solver_ops &, const manipulator::screw_chain &, const transform &,
+                                        const manipulator::joint_vector &, const manipulator::solver_parameters &, manipulator::ik_result &)
 {
     ++solves_entered;
 
@@ -189,8 +191,12 @@ struct opened_comparison
 
     std::shared_ptr<scene::preset> open(const presets::arm_scenario &chosen, const manipulator::capabilities &arm)
     {
-        return open([&](const scene::preset_site &site)
-                    { return presets::arm_preset(site, arm, trajectory::baseline(), rigid_motion::baseline(), chosen, presets::arm_windows_path_comparison(chosen)); });
+        return open(
+                [&](const scene::preset_site &site)
+                {
+                    return presets::arm_preset(site, arm, trajectory::baseline(), rigid_motion::baseline(), optimization::baseline(), chosen,
+                                               presets::arm_windows_path_comparison(chosen));
+                });
     }
 
     std::shared_ptr<scene::preset> open(const scene::preset_registry::factory &compose)
@@ -418,7 +424,7 @@ TEST_CASE("a play through an arm registered with capabilities of its own enters 
     const std::array<std::filesystem::path, 1> roots{described.directory};
 
     const auto registry = std::make_shared<scene::preset_registry>();
-    REQUIRE(presets::register_arms(registry, documents, roots, {}, {}, recording_solves(), trajectory::baseline(), rigid_motion::baseline()).size() == 1u);
+    REQUIRE(presets::register_arms(registry, documents, roots, {}, {}, recording_solves(), trajectory::baseline(), rigid_motion::baseline(), optimization::baseline()).size() == 1u);
 
     opened_comparison stage;
     REQUIRE(stage.open(registry->load_preset("Compared")) != nullptr);

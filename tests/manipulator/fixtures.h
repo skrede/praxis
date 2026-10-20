@@ -9,6 +9,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <threepp/objects/Robot.hpp>
 #include <threepp/core/Object3D.hpp>
 
@@ -85,7 +87,7 @@ inline screw_chain sliding_chain()
 inline kinematics sliding_solver()
 {
     return kinematics::compose(sliding_chain(), forward_kinematics_ops{.forward_kinematics = &sliding_forward_kinematics}, differential_kinematics_ops{}, inverse_kinematics_ops{},
-                               rigid_motion::baseline().screw, rigid_motion::baseline().frame)
+                               rigid_motion::baseline().screw, rigid_motion::baseline().frame, optimization::baseline().solver)
             .value();
 }
 

@@ -15,6 +15,8 @@
 #include "praxis/rigid_motion/axis_order.h"
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/scene/preset.h"
 #include "praxis/scene/imgui_window.h"
 
@@ -67,7 +69,7 @@ inline presets::arm_scenario placing_models(const std::filesystem::path &descrip
 inline std::shared_ptr<scene::preset> opened_under(opened_arm &stage, const presets::arm_scenario &chosen, const manipulator::arm_composition &opened,
                                                    const rigid_motion::capabilities &motions)
 {
-    std::shared_ptr<scene::preset> composed = presets::arm_preset(stage.site(), manipulator::baseline(), trajectory::baseline(), motions, chosen, opened);
+    std::shared_ptr<scene::preset> composed = presets::arm_preset(stage.site(), manipulator::baseline(), trajectory::baseline(), motions, optimization::baseline(), chosen, opened);
     REQUIRE(composed != nullptr);
     REQUIRE(composed->initialize().has_value());
     REQUIRE(stage.loop.drain().has_value());

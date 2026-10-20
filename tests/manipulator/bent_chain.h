@@ -53,28 +53,28 @@ inline expected<std::vector<screw_axis>, refusal> one_axis_short(const rigid_mot
 }
 
 inline expected<void, refusal> never_solves(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &,
-                                            const screw_chain &, const transform &, const joint_vector &, const solver_parameters &, ik_result &)
+                                            const optimization::solver_ops &, const screw_chain &, const transform &, const joint_vector &, const solver_parameters &, ik_result &)
 {
     return unexpected(refusal::no_solution);
 }
 
 inline expected<void, refusal> never_solves_for_another_reason(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const forward_kinematics_ops &,
-                                                               const differential_kinematics_ops &, const screw_chain &, const transform &, const joint_vector &,
-                                                               const solver_parameters &, ik_result &)
+                                                               const differential_kinematics_ops &, const optimization::solver_ops &, const screw_chain &, const transform &,
+                                                               const joint_vector &, const solver_parameters &, ik_result &)
 {
     return unexpected(refusal::unsupported_input);
 }
 
 inline expected<void, refusal> answers_without_naming_a_configuration(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const forward_kinematics_ops &,
-                                                                      const differential_kinematics_ops &, const screw_chain &, const transform &, const joint_vector &,
-                                                                      const solver_parameters &, ik_result &)
+                                                                      const differential_kinematics_ops &, const optimization::solver_ops &, const screw_chain &, const transform &,
+                                                                      const joint_vector &, const solver_parameters &, ik_result &)
 {
     return {};
 }
 
 inline expected<void, refusal> always_answers_the_seed(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const forward_kinematics_ops &,
-                                                       const differential_kinematics_ops &, const screw_chain &, const transform &, const joint_vector &j0, const solver_parameters &,
-                                                       ik_result &answer)
+                                                       const differential_kinematics_ops &, const optimization::solver_ops &, const screw_chain &, const transform &,
+                                                       const joint_vector &j0, const solver_parameters &, ik_result &answer)
 {
     answer.solutions.push_back(j0);
 
@@ -87,14 +87,14 @@ inline std::size_t entries = 0;
 // a real search does. The comparator asks each side's slot once per drawn case, so this count stands
 // at one per drawn case.
 inline expected<void, refusal> counts_its_entries(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward,
-                                                  const differential_kinematics_ops &differential, const screw_chain &chain, const transform &desired, const joint_vector &j0,
-                                                  const solver_parameters &parameters, ik_result &answer)
+                                                  const differential_kinematics_ops &differential, const optimization::solver_ops &solver, const screw_chain &chain,
+                                                  const transform &desired, const joint_vector &j0, const solver_parameters &parameters, ik_result &answer)
 {
     ++entries;
     static_cast<void>(forward.forward_kinematics(screw, chain.home, chain.space_screws, j0));
     static_cast<void>(differential.space_jacobian(screw, chain.space_screws, j0));
 
-    return inverse_kinematics(screw, frames, forward, differential, chain, desired, j0, parameters, answer);
+    return inverse_kinematics(screw, frames, forward, differential, solver, chain, desired, j0, parameters, answer);
 }
 
 inline inverse_kinematics_ops solving(decltype(inverse_kinematics_ops::inverse_kinematics) bound)

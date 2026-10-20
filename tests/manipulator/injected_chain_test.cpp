@@ -14,6 +14,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/scheduler/scheduler.h"
 
 #include "praxis/evaluation/tolerance.h"
@@ -146,8 +148,8 @@ TEST_CASE("the supplied chain builder is the one the composed machine's forward 
         return std::vector<std::shared_ptr<scene::imgui_window>>{};
     };
 
-    const std::shared_ptr<scene::preset> composed =
-            compose_arm(machine, built.site, attachments{}, deriving_the_supplied_chain(), trajectory::baseline(), rigid_motion::baseline(), folded(), capturing);
+    const std::shared_ptr<scene::preset> composed = compose_arm(machine, built.site, attachments{}, deriving_the_supplied_chain(), trajectory::baseline(), rigid_motion::baseline(),
+                                                                optimization::baseline(), folded(), capturing);
     REQUIRE(composed != nullptr);
     REQUIRE(composed->initialize().has_value());
     REQUIRE_FALSE(driven.expired());

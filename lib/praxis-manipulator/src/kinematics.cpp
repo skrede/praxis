@@ -40,12 +40,13 @@ solver_parameters::solver_parameters(double position_tolerance, double orientati
 }
 
 kinematics::kinematics()
-        : kinematics(screw_chain(), forward_kinematics_ops(), differential_kinematics_ops(), inverse_kinematics_ops(), rigid_motion::screw_ops(), rigid_motion::frame_ops())
+        : kinematics(screw_chain(), forward_kinematics_ops(), differential_kinematics_ops(), inverse_kinematics_ops(), rigid_motion::screw_ops(), rigid_motion::frame_ops(),
+                     optimization::solver_ops())
 {
 }
 
 kinematics::kinematics(screw_chain chain, forward_kinematics_ops forward, differential_kinematics_ops differential, inverse_kinematics_ops inverse, const rigid_motion::screw_ops &screw,
-                       const rigid_motion::frame_ops &frames)
+                       const rigid_motion::frame_ops &frames, const optimization::solver_ops &solver)
         : m_space(std::move(chain))
         , m_body()
         , m_body_unavailable()
@@ -54,6 +55,7 @@ kinematics::kinematics(screw_chain chain, forward_kinematics_ops forward, differ
         , m_ik(inverse)
         , m_screw(screw)
         , m_frames(frames)
+        , m_solver(solver)
         , m_last()
         , m_solve_tally(0u)
 {
@@ -65,9 +67,9 @@ kinematics::kinematics(screw_chain chain, forward_kinematics_ops forward, differ
 // screws has no adjoint to apply, so the derivation is skipped rather than asked for and the body
 // chain is left as empty as the space chain it would have been taken from.
 expected<kinematics, refusal> kinematics::compose(screw_chain chain, forward_kinematics_ops forward, differential_kinematics_ops differential, inverse_kinematics_ops inverse,
-                                                  const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames)
+                                                  const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const optimization::solver_ops &solver)
 {
-    kinematics composed(std::move(chain), forward, differential, inverse, screw, frames);
+    kinematics composed(std::move(chain), forward, differential, inverse, screw, frames, solver);
     if(!limits_cover_every_joint(composed.m_space))
         return unexpected(refusal::unsupported_input);
     if(composed.m_space.space_screws.empty())
@@ -187,7 +189,7 @@ expected<void, refusal> kinematics::solve(const transform &desired_pose, const j
     m_last.iterations.clear();
     ++m_solve_tally;
 
-    return m_ik.inverse_kinematics(m_screw, m_frames, m_fk, m_dk, m_space, desired_pose, j0, parameters, m_last);
+    return m_ik.inverse_kinematics(m_screw, m_frames, m_fk, m_dk, m_solver, m_space, desired_pose, j0, parameters, m_last);
 }
 
 }

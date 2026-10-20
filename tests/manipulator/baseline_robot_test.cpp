@@ -9,6 +9,8 @@
 #include "praxis/rigid_motion/frame.h"
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/evaluation/tolerance.h"
 
 #include <catch2/catch_test_macros.hpp>
@@ -88,7 +90,9 @@ TEST_CASE("the_accessors_return_the_translation_column_and_the_rotation_block_of
 
 TEST_CASE("solving_for_a_flange_pose_reaches_it_under_forward_kinematics")
 {
-    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame).value();
+    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame,
+                                              optimization::baseline().solver)
+                                      .value();
     const transform wanted  = solver.fk_solve(posed_arm()).value();
     const joint_vector j0   = arm_configuration(0.3, -1.1, 0.45);
 
@@ -101,7 +105,9 @@ TEST_CASE("solving_for_a_flange_pose_reaches_it_under_forward_kinematics")
 
 TEST_CASE("solving_for_a_tool_pose_reaches_it_once_the_tool_offset_is_reapplied")
 {
-    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame).value();
+    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame,
+                                              optimization::baseline().solver)
+                                      .value();
     const transform wanted  = tool_pose_from_flange_pose(solver.fk_solve(posed_arm()).value(), tool_offset());
     const joint_vector j0   = arm_configuration(0.3, -1.1, 0.45);
 
@@ -116,7 +122,9 @@ TEST_CASE("solving_for_a_tool_pose_reaches_it_once_the_tool_offset_is_reapplied"
 // so it is refused at the reference's own boundary rather than handed on.
 TEST_CASE("a_seed_of_a_size_the_chain_does_not_have_is_refused_rather_than_handed_to_the_solver")
 {
-    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame).value();
+    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame,
+                                              optimization::baseline().solver)
+                                      .value();
     const transform wanted  = solver.fk_solve(posed_arm()).value();
     const joint_vector j0   = joint_vector::Constant(2, 0.3);
 

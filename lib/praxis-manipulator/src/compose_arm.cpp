@@ -13,6 +13,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <spdlog/spdlog.h>
 
 #include <memory>
@@ -47,13 +49,13 @@ unexpected<refusal> undrivable(const char *builder, const std::string &model, re
 // is the capability that produced it saying so, and binding one is never the price of binding
 // another.
 expected<scene_robot, refusal> driven_arm(const meios::model<> &description, const threepp::Robot &handle, const capabilities &arm, const rigid_motion::screw_ops &screw,
-                                          const rigid_motion::frame_ops &frames)
+                                          const rigid_motion::frame_ops &frames, const optimization::capabilities &solving)
 {
     auto chain = arm.modeling.build_chain(description);
     if(!chain)
         return undrivable("manipulator.modeling.build_chain", description.name, chain.error());
 
-    auto solver = kinematics::compose(std::move(*chain), arm.fk, arm.dk, arm.ik, screw, frames);
+    auto solver = kinematics::compose(std::move(*chain), arm.fk, arm.dk, arm.ik, screw, frames, solving.solver);
     if(!solver)
         return undrivable("manipulator.kinematics.compose", description.name, solver.error());
 
@@ -210,14 +212,14 @@ std::optional<joint_vector> opening_configuration(const std::string &model, cons
 // the screw axes and the rendered links agree on the frame they are expressed in. The scene graph is
 // the one derivation with nothing to fall back on: with no body there is no preset.
 std::shared_ptr<scene::preset> compose_arm(const meios::model<> &description, const scene::preset_site &site, attachments attached, const capabilities &arm,
-                                           const trajectory::capabilities &shapes, const rigid_motion::capabilities &motions, const joint_vector &initial,
-                                           const arm_window_composer &windows)
+                                           const trajectory::capabilities &shapes, const rigid_motion::capabilities &motions, const optimization::capabilities &solving,
+                                           const joint_vector &initial, const arm_window_composer &windows)
 {
     auto handle = build_scene_robot(description);
     if(!handle)
         return report_refusal("manipulator.build_scene_robot", description.name, handle.error());
 
-    auto driven = driven_arm(description, held(*handle, "the composed arm", "renderer handle"), arm, motions.screw, motions.frame);
+    auto driven = driven_arm(description, held(*handle, "the composed arm", "renderer handle"), arm, motions.screw, motions.frame, solving);
     if(!driven)
         return undriven_preset(site, *handle, std::move(attached), initial, motions, driven.error());
 

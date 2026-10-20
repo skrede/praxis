@@ -9,6 +9,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <Eigen/Core>
@@ -46,8 +48,8 @@ constexpr seconds serviced{0.05};
 // The answer is the desired pose's own translation, so a command reaches a configuration the case
 // can name, and the one recorded step is identifiable by its index alone.
 praxis::expected<void, praxis::refusal> recording_inverse_kinematics(const praxis::rigid_motion::screw_ops &, const praxis::rigid_motion::frame_ops &, const forward_kinematics_ops &,
-                                                                     const differential_kinematics_ops &, const screw_chain &, const praxis::transform &desired, const joint_vector &j0,
-                                                                     const solver_parameters &, ik_result &answer)
+                                                                     const differential_kinematics_ops &, const praxis::optimization::solver_ops &, const screw_chain &,
+                                                                     const praxis::transform &desired, const joint_vector &j0, const solver_parameters &, ik_result &answer)
 {
     answer.iterations.push_back(iteration_state{j0, 0.5, 0.25, 0.125, 7u});
     answer.solutions.push_back(configuration(desired(0, 3), desired(1, 3)));
@@ -58,8 +60,8 @@ praxis::expected<void, praxis::refusal> recording_inverse_kinematics(const praxi
 // The step is reported and no solution is offered, so the solve is genuinely entered and ik_solve
 // refuses afterwards on an empty solution set rather than before the solver is reached.
 praxis::expected<void, praxis::refusal> fruitless_inverse_kinematics(const praxis::rigid_motion::screw_ops &, const praxis::rigid_motion::frame_ops &, const forward_kinematics_ops &,
-                                                                     const differential_kinematics_ops &, const screw_chain &, const praxis::transform &, const joint_vector &j0,
-                                                                     const solver_parameters &, ik_result &answer)
+                                                                     const differential_kinematics_ops &, const praxis::optimization::solver_ops &, const screw_chain &,
+                                                                     const praxis::transform &, const joint_vector &j0, const solver_parameters &, ik_result &answer)
 {
     answer.iterations.push_back(iteration_state{j0, 0.5, 0.25, 0.125, 7u});
 
@@ -107,11 +109,11 @@ struct bare_arm
 // screw-swept motion, so a screw preview is a motion operation that refuses before the solver.
 bare_arm compose_arm(const forward_kinematics_ops &forward, const differential_kinematics_ops &differential, const inverse_kinematics_ops &inverse)
 {
-    auto robot = std::make_shared<scene_robot>(
-            scene_robot::compose(
-                    kinematics::compose(sliding_chain(), forward, differential, inverse, praxis::rigid_motion::baseline().screw, praxis::rigid_motion::baseline().frame).value(),
-                    praxis::manipulator::baseline().robot, praxis::rigid_motion::baseline().frame, 2u)
-                    .value());
+    auto robot = std::make_shared<scene_robot>(scene_robot::compose(kinematics::compose(sliding_chain(), forward, differential, inverse, praxis::rigid_motion::baseline().screw,
+                                                                                        praxis::rigid_motion::baseline().frame, praxis::optimization::baseline().solver)
+                                                                            .value(),
+                                                                    praxis::manipulator::baseline().robot, praxis::rigid_motion::baseline().frame, 2u)
+                                                       .value());
     robot->set_joint_positions(configuration(0.25, -0.5));
 
     auto control = std::make_unique<robot_controller>(*robot, motion_ops{.task_space_pose = &solving_task_space_pose}, composing_path(), task_trajectory_ops{}, composing_time_scaling(),

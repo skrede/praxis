@@ -12,6 +12,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <vector>
@@ -79,7 +81,8 @@ TEST_CASE("a_reflected_seed_reaches_the_requested_pose_from_a_configuration_that
         case_source drawn             = case_source::at_case(recorded_seed, "ik.inverse_kinematics", spread::bulk, index);
         const evaluation_case example = drawn_case(drawn);
         const joint_vector seed       = drawn_joints(drawn, example.chain.joint_count());
-        const auto composed           = kinematics::compose(example.chain, reference.fk, reference.dk, reference.ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame);
+        const auto composed           = kinematics::compose(example.chain, reference.fk, reference.dk, reference.ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame,
+                                                            optimization::baseline().solver);
         if(!composed)
             continue;
 
@@ -89,10 +92,10 @@ TEST_CASE("a_reflected_seed_reaches_the_requested_pose_from_a_configuration_that
 
         ik_result here;
         ik_result there;
-        const expected<void, refusal> held =
-                inverse_kinematics(rigid_motion::baseline().screw, rigid_motion::baseline().frame, reference.fk, reference.dk, example.chain, *target, seed, solver_parameters(), here);
-        const expected<void, refusal> other = solves_from_a_reflected_seed(rigid_motion::baseline().screw, rigid_motion::baseline().frame, reference.fk, reference.dk, example.chain,
-                                                                           *target, seed, solver_parameters(), there);
+        const expected<void, refusal> held  = inverse_kinematics(rigid_motion::baseline().screw, rigid_motion::baseline().frame, reference.fk, reference.dk,
+                                                                 optimization::baseline().solver, example.chain, *target, seed, solver_parameters(), here);
+        const expected<void, refusal> other = solves_from_a_reflected_seed(rigid_motion::baseline().screw, rigid_motion::baseline().frame, reference.fk, reference.dk,
+                                                                           optimization::baseline().solver, example.chain, *target, seed, solver_parameters(), there);
         if(!held || !other || here.solutions.empty() || there.solutions.empty())
             continue;
 

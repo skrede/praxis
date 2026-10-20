@@ -10,6 +10,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <Eigen/SVD>
@@ -80,7 +82,7 @@ arm_pipe pipe(scheduler &loop, const screw_chain &chain, std::uint32_t joints, c
     const strand work = *loop.make_strand();
     auto robot        = std::make_shared<scene_robot>(
             scene_robot::compose(kinematics::compose(chain, forward_kinematics_ops{.forward_kinematics = &sliding_forward_kinematics}, differential, inverse_kinematics_ops{},
-                                                     praxis::rigid_motion::baseline().screw, praxis::rigid_motion::baseline().frame)
+                                                     praxis::rigid_motion::baseline().screw, praxis::rigid_motion::baseline().frame, praxis::optimization::baseline().solver)
                                          .value(),
                                  robot_ops{}, praxis::rigid_motion::baseline().frame, joints)
                     .value());

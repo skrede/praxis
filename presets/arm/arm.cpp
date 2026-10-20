@@ -119,7 +119,8 @@ manipulator::arm_composition arm_windows(arm_scenario chosen)
 }
 
 std::shared_ptr<scene::preset> arm_preset(const scene::preset_site &site, const manipulator::capabilities &arm, const trajectory::capabilities &shapes,
-                                          const rigid_motion::capabilities &motions, const arm_scenario &chosen, const manipulator::arm_composition &composed)
+                                          const rigid_motion::capabilities &motions, const optimization::capabilities &solving, const arm_scenario &chosen,
+                                          const manipulator::arm_composition &composed)
 {
     auto description = meios::load(chosen.description, chosen.options);
     if(!description)
@@ -130,7 +131,7 @@ std::shared_ptr<scene::preset> arm_preset(const scene::preset_site &site, const 
         return nullptr;
     }
 
-    return manipulator::compose_arm(description->robot, site, scenario_attachments(composed, chosen), arm, shapes, motions, chosen.initial, composed.windows);
+    return manipulator::compose_arm(description->robot, site, scenario_attachments(composed, chosen), arm, shapes, motions, solving, chosen.initial, composed.windows);
 }
 
 }

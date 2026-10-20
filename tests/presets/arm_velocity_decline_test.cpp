@@ -15,6 +15,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <threepp/scenes/Scene.hpp>
@@ -59,7 +61,8 @@ std::string said(const std::string &reported)
 
 std::shared_ptr<scene::preset> open_with(threepp::Scene &target, const presets::arm_scenario &chosen, const manipulator::capabilities &arm)
 {
-    return presets::arm_preset(unwired(target), arm, trajectory::baseline(), rigid_motion::baseline(), chosen, presets::arm_windows_velocity_kinematics(chosen));
+    return presets::arm_preset(unwired(target), arm, trajectory::baseline(), rigid_motion::baseline(), optimization::baseline(), chosen,
+                               presets::arm_windows_velocity_kinematics(chosen));
 }
 
 }

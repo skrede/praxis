@@ -239,6 +239,7 @@ praxis_add_module(manipulator
     praxis::scheduler
     praxis::config
     praxis::scene
+    praxis::optimization
     praxis::trajectory
     praxis::rigid_motion
     meios::urdf

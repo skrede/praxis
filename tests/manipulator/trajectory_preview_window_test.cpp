@@ -15,6 +15,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <imgui_internal.h>
@@ -84,8 +86,8 @@ transform offset_tool_pose(const transform &pose, const transform &offset)
 }
 
 expected<void, refusal> recording_inverse_kinematics(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const forward_kinematics_ops &,
-                                                     const differential_kinematics_ops &, const screw_chain &, const transform &desired, const joint_vector &j0,
-                                                     const solver_parameters &, ik_result &answer)
+                                                     const differential_kinematics_ops &, const optimization::solver_ops &, const screw_chain &, const transform &desired,
+                                                     const joint_vector &j0, const solver_parameters &, ik_result &answer)
 {
     answer.iterations.push_back(iteration_state{j0, 0.5, 0.25, 0.125, 7u});
     answer.solutions.push_back(configuration(desired(0, 3), desired(1, 3)));
@@ -116,7 +118,8 @@ preview_run run_stating(double span, double moved_at, std::size_t moved)
 scene_robot previewing_arm()
 {
     return scene_robot::compose(kinematics::compose(sliding_chain(), forward_kinematics_ops{.forward_kinematics = &sliding_forward_kinematics}, differential_kinematics_ops{},
-                                                    inverse_kinematics_ops{&recording_inverse_kinematics}, rigid_motion::baseline().screw, rigid_motion::baseline().frame)
+                                                    inverse_kinematics_ops{&recording_inverse_kinematics}, rigid_motion::baseline().screw, rigid_motion::baseline().frame,
+                                                    optimization::baseline().solver)
                                         .value(),
                                 robot_ops{.tool_pose_from_flange_pose = &offset_tool_pose}, rigid_motion::baseline().frame, 2u)
             .value();

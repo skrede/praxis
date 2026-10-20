@@ -12,6 +12,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/scheduler/scheduler.h"
 
 #include "praxis/evaluation/tolerance.h"
@@ -187,7 +189,7 @@ composition compose_with(stage &built, const capabilities &arm, const trajectory
 {
     captured_log captured;
 
-    std::shared_ptr<scene::preset> composed = compose_arm(description, built.site, attachments{}, arm, shapes, motions, one_joint(0.25), windows);
+    std::shared_ptr<scene::preset> composed = compose_arm(description, built.site, attachments{}, arm, shapes, motions, optimization::baseline(), one_joint(0.25), windows);
 
     return composition{std::move(composed), captured.text()};
 }

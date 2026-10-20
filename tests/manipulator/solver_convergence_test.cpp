@@ -6,6 +6,8 @@
 #include "praxis/rigid_motion/baseline/screw.h"
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/evaluation/tolerance.h"
 
 #include <catch2/catch_test_macros.hpp>
@@ -74,7 +76,7 @@ struct round_trips
 round_trips round_trip(const screw_chain &chain, const std::vector<joint_vector> &grid, const solver_parameters &parameters)
 {
     const kinematics solver = manipulator::make_kinematics(chain, manipulator::baseline().fk, manipulator::baseline().dk, manipulator::baseline().ik, rigid_motion::baseline().screw,
-                                                           rigid_motion::baseline().frame)
+                                                           rigid_motion::baseline().frame, optimization::baseline().solver)
                                       .value();
     round_trips seen{0u, grid.size(), 0.0, 0.0, 0u};
 
@@ -160,7 +162,7 @@ TEST_CASE("a_budget_at_the_top_of_its_range_still_runs_the_solve")
     const solver_parameters topmost(defaults.position_tol, defaults.orientation_tol, std::numeric_limits<std::uint32_t>::max());
 
     const kinematics solver     = manipulator::make_kinematics(fixture::three_link_arm(), manipulator::baseline().fk, manipulator::baseline().dk, manipulator::baseline().ik,
-                                                               rigid_motion::baseline().screw, rigid_motion::baseline().frame)
+                                                               rigid_motion::baseline().screw, rigid_motion::baseline().frame, optimization::baseline().solver)
                                           .value();
     const transform target      = solver.fk_solve(fixture::posed_arm()).value();
     const joint_vector seed     = fixture::arm_configuration(-0.2, -0.5, 0.9);
@@ -179,7 +181,7 @@ TEST_CASE("a_budget_at_the_top_of_its_range_still_runs_the_solve")
 TEST_CASE("the_recorded_errors_are_the_two_halves_of_the_body_twist")
 {
     const kinematics solver = manipulator::make_kinematics(fixture::recorded_arm(), manipulator::baseline().fk, manipulator::baseline().dk, manipulator::baseline().ik,
-                                                           rigid_motion::baseline().screw, rigid_motion::baseline().frame)
+                                                           rigid_motion::baseline().screw, rigid_motion::baseline().frame, optimization::baseline().solver)
                                       .value();
     const joint_vector seed = fixture::recorded_configuration(0.3, -0.3, 0.2, -0.3, -0.8, -0.1);
     const transform target  = solver.fk_solve(fixture::recorded_configuration(0.5, -1.1, 1.0, -0.7, 0.6, -0.5)).value();

@@ -16,6 +16,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <threepp/scenes/Scene.hpp>
@@ -88,7 +90,7 @@ opening open_with(threepp::Scene &target, const commanding_scenario &named, cons
     opening made;
     {
         const tests::captured_log captured;
-        made.composed = presets::arm_preset(unwired(target), arm, trajectory::baseline(), rigid_motion::baseline(), chosen, named.opens(chosen));
+        made.composed = presets::arm_preset(unwired(target), arm, trajectory::baseline(), rigid_motion::baseline(), optimization::baseline(), chosen, named.opens(chosen));
         made.reported = captured.text();
     }
 

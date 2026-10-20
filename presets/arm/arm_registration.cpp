@@ -16,6 +16,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/config/store.h"
 #include "praxis/config/binding.h"
 #include "praxis/config/document.h"
@@ -41,6 +43,7 @@ struct arm_capabilities
     manipulator::capabilities arm;
     trajectory::capabilities shapes;
     rigid_motion::capabilities motions;
+    optimization::capabilities solving;
 };
 
 // Where one arm keeps a chain somebody supplied, asked of the caller's route by the name the arm's
@@ -73,7 +76,7 @@ scene::preset_registry::factory arm_factory(config::location registered, std::ve
         const scenario_documents documents{bound, carried.values, kept_chain(carried.values, bound.at, located)};
         const opened_scenario opened = windows(machine, documents, composed.motions);
 
-        std::shared_ptr<scene::preset> built = arm_preset(site, composed.arm, composed.shapes, composed.motions, opened.opening, opened.composed);
+        std::shared_ptr<scene::preset> built = arm_preset(site, composed.arm, composed.shapes, composed.motions, composed.solving, opened.opening, opened.composed);
         if(built != nullptr && announced)
             announced(opened.announced, opened.carried);
 
@@ -123,12 +126,13 @@ std::optional<arm_scenario_kind> offered_scenario(const config::location &at, co
 std::vector<std::string> register_arms(const std::shared_ptr<scene::preset_registry> &registry, std::span<const config::location> documents,
                                        std::span<const std::filesystem::path> roots, document_route located, composed_route announced)
 {
-    return register_arms(registry, documents, roots, std::move(located), std::move(announced), manipulator::baseline(), trajectory::baseline(), rigid_motion::baseline());
+    return register_arms(registry, documents, roots, std::move(located), std::move(announced), manipulator::baseline(), trajectory::baseline(), rigid_motion::baseline(),
+                         optimization::baseline());
 }
 
 std::vector<std::string> register_arms(const std::shared_ptr<scene::preset_registry> &registry, std::span<const config::location> documents,
                                        std::span<const std::filesystem::path> roots, document_route located, composed_route announced, const manipulator::capabilities &arm,
-                                       const trajectory::capabilities &shapes, const rigid_motion::capabilities &motions)
+                                       const trajectory::capabilities &shapes, const rigid_motion::capabilities &motions, const optimization::capabilities &solving)
 {
     if(registry == nullptr)
     {
@@ -150,7 +154,7 @@ std::vector<std::string> register_arms(const std::shared_ptr<scene::preset_regis
             continue;
 
         registered.push_back(*named);
-        registry->register_preset(*named, arm_factory(at, searched, located, announced, arm_capabilities{arm, shapes, motions}, composer_for(*scenario)));
+        registry->register_preset(*named, arm_factory(at, searched, located, announced, arm_capabilities{arm, shapes, motions, solving}, composer_for(*scenario)));
     }
 
     return registered;

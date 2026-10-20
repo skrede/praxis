@@ -145,8 +145,8 @@ expected<joint_vector, refusal> iterated(const handed_maps &maps, const transfor
 
 template<step S, twist_frame F, helpers H, iteration_cap C>
 expected<void, refusal> ikin(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &, const manipulator::forward_kinematics_ops &forward,
-                             const manipulator::differential_kinematics_ops &differential, const manipulator::screw_chain &chain, const transform &desired, const joint_vector &j0,
-                             const manipulator::solver_parameters &parameters, manipulator::ik_result &answer)
+                             const manipulator::differential_kinematics_ops &differential, const optimization::solver_ops &, const manipulator::screw_chain &chain,
+                             const transform &desired, const joint_vector &j0, const manipulator::solver_parameters &parameters, manipulator::ik_result &answer)
 {
     if(j0.size() != static_cast<Eigen::Index>(chain.joint_count()))
         return unexpected(refusal::unsupported_input);

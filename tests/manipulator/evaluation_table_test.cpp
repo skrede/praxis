@@ -13,6 +13,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <meios/model.h>
@@ -173,7 +175,9 @@ TEST_CASE("a_drawn_case_and_a_drawn_machine_carry_one_entry_per_axis_the_source_
         REQUIRE(static_cast<std::size_t>(example.joints.size()) == example.chain.joint_count());
         REQUIRE(static_cast<std::size_t>(example.chain.limits.velocity.size()) == example.chain.joint_count());
         REQUIRE(static_cast<std::size_t>(example.chain.limits.lower_position.size()) == example.chain.joint_count());
-        REQUIRE(manipulator::kinematics::compose(example.chain, reference.fk, reference.dk, reference.ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame).has_value());
+        REQUIRE(manipulator::kinematics::compose(example.chain, reference.fk, reference.dk, reference.ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame,
+                                                 optimization::baseline().solver)
+                        .has_value());
         REQUIRE(machine.links.size() == machine.joints.size() + 1u);
         REQUIRE(machine.topo.parent_of.size() == machine.links.size());
     }

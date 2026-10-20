@@ -4,6 +4,8 @@
 #include "praxis/manipulator/baseline/kinematics.h"
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <limits>
@@ -54,8 +56,8 @@ const solver_parameters tight_parameters(1.0e-10, 1.0e-10, 400u);
 
 transform reached(const joint_vector &q)
 {
-    expected<kinematics, refusal> solver =
-            manipulator::make_kinematics(planar_arm(), manipulator::baseline().fk, manipulator::baseline().dk, manipulator::baseline().ik, reference_screw, reference_frames);
+    expected<kinematics, refusal> solver = manipulator::make_kinematics(planar_arm(), manipulator::baseline().fk, manipulator::baseline().dk, manipulator::baseline().ik,
+                                                                        reference_screw, reference_frames, optimization::baseline().solver);
     REQUIRE(solver);
     const expected<transform, refusal> pose = solver->fk_solve(q);
     REQUIRE(pose);

@@ -12,6 +12,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <threepp/scenes/Scene.hpp>
@@ -65,8 +67,8 @@ screw_chain reaching_chain()
 // Three answers for one target, in an order that is not their order of nearness to where the arm
 // stands: the second is the nearest and the first is what taking the front of the set would give.
 praxis::expected<void, praxis::refusal> three_branches(const praxis::rigid_motion::screw_ops &, const praxis::rigid_motion::frame_ops &, const forward_kinematics_ops &,
-                                                       const differential_kinematics_ops &, const screw_chain &, const praxis::transform &, const joint_vector &,
-                                                       const solver_parameters &, ik_result &answer)
+                                                       const differential_kinematics_ops &, const praxis::optimization::solver_ops &, const screw_chain &, const praxis::transform &,
+                                                       const joint_vector &, const solver_parameters &, ik_result &answer)
 {
     answer.solutions.push_back(configuration(1.0, 1.0));
     answer.solutions.push_back(configuration(0.5, -0.25));
@@ -79,8 +81,8 @@ praxis::expected<void, praxis::refusal> three_branches(const praxis::rigid_motio
 // a fraction of a turn away. Wrapped, the first is the nearer; unwrapped it is the farther by a wide
 // margin, so which the arm takes says which metric decided.
 praxis::expected<void, praxis::refusal> a_turn_and_a_fraction(const praxis::rigid_motion::screw_ops &, const praxis::rigid_motion::frame_ops &, const forward_kinematics_ops &,
-                                                              const differential_kinematics_ops &, const screw_chain &, const praxis::transform &, const joint_vector &,
-                                                              const solver_parameters &, ik_result &answer)
+                                                              const differential_kinematics_ops &, const praxis::optimization::solver_ops &, const screw_chain &,
+                                                              const praxis::transform &, const joint_vector &, const solver_parameters &, ik_result &answer)
 {
     answer.solutions.push_back(configuration(0.25 + 2.0 * std::numbers::pi, -0.5));
     answer.solutions.push_back(configuration(0.9, -0.5));
@@ -109,7 +111,7 @@ struct stage
             , shown(two_joint_handle(), attachments{}, *scene, loop.main_strand(), published->reader(), praxis::rigid_motion::baseline().screw, praxis::rigid_motion::screw_slot_set{})
     {
         auto solver = kinematics::compose(reaching_chain(), forward_kinematics_ops{.forward_kinematics = &sliding_forward_kinematics}, differential_kinematics_ops{}, inverse,
-                                          praxis::rigid_motion::baseline().screw, praxis::rigid_motion::baseline().frame);
+                                          praxis::rigid_motion::baseline().screw, praxis::rigid_motion::baseline().frame, praxis::optimization::baseline().solver);
         auto driven = std::make_shared<scene_robot>(scene_robot::compose(solver.value(), robot_ops{}, praxis::rigid_motion::baseline().frame, 2u).value());
         driven->set_joint_positions(configuration(0.25, -0.5));
 

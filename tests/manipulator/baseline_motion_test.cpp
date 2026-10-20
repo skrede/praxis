@@ -10,6 +10,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/evaluation/tolerance.h"
 
 #include <catch2/catch_test_macros.hpp>
@@ -42,7 +44,9 @@ rigid_motion::screw_ops reversing_the_exponential()
 
 TEST_CASE("resolving_a_task_space_pose_reaches_it_under_forward_kinematics")
 {
-    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame).value();
+    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame,
+                                              optimization::baseline().solver)
+                                      .value();
     const transform wanted  = solver.fk_solve(posed_arm()).value();
     const joint_vector j0   = arm_configuration(0.3, -1.1, 0.45);
 
@@ -55,7 +59,9 @@ TEST_CASE("resolving_a_task_space_pose_reaches_it_under_forward_kinematics")
 
 TEST_CASE("a_screw_motion_of_zero_angle_returns_the_seed_configuration")
 {
-    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame).value();
+    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame,
+                                              optimization::baseline().solver)
+                                      .value();
     const joint_vector at   = posed_arm();
     const transform start   = solver.fk_solve(at).value();
 
@@ -70,7 +76,9 @@ TEST_CASE("a_screw_motion_of_zero_angle_returns_the_seed_configuration")
 // would carry the origin around the world z instead.
 TEST_CASE("a_zero_pitch_screw_through_the_tool_origin_reorients_the_tool_and_leaves_it_in_place")
 {
-    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame).value();
+    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame,
+                                              optimization::baseline().solver)
+                                      .value();
     const joint_vector at   = posed_arm();
     const transform start   = solver.fk_solve(at).value();
 
@@ -89,7 +97,9 @@ TEST_CASE("a_zero_pitch_screw_through_the_tool_origin_reorients_the_tool_and_lea
 // no angle about a real axis.
 TEST_CASE("a_screw_about_no_direction_is_refused_rather_than_resolved_at_the_start_pose")
 {
-    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame).value();
+    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame,
+                                              optimization::baseline().solver)
+                                      .value();
     const joint_vector at   = posed_arm();
     const transform start   = solver.fk_solve(at).value();
 
@@ -101,7 +111,9 @@ TEST_CASE("a_screw_about_no_direction_is_refused_rather_than_resolved_at_the_sta
 
 TEST_CASE("a_seed_of_a_size_the_chain_does_not_have_is_refused_by_every_motion_resolution")
 {
-    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame).value();
+    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame,
+                                              optimization::baseline().solver)
+                                      .value();
     const transform start   = solver.fk_solve(posed_arm()).value();
     const joint_vector at   = joint_vector::Constant(2, 0.3);
 
@@ -116,7 +128,9 @@ TEST_CASE("a_seed_of_a_size_the_chain_does_not_have_is_refused_by_every_motion_r
 
 TEST_CASE("a_screw_motion_answers_through_the_exponential_it_is_handed_rather_than_the_reference_one")
 {
-    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame).value();
+    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame,
+                                              optimization::baseline().solver)
+                                      .value();
     const joint_vector at   = posed_arm();
     const transform start   = solver.fk_solve(at).value();
 
@@ -132,7 +146,9 @@ TEST_CASE("a_screw_motion_answers_through_the_exponential_it_is_handed_rather_th
 // that refusal out rather than continuing on a fabricated axis.
 TEST_CASE("a_screw_motion_over_a_screw_aggregate_left_on_its_defaults_is_refused_rather_than_resolved")
 {
-    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame).value();
+    const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame,
+                                              optimization::baseline().solver)
+                                      .value();
     const joint_vector at   = posed_arm();
     const transform start   = solver.fk_solve(at).value();
 

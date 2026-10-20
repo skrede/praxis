@@ -11,6 +11,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include "praxis/scheduler/scheduler.h"
 
 #include <catch2/catch_test_macros.hpp>
@@ -83,7 +85,7 @@ std::weak_ptr<owned_arm> open(counting_site &at, const capabilities &arm, std::s
         return std::vector<std::shared_ptr<scene::imgui_window>>{};
     };
 
-    composed = compose_arm(six_axis_machine(), at.site, attachments{}, arm, trajectory::baseline(), rigid_motion::baseline(), joint_vector{}, capturing);
+    composed = compose_arm(six_axis_machine(), at.site, attachments{}, arm, trajectory::baseline(), rigid_motion::baseline(), optimization::baseline(), joint_vector{}, capturing);
     REQUIRE(composed != nullptr);
 
     return taken;

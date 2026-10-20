@@ -2,6 +2,8 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/capabilities.h"
+
 #include <span>
 #include <vector>
 #include <cstddef>
@@ -44,8 +46,9 @@ praxis::expected<praxis::manipulator::jacobian, praxis::refusal> space_jacobian(
 // afterwards without the solve owning a buffer of its own.
 praxis::expected<void, praxis::refusal> inverse_kinematics(const praxis::rigid_motion::screw_ops &screw, const praxis::rigid_motion::frame_ops &,
                                                            const praxis::manipulator::forward_kinematics_ops &forward, const praxis::manipulator::differential_kinematics_ops &,
-                                                           const praxis::manipulator::screw_chain &chain, const praxis::transform &, const praxis::manipulator::joint_vector &j0,
-                                                           const praxis::manipulator::solver_parameters &parameters, praxis::manipulator::ik_result &answer)
+                                                           const praxis::optimization::solver_ops &, const praxis::manipulator::screw_chain &chain, const praxis::transform &,
+                                                           const praxis::manipulator::joint_vector &j0, const praxis::manipulator::solver_parameters &parameters,
+                                                           praxis::manipulator::ik_result &answer)
 {
     const praxis::expected<praxis::transform, praxis::refusal> reached = forward.forward_kinematics(screw, chain.home, chain.space_screws, j0);
     if(!reached)
@@ -60,11 +63,13 @@ praxis::expected<void, praxis::refusal> inverse_kinematics(const praxis::rigid_m
 // Composing the aggregates is what proves the functions match the seam: a signature that does not
 // match the slot it is assigned to does not compile. A slot no initializer names keeps its inert
 // default.
-praxis::expected<praxis::manipulator::kinematics, praxis::refusal> make_solver(praxis::manipulator::screw_chain chain, const praxis::rigid_motion::capabilities &motions)
+praxis::expected<praxis::manipulator::kinematics, praxis::refusal> make_solver(praxis::manipulator::screw_chain chain, const praxis::rigid_motion::capabilities &motions,
+                                                                               const praxis::optimization::capabilities &solving)
 {
     return praxis::manipulator::kinematics::compose(std::move(chain), praxis::manipulator::forward_kinematics_ops{.forward_kinematics = &forward_kinematics},
                                                     praxis::manipulator::differential_kinematics_ops{.space_jacobian = &space_jacobian},
-                                                    praxis::manipulator::inverse_kinematics_ops{.inverse_kinematics = &inverse_kinematics}, motions.screw, motions.frame);
+                                                    praxis::manipulator::inverse_kinematics_ops{.inverse_kinematics = &inverse_kinematics}, motions.screw, motions.frame,
+                                                    solving.solver);
 }
 
 }
