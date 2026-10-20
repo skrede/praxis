@@ -2104,6 +2104,22 @@ lib/praxis-optimization/include/praxis/optimization/capabilities.h	solver	member
 lib/praxis-optimization/include/praxis/optimization/capabilities.h	baseline	prototype	()	typename:capabilities
 lib/praxis-optimization/include/praxis/optimization/capabilities.h	capability_views	prototype	(const capabilities & c)	typename:std::array<capability_view,1>
 lib/praxis-optimization/include/praxis/optimization/capabilities.h	capability_views	prototype	(capabilities &&)	typename:std::array<capability_view,1>
+lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	optimization	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	praxis	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	scenario_window_inputs	struct	-	-
+lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	seen	member	-	typename:scenario_reader
+lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	dimension	member	-	typename:std::size_t
+lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	registered	member	-	typename:std::vector<std::string>
+lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	scenario	member	-	typename:std::weak_ptr<owned_scenario>
+lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	scenario_window_composer	typedef	-	-
+lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	scenario_composition	struct	-	-
+lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	windows	member	-	typename:scenario_window_composer
+lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	checks_derivative	member	-	typename:bool
+lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	compose_curve_scenario	prototype	(const scene::preset_site & site,std::vector<registered_curve> curves,const capabilities & solving,const scenario_settings & opened,const scenario_composition & composed)	typename:std::shared_ptr<scene::preset>
+lib/praxis-optimization/include/praxis/optimization/curve_graph.h	optimization	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/curve_graph.h	praxis	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/curve_graph.h	curve_reading	prototype	(const scenario_reader & seen)	typename:scene::plot_reading
+lib/praxis-optimization/include/praxis/optimization/curve_graph.h	curve_graph	prototype	(const scenario_window_inputs & inputs,std::string name)	typename:std::shared_ptr<scene::plot_window>
 lib/praxis-optimization/include/praxis/optimization/evaluation.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/evaluation.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/evaluation.h	evaluation_views	prototype	(const capabilities & first,const capabilities & second)	typename:std::array<evaluation::evaluation_view,1>
@@ -2125,6 +2141,55 @@ lib/praxis-optimization/include/praxis/optimization/projected/solver.h	optimizat
 lib/praxis-optimization/include/praxis/optimization/projected/solver.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/projected/solver.h	projected	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/projected/solver.h	solve	prototype	(const problem & p,const Eigen::VectorXd & x0,std::uint32_t max_iterations,std::vector<Eigen::VectorXd> & iterates)	typename:expected<Eigen::VectorXd,refusal>
+lib/praxis-optimization/include/praxis/optimization/registered.h	optimization	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/registered.h	praxis	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/registered.h	registered_curve	struct	-	-
+lib/praxis-optimization/include/praxis/optimization/registered.h	registered_curve	prototype	(std::string called,std::function<double (double)> g,std::function<double (double)> slope)	-
+lib/praxis-optimization/include/praxis/optimization/registered.h	registered_curve	prototype	(std::string called,std::function<double (double)> g,std::function<double (double)> slope,box region)	-
+lib/praxis-optimization/include/praxis/optimization/registered.h	name	member	-	typename:std::string
+lib/praxis-optimization/include/praxis/optimization/registered.h	bounds	member	-	typename:std::optional<box>
+lib/praxis-optimization/include/praxis/optimization/registered.h	value	member	-	typename:std::function<double (double)>
+lib/praxis-optimization/include/praxis/optimization/registered.h	derivative	member	-	typename:std::function<double (double)>
+lib/praxis-optimization/include/praxis/optimization/registered.h	curve_problem	prototype	(const registered_curve & curve,double tolerance)	typename:problem
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	optimization	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	praxis	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	interval	struct	-	-
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	lower	member	-	typename:double
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	upper	member	-	typename:double
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	scenario_run	struct	-	-
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	seed	member	-	typename:Eigen::VectorXd
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	limit	member	-	typename:std::uint32_t
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	iterates	member	-	typename:std::vector<Eigen::VectorXd>
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	errors	member	-	typename:std::vector<expected<Eigen::VectorXd,refusal>>
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	jacobians	member	-	typename:std::vector<expected<Eigen::MatrixXd,refusal>>
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	refused	member	-	typename:std::optional<refusal>
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	scenario_snapshot	struct	-	-
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	selected	member	-	typename:std::size_t
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	range	member	-	typename:interval
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	abscissa	member	-	typename:std::vector<double>
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	ordinate	member	-	typename:std::vector<double>
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	run	member	-	typename:scenario_run
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	scenario_publisher	typedef	-	typename:scheduler::snapshot_publisher<std::shared_ptr<const scenario_snapshot>>
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	scenario_reader	typedef	-	typename:scheduler::snapshot_reader<std::shared_ptr<const scenario_snapshot>>
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	optimization	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	praxis	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	scenario_settings	struct	-	-
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	selected	member	-	typename:std::string
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	range	member	-	typename:interval
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	seed	member	-	typename:double
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	limit	member	-	typename:std::uint32_t
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	tolerance	member	-	typename:double
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	scenario_state	class	-	-
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	scenario_state	prototype	(std::vector<registered_curve> curves,capabilities solving,scenario_settings opened,std::shared_ptr<scenario_publisher> published)	-
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	mutate	function	(operation work)	typename:void
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	run	prototype	()	typename:void
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	m_solving	member	-	typename:capabilities
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	m_settings	member	-	typename:scenario_settings
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	m_curves	member	-	typename:std::vector<registered_curve>
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	m_published	member	-	typename:std::shared_ptr<scenario_publisher>
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	owned_scenario	typedef	-	typename:scheduler::strand_owned<scenario_state>
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	command	function	(const std::weak_ptr<owned_scenario> & scenario,operation work)	typename:void
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	__anon02515bbe0102	function	(scenario_state &state) 	-
 lib/praxis-optimization/include/praxis/optimization/slots.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/slots.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/slots.h	solver_slot	enum	-	typename:std::uint32_t

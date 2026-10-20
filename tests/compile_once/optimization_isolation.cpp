@@ -16,6 +16,7 @@
 #include <array>
 #include <vector>
 #include <cstddef>
+#include <optional>
 
 namespace {
 
@@ -28,6 +29,9 @@ struct reachable_types
     praxis::optimization::solver_ops solver;
     praxis::optimization::solver_slot_set expected;
     praxis::optimization::capabilities composed;
+    std::optional<praxis::optimization::registered_curve> curve;
+    praxis::optimization::scenario_snapshot published;
+    praxis::optimization::scenario_composition scenario;
 };
 
 }
@@ -55,6 +59,7 @@ std::size_t optimization_surface()
     types.composed = baseline();
     types.solver   = types.composed.solver;
     types.expected.set(solver_slot::solve);
+    types.curve.emplace("line", [](double x) { return x; }, [](double) { return 1.0; });
 
     const expected<Eigen::VectorXd, refusal> root          = types.solver.solve(types.posed, Eigen::VectorXd::Ones(1), 4u, iterates);
     const expected<Eigen::VectorXd, refusal> refused       = inert::solve(types.posed, Eigen::VectorXd::Ones(1), 4u, iterates);
@@ -62,7 +67,8 @@ std::size_t optimization_surface()
     const expected<Eigen::VectorXd, refusal> reference_run = solve(types.posed, Eigen::VectorXd::Ones(1), 4u, iterates);
 
     return count_defaults(reported) + iterates.size() + static_cast<std::size_t>(types.region.lower.size()) + (types.expected.contains(solver_slot::solve) ? 1u : 0u) +
-            (root ? 1u : 0u) + (refused ? 1u : 0u) + (reference_run ? 1u : 0u) + (holds_default(view_of(types.solver), 0) ? 1u : 0u);
+            (root ? 1u : 0u) + (refused ? 1u : 0u) + (reference_run ? 1u : 0u) + (holds_default(view_of(types.solver), 0) ? 1u : 0u) +
+            (curve_problem(*types.curve, 1.0e-6).bounds ? 1u : 0u) + types.published.abscissa.size() + (types.scenario.checks_derivative ? 1u : 0u);
 }
 
 }
