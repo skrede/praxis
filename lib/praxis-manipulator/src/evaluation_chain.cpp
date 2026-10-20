@@ -54,57 +54,9 @@ evaluation::residual element_wise_over(std::span<const screw_axis> held, std::sp
     return evaluation::element_wise_residual(here, there);
 }
 
-// A target the chain stands at when driven to a drawn configuration, so a solve that declines failed
-// rather than being asked for an unreachable pose; a seed drawn on its own; and the holder, bound to
-// the reference, that both sides' answers are read back through. The forward maps and the Jacobians
-// are the reference's and both compared sides are handed the same pair, so each side measures its own
-// slot rather than that pair.
-struct solve_request
-{
-    kinematics reference;
-    forward_kinematics_ops forward;
-    differential_kinematics_ops differential;
-    transform target;
-    joint_vector seed;
-};
-
-std::optional<solve_request> drawn_request(evaluation::case_source &drawn, const evaluation_case &example)
-{
-    const joint_vector seed = drawn_joints(drawn, example.chain.joint_count());
-    expected<kinematics, refusal> composed =
-            kinematics::compose(example.chain, shared_forward(), shared_differential(), shared_inverse(), shared_screw(), shared_frames(), shared_solver());
-    if(!composed)
-        return std::nullopt;
-
-    const expected<transform, refusal> reached = composed->fk_solve(example.joints);
-    if(!reached)
-        return std::nullopt;
-
-    return solve_request{std::move(*composed), shared_forward(), shared_differential(), *reached, seed};
-}
-
 expected<void, refusal> solved_by(const inverse_kinematics_ops &bound, const screw_chain &chain, const solve_request &asked, ik_result &answer)
 {
     return bound.inverse_kinematics(shared_screw(), shared_frames(), asked.forward, asked.differential, shared_solver(), chain, asked.target, asked.seed, solver_parameters(), answer);
-}
-
-expected<void, refusal> answered_with_a_configuration(const expected<void, refusal> &solved, const ik_result &answer)
-{
-    if(solved && answer.solutions.empty())
-        return unexpected(refusal::no_solution);
-
-    return solved;
-}
-
-// A pose a chain can reach is reached by more than one configuration, so an answer is read back
-// through one shared forward map before it is held against anything.
-std::optional<transform> reached_by(const kinematics &reference, const ik_result &answer)
-{
-    const expected<transform, refusal> pose = reference.fk_solve(answer.solutions.front());
-    if(!pose)
-        return std::nullopt;
-
-    return *pose;
 }
 
 evaluation::case_result agreeing_everywhere(const screw_chain &held, const screw_chain &against, std::span<const joint_vector> asked_at, const evaluation::tolerance_pair &allowed)
@@ -126,6 +78,38 @@ evaluation::case_result agreeing_everywhere(const screw_chain &held, const screw
     return judged(worst, allowed);
 }
 
+}
+
+std::optional<solve_request> drawn_request(evaluation::case_source &drawn, const evaluation_case &example)
+{
+    const joint_vector seed = drawn_joints(drawn, example.chain.joint_count());
+    expected<kinematics, refusal> composed =
+            kinematics::compose(example.chain, shared_forward(), shared_differential(), shared_inverse(), shared_screw(), shared_frames(), shared_solver());
+    if(!composed)
+        return std::nullopt;
+
+    const expected<transform, refusal> reached = composed->fk_solve(example.joints);
+    if(!reached)
+        return std::nullopt;
+
+    return solve_request{std::move(*composed), shared_forward(), shared_differential(), *reached, seed};
+}
+
+expected<void, refusal> answered_with_a_configuration(const expected<void, refusal> &solved, const ik_result &answer)
+{
+    if(solved && answer.solutions.empty())
+        return unexpected(refusal::no_solution);
+
+    return solved;
+}
+
+std::optional<transform> reached_by(const kinematics &reference, const ik_result &answer)
+{
+    const expected<transform, refusal> pose = reference.fk_solve(answer.solutions.front());
+    if(!pose)
+        return std::nullopt;
+
+    return *pose;
 }
 
 evaluation::case_result compare_body_screws_from_space(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed)

@@ -17,4 +17,9 @@ std::array<evaluation::evaluation_view, 7> evaluation_views(const capabilities &
             evaluation::evaluation_view::of(first.trajectory, second.trajectory, task_trajectory_evaluations())};
 }
 
+std::array<evaluation::evaluation_view, 1> solver_evaluation_views(const optimization::capabilities &first, const optimization::capabilities &second)
+{
+    return {evaluation::evaluation_view::of(first.solver, second.solver, solver_route_evaluations())};
+}
+
 }

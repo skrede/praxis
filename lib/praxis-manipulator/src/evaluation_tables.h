@@ -19,6 +19,8 @@
 
 namespace praxis::manipulator {
 
+struct evaluation_case;
+
 // The bound the two rows whose answer is a Jacobian accumulated along a chain of up to eight screws
 // are judged at, in the dimensionless unit an element-wise difference carries.
 inline constexpr double accumulated_element_wise_tolerance = 1.0e-11;
@@ -39,6 +41,11 @@ inline constexpr double solved_pose_tolerance_meters  = 1.0e-6;
 inline constexpr double inverse_kinematics_tolerance_radians = 1.0e-6;
 inline constexpr double inverse_kinematics_tolerance_meters  = 1.0e-5;
 
+// The bounds the row judging a bound solver through the inverse kinematics adapters is judged at: a
+// rotation in radians and a distance in meters.
+inline constexpr double solver_route_tolerance_radians = 1.0e-6;
+inline constexpr double solver_route_tolerance_meters  = 1.0e-5;
+
 // The bound the row whose answer is a prepared task-space motion is judged at, in the dimensionless
 // unit an element-wise difference carries. One sample holds a configuration, a rate and an
 // acceleration, which fold to whichever of the three stands loosest, the acceleration taken as a
@@ -56,6 +63,7 @@ const evaluation::capability_evaluations<task_trajectory_ops> &task_trajectory_e
 const evaluation::capability_evaluations<forward_kinematics_ops> &forward_kinematics_evaluations();
 const evaluation::capability_evaluations<differential_kinematics_ops> &differential_kinematics_evaluations();
 const evaluation::capability_evaluations<inverse_kinematics_ops> &inverse_kinematics_evaluations();
+const evaluation::capability_evaluations<optimization::solver_ops> &solver_route_evaluations();
 
 const rigid_motion::screw_ops &shared_screw();
 const rigid_motion::frame_ops &shared_frames();
@@ -65,6 +73,29 @@ const inverse_kinematics_ops &shared_inverse();
 const optimization::solver_ops &shared_solver();
 const motion_ops &shared_motion();
 const trajectory::trajectory_ops &shared_trajectory();
+
+// A target the chain stands at when driven to a drawn configuration, so a solve that declines failed
+// rather than being asked for an unreachable pose; a seed drawn on its own; and the holder, bound to
+// the reference, that both sides' answers are read back through. The forward maps and the Jacobians
+// are the reference's and both compared sides are handed the same pair, so each side measures its own
+// slot rather than that pair.
+struct solve_request
+{
+    kinematics reference;
+    forward_kinematics_ops forward;
+    differential_kinematics_ops differential;
+    transform target;
+    joint_vector seed;
+};
+
+std::optional<solve_request> drawn_request(evaluation::case_source &drawn, const evaluation_case &example);
+
+// A solve that succeeds with no configuration in its answer is read as the refusal no_solution.
+expected<void, refusal> answered_with_a_configuration(const expected<void, refusal> &solved, const ik_result &answer);
+
+// A pose a chain can reach is reached by more than one configuration, so an answer is read back
+// through one shared forward map before it is held against anything.
+std::optional<transform> reached_by(const kinematics &reference, const ik_result &answer);
 
 inline evaluation::case_result judged(const evaluation::residual &difference, const evaluation::tolerance_pair &allowed)
 {
@@ -120,10 +151,12 @@ inline evaluation::case_result reaching_what_was_asked(const std::optional<trans
 }
 
 // The three slots whose return types no shipped residual folds over: a sequence of screw axes, a
-// solve that answers nothing and writes into a result the caller owns, and a whole chain.
+// solve that answers nothing and writes into a result the caller owns, and a whole chain; and a
+// solver, judged by the solve it drives through an inverse kinematics adapter.
 evaluation::case_result compare_build_chain(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed);
 evaluation::case_result compare_inverse_kinematics(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed);
 evaluation::case_result compare_body_screws_from_space(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed);
+evaluation::case_result compare_solver_route(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed);
 
 }
 

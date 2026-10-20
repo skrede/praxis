@@ -622,6 +622,10 @@ lib/praxis-manipulator/include/praxis/manipulator/evaluation.h	evaluation_views	
 lib/praxis-manipulator/include/praxis/manipulator/evaluation.h	evaluation_views	prototype	(capabilities &&,const capabilities &)	typename:std::array<evaluation::evaluation_view,7>
 lib/praxis-manipulator/include/praxis/manipulator/evaluation.h	evaluation_views	prototype	(const capabilities &,capabilities &&)	typename:std::array<evaluation::evaluation_view,7>
 lib/praxis-manipulator/include/praxis/manipulator/evaluation.h	evaluation_views	prototype	(capabilities &&,capabilities &&)	typename:std::array<evaluation::evaluation_view,7>
+lib/praxis-manipulator/include/praxis/manipulator/evaluation.h	solver_evaluation_views	prototype	(const optimization::capabilities & first,const optimization::capabilities & second)	typename:std::array<evaluation::evaluation_view,1>
+lib/praxis-manipulator/include/praxis/manipulator/evaluation.h	solver_evaluation_views	prototype	(optimization::capabilities &&,const optimization::capabilities &)	typename:std::array<evaluation::evaluation_view,1>
+lib/praxis-manipulator/include/praxis/manipulator/evaluation.h	solver_evaluation_views	prototype	(const optimization::capabilities &,optimization::capabilities &&)	typename:std::array<evaluation::evaluation_view,1>
+lib/praxis-manipulator/include/praxis/manipulator/evaluation.h	solver_evaluation_views	prototype	(optimization::capabilities &&,optimization::capabilities &&)	typename:std::array<evaluation::evaluation_view,1>
 lib/praxis-manipulator/include/praxis/manipulator/ik_convergence_window.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/ik_convergence_window.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/ik_convergence_window.h	ik_convergence_window	class	-	-

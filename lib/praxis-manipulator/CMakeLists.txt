@@ -100,6 +100,7 @@ praxis_add_module(manipulator
     src/evaluation_modeling.cpp
     src/evaluation_motion.cpp
     src/evaluation_robot.cpp
+    src/evaluation_solver_route.cpp
     src/evaluation_task_trajectory.cpp
     src/fatality.h
     src/fatality.cpp
