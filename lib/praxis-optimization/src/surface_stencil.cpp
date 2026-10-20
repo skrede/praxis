@@ -127,6 +127,8 @@ void surface_stencil::render() const
     place_iterates(*shown);
     draw_step(step_figures{*m_patch, *m_zero_line, *m_nearest, *m_recorded}, *shown, placed);
     draw_planes(point_figures{*m_plane, *m_central}, *shown, placed, m_heights);
+    m_plane->visible   = m_plane->visible && shown_parts.point;
+    m_central->visible = m_central->visible && shown_parts.point;
 }
 
 // The field, its zero curve and the heights the planes are held to change only with the samples.

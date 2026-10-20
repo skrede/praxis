@@ -12,7 +12,7 @@
 namespace praxis::optimization {
 
 // Switches for what a surface's stencil draws in the scene: the field, the iterates, the zero curve,
-// the selected step's construction and the box. A composition that opens no such window draws them
+// the selected step's construction, the box and the planes at the linearized point. A composition that opens no such window draws them
 // all. The switches are a view of the scene and are not saved.
 class surface_graph_window : public scene::imgui_window
 {

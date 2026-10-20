@@ -2329,11 +2329,13 @@ lib/praxis-optimization/include/praxis/optimization/surface_graph_window.h	m_dra
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	surface_view	struct	-	-
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	surface_view	function	()	-
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	field	member	-	typename:bool
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	iterates	member	-	typename:bool
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	zero_curve	member	-	typename:bool
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	step	member	-	typename:bool
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	bounds	member	-	typename:bool
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	point	member	-	typename:bool
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	surface_stencil	class	-	-
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	surface_stencil	prototype	(threepp::Scene & parent,scenario_reader seen,std::shared_ptr<const surface_view> drawn)	-
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	~surface_stencil	prototype	()	-

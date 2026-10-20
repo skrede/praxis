@@ -134,7 +134,8 @@ bool linearization_window::edit_point(const std::vector<interval> &ranges)
     for(std::size_t axis = 0; axis < point_labels.size() && axis < ranges.size() && axis < static_cast<std::size_t>(m_point.size()); ++axis)
     {
         double &coordinate = m_point[static_cast<Eigen::Index>(axis)];
-        edited |= ImGui::InputDouble(point_labels[axis], &coordinate, 0.0, 0.0, "%.10g");
+        ImGui::InputDouble(point_labels[axis], &coordinate, 0.0, 0.0, "%.10g");
+        edited |= ImGui::IsItemDeactivatedAfterEdit();
         edited |= ImGui::SliderScalar(slider_labels[axis], ImGuiDataType_Double, &coordinate, &ranges[axis].lower, &ranges[axis].upper, "%.6g");
     }
 

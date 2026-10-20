@@ -23,6 +23,7 @@ void surface_graph_window::render()
     ImGui::Checkbox("Zero curve", &m_drawn->zero_curve);
     ImGui::Checkbox("Step", &m_drawn->step);
     ImGui::Checkbox("Box", &m_drawn->bounds);
+    ImGui::Checkbox("Linearization", &m_drawn->point);
     ImGui::End();
 }
 

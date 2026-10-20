@@ -8,6 +8,7 @@
 #include "praxis/optimization/problem.h"
 #include "praxis/optimization/registered.h"
 #include "praxis/optimization/capabilities.h"
+#include "praxis/optimization/scenario_state.h"
 #include "praxis/optimization/scenario_snapshot.h"
 #include "praxis/optimization/surface_graph_window.h"
 
@@ -150,4 +151,21 @@ TEST_CASE("the graph window's switches hide and show the zero curve, the selecte
         viewed.press(label);
     for(const char *name : {"zero curve", "tangent plane", "box"})
         CHECK(drawn_visible(scene, name));
+}
+
+TEST_CASE("the graph window's linearization switch hides and shows the plane at the linearized point alone", "[optimization][surface][view]")
+{
+    viewed_surface viewed(true);
+    threepp::Scene &scene = *viewed.built.scene;
+    command(viewed.taken.inputs->scenario, [](scenario_state &state) { state.linearize(Eigen::Vector2d(0.5, 0.5)); });
+    REQUIRE(viewed.loop.drain().has_value());
+    viewed.taken.composed->stencil->render();
+    REQUIRE(drawn_visible(scene, "tangent plane at p"));
+
+    viewed.press("Linearization");
+    CHECK_FALSE(drawn_visible(scene, "tangent plane at p"));
+    CHECK(drawn_visible(scene, "tangent plane"));
+
+    viewed.press("Linearization");
+    CHECK(drawn_visible(scene, "tangent plane at p"));
 }

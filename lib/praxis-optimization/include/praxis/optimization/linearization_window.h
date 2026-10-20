@@ -21,8 +21,8 @@ namespace praxis::optimization {
 std::vector<std::string> linearization_lines(const scenario_linearization &at, bool checks_derivative);
 
 // A point taken by a field and by a slider over the range of each variable, asked of the scenario
-// through its gate as any is edited; the window asks for the middle of the ranges it opened at when
-// it is built.
+// through its gate as a slider moves and once a field is left after an edit; the window asks for the
+// middle of the ranges it opened at when it is built.
 class linearization_window : public scene::imgui_window
 {
 public:

@@ -29,11 +29,22 @@ namespace praxis::optimization {
 // on the strand the frames are drawn on.
 struct surface_view
 {
-    bool field      = true;
-    bool iterates   = true;
-    bool zero_curve = true;
-    bool step       = true;
-    bool bounds     = true;
+    surface_view()
+            : field(true)
+            , iterates(true)
+            , zero_curve(true)
+            , step(true)
+            , bounds(true)
+            , point(true)
+    {
+    }
+
+    bool field;
+    bool iterates;
+    bool zero_curve;
+    bool step;
+    bool bounds;
+    bool point;
 };
 
 // The surface a scenario publishes, drawn in the scene as a height field named "surface" with each
@@ -45,11 +56,10 @@ struct surface_view
 // "tangent plane", the plane's "zero line", the point of it nearest x_k, "nearest point", and the
 // recorded x_(k+1) as "x_(k+1)", a line from the zero plane up to the surface. A problem carrying a
 // box draws it, "box", on the zero plane. A point asked for by the Linearization window draws the
-// tangent plane there, "tangent plane at p", over the ranges and held to the field's heights, and where
-// the check disagrees the central difference's plane, "central difference at p", in wire. Everything
-// is read
-// from the publication, so nothing here evaluates the function, and nothing here picks: the seed is
-// typed. The view says which of these is drawn.
+// tangent plane there, "tangent plane at p", over the ranges and held to the field's heights, and
+// where the check disagrees the central difference's plane, "central difference at p", in wire.
+// Everything is read from the publication, so nothing here evaluates the function, and nothing here
+// picks: the seed is typed. The view says which of these is drawn.
 class surface_stencil : public scene::stencil
 {
 public:

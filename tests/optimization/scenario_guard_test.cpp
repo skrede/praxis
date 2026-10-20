@@ -1,4 +1,7 @@
 #include "composed_curve.h"
+
+#include "panel_keys.h"
+#include "imgui_frame.h"
 #include "captured_log.h"
 
 #include "praxis/optimization/problem.h"
@@ -6,11 +9,14 @@
 #include "praxis/optimization/solve_window.h"
 #include "praxis/optimization/scenario_state.h"
 #include "praxis/optimization/scenario_snapshot.h"
+#include "praxis/optimization/linearization_window.h"
 
 #include "praxis/scheduler/scheduler.h"
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_string.hpp>
+
+#include <imgui.h>
 
 #include <Eigen/Core>
 
@@ -110,6 +116,36 @@ TEST_CASE("a settings edit through the gate that the state's own requests would 
     command(taken.inputs->scenario, [](scenario_state &state) { state.run(); });
     REQUIRE(loop.drain().has_value());
     CHECK(taken.inputs->seen.read()->run.iterates == first->run.iterates);
+
+    taken.composed->tear_down();
+}
+
+TEST_CASE("a point typed into the Linearization window is asked for only once its field is left", "[optimization][scenario]")
+{
+    scheduler::scheduler loop(scheduler::inline_workers);
+    staged built(loop);
+    std::shared_ptr<linearization_window> panel;
+    const scenario_window_composer composer = [&panel](const scenario_window_inputs &offered)
+    {
+        panel = std::make_shared<linearization_window>("Linearization", offered);
+
+        return std::vector<std::shared_ptr<scene::imgui_window>>{panel};
+    };
+    const opened taken = open_composing(built.site, {cubic()}, baseline(), opening(), composer);
+    REQUIRE(settled(loop, taken) != nullptr);
+    const drawing draw = [panel] { panel->render(); };
+
+    tests::imgui_frame frames;
+    stand_below_top(frames, draw, 0);
+    tap(frames, draw, ImGuiKey_Space);
+    ImGui::GetIO().AddInputCharacter(static_cast<unsigned int>('1'));
+    frames.draw_frame(draw);
+    REQUIRE(loop.drain().has_value());
+    CHECK(taken.inputs->seen.read()->linearization->point[0] == 0.0);
+
+    tap(frames, draw, ImGuiKey_Enter);
+    REQUIRE(loop.drain().has_value());
+    CHECK(taken.inputs->seen.read()->linearization->point[0] == 1.0);
 
     taken.composed->tear_down();
 }
