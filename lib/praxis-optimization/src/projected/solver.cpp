@@ -1,4 +1,5 @@
 #include "step_constants.h"
+#include "periodic_bounds.h"
 
 #include "praxis/optimization/projected/solver.h"
 
@@ -19,9 +20,11 @@ bool well_posed(const problem &p, const Eigen::VectorXd &x0)
     if(!p.bounds)
         return true;
 
-    const box &bounds = *p.bounds;
+    const box &bounds     = *p.bounds;
+    const bool sized      = bounds.lower.size() == x0.size() && bounds.upper.size() == x0.size() && (bounds.lower.array() <= bounds.upper.array()).all();
+    const bool wraps_well = bounds.period.size() == 0 || (bounds.period.size() == x0.size() && bounds.period.allFinite() && (bounds.period.array() >= 0.0).all());
 
-    return bounds.lower.size() == x0.size() && bounds.upper.size() == x0.size() && (bounds.lower.array() <= bounds.upper.array()).all();
+    return sized && wraps_well;
 }
 
 // Sugihara's damping at W_E = I: d = (J^T J + (E + bias) I)^-1 J^T e, E = 1/2 e^T e.
@@ -33,12 +36,14 @@ Eigen::VectorXd damped_step(const Eigen::MatrixXd &j, const Eigen::VectorXd &e)
     return coefficients.llt().solve(j.transpose() * e);
 }
 
-// The Euclidean projection onto a box is the componentwise clamp.
+// The Euclidean projection onto a box is the componentwise clamp; a wrapping coordinate is named inside it first.
 Eigen::VectorXd projected(const std::optional<box> &bounds, Eigen::VectorXd x)
 {
-    if(bounds)
-        for(Eigen::Index i = 0; i < x.size(); ++i)
-            x[i] = std::clamp(x[i], bounds->lower[i], bounds->upper[i]);
+    if(!bounds)
+        return x;
+
+    for(Eigen::Index i = 0; i < x.size(); ++i)
+        x[i] = bounds->period.size() == 0 ? std::clamp(x[i], bounds->lower[i], bounds->upper[i]) : projected_between(x[i], bounds->lower[i], bounds->upper[i], bounds->period[i]);
 
     return x;
 }

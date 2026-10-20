@@ -13,13 +13,6 @@ namespace praxis::manipulator {
 
 namespace {
 
-// Lynch & Park, Modern Robotics, Def. 3.24: a unit screw of pitch w . v = 0 is a pure rotation, so a
-// whole turn about it is no displacement.
-bool turns_whole(const screw_axis &s)
-{
-    return is_approx_equal(s.head<3>().norm(), 1.0) && is_approx_equal(s.head<3>().dot(s.tail<3>()), 0.0);
-}
-
 // In machine epsilons of the largest finite operand's magnitude.
 constexpr double turn_count_slack = 2.0;
 
@@ -45,6 +38,13 @@ std::optional<double> named_between(double value, double lower, double upper, do
 
 }
 
+double whole_turn(const screw_axis &s)
+{
+    const bool rotation = is_approx_equal(s.head<3>().norm(), 1.0) && is_approx_equal(s.head<3>().dot(s.tail<3>()), 0.0);
+
+    return rotation ? 2.0 * std::numbers::pi : 0.0;
+}
+
 std::optional<joint_vector> named_inside_bounds(const screw_chain &chain, const joint_vector &candidate)
 {
     const joint_limits &bounds = chain.limits;
@@ -55,7 +55,7 @@ std::optional<joint_vector> named_inside_bounds(const screw_chain &chain, const 
         if(joint >= bounds.lower_position.size() || joint >= bounds.upper_position.size())
             continue;
 
-        const double turn                  = turns_whole(chain.space_screws[static_cast<std::size_t>(joint)]) ? 2.0 * std::numbers::pi : 0.0;
+        const double turn                  = whole_turn(chain.space_screws[static_cast<std::size_t>(joint)]);
         const std::optional<double> inside = named_between(named[joint], bounds.lower_position[joint], bounds.upper_position[joint], turn);
         if(!inside.has_value())
             return std::nullopt;

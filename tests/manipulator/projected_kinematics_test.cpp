@@ -2,6 +2,7 @@
 #include "praxis/manipulator/solver_adapters.h"
 #include "praxis/manipulator/baseline/kinematics.h"
 
+#include "praxis/rigid_motion/angles.h"
 #include "praxis/rigid_motion/capabilities.h"
 #include "praxis/rigid_motion/baseline/frame.h"
 #include "praxis/rigid_motion/baseline/screw.h"
@@ -16,6 +17,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <span>
+#include <array>
 #include <cmath>
 #include <limits>
 #include <vector>
@@ -137,6 +139,15 @@ screw_chain one_joint_about_z(double lower, double upper)
     return screw_chain(home, {about_z}, bounds);
 }
 
+// {lower, upper, seed, answer} in degrees, the target the pose at the answer: the shortest turn from the
+// seed towards it carries the joint past a bound.
+constexpr std::array<std::array<double, 4>, 6> across_a_bound{{{-185.0, 185.0, 180.0, -170.0},
+                                                               {-185.0, 185.0, -180.0, 170.0},
+                                                               {-180.0, 180.0, 170.0, -170.0},
+                                                               {-180.0, 180.0, -170.0, 170.0},
+                                                               {-170.0, 170.0, 160.0, -160.0},
+                                                               {-170.0, 170.0, -160.0, 160.0}}};
+
 struct entry
 {
     screw_chain chain;
@@ -257,6 +268,21 @@ TEST_CASE("a_joint_without_a_bound_pair_stays_free")
     CHECK(is_approx_equal(pose_of(chain, answer.solutions.front()), target, 1.0e-9));
     CHECK(std::abs(answer.solutions.front()[1]) > 1.0);
     CHECK(all_inside(chain, answer.iterations));
+}
+
+TEST_CASE("a_whole_turn_joint_stepped_past_a_bound_is_named_inside_the_bounds_and_answered_there")
+{
+    for(const auto &[lower, upper, seed, answer] : across_a_bound)
+    {
+        CAPTURE(lower, upper, seed, answer);
+        const screw_chain chain = one_joint_about_z(lower * radians_per_degree, upper * radians_per_degree);
+
+        ik_result solved;
+        REQUIRE(routed(chain, pose_of(chain, joint_vector::Constant(1, answer * radians_per_degree)), joint_vector::Constant(1, seed * radians_per_degree), tight_parameters, solved));
+        REQUIRE(solved.solutions.size() == 1u);
+        CHECK(is_approx_equal(solved.solutions.front()[0], answer * radians_per_degree, 1.0e-9));
+        CHECK(all_inside(chain, solved.iterations));
+    }
 }
 
 TEST_CASE("the_first_step_is_the_levenberg_marquardt_step_damped_by_the_error_and_the_bias")

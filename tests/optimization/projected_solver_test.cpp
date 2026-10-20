@@ -8,7 +8,9 @@
 #include <Eigen/Cholesky>
 
 #include <cmath>
+#include <limits>
 #include <vector>
+#include <numbers>
 #include <cstddef>
 #include <utility>
 #include <optional>
@@ -65,6 +67,36 @@ problem unit_circle(std::optional<box> bounds)
     };
 }
 
+// e(x) = a - x wrapped to [-pi, pi]: a heading reached at every value a whole turn from a.
+problem heading(double a, std::optional<box> bounds)
+{
+    return problem{
+            .error     = [a](const Eigen::VectorXd &x) -> expected<Eigen::VectorXd, refusal> { return point(std::remainder(a - x[0], 2.0 * std::numbers::pi)); },
+            .jacobian  = [](const Eigen::VectorXd &) -> expected<Eigen::MatrixXd, refusal> { return Eigen::MatrixXd::Identity(1, 1); },
+            .converged = [](const Eigen::VectorXd &e) -> bool { return e.cwiseAbs().maxCoeff() < 1.0e-12; },
+            .bounds    = std::move(bounds),
+    };
+}
+
+}
+
+TEST_CASE("a periodic coordinate stepped past a bound is named inside the box and reaches the root there")
+{
+    const box wrapping{.lower = point(-3.0), .upper = point(3.0), .period = point(2.0 * std::numbers::pi)};
+    const box clamping{.lower = point(-3.0), .upper = point(3.0)};
+    std::vector<Eigen::VectorXd> named;
+    std::vector<Eigen::VectorXd> clamped;
+
+    const expected<Eigen::VectorXd, refusal> root    = projected::solve(heading(-2.9, wrapping), point(2.9), 50u, named);
+    const expected<Eigen::VectorXd, refusal> stalled = projected::solve(heading(-2.9, clamping), point(2.9), 50u, clamped);
+
+    REQUIRE(root);
+    CHECK(std::abs((*root)[0] - -2.9) < 1.0e-12);
+    for(std::size_t k = 1; k < named.size(); ++k)
+        CHECK(held_by(wrapping, named[k]));
+    REQUIRE_FALSE(stalled);
+    CHECK(stalled.error() == refusal::no_solution);
+    CHECK(clamped.back() == point(3.0));
 }
 
 TEST_CASE("a step the box returns to the iterate it left is refused with every iterate kept inside the box")
@@ -165,13 +197,18 @@ TEST_CASE("an error refused past the seed is passed on with the iterates kept")
     CHECK(iterates.front() == point(0.5));
 }
 
-TEST_CASE("an empty member or a box that does not fit the seed is refused before anything is recorded")
+TEST_CASE("an empty member, a box that does not fit the seed or a period that is not a width of finite non-negative entries is refused before anything is recorded")
 {
     problem without_jacobian  = root_of_four(std::nullopt);
     without_jacobian.jacobian = nullptr;
 
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    const double inf = std::numeric_limits<double>::infinity();
+
     for(const problem &p :
-        {without_jacobian, root_of_four(box{point(0.0, 0.0), point(3.0, 3.0)}), root_of_four(box{point(0.0), point(3.0, 3.0)}), root_of_four(box{point(1.0), point(0.0)})})
+        {without_jacobian, root_of_four(box{point(0.0, 0.0), point(3.0, 3.0)}), root_of_four(box{point(0.0), point(3.0, 3.0)}), root_of_four(box{point(1.0), point(0.0)}),
+         root_of_four(box{point(0.0), point(3.0), point(1.0, 1.0)}), root_of_four(box{point(0.0), point(3.0), point(-1.0)}), root_of_four(box{point(0.0), point(3.0), point(nan)}),
+         root_of_four(box{point(0.0), point(3.0), point(inf)})})
     {
         std::vector<Eigen::VectorXd> iterates;
         const expected<Eigen::VectorXd, refusal> root = projected::solve(p, point(0.5), 50u, iterates);

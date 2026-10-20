@@ -248,16 +248,16 @@ for a real reason.
   designated-initializer composition keeps its in-declaration member initializers.** That is the
   injection aggregates — the per-capability `*_ops` a seam is built from, and the per-extension
   `capabilities` that composes an extension's own — and the problem object a solver slot is handed,
-  and nothing else.
+  with the box the problem carries, and nothing else.
   Giving them a constructor would eliminate the property that made them worth choosing, because a
   type with a user-declared constructor is not an aggregate and cannot be written with designated
   initializers at all, while a type with default member initializers still is one. The defaults are
   the point rather than a convenience: every slot defaults to a named inert function, so a
   value-initialized aggregate is a table of working inert implementations instead of a table of
-  null pointers waiting to be called through. The problem object's members each carry an
-  in-declaration initializer for the same reason in another form: a designated initializer that
-  omits a member lacking one draws a warning, so an optional member added later would warn at every
-  call site already composing a problem.
+  null pointers waiting to be called through. The problem object's members, and the box's optional
+  period, each carry an in-declaration initializer for the same reason in another form: a designated
+  initializer that omits a member lacking one draws a warning, so an optional member added later
+  would warn at every call site already composing a problem or a box.
 - **The constructor's init list is written in member-declaration order.** Members initialize in
   declaration order regardless of the init-list order, so the two must agree (no `-Wreorder`). This
   has a consequence for the member triangle below: a member consumed by another member's constructor

@@ -17,6 +17,8 @@ praxis_add_module(optimization
     src/baseline/capabilities.cpp
     src/projected/solver.cpp
     src/projected/step_constants.h
+    src/projected/periodic_bounds.h
+    src/projected/periodic_bounds.cpp
     PUBLIC_LIBS
     praxis::extension
     praxis::evaluation

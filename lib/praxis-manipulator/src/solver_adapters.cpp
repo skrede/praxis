@@ -1,5 +1,7 @@
 #include "praxis/manipulator/solver_adapters.h"
 
+#include "joint_bounds.h"
+
 #include "baseline/chain_maps.h"
 
 #include "praxis/optimization/problem.h"
@@ -98,15 +100,19 @@ bool within(const Eigen::VectorXd &error, const solver_parameters &parameters)
     return error.size() == 6 && error.head<3>().norm() <= parameters.orientation_tol && error.tail<3>().norm() <= parameters.position_tol;
 }
 
-// A joint the limits do not cover is free on both sides.
-optimization::box joint_box(const joint_limits &limits, Eigen::Index width)
+// A joint the limits do not cover is free on both sides; one that turns whole wraps by its turn.
+optimization::box joint_box(const screw_chain &chain)
 {
     constexpr double unbounded = std::numeric_limits<double>::infinity();
+    const joint_limits &limits = chain.limits;
+    const auto width           = static_cast<Eigen::Index>(chain.joint_count());
     const Eigen::Index covered = std::min({width, limits.lower_position.size(), limits.upper_position.size()});
 
-    optimization::box bounds{Eigen::VectorXd::Constant(width, -unbounded), Eigen::VectorXd::Constant(width, unbounded)};
+    optimization::box bounds{.lower = Eigen::VectorXd::Constant(width, -unbounded), .upper = Eigen::VectorXd::Constant(width, unbounded), .period = Eigen::VectorXd(width)};
     bounds.lower.head(covered) = limits.lower_position.head(covered);
     bounds.upper.head(covered) = limits.upper_position.head(covered);
+    for(Eigen::Index joint = 0; joint < width; ++joint)
+        bounds.period[joint] = whole_turn(chain.space_screws[static_cast<std::size_t>(joint)]);
 
     return bounds;
 }
@@ -118,7 +124,7 @@ optimization::problem residual_problem(const std::shared_ptr<const arm_residual>
             .error     = [arm, error](const Eigen::VectorXd &x) { return finite<Eigen::VectorXd>(error(*arm, x)); },
             .jacobian  = [arm, columns](const Eigen::VectorXd &x) { return finite<Eigen::MatrixXd>(columns(*arm, x)); },
             .converged = [parameters](const Eigen::VectorXd &e) { return within(e, parameters); },
-            .bounds    = joint_box(arm->chain.limits, static_cast<Eigen::Index>(arm->chain.joint_count())),
+            .bounds    = joint_box(arm->chain),
     };
 }
 

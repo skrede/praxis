@@ -17,6 +17,8 @@ struct box
 {
     Eigen::VectorXd lower;
     Eigen::VectorXd upper;
+    // Values a whole period apart name the same point; empty, or an entry of zero, does not wrap.
+    Eigen::VectorXd period = {};
 };
 
 // Lynch & Park, Modern Robotics, sec. 6.2: e(x) = x_d - f(x), J = df/dx, a step x += J^+ e.

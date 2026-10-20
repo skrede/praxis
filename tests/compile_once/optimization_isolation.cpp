@@ -34,14 +34,15 @@ struct reachable_types
 
 namespace praxis::optimization::probe {
 
-// A designated initializer naming only the members a residual solve reads; the target compiles with
-// warnings as errors, so an omitted member lacking an initializer fails here.
+// Designated initializers naming only the members a bounded residual solve reads; the target compiles
+// with warnings as errors, so an omitted member lacking an initializer fails here.
 problem residual_problem()
 {
     return problem{
             .error     = [](const Eigen::VectorXd &x) -> expected<Eigen::VectorXd, refusal> { return Eigen::VectorXd(-x); },
             .jacobian  = [](const Eigen::VectorXd &x) -> expected<Eigen::MatrixXd, refusal> { return Eigen::MatrixXd::Identity(x.size(), x.size()); },
             .converged = [](const Eigen::VectorXd &e) -> bool { return e.norm() < 1.0; },
+            .bounds    = box{.lower = -Eigen::VectorXd::Ones(1), .upper = Eigen::VectorXd::Ones(1)},
     };
 }
 

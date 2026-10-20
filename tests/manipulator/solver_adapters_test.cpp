@@ -18,6 +18,8 @@
 #include <vector>
 #include <cstddef>
 #include <cstdint>
+#include <numbers>
+#include <utility>
 #include <optional>
 
 using namespace praxis;
@@ -173,6 +175,25 @@ TEST_CASE("the problem is bounded by the chain's joint positions and free where 
         CHECK(seen.problem.bounds->lower == configuration(-3.0, -unbounded));
         CHECK(seen.problem.bounds->upper == configuration(3.0, unbounded));
     }
+}
+
+TEST_CASE("the problem wraps a joint that turns whole by a turn and neither a sliding nor a pitched one")
+{
+    constexpr double turn = 2.0 * std::numbers::pi;
+    screw_chain sliding   = planar_arm();
+    sliding.space_screws[1] << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0;
+    screw_chain pitched = planar_arm();
+    pitched.space_screws[1] << 0.0, 0.0, 1.0, 0.0, -upper_arm, 0.1;
+
+    for(const adapter solve : adapters)
+        for(const auto &[chain, second] : {std::pair{planar_arm(1), turn}, std::pair{sliding, 0.0}, std::pair{pitched, 0.0}})
+        {
+            seen = {};
+            ik_result answer;
+            static_cast<void>(asked(solve, manipulator::baseline().fk, {&recording_reference}, chain, target(), seed, answer));
+            REQUIRE(seen.problem.bounds.has_value());
+            CHECK(seen.problem.bounds->period == configuration(turn, second));
+        }
 }
 
 TEST_CASE("handed the inert solver an adapter refuses not_implemented and names no configuration")

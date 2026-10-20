@@ -2111,6 +2111,7 @@ lib/praxis-optimization/include/praxis/optimization/problem.h	praxis	namespace	-
 lib/praxis-optimization/include/praxis/optimization/problem.h	box	struct	-	-
 lib/praxis-optimization/include/praxis/optimization/problem.h	lower	member	-	typename:Eigen::VectorXd
 lib/praxis-optimization/include/praxis/optimization/problem.h	upper	member	-	typename:Eigen::VectorXd
+lib/praxis-optimization/include/praxis/optimization/problem.h	period	member	-	typename:Eigen::VectorXd
 lib/praxis-optimization/include/praxis/optimization/problem.h	problem	struct	-	-
 lib/praxis-optimization/include/praxis/optimization/problem.h	error	member	-	typename:std::function<expected<Eigen::VectorXd,refusal> (const Eigen::VectorXd & x)>
 lib/praxis-optimization/include/praxis/optimization/problem.h	jacobian	member	-	typename:std::function<expected<Eigen::MatrixXd,refusal> (const Eigen::VectorXd & x)>
