@@ -52,17 +52,17 @@ transform marked_inverse(const transform &)
 TEST_CASE("composing_a_flange_pose_with_a_tool_offset_and_decomposing_it_returns_the_flange_pose")
 {
     const transform flange = flange_pose();
-    const transform tool   = tool_pose_from_flange_pose(flange, tool_offset());
+    const transform tool   = tool_pose_from_flange_pose(flange, tool_offset()).value();
 
     CHECK_FALSE(is_approx_equal(tool, flange));
-    CHECK(is_approx_equal(flange_pose_from_tool_pose(rigid_motion::baseline().frame, tool, tool_offset()), flange));
+    CHECK(is_approx_equal(flange_pose_from_tool_pose(rigid_motion::baseline().frame, tool, tool_offset()).value(), flange));
 }
 
 TEST_CASE("decomposing_a_tool_pose_against_frame_operations_left_on_their_defaults_returns_the_tool_pose")
 {
     const transform flange   = flange_pose();
-    const transform tool     = tool_pose_from_flange_pose(flange, tool_offset());
-    const transform answered = flange_pose_from_tool_pose(rigid_motion::frame_ops{}, tool, tool_offset());
+    const transform tool     = tool_pose_from_flange_pose(flange, tool_offset()).value();
+    const transform answered = flange_pose_from_tool_pose(rigid_motion::frame_ops{}, tool, tool_offset()).value();
 
     CHECK(is_approx_equal(answered, tool));
     CHECK_FALSE(is_approx_equal(answered, flange));
@@ -71,11 +71,11 @@ TEST_CASE("decomposing_a_tool_pose_against_frame_operations_left_on_their_defaul
 TEST_CASE("decomposing_a_tool_pose_applies_the_inverse_bound_into_the_frame_operations_it_is_handed")
 {
     const rigid_motion::frame_ops substituted{.inverse = &marked_inverse};
-    const transform tool     = tool_pose_from_flange_pose(flange_pose(), tool_offset());
-    const transform answered = flange_pose_from_tool_pose(substituted, tool, tool_offset());
+    const transform tool     = tool_pose_from_flange_pose(flange_pose(), tool_offset()).value();
+    const transform answered = flange_pose_from_tool_pose(substituted, tool, tool_offset()).value();
 
     CHECK(is_approx_equal(answered, tool * marked_pose()));
-    CHECK_FALSE(is_approx_equal(answered, flange_pose_from_tool_pose(rigid_motion::baseline().frame, tool, tool_offset())));
+    CHECK_FALSE(is_approx_equal(answered, flange_pose_from_tool_pose(rigid_motion::baseline().frame, tool, tool_offset()).value()));
 }
 
 TEST_CASE("the_accessors_return_the_translation_column_and_the_rotation_block_of_a_pose")
@@ -84,8 +84,8 @@ TEST_CASE("the_accessors_return_the_translation_column_and_the_rotation_block_of
     const Eigen::Vector3d at(0.3, -0.8, 1.2);
     const transform pose = rigid_motion::transformation_matrix_from_rotation_position(orientation, at);
 
-    CHECK(position_from_pose(pose).isApprox(at, default_tolerance));
-    CHECK(orientation_from_pose(pose).isApprox(orientation, default_tolerance));
+    CHECK(position_from_pose(pose).value().isApprox(at, default_tolerance));
+    CHECK(orientation_from_pose(pose).value().isApprox(orientation, default_tolerance));
 }
 
 TEST_CASE("solving_for_a_flange_pose_reaches_it_under_forward_kinematics")
@@ -108,14 +108,14 @@ TEST_CASE("solving_for_a_tool_pose_reaches_it_once_the_tool_offset_is_reapplied"
     const kinematics solver = make_kinematics(three_link_arm(), baseline().fk, baseline().dk, baseline().ik, rigid_motion::baseline().screw, rigid_motion::baseline().frame,
                                               optimization::baseline().solver)
                                       .value();
-    const transform wanted  = tool_pose_from_flange_pose(solver.fk_solve(posed_arm()).value(), tool_offset());
+    const transform wanted  = tool_pose_from_flange_pose(solver.fk_solve(posed_arm()).value(), tool_offset()).value();
     const joint_vector j0   = arm_configuration(0.3, -1.1, 0.45);
 
     const expected<joint_vector, refusal> solution = ik_solve_pose(solver, rigid_motion::baseline().frame, wanted, j0, tool_offset());
 
     REQUIRE(solution.has_value());
     CHECK_FALSE(is_approx_equal(*solution, j0));
-    CHECK(is_approx_equal(tool_pose_from_flange_pose(solver.fk_solve(*solution).value(), tool_offset()), wanted, solved_tolerance));
+    CHECK(is_approx_equal(tool_pose_from_flange_pose(solver.fk_solve(*solution).value(), tool_offset()).value(), wanted, solved_tolerance));
 }
 
 // A seed of the wrong length reaches the solver as a vector it cannot difference against the chain,

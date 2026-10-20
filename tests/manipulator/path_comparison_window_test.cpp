@@ -155,7 +155,7 @@ expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> recorded_wa
     return praxis::unexpected(refusal::not_implemented);
 }
 
-transform recorded_conversion(const rigid_motion::frame_ops &frames, const transform &tool_pose, const transform &tool_offset)
+expected<transform, refusal> recorded_conversion(const rigid_motion::frame_ops &frames, const transform &tool_pose, const transform &tool_offset)
 {
     carried_from_the_tool_frame().push_back(tool_pose);
 
@@ -242,7 +242,7 @@ std::vector<transform> carried_to_the_tool_frame(const std::vector<transform> &f
 {
     std::vector<transform> standing;
     for(const transform &pose : flange_poses)
-        standing.push_back(tool_pose_from_flange_pose(pose, bent_tool_offset()));
+        standing.push_back(tool_pose_from_flange_pose(pose, bent_tool_offset()).value());
 
     return standing;
 }

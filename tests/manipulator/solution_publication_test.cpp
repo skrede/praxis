@@ -112,7 +112,7 @@ struct stage
     {
         auto solver = kinematics::compose(reaching_chain(), forward_kinematics_ops{.forward_kinematics = &sliding_forward_kinematics}, differential_kinematics_ops{}, inverse,
                                           praxis::rigid_motion::baseline().screw, praxis::rigid_motion::baseline().frame, praxis::optimization::baseline().solver);
-        auto driven = std::make_shared<scene_robot>(scene_robot::compose(solver.value(), robot_ops{}, praxis::rigid_motion::baseline().frame, 2u).value());
+        auto driven = std::make_shared<scene_robot>(scene_robot::compose(solver.value(), praxis::manipulator::baseline().robot, praxis::rigid_motion::baseline().frame, 2u).value());
         driven->set_joint_positions(configuration(0.25, -0.5));
 
         auto control = std::make_shared<robot_controller>(*driven, motion_ops{}, composing_path(), task_trajectory_ops{}, composing_time_scaling(), praxis::trajectory::trajectory_ops{},

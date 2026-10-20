@@ -26,9 +26,9 @@ static_assert(std::is_trivially_copyable_v<praxis::rigid_motion::screw_ops>);
 
 namespace {
 
-Eigen::Vector3d constant_position(const transform &)
+expected<Eigen::Vector3d, refusal> constant_position(const transform &)
 {
-    return Eigen::Vector3d::Constant(4.0);
+    return Eigen::Vector3d(Eigen::Vector3d::Constant(4.0));
 }
 
 using pose_reading = pose_readout::pose_reading;
@@ -92,19 +92,28 @@ pose_reading answered(robot_slot_set inert, const arm_snapshot &seen, frame_view
 
 }
 
-TEST_CASE("the_pose_conversion_and_accessor_slots_default_to_identity_and_zero")
+TEST_CASE("the_pose_conversion_and_accessor_slots_default_to_refusing_rather_than_to_identity_and_zero")
 {
-    robot_ops ops{};
+    const robot_ops ops{};
 
     REQUIRE(ops.tool_pose_from_flange_pose != nullptr);
     REQUIRE(ops.flange_pose_from_tool_pose != nullptr);
     REQUIRE(ops.position_from_pose != nullptr);
     REQUIRE(ops.orientation_from_pose != nullptr);
 
-    REQUIRE(is_approx_equal(ops.tool_pose_from_flange_pose(transform::Identity(), transform::Identity()), transform::Identity()));
-    REQUIRE(is_approx_equal(ops.flange_pose_from_tool_pose(rigid_motion::frame_ops{}, transform::Identity(), transform::Identity()), transform::Identity()));
-    REQUIRE(ops.position_from_pose(transform::Identity()).isZero(default_tolerance));
-    REQUIRE(ops.orientation_from_pose(transform::Identity()).isApprox(rotation::Identity(), default_tolerance));
+    const expected<transform, refusal> tool           = ops.tool_pose_from_flange_pose(transform::Identity(), transform::Identity());
+    const expected<transform, refusal> flange         = ops.flange_pose_from_tool_pose(rigid_motion::frame_ops{}, transform::Identity(), transform::Identity());
+    const expected<Eigen::Vector3d, refusal> position = ops.position_from_pose(transform::Identity());
+    const expected<rotation, refusal> orientation     = ops.orientation_from_pose(transform::Identity());
+
+    REQUIRE_FALSE(tool.has_value());
+    REQUIRE_FALSE(flange.has_value());
+    REQUIRE_FALSE(position.has_value());
+    REQUIRE_FALSE(orientation.has_value());
+    CHECK(tool.error() == refusal::not_implemented);
+    CHECK(flange.error() == refusal::not_implemented);
+    CHECK(position.error() == refusal::not_implemented);
+    CHECK(orientation.error() == refusal::not_implemented);
 }
 
 TEST_CASE("the_robot_inverse_kinematics_slots_default_to_refusing_rather_than_to_the_seed_configuration")
@@ -130,7 +139,9 @@ TEST_CASE("assigning_one_robot_slot_leaves_every_other_slot_on_its_default")
     robot_ops ops{.position_from_pose = &constant_position};
 
     REQUIRE(ops.position_from_pose == &constant_position);
-    REQUIRE(ops.position_from_pose(transform::Identity()).isApprox(Eigen::Vector3d::Constant(4.0), default_tolerance));
+    const expected<Eigen::Vector3d, refusal> position = ops.position_from_pose(transform::Identity());
+    REQUIRE(position.has_value());
+    REQUIRE(position->isApprox(Eigen::Vector3d::Constant(4.0), default_tolerance));
 
     REQUIRE(ops.tool_pose_from_flange_pose == &inert::tool_pose_from_flange_pose);
     REQUIRE(ops.orientation_from_pose == &inert::orientation_from_pose);

@@ -97,12 +97,10 @@ static_assert(differential_kinematics_partition[static_cast<std::size_t>(differe
 
 static_assert(inverse_kinematics_partition[static_cast<std::size_t>(inverse_kinematics_slot::inverse_kinematics)].carries_the_channel);
 
-// The four pose conversions and accessors are total: each answers for every rigid motion it can be
-// handed, so it has nothing to refuse and no channel to refuse through.
-static_assert(!robot_partition[static_cast<std::size_t>(robot_slot::tool_pose_from_flange_pose)].carries_the_channel);
-static_assert(!robot_partition[static_cast<std::size_t>(robot_slot::flange_pose_from_tool_pose)].carries_the_channel);
-static_assert(!robot_partition[static_cast<std::size_t>(robot_slot::position_from_pose)].carries_the_channel);
-static_assert(!robot_partition[static_cast<std::size_t>(robot_slot::orientation_from_pose)].carries_the_channel);
+static_assert(robot_partition[static_cast<std::size_t>(robot_slot::tool_pose_from_flange_pose)].carries_the_channel);
+static_assert(robot_partition[static_cast<std::size_t>(robot_slot::flange_pose_from_tool_pose)].carries_the_channel);
+static_assert(robot_partition[static_cast<std::size_t>(robot_slot::position_from_pose)].carries_the_channel);
+static_assert(robot_partition[static_cast<std::size_t>(robot_slot::orientation_from_pose)].carries_the_channel);
 static_assert(robot_partition[static_cast<std::size_t>(robot_slot::ik_solve_pose)].carries_the_channel);
 static_assert(robot_partition[static_cast<std::size_t>(robot_slot::ik_solve_flange_pose)].carries_the_channel);
 
@@ -134,5 +132,5 @@ TEST_CASE("every_slot_of_this_extension_is_paired_with_its_enumerator_on_the_sid
             counted(motion_partition) + counted(task_trajectory_partition) + counted(modeling_partition);
 
     CHECK(paired == 16u);
-    CHECK(fallible == 12u);
+    CHECK(fallible == 16u);
 }

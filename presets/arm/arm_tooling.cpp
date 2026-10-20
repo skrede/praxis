@@ -38,7 +38,7 @@ composed_windows declined(manipulator::loadable_robot_stencil &on, const std::st
     on.clear_flange_attachment(manipulator::flange_attachment::tool);
     on.clear_world_object();
 
-    spdlog::error("praxis: 'presets.arm_windows_tooling' was denied {}, which still hold their defaults; every pose it would show would be answered without being computed, so it "
+    spdlog::error("praxis: 'presets.arm_windows_tooling' was denied {}, which still hold their defaults; every pose it would show would be a refusal, so it "
                   "composes no window and draws neither model",
                   unbound);
 

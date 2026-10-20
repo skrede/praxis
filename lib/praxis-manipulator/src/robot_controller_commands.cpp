@@ -28,6 +28,8 @@ namespace {
 // where every one of them is written to the number of distinct configurations the command found.
 constexpr std::size_t reached_nothing = static_cast<std::size_t>(-1);
 
+constexpr std::string_view converting_slot = "robot.flange_pose_from_tool_pose";
+
 // Per joint, in that joint's unit.
 constexpr double held_configuration_tolerance = 1.0e-12;
 
@@ -121,10 +123,12 @@ void robot_controller::preview_task_space_pose(const transform &tool_pose)
     if(executing())
         return;
 
-    const transform target = m_robot.flange_pose_from_tool_pose(tool_pose);
+    const expected<transform, refusal> target = m_robot.flange_pose_from_tool_pose(tool_pose);
+    if(!target)
+        return report_refusal(converting_slot, target.error(), refusal_standing::per_request, request_origin::edited);
 
     const std::uint64_t before                    = m_robot.solver().solve_count();
-    const expected<joint_vector, refusal> reached = kept(before, m_motion.task_space_pose(m_robot.solver(), target, m_robot.joint_positions()));
+    const expected<joint_vector, refusal> reached = kept(before, m_motion.task_space_pose(m_robot.solver(), *target, m_robot.joint_positions()));
     if(reached)
         m_robot.set_joint_positions(*reached);
     else
@@ -142,10 +146,12 @@ void robot_controller::preview_task_space_screw(const transform &tool_pose, cons
     // The exponential premultiplies and the conversion acts on the right, so the turn of the
     // converted start pose is the conversion of the turned one: converting the start converts the
     // whole path.
-    const transform start = m_robot.flange_pose_from_tool_pose(tool_pose);
+    const expected<transform, refusal> start = m_robot.flange_pose_from_tool_pose(tool_pose);
+    if(!start)
+        return report_refusal(converting_slot, start.error(), refusal_standing::per_request, request_origin::edited);
 
     const std::uint64_t before                    = m_robot.solver().solve_count();
-    const expected<joint_vector, refusal> reached = kept(before, m_motion.task_space_screw(m_screw, m_robot.solver(), start, w, q, theta_radians, pitch, m_robot.joint_positions()));
+    const expected<joint_vector, refusal> reached = kept(before, m_motion.task_space_screw(m_screw, m_robot.solver(), *start, w, q, theta_radians, pitch, m_robot.joint_positions()));
     if(reached)
         m_robot.set_joint_positions(*reached);
     else
@@ -171,10 +177,12 @@ void robot_controller::task_space_ptp(const transform &tool_pose)
     if(executing())
         return;
 
-    const transform commanded = m_robot.flange_pose_from_tool_pose(tool_pose);
+    const expected<transform, refusal> commanded = m_robot.flange_pose_from_tool_pose(tool_pose);
+    if(!commanded)
+        return report_refusal(converting_slot, commanded.error());
 
     const std::uint64_t before                   = m_robot.solver().solve_count();
-    const expected<joint_vector, refusal> target = kept(before, m_motion.task_space_pose(m_robot.solver(), commanded, m_robot.joint_positions()));
+    const expected<joint_vector, refusal> target = kept(before, m_motion.task_space_pose(m_robot.solver(), *commanded, m_robot.joint_positions()));
     if(target)
         run_to(*target);
     else
@@ -196,12 +204,15 @@ void robot_controller::solve_from_seeds(const transform &tool_pose, std::span<co
         return;
     }
 
+    const expected<transform, refusal> reaching = m_robot.flange_pose_from_tool_pose(tool_pose);
+    if(!reaching)
+        return report_refusal(converting_slot, reaching.error());
+
     const command_extent extent(*this);
     asking();
 
-    const transform reaching = m_robot.flange_pose_from_tool_pose(tool_pose);
     for(const joint_vector &seed : seeds)
-        solved_from(reaching, seed);
+        solved_from(*reaching, seed);
 
     for(std::size_t &named : m_reached)
         if(named == reached_nothing)
@@ -250,12 +261,14 @@ void robot_controller::task_space_trajectory(std::span<const transform> tool_pos
     if(executing())
         return;
 
-    const std::vector<transform> reaching = flange_poses_from(tool_poses);
-    if(stands_at_every(reaching, m_robot))
+    const expected<std::vector<transform>, refusal> reaching = flange_poses_from(tool_poses);
+    if(!reaching)
+        return report_refusal(converting_slot, reaching.error());
+    if(stands_at_every(*reaching, m_robot))
         return report_held(tool_poses.size(), "pose", "no motion is commanded");
 
     asking();
-    auto motion = m_task_trajectory.task_space_waypoints(m_joint_trajectory, m_motion, m_robot.solver(), reaching, m_robot.joint_positions(), m_robot.limits());
+    auto motion = m_task_trajectory.task_space_waypoints(m_joint_trajectory, m_motion, m_robot.solver(), *reaching, m_robot.joint_positions(), m_robot.limits());
     if(!motion)
     {
         spdlog::error("praxis: the task-space waypoint factory refused {} waypoints, so no motion is commanded", tool_poses.size());
@@ -311,9 +324,11 @@ void robot_controller::preview_trajectory(const transform &tool_pose)
         return;
     }
 
-    const transform target = m_robot.flange_pose_from_tool_pose(tool_pose);
+    const expected<transform, refusal> target = m_robot.flange_pose_from_tool_pose(tool_pose);
+    if(!target)
+        return report_refusal(converting_slot, target.error(), refusal_standing::per_request, request_origin::edited);
 
-    auto motion = task_space_motion(m_motion, m_screw, m_frames, prepared(), m_robot.solver(), m_robot.limits(), m_robot.joint_positions(), *start_pose, target, m_path.decoupled);
+    auto motion = task_space_motion(m_motion, m_screw, m_frames, prepared(), m_robot.solver(), m_robot.limits(), m_robot.joint_positions(), *start_pose, *target, m_path.decoupled);
     if(!motion)
     {
         spdlog::error("praxis: the task-space composition refused the previewed pose, so no preview stands");
@@ -344,11 +359,13 @@ void robot_controller::preview_trajectory(std::span<const transform> tool_poses)
     if(executing())
         return;
 
-    const std::vector<transform> reaching = flange_poses_from(tool_poses);
-    if(stands_at_every(reaching, m_robot))
+    const expected<std::vector<transform>, refusal> reaching = flange_poses_from(tool_poses);
+    if(!reaching)
+        return report_refusal(converting_slot, reaching.error(), refusal_standing::per_request, request_origin::edited);
+    if(stands_at_every(*reaching, m_robot))
         return report_held(tool_poses.size(), "pose", "no preview stands");
 
-    auto motion = m_task_trajectory.task_space_waypoints(m_joint_trajectory, m_motion, m_robot.solver(), reaching, m_robot.joint_positions(), m_robot.limits());
+    auto motion = m_task_trajectory.task_space_waypoints(m_joint_trajectory, m_motion, m_robot.solver(), *reaching, m_robot.joint_positions(), m_robot.limits());
     if(!motion)
     {
         spdlog::error("praxis: the task-space waypoint factory refused {} waypoints, so no preview stands", tool_poses.size());
@@ -588,11 +605,13 @@ void robot_controller::run_along(const transform &tool_pose, task_space_path sha
         return;
     }
 
-    const transform target = m_robot.flange_pose_from_tool_pose(tool_pose);
+    const expected<transform, refusal> target = m_robot.flange_pose_from_tool_pose(tool_pose);
+    if(!target)
+        return report_refusal(converting_slot, target.error());
 
     asking();
     const prepared_time_scaling scaled = prepared();
-    auto motion = task_space_motion(m_motion, m_screw, m_frames, scaled, m_robot.solver(), m_robot.limits(), m_robot.joint_positions(), *start_pose, target, shape);
+    auto motion = task_space_motion(m_motion, m_screw, m_frames, scaled, m_robot.solver(), m_robot.limits(), m_robot.joint_positions(), *start_pose, *target, shape);
     if(!motion)
     {
         report_refusal("task_space_motion", motion.error());
@@ -602,12 +621,17 @@ void robot_controller::run_along(const transform &tool_pose, task_space_path sha
     run(std::move(*motion));
 }
 
-std::vector<transform> robot_controller::flange_poses_from(std::span<const transform> tool_poses) const
+expected<std::vector<transform>, refusal> robot_controller::flange_poses_from(std::span<const transform> tool_poses) const
 {
     std::vector<transform> reaching;
     reaching.reserve(tool_poses.size());
     for(const transform &pose : tool_poses)
-        reaching.push_back(m_robot.flange_pose_from_tool_pose(pose));
+    {
+        const expected<transform, refusal> converted = m_robot.flange_pose_from_tool_pose(pose);
+        if(!converted)
+            return unexpected(converted.error());
+        reaching.push_back(*converted);
+    }
 
     return reaching;
 }

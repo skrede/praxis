@@ -19,6 +19,23 @@ namespace praxis::manipulator {
 // run with holes in it.
 expected<std::vector<joint_vector>, refusal> configurations_along(const trajectory::path_ops &shapes, const joint_vector &from, const joint_vector &to);
 
+// Every pose carried through `convert`, or the first refusal it answered.
+template<typename Convert>
+expected<std::vector<transform>, refusal> each_converted(const std::vector<transform> &poses, Convert convert)
+{
+    std::vector<transform> converted;
+    converted.reserve(poses.size());
+    for(const transform &pose : poses)
+    {
+        const expected<transform, refusal> one = convert(pose);
+        if(!one)
+            return praxis::unexpected(one.error());
+        converted.push_back(*one);
+    }
+
+    return converted;
+}
+
 }
 
 #endif

@@ -80,7 +80,7 @@ clock_source dictating()
     return clock_source{&reading};
 }
 
-transform offset_tool_pose(const transform &pose, const transform &offset)
+expected<transform, refusal> offset_tool_pose(const transform &pose, const transform &offset)
 {
     return transform(pose * offset);
 }

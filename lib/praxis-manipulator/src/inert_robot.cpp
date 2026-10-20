@@ -2,24 +2,24 @@
 
 namespace praxis::manipulator::inert {
 
-transform tool_pose_from_flange_pose(const transform &, const transform &)
+expected<transform, refusal> tool_pose_from_flange_pose(const transform &, const transform &)
 {
-    return transform::Identity();
+    return unexpected(refusal::not_implemented);
 }
 
-transform flange_pose_from_tool_pose(const rigid_motion::frame_ops &, const transform &, const transform &)
+expected<transform, refusal> flange_pose_from_tool_pose(const rigid_motion::frame_ops &, const transform &, const transform &)
 {
-    return transform::Identity();
+    return unexpected(refusal::not_implemented);
 }
 
-Eigen::Vector3d position_from_pose(const transform &)
+expected<Eigen::Vector3d, refusal> position_from_pose(const transform &)
 {
-    return Eigen::Vector3d::Zero();
+    return unexpected(refusal::not_implemented);
 }
 
-rotation orientation_from_pose(const transform &)
+expected<rotation, refusal> orientation_from_pose(const transform &)
 {
-    return rotation::Identity();
+    return unexpected(refusal::not_implemented);
 }
 
 expected<joint_vector, refusal> ik_solve_pose(const kinematics &, const rigid_motion::frame_ops &, const transform &, const joint_vector &, const transform &)

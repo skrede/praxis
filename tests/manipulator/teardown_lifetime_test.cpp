@@ -60,7 +60,7 @@ struct arm_pipe
 arm_pipe pipe(praxis::scheduler::scheduler &loop)
 {
     const strand work    = *loop.make_strand();
-    const auto driven    = std::make_shared<scene_robot>(two_joint_arm(robot_ops{}));
+    const auto driven    = std::make_shared<scene_robot>(two_joint_arm(praxis::manipulator::baseline().robot));
     const auto published = std::make_shared<arm_publisher>();
     const auto control   = std::make_shared<robot_controller>(*driven, composing_motion(), composing_path(), task_trajectory_ops{}, composing_time_scaling(),
                                                               praxis::trajectory::trajectory_ops{}, praxis::rigid_motion::screw_ops{}, praxis::rigid_motion::frame_ops{});

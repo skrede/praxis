@@ -70,22 +70,22 @@ bool scene_robot::tool_offset_known() const
     return m_offset_known;
 }
 
-Eigen::Vector3d scene_robot::position_of(const transform &pose) const
+expected<Eigen::Vector3d, refusal> scene_robot::position_of(const transform &pose) const
 {
     return m_robot.position_from_pose(pose);
 }
 
-rotation scene_robot::orientation_of(const transform &pose) const
+expected<rotation, refusal> scene_robot::orientation_of(const transform &pose) const
 {
     return m_robot.orientation_from_pose(pose);
 }
 
-transform scene_robot::flange_pose_from_tool_pose(const transform &tool_pose) const
+expected<transform, refusal> scene_robot::flange_pose_from_tool_pose(const transform &tool_pose) const
 {
     return m_robot.flange_pose_from_tool_pose(m_frames, tool_pose, m_offset);
 }
 
-transform scene_robot::tool_pose_from_flange_pose(const transform &flange_pose) const
+expected<transform, refusal> scene_robot::tool_pose_from_flange_pose(const transform &flange_pose) const
 {
     return m_robot.tool_pose_from_flange_pose(flange_pose, m_offset);
 }

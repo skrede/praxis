@@ -39,9 +39,8 @@ constexpr std::array robot_table{
                                         const transform flange = drawn.transform_member();
                                         const transform offset = drawn.transform_member();
 
-                                        return judged(evaluation::pose_residual(robot_of(first).tool_pose_from_flange_pose(flange, offset),
-                                                                                robot_of(second).tool_pose_from_flange_pose(flange, offset)),
-                                                      allowed);
+                                        return evaluation::agreed_or_refused(robot_of(first).tool_pose_from_flange_pose(flange, offset),
+                                                                             robot_of(second).tool_pose_from_flange_pose(flange, offset), evaluation::pose_residual, allowed);
                                     }},
         evaluation::slot_evaluation{"robot.flange_pose_from_tool_pose", evaluation::residual_kind::pose, evaluation::tolerance_of(evaluation::residual_kind::pose),
                                     [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result
@@ -49,23 +48,25 @@ constexpr std::array robot_table{
                                         const transform tool   = drawn.transform_member();
                                         const transform offset = drawn.transform_member();
 
-                                        return judged(evaluation::pose_residual(robot_of(first).flange_pose_from_tool_pose(shared_frames(), tool, offset),
-                                                                                robot_of(second).flange_pose_from_tool_pose(shared_frames(), tool, offset)),
-                                                      allowed);
+                                        return evaluation::agreed_or_refused(robot_of(first).flange_pose_from_tool_pose(shared_frames(), tool, offset),
+                                                                             robot_of(second).flange_pose_from_tool_pose(shared_frames(), tool, offset), evaluation::pose_residual,
+                                                                             allowed);
                                     }},
         evaluation::slot_evaluation{"robot.position_from_pose", evaluation::residual_kind::element_wise, evaluation::tolerance_of(evaluation::residual_kind::element_wise),
                                     [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result
                                     {
                                         const transform pose = drawn.transform_member();
 
-                                        return judged(evaluation::element_wise_residual(robot_of(first).position_from_pose(pose), robot_of(second).position_from_pose(pose)), allowed);
+                                        return evaluation::agreed_or_refused(robot_of(first).position_from_pose(pose), robot_of(second).position_from_pose(pose),
+                                                                             evaluation::element_wise_residual, allowed);
                                     }},
         evaluation::slot_evaluation{"robot.orientation_from_pose", evaluation::residual_kind::geodesic, evaluation::tolerance_of(evaluation::residual_kind::geodesic),
                                     [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result
                                     {
                                         const transform pose = drawn.transform_member();
 
-                                        return judged(evaluation::geodesic_residual(robot_of(first).orientation_from_pose(pose), robot_of(second).orientation_from_pose(pose)), allowed);
+                                        return evaluation::agreed_or_refused(robot_of(first).orientation_from_pose(pose), robot_of(second).orientation_from_pose(pose),
+                                                                             evaluation::geodesic_residual, allowed);
                                     }},
         evaluation::slot_evaluation{"robot.ik_solve_pose", evaluation::residual_kind::pose, evaluation::tolerance_pair{solved_pose_tolerance_radians, solved_pose_tolerance_meters},
                                     [](const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed) -> evaluation::case_result

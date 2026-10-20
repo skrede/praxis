@@ -1,3 +1,5 @@
+#include "path_comparison_paths.h"
+
 #include "praxis/manipulator/motion_drawings.h"
 #include "praxis/manipulator/path_comparison_window.h"
 
@@ -32,15 +34,12 @@ bool unchanged(const Eigen::VectorXf &one, const Eigen::VectorXf &other)
     return one.size() == other.size() && one == other;
 }
 
-// The forward map answers flange poses and all four polylines are drawn at the tool center point.
-std::vector<transform> at_the_tool(const robot_ops &robot, const transform &tool_offset, const std::vector<transform> &flange_poses)
-{
-    std::vector<transform> standing;
-    standing.reserve(flange_poses.size());
-    for(const transform &pose : flange_poses)
-        standing.push_back(robot.tool_pose_from_flange_pose(pose, tool_offset));
+constexpr std::string_view converting_slot = "robot.tool_pose_from_flange_pose";
 
-    return standing;
+// The forward map answers flange poses and all four polylines are drawn at the tool center point.
+expected<std::vector<transform>, refusal> at_the_tool(const robot_ops &robot, const transform &tool_offset, const std::vector<transform> &flange_poses)
+{
+    return each_converted(flange_poses, [&robot, &tool_offset](const transform &pose) { return robot.tool_pose_from_flange_pose(pose, tool_offset); });
 }
 
 threepp::Color drawn_tone(compared_path shape)
@@ -84,14 +83,19 @@ void path_comparison_window::draw_paths()
 
 void path_comparison_window::draw_path(compared_path shape)
 {
-    const std::size_t at                                     = static_cast<std::size_t>(shape);
-    const expected<std::vector<transform>, refused_slot> run = sampled(shape);
+    const std::size_t at                               = static_cast<std::size_t>(shape);
+    expected<std::vector<transform>, refused_slot> run = sampled(shape);
     if(run)
     {
-        m_refused[at].reset();
-        static_cast<void>(m_drawn.set_pose_path(drawn_names[at], at_the_tool(m_robot, m_told_offset, *run), drawn_tone(shape)));
+        const expected<std::vector<transform>, refusal> standing = at_the_tool(m_robot, m_told_offset, *run);
+        if(standing)
+        {
+            m_refused[at].reset();
+            static_cast<void>(m_drawn.set_pose_path(drawn_names[at], *standing, drawn_tone(shape)));
 
-        return;
+            return;
+        }
+        run = praxis::unexpected(refused_slot{converting_slot, standing.error()});
     }
 
     m_drawn.clear_pose_path(drawn_names[at]);

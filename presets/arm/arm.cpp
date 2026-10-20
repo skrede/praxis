@@ -41,7 +41,7 @@ composed_windows declined(manipulator::loadable_robot_stencil &on, const std::st
     on.clear_flange_attachment(manipulator::flange_attachment::tool);
     on.clear_world_object();
 
-    spdlog::error("praxis: '{}' was denied {}, which still hold their defaults; every pose it would show or command would be answered without being computed, so it composes no "
+    spdlog::error("praxis: '{}' was denied {}, which still hold their defaults; every pose it would show or command would be a refusal, so it composes no "
                   "window and draws neither model",
                   composer_name, unbound);
 

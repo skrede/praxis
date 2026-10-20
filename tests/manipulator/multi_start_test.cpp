@@ -92,7 +92,7 @@ struct standing_arm
             : driven(scene_robot::compose(kinematics::compose(reaching_chain(), forward_kinematics_ops{.forward_kinematics = &sliding_forward_kinematics}, differential_kinematics_ops{},
                                                               inverse, rigid_motion::baseline().screw, rigid_motion::baseline().frame, optimization::baseline().solver)
                                                   .value(),
-                                          robot_ops{}, rigid_motion::baseline().frame, 2u)
+                                          manipulator::baseline().robot, rigid_motion::baseline().frame, 2u)
                              .value())
             , control(driven, motion_ops{}, composing_path(), task_trajectory_ops{}, composing_time_scaling(), trajectory::trajectory_ops{}, rigid_motion::screw_ops{},
                       rigid_motion::frame_ops{})

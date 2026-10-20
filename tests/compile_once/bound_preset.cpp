@@ -14,9 +14,9 @@ praxis::expected<praxis::transform, praxis::refusal> forward_kinematics(const pr
     return m;
 }
 
-Eigen::Vector3d position_from_pose(const praxis::transform &pose)
+praxis::expected<Eigen::Vector3d, praxis::refusal> position_from_pose(const praxis::transform &pose)
 {
-    return pose.block<3, 1>(0, 3);
+    return Eigen::Vector3d(pose.block<3, 1>(0, 3));
 }
 
 praxis::expected<praxis::trajectory::scaling_sample, praxis::refusal> quintic(double, double)

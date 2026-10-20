@@ -58,7 +58,7 @@ const std::vector<std::string> &tooling_windows()
 // two readings the composition produced rather than a reading against a pose it computed for itself.
 std::vector<transform> read_through;
 
-Eigen::Vector3d recorded_position(const transform &pose)
+expected<Eigen::Vector3d, refusal> recorded_position(const transform &pose)
 {
     read_through.push_back(pose);
 

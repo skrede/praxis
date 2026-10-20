@@ -58,9 +58,9 @@ double travel_of(commanded_arm &placed, const Eigen::Vector3d &offset, const rot
 }
 
 // As rigid as the reference conversion and landing elsewhere: the inverse offset composes on the left.
-transform flange_pose_with_the_offset_on_the_left(const rigid_motion::frame_ops &frames, const transform &tool_pose, const transform &tool_offset)
+expected<transform, refusal> flange_pose_with_the_offset_on_the_left(const rigid_motion::frame_ops &frames, const transform &tool_pose, const transform &tool_offset)
 {
-    return frames.inverse(tool_offset) * tool_pose;
+    return transform(frames.inverse(tool_offset) * tool_pose);
 }
 
 robot_ops converting_on_the_left()
@@ -235,7 +235,7 @@ double the_two_routes_apart(const transform &tool_offset)
 
     const expected<joint_vector, refusal> from_the_tool_pose = placed.driven().ik_solve_pose(target, seed);
     const expected<joint_vector, refusal> from_the_conversion =
-            manipulator::baseline().motion.task_space_pose(placed.driven().solver(), placed.driven().flange_pose_from_tool_pose(target), seed);
+            manipulator::baseline().motion.task_space_pose(placed.driven().solver(), placed.driven().flange_pose_from_tool_pose(target).value(), seed);
 
     REQUIRE(from_the_tool_pose.has_value());
     REQUIRE(from_the_conversion.has_value());

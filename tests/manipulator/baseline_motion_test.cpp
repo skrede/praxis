@@ -82,14 +82,14 @@ TEST_CASE("a_zero_pitch_screw_through_the_tool_origin_reorients_the_tool_and_lea
     const joint_vector at   = posed_arm();
     const transform start   = solver.fk_solve(at).value();
 
-    const expected<joint_vector, refusal> spun = task_space_screw(reference_screw, solver, start, Eigen::Vector3d::UnitZ(), position_from_pose(start), turn, 0.0, at);
+    const expected<joint_vector, refusal> spun = task_space_screw(reference_screw, solver, start, Eigen::Vector3d::UnitZ(), position_from_pose(start).value(), turn, 0.0, at);
     REQUIRE(spun.has_value());
 
     const transform reached = solver.fk_solve(*spun).value();
-    const rotation turned   = rigid_motion::rotate_z(turn) * orientation_from_pose(start);
+    const rotation turned   = rigid_motion::rotate_z(turn) * orientation_from_pose(start).value();
 
-    CHECK((position_from_pose(reached) - position_from_pose(start)).norm() < solved_tolerance);
-    CHECK(orientation_from_pose(reached).isApprox(turned, solved_tolerance));
+    CHECK((position_from_pose(reached).value() - position_from_pose(start).value()).norm() < solved_tolerance);
+    CHECK(orientation_from_pose(reached).value().isApprox(turned, solved_tolerance));
 }
 
 // A screw axis has a direction; the construction answers the zero axis for a zero one, which under
@@ -103,7 +103,7 @@ TEST_CASE("a_screw_about_no_direction_is_refused_rather_than_resolved_at_the_sta
     const joint_vector at   = posed_arm();
     const transform start   = solver.fk_solve(at).value();
 
-    const expected<joint_vector, refusal> nowhere = task_space_screw(reference_screw, solver, start, Eigen::Vector3d::Zero(), position_from_pose(start), turn, 0.0, at);
+    const expected<joint_vector, refusal> nowhere = task_space_screw(reference_screw, solver, start, Eigen::Vector3d::Zero(), position_from_pose(start).value(), turn, 0.0, at);
 
     REQUIRE_FALSE(nowhere.has_value());
     CHECK(nowhere.error() == refusal::degenerate);
@@ -118,7 +118,7 @@ TEST_CASE("a_seed_of_a_size_the_chain_does_not_have_is_refused_by_every_motion_r
     const joint_vector at   = joint_vector::Constant(2, 0.3);
 
     const expected<joint_vector, refusal> to_pose  = task_space_pose(solver, start, at);
-    const expected<joint_vector, refusal> to_screw = task_space_screw(reference_screw, solver, start, Eigen::Vector3d::UnitZ(), position_from_pose(start), turn, 0.0, at);
+    const expected<joint_vector, refusal> to_screw = task_space_screw(reference_screw, solver, start, Eigen::Vector3d::UnitZ(), position_from_pose(start).value(), turn, 0.0, at);
 
     REQUIRE_FALSE(to_pose.has_value());
     REQUIRE_FALSE(to_screw.has_value());
@@ -134,8 +134,9 @@ TEST_CASE("a_screw_motion_answers_through_the_exponential_it_is_handed_rather_th
     const joint_vector at   = posed_arm();
     const transform start   = solver.fk_solve(at).value();
 
-    const expected<joint_vector, refusal> held      = task_space_screw(reference_screw, solver, start, Eigen::Vector3d::UnitZ(), position_from_pose(start), turn, 0.0, at);
-    const expected<joint_vector, refusal> reversing = task_space_screw(reversing_the_exponential(), solver, start, Eigen::Vector3d::UnitZ(), position_from_pose(start), turn, 0.0, at);
+    const expected<joint_vector, refusal> held = task_space_screw(reference_screw, solver, start, Eigen::Vector3d::UnitZ(), position_from_pose(start).value(), turn, 0.0, at);
+    const expected<joint_vector, refusal> reversing =
+            task_space_screw(reversing_the_exponential(), solver, start, Eigen::Vector3d::UnitZ(), position_from_pose(start).value(), turn, 0.0, at);
 
     REQUIRE(held.has_value());
     REQUIRE(reversing.has_value());
@@ -152,7 +153,8 @@ TEST_CASE("a_screw_motion_over_a_screw_aggregate_left_on_its_defaults_is_refused
     const joint_vector at   = posed_arm();
     const transform start   = solver.fk_solve(at).value();
 
-    const expected<joint_vector, refusal> unbound = task_space_screw(rigid_motion::screw_ops{}, solver, start, Eigen::Vector3d::UnitZ(), position_from_pose(start), turn, 0.0, at);
+    const expected<joint_vector, refusal> unbound =
+            task_space_screw(rigid_motion::screw_ops{}, solver, start, Eigen::Vector3d::UnitZ(), position_from_pose(start).value(), turn, 0.0, at);
 
     REQUIRE_FALSE(unbound.has_value());
     CHECK(unbound.error() == refusal::not_implemented);

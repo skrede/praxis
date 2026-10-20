@@ -2,24 +2,24 @@
 
 namespace praxis::manipulator {
 
-transform tool_pose_from_flange_pose(const transform &flange_pose, const transform &tool_offset)
+expected<transform, refusal> tool_pose_from_flange_pose(const transform &flange_pose, const transform &tool_offset)
 {
-    return flange_pose * tool_offset;
+    return transform(flange_pose * tool_offset);
 }
 
-transform flange_pose_from_tool_pose(const rigid_motion::frame_ops &frames, const transform &tool_pose, const transform &tool_offset)
+expected<transform, refusal> flange_pose_from_tool_pose(const rigid_motion::frame_ops &frames, const transform &tool_pose, const transform &tool_offset)
 {
-    return tool_pose * frames.inverse(tool_offset);
+    return transform(tool_pose * frames.inverse(tool_offset));
 }
 
-Eigen::Vector3d position_from_pose(const transform &pose)
+expected<Eigen::Vector3d, refusal> position_from_pose(const transform &pose)
 {
-    return pose.block<3, 1>(0, 3);
+    return Eigen::Vector3d(pose.block<3, 1>(0, 3));
 }
 
-rotation orientation_from_pose(const transform &pose)
+expected<rotation, refusal> orientation_from_pose(const transform &pose)
 {
-    return pose.block<3, 3>(0, 0);
+    return rotation(pose.block<3, 3>(0, 0));
 }
 
 // The seam carries no solver parameters into a robot capability, so both resolutions run on the
@@ -27,7 +27,11 @@ rotation orientation_from_pose(const transform &pose)
 expected<joint_vector, refusal> ik_solve_pose(const kinematics &solver, const rigid_motion::frame_ops &frames, const transform &tool_pose, const joint_vector &j0,
                                               const transform &tool_offset)
 {
-    return ik_solve_flange_pose(solver, flange_pose_from_tool_pose(frames, tool_pose, tool_offset), j0);
+    const expected<transform, refusal> flange_pose = flange_pose_from_tool_pose(frames, tool_pose, tool_offset);
+    if(!flange_pose)
+        return unexpected(flange_pose.error());
+
+    return ik_solve_flange_pose(solver, *flange_pose, j0);
 }
 
 expected<joint_vector, refusal> ik_solve_flange_pose(const kinematics &solver, const transform &flange_pose, const joint_vector &j0)

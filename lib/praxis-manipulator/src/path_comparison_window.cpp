@@ -34,14 +34,9 @@ joint_vector radians_of(const Eigen::VectorXf &degrees)
     return degrees.cast<double>() * radians_per_degree;
 }
 
-std::vector<transform> tool_poses_of(const scene_robot &driven, const std::vector<transform> &flange_poses)
+expected<std::vector<transform>, refusal> tool_poses_of(const scene_robot &driven, const std::vector<transform> &flange_poses)
 {
-    std::vector<transform> standing;
-    standing.reserve(flange_poses.size());
-    for(const transform &pose : flange_poses)
-        standing.push_back(driven.tool_pose_from_flange_pose(pose));
-
-    return standing;
+    return each_converted(flange_poses, [&driven](const transform &pose) { return driven.tool_pose_from_flange_pose(pose); });
 }
 
 void play_poses(const std::weak_ptr<owned_arm> &arm, const joint_vector &first, const std::vector<transform> &poses)
@@ -49,9 +44,12 @@ void play_poses(const std::weak_ptr<owned_arm> &arm, const joint_vector &first, 
     command(arm,
             [first, poses](robot_controller &control, scene_robot &driven)
             {
+                const expected<std::vector<transform>, refusal> standing = tool_poses_of(driven, poses);
+                if(!standing)
+                    return control.report_refusal("robot.tool_pose_from_flange_pose", standing.error());
+
                 driven.set_joint_positions(first);
-                const std::vector<transform> standing = tool_poses_of(driven, poses);
-                control.task_space_trajectory(std::span<const transform>(standing));
+                control.task_space_trajectory(std::span<const transform>(*standing));
             });
 }
 

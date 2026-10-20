@@ -84,7 +84,7 @@ arm_pipe pipe(scheduler &loop, const screw_chain &chain, std::uint32_t joints, c
             scene_robot::compose(kinematics::compose(chain, forward_kinematics_ops{.forward_kinematics = &sliding_forward_kinematics}, differential, inverse_kinematics_ops{},
                                                      praxis::rigid_motion::baseline().screw, praxis::rigid_motion::baseline().frame, praxis::optimization::baseline().solver)
                                          .value(),
-                                 robot_ops{}, praxis::rigid_motion::baseline().frame, joints)
+                                 praxis::manipulator::baseline().robot, praxis::rigid_motion::baseline().frame, joints)
                     .value());
 
     auto controller = std::make_shared<robot_controller>(*robot, motion_ops{}, composing_path(), task_trajectory_ops{}, composing_time_scaling(), praxis::trajectory::trajectory_ops{},

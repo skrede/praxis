@@ -50,7 +50,7 @@ expected<joint_vector, refusal> swept_under(const rigid_motion::capabilities &sp
 {
     const robot_ops arm = manipulator::baseline().robot;
 
-    return manipulator::baseline().motion.task_space_screw(spatial.screw, solver, start, Eigen::Vector3d::UnitZ(), arm.position_from_pose(start), turn, 0.0, at);
+    return manipulator::baseline().motion.task_space_screw(spatial.screw, solver, start, Eigen::Vector3d::UnitZ(), arm.position_from_pose(start).value(), turn, 0.0, at);
 }
 
 // The arm's configuration halfway through a task-space motion from the posed arm to a second planar
@@ -86,8 +86,8 @@ TEST_CASE("a substituted inverse changes the flange pose, which is handed the ag
     REQUIRE_FALSE(is_approx_equal(perturbed.frame.inverse(offset), reference.frame.inverse(offset)));
 
     const robot_ops arm                 = manipulator::baseline().robot;
-    const transform under_the_reference = arm.flange_pose_from_tool_pose(reference.frame, tool_pose, offset);
-    const transform under_substitution  = arm.flange_pose_from_tool_pose(perturbed.frame, tool_pose, offset);
+    const transform under_the_reference = arm.flange_pose_from_tool_pose(reference.frame, tool_pose, offset).value();
+    const transform under_substitution  = arm.flange_pose_from_tool_pose(perturbed.frame, tool_pose, offset).value();
 
     REQUIRE_FALSE(is_approx_equal(under_substitution, under_the_reference));
     REQUIRE((under_substitution - under_the_reference).norm() > 1.0);

@@ -10,8 +10,7 @@
 namespace praxis::presets {
 
 // The four frame transformations every pose a scenario shows or commands is read through. Each of them
-// answers the origin unrotated where nobody bound it, and the origin unrotated is a pose an arm can
-// genuinely be at, so downstream of them a fabrication and a reading are the same value.
+// refuses where nobody bound it, so a window reading a pose through one left unbound has nothing to show.
 constexpr std::array<manipulator::robot_slot, 4> pose_transformations{manipulator::robot_slot::tool_pose_from_flange_pose, manipulator::robot_slot::flange_pose_from_tool_pose,
                                                                       manipulator::robot_slot::position_from_pose, manipulator::robot_slot::orientation_from_pose};
 

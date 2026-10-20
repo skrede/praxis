@@ -58,19 +58,25 @@ double apart(const transform &one, const transform &other)
     return (one - other).cwiseAbs().maxCoeff();
 }
 
-transform shifted_tool_pose(const transform &pose, const transform &offset)
+template<typename T>
+bool refused_as_unbound(const expected<T, refusal> &answer)
 {
-    return pose + offset;
+    return !answer && answer.error() == refusal::not_implemented;
 }
 
-Eigen::Vector3d doubled_position(const transform &pose)
+expected<transform, refusal> shifted_tool_pose(const transform &pose, const transform &offset)
 {
-    return 2.0 * pose.block<3, 1>(0, 3);
+    return transform(pose + offset);
 }
 
-rotation negated_orientation(const transform &pose)
+expected<Eigen::Vector3d, refusal> doubled_position(const transform &pose)
 {
-    return -pose.block<3, 3>(0, 0);
+    return Eigen::Vector3d(2.0 * pose.block<3, 1>(0, 3));
+}
+
+expected<rotation, refusal> negated_orientation(const transform &pose)
+{
+    return rotation(-pose.block<3, 3>(0, 0));
 }
 
 expected<joint_vector, refusal> shifted_solution(const kinematics &, const rigid_motion::frame_ops &, const transform &, const joint_vector &j0, const transform &)
@@ -218,8 +224,8 @@ TEST_CASE("the two frame conversions the holder publishes are inverses of each o
 
     const transform pose = a_turned_pose();
 
-    CHECK(apart(robot.flange_pose_from_tool_pose(robot.tool_pose_from_flange_pose(pose)), pose) < round_trip_tolerance);
-    CHECK(apart(robot.tool_pose_from_flange_pose(robot.flange_pose_from_tool_pose(pose)), pose) < round_trip_tolerance);
+    CHECK(apart(robot.flange_pose_from_tool_pose(robot.tool_pose_from_flange_pose(pose).value()).value(), pose) < round_trip_tolerance);
+    CHECK(apart(robot.tool_pose_from_flange_pose(robot.flange_pose_from_tool_pose(pose).value()).value(), pose) < round_trip_tolerance);
 }
 
 TEST_CASE("each frame conversion the holder publishes is the identity where the tool offset is")
@@ -227,8 +233,8 @@ TEST_CASE("each frame conversion the holder publishes is the identity where the 
     const scene_robot robot = adapter(baseline().robot);
     const transform pose    = a_turned_pose();
 
-    CHECK(apart(robot.flange_pose_from_tool_pose(pose), pose) < round_trip_tolerance);
-    CHECK(apart(robot.tool_pose_from_flange_pose(pose), pose) < round_trip_tolerance);
+    CHECK(apart(robot.flange_pose_from_tool_pose(pose).value(), pose) < round_trip_tolerance);
+    CHECK(apart(robot.tool_pose_from_flange_pose(pose).value(), pose) < round_trip_tolerance);
 }
 
 TEST_CASE("the_flange_pose_is_the_solvers_forward_kinematics_at_the_held_configuration")
@@ -295,16 +301,18 @@ TEST_CASE("a_solver_that_refuses_forward_kinematics_refuses_every_pose_the_adapt
     CHECK(turned.error() == refusal::not_implemented);
 }
 
-TEST_CASE("an_unbound_robot_capability_leaves_every_mathematics_accessor_inert")
+TEST_CASE("an_unbound_robot_capability_leaves_every_mathematics_accessor_refusing")
 {
     scene_robot robot = adapter(robot_ops{});
     robot.set_joint_positions(configuration(0.4, -0.2));
 
-    CHECK(is_approx_equal(robot.tool_pose().value(), transform::Identity()));
-    CHECK(robot.tool_position().value().isZero(default_tolerance));
-    CHECK((robot.tool_orientation().value() - rotation::Identity()).isZero(default_tolerance));
-    CHECK(robot.flange_position().value().isZero(default_tolerance));
-    CHECK((robot.flange_orientation().value() - rotation::Identity()).isZero(default_tolerance));
+    REQUIRE(robot.flange_pose().has_value());
+    CHECK(refused_as_unbound(robot.tool_pose()));
+    CHECK(refused_as_unbound(robot.tool_position()));
+    CHECK(refused_as_unbound(robot.tool_orientation()));
+    CHECK(refused_as_unbound(robot.flange_position()));
+    CHECK(refused_as_unbound(robot.flange_orientation()));
+    CHECK(refused_as_unbound(robot.tool_pose_at(configuration(0.1, 0.2))));
 
     const joint_vector j0                             = configuration(0.1, 0.2);
     const expected<joint_vector, refusal> from_tool   = robot.ik_solve_pose(transform::Identity(), j0);
@@ -326,12 +334,12 @@ TEST_CASE("every_mathematics_accessor_reports_what_the_injected_robot_slots_comp
     robot.set_tool_offset(offset);
 
     const transform flange = robot.flange_pose().value();
-    const transform tool   = shifted_tool_pose(flange, offset);
+    const transform tool   = shifted_tool_pose(flange, offset).value();
     CHECK(is_approx_equal(robot.tool_pose().value(), tool));
-    CHECK((robot.tool_position().value() - doubled_position(tool)).isZero(default_tolerance));
-    CHECK((robot.tool_orientation().value() - negated_orientation(tool)).isZero(default_tolerance));
-    CHECK((robot.flange_position().value() - doubled_position(flange)).isZero(default_tolerance));
-    CHECK((robot.flange_orientation().value() - negated_orientation(flange)).isZero(default_tolerance));
+    CHECK((robot.tool_position().value() - doubled_position(tool).value()).isZero(default_tolerance));
+    CHECK((robot.tool_orientation().value() - negated_orientation(tool).value()).isZero(default_tolerance));
+    CHECK((robot.flange_position().value() - doubled_position(flange).value()).isZero(default_tolerance));
+    CHECK((robot.flange_orientation().value() - negated_orientation(flange).value()).isZero(default_tolerance));
 
     const joint_vector j0                             = configuration(0.6, -0.4);
     const expected<joint_vector, refusal> from_tool   = robot.ik_solve_pose(transform::Identity(), j0);

@@ -25,7 +25,7 @@ using composed_windows = std::vector<std::shared_ptr<scene::imgui_window>>;
 
 composed_windows declined(const std::string &unbound)
 {
-    spdlog::error("praxis: '{}' was denied {}, which still hold their defaults; every pose it would show or command would be answered without being computed, so it composes no "
+    spdlog::error("praxis: '{}' was denied {}, which still hold their defaults; every pose it would show or command would be a refusal, so it composes no "
                   "window",
                   composer_name, unbound);
 

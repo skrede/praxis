@@ -308,7 +308,7 @@ private:
     void run_to(const joint_vector &target);
     void run_along(const transform &tool_pose, task_space_path shape);
 
-    std::vector<transform> flange_poses_from(std::span<const transform> tool_poses) const;
+    expected<std::vector<transform>, refusal> flange_poses_from(std::span<const transform> tool_poses) const;
 };
 
 }

@@ -143,9 +143,9 @@ enum class modeling_beside : std::uint8_t
 manipulator::arm_composition arm_windows_modeling(arm_scenario chosen, screw_table_source keeping, modeling_beside beside = modeling_beside::pose);
 
 // A tool and a world object on top of forward kinematics, with the tool attachable and detachable
-// while the scenario runs. The four frame transformations a tool pose is read through answer the
-// origin unrotated when nobody binds them, which is a pose an arm can genuinely be at, so a
-// composition handed any of them unbound opens no window at all and names the ones it was denied.
+// while the scenario runs. The four frame transformations a tool pose is read through refuse when
+// nobody binds them, so a composition handed any of them unbound opens no window at all and names the
+// ones it was denied.
 // The tool and the world object are placed as the scenario states them whether or not their windows
 // are kept, and a frame transformation the placement reads at its default, or that answers a value
 // that is not finite, is named in the log.

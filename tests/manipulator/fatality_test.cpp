@@ -63,7 +63,7 @@ struct outcome
 outcome previewing(const motion_ops &injected)
 {
     int asked          = 0;
-    scene_robot driven = two_joint_arm(robot_ops{});
+    scene_robot driven = two_joint_arm(manipulator::baseline().robot);
     driven.set_joint_positions(configuration(0.15, -0.25));
     const joint_vector before = driven.joint_positions();
 
@@ -78,7 +78,7 @@ outcome previewing(const motion_ops &injected)
 outcome previewing_configuration(const joint_vector &positions)
 {
     int asked          = 0;
-    scene_robot driven = two_joint_arm(robot_ops{});
+    scene_robot driven = two_joint_arm(manipulator::baseline().robot);
     driven.set_joint_positions(configuration(0.15, -0.25));
     const joint_vector before = driven.joint_positions();
 
@@ -93,7 +93,7 @@ outcome previewing_configuration(const joint_vector &positions)
 outcome commanding_configurations(std::span<const joint_vector> waypoints)
 {
     int asked          = 0;
-    scene_robot driven = two_joint_arm(robot_ops{});
+    scene_robot driven = two_joint_arm(manipulator::baseline().robot);
     driven.set_joint_positions(configuration(0.15, -0.25));
     const joint_vector before = driven.joint_positions();
 
@@ -106,7 +106,7 @@ outcome commanding_configurations(std::span<const joint_vector> waypoints)
 outcome commanding_poses(std::span<const transform> waypoints)
 {
     int asked          = 0;
-    scene_robot driven = two_joint_arm(robot_ops{});
+    scene_robot driven = two_joint_arm(manipulator::baseline().robot);
     driven.set_joint_positions(configuration(0.15, -0.25));
     const joint_vector before = driven.joint_positions();
 
@@ -138,7 +138,7 @@ std::size_t occurrences(const std::string &reported, const std::string &of)
 std::string reported_over(int requests, const motion_ops &injected)
 {
     int asked          = 0;
-    scene_robot driven = two_joint_arm(robot_ops{});
+    scene_robot driven = two_joint_arm(manipulator::baseline().robot);
 
     robot_controller controller = controlling(driven, injected, [&asked](std::string) { ++asked; });
 
@@ -202,7 +202,7 @@ TEST_CASE("an_answer_that_does_not_exist_leaves_the_composition_loaded_and_the_c
 // reports the refusal it received and decides nothing.
 TEST_CASE("a_fatal_refusal_with_no_route_to_ask_through_reports_and_does_not_fault")
 {
-    scene_robot driven          = two_joint_arm(robot_ops{});
+    scene_robot driven          = two_joint_arm(manipulator::baseline().robot);
     robot_controller controller = controlling(driven, motion_ops{.task_space_pose = &unsupported}, nullptr);
 
     CHECK_NOTHROW(controller.preview_task_space_pose(transform::Identity()));

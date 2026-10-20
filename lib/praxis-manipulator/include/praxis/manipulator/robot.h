@@ -15,11 +15,11 @@
 
 namespace praxis::manipulator::inert {
 
-transform tool_pose_from_flange_pose(const transform &flange_pose, const transform &tool_offset);
-transform flange_pose_from_tool_pose(const rigid_motion::frame_ops &frames, const transform &tool_pose, const transform &tool_offset);
+expected<transform, refusal> tool_pose_from_flange_pose(const transform &flange_pose, const transform &tool_offset);
+expected<transform, refusal> flange_pose_from_tool_pose(const rigid_motion::frame_ops &frames, const transform &tool_pose, const transform &tool_offset);
 
-Eigen::Vector3d position_from_pose(const transform &pose);
-rotation orientation_from_pose(const transform &pose);
+expected<Eigen::Vector3d, refusal> position_from_pose(const transform &pose);
+expected<rotation, refusal> orientation_from_pose(const transform &pose);
 
 expected<joint_vector, refusal> ik_solve_pose(const kinematics &solver, const rigid_motion::frame_ops &frames, const transform &tool_pose, const joint_vector &j0,
                                               const transform &tool_offset);
@@ -31,11 +31,12 @@ namespace praxis::manipulator {
 
 struct robot_ops
 {
-    transform (*tool_pose_from_flange_pose)(const transform &flange_pose, const transform &tool_offset)                                      = &inert::tool_pose_from_flange_pose;
-    transform (*flange_pose_from_tool_pose)(const rigid_motion::frame_ops &frames, const transform &tool_pose, const transform &tool_offset) = &inert::flange_pose_from_tool_pose;
+    expected<transform, refusal> (*tool_pose_from_flange_pose)(const transform &flange_pose, const transform &tool_offset) = &inert::tool_pose_from_flange_pose;
+    expected<transform, refusal> (*flange_pose_from_tool_pose)(const rigid_motion::frame_ops &frames, const transform &tool_pose,
+                                                               const transform &tool_offset)                               = &inert::flange_pose_from_tool_pose;
 
-    Eigen::Vector3d (*position_from_pose)(const transform &pose) = &inert::position_from_pose;
-    rotation (*orientation_from_pose)(const transform &pose)     = &inert::orientation_from_pose;
+    expected<Eigen::Vector3d, refusal> (*position_from_pose)(const transform &pose) = &inert::position_from_pose;
+    expected<rotation, refusal> (*orientation_from_pose)(const transform &pose)     = &inert::orientation_from_pose;
 
     expected<joint_vector, refusal> (*ik_solve_pose)(const kinematics &solver, const rigid_motion::frame_ops &frames, const transform &tool_pose, const joint_vector &j0,
                                                      const transform &tool_offset)                                                          = &inert::ik_solve_pose;

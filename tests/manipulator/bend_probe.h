@@ -128,10 +128,11 @@ void note_answers_apart(const manipulator::capabilities &held, const manipulator
     seen[3] = seen[3] ||
             answers_apart(held.dk.space_jacobian(shared_motions().screw, example.chain.space_screws, example.joints),
                           bent.dk.space_jacobian(shared_motions().screw, example.chain.space_screws, example.joints));
-    seen[6] = seen[6] || apart(held.robot.tool_pose_from_flange_pose(pose, offset), bent.robot.tool_pose_from_flange_pose(pose, offset));
-    seen[7] = seen[7] || apart(held.robot.flange_pose_from_tool_pose(shared_motions().frame, pose, offset), bent.robot.flange_pose_from_tool_pose(shared_motions().frame, pose, offset));
-    seen[8] = seen[8] || apart(held.robot.position_from_pose(pose), bent.robot.position_from_pose(pose));
-    seen[9] = seen[9] || apart(held.robot.orientation_from_pose(pose), bent.robot.orientation_from_pose(pose));
+    seen[6] = seen[6] || answers_apart(held.robot.tool_pose_from_flange_pose(pose, offset), bent.robot.tool_pose_from_flange_pose(pose, offset));
+    seen[7] = seen[7] ||
+            answers_apart(held.robot.flange_pose_from_tool_pose(shared_motions().frame, pose, offset), bent.robot.flange_pose_from_tool_pose(shared_motions().frame, pose, offset));
+    seen[8] = seen[8] || answers_apart(held.robot.position_from_pose(pose), bent.robot.position_from_pose(pose));
+    seen[9] = seen[9] || answers_apart(held.robot.orientation_from_pose(pose), bent.robot.orientation_from_pose(pose));
 
     seen[1] = seen[1] ||
             answers_apart(held.fk.body_forward_kinematics(shared_motions().screw, shared_motions().frame, example.chain.home, example.chain.space_screws, example.joints),
