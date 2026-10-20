@@ -60,13 +60,16 @@ const ImPlotPlot &drawn_plot(int index)
 
 // The pointer is placed and the modifier set a frame before the press, and the press is released a
 // frame after it, because the library sees neither a press nor a release within the frame it moves in.
-void press_at(tests::imgui_frame &frames, const drawing &draw, ImVec2 spot, bool shifted)
+// A drag moves the pointer by its offset in a frame of its own between the two.
+void press_at(tests::imgui_frame &frames, const drawing &draw, ImVec2 spot, bool shifted, ImVec2 drag = ImVec2(0.f, 0.f))
 {
     ImGuiIO &io = ImGui::GetIO();
     io.AddMousePosEvent(spot.x, spot.y);
     io.AddKeyEvent(ImGuiMod_Shift, shifted);
     frames.draw_frame(draw);
     io.AddMouseButtonEvent(ImGuiMouseButton_Left, true);
+    frames.draw_frame(draw);
+    io.AddMousePosEvent(spot.x + drag.x, spot.y + drag.y);
     frames.draw_frame(draw);
     io.AddMouseButtonEvent(ImGuiMouseButton_Left, false);
     frames.draw_frame(draw);
@@ -165,4 +168,19 @@ TEST_CASE("a Shift press over the second of two stacked plots names the second f
 
     REQUIRE(taken.size() == 1u);
     CHECK(taken.front().frame == 1u);
+}
+
+TEST_CASE("a Shift drag over a plot pans it and hands the pick nothing", "[scene]")
+{
+    std::vector<picked> taken;
+    scene::plot_window panel(title, nullptr, answering(stacked_frames(1u)), recording(taken));
+    const drawing draw = [&panel] { panel.render(); };
+
+    tests::imgui_frame frames;
+    frames.draw(draw);
+    const double left = drawn_plot(0).Axes[ImAxis_X1].Range.Min;
+    press_at(frames, draw, drawn_plot(0).PlotRect.GetCenter(), true, ImVec2(60.f, 0.f));
+
+    CHECK(taken.empty());
+    CHECK(drawn_plot(0).Axes[ImAxis_X1].Range.Min < left);
 }

@@ -59,8 +59,8 @@ struct plot_reading
 
 using plot_source = std::function<plot_reading()>;
 
-// Handed a left press made with Shift held over a plot; the plot's own pan and box selection keep
-// their bindings.
+// Handed a left click made with Shift held over a plot, on its release; a drag stays the plot's own
+// pan, and its box selection keeps its binding.
 using plot_pick = std::function<void(std::size_t frame, double abscissa, double ordinate)>;
 
 class plot_window : public imgui_window

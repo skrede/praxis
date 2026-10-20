@@ -59,9 +59,16 @@ void render_curve(const plot_series &curve)
     ImPlot::PlotLine(curve.name.c_str(), curve.abscissa.data(), curve.ordinate.data(), drawn_length(curve), spec);
 }
 
+// The press also starts the plot's pan, so the pick waits for the release and a press that strayed
+// past the GUI library's drag threshold stays a pan.
+bool clicked(const ImGuiIO &io)
+{
+    return ImGui::IsMouseReleased(ImGuiMouseButton_Left) && io.MouseDragMaxDistanceSqr[ImGuiMouseButton_Left] < io.MouseDragThreshold * io.MouseDragThreshold;
+}
+
 void report_pick(const plot_pick &pick, std::size_t index)
 {
-    if(!pick || !ImGui::IsMouseClicked(ImGuiMouseButton_Left) || !ImGui::GetIO().KeyShift || !ImPlot::IsPlotHovered())
+    if(!pick || !clicked(ImGui::GetIO()) || !ImGui::GetIO().KeyShift || !ImPlot::IsPlotHovered())
         return;
 
     const ImPlotPoint at = ImPlot::GetPlotMousePos();
