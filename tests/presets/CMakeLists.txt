@@ -31,6 +31,10 @@ praxis_add_test(kept_modeling_test.cpp HEADERS opened_arm.h drawn_lines.h descri
 praxis_add_test(arrangement_capability_binding_test.cpp HEADERS scratch_directory.h LIBS praxis::rigid_presets praxis::scene praxis::rigid_motion praxis::config)
 praxis_add_test(seam_routing_test.cpp HEADERS substituted_rigid_motion.h LIBS praxis::scene praxis::manipulator praxis::trajectory praxis::rigid_motion praxis_test_support)
 praxis_add_test(body_frame_routing_test.cpp HEADERS substituted_rigid_motion.h LIBS praxis::manipulator praxis::rigid_motion praxis_test_support)
+praxis_add_test(optimization_scenarios_test.cpp HEADERS scratch_directory.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config)
+
+# The shipped documents are read from beside the demonstration's sources.
+target_compile_definitions(optimization_scenarios_test PRIVATE PRAXIS_SHIPPED_OPTIMIZATION_DIR="${PROJECT_SOURCE_DIR}/examples/optimization")
 
 # The descriptions are deployed beside the demonstration executable, which a configure without the
 # demonstration never creates; the case reading them skips when the directory it is pointed at is

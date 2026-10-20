@@ -51,17 +51,18 @@ the extension machinery every seam is described in, the scheduler that owns the 
 rendering and GUI pipeline, and the harness an implementation bound to a slot is measured by — none
 of which names any robotics, plus **extensions**, each owning everything specific to
 one domain: its vocabulary, its mathematics, its backend logic, its stencil and its controls.
-Beside those two kinds stands a third: `praxis::rigid_presets` and `praxis::manipulator_presets`,
-targets that link extensions rather than being ones, composing their windows, stencils and inert
-defaults into named scenarios and publishing from `presets/include` rather than from a module
-include root. A consumer names the half it composes from, and the manipulator half does not link the
-rigid one. They are linkable, exported and installed surface, and neither appears in a module list
-in `lib/CMakeLists.txt`, so the two gates that read those lists — the Foundation vocabulary scans
-and the link-isolation closure — do not reach them, and their header guards, file names and include
-forms are held by review. The shipped surface record does reach them: the extraction globs
-`presets/include` beside the module include roots, as an include root of its own rather than through
-a module list. The declared-sources gate reaches them through a `presets/` section of its own, and
-the include-leak assertion is applied to each target directly.
+Beside those two kinds stands a third: `praxis::rigid_presets`, `praxis::manipulator_presets` and
+`praxis::optimization_presets`, targets that link extensions rather than being ones, composing their
+windows, stencils and inert defaults into named scenarios and publishing from `presets/include`
+rather than from a module include root. A consumer names the part it composes from, and no part links
+another: the manipulator part does not link the rigid one, and the optimization part, which composes
+the robot-free scenario, links neither. They are linkable, exported and installed surface, and none
+appears in a module list in `lib/CMakeLists.txt`, so the two gates that read those lists — the
+Foundation vocabulary scans and the link-isolation closure — do not reach them, and their header
+guards, file names and include forms are held by review. The shipped surface record does reach
+them: the extraction globs `presets/include` beside the module include roots, as an include root of
+its own rather than through a module list. The declared-sources gate reaches them through a
+`presets/` section of its own, and the include-leak assertion is applied to each target directly.
 
 - No Foundation target may name a domain type.
 - An extension is one target, carrying its vocabulary, its contracts, its inert defaults, its

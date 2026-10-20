@@ -43,8 +43,8 @@ add_library(praxis::praxis ALIAS praxis_all)
 
 target_link_libraries(praxis_all INTERFACE ${praxis_core_aggregate})
 
-# Every extension this repository ships, each of which carries one preset, so linking this pulls in
-# all of them; a consumer wanting one preset links that extension instead.
+# Every extension this repository ships, so linking this pulls in all of them; a consumer wanting one
+# links that extension instead.
 add_library(praxis_extensions INTERFACE)
 add_library(praxis::extensions ALIAS praxis_extensions)
 

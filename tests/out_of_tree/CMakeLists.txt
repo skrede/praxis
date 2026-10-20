@@ -15,7 +15,7 @@ ExternalProject_Add(out_of_tree_probe_project
     TEST_COMMAND ""
     DEPENDS praxis_compat praxis_config praxis_extension praxis_scheduler praxis_scene praxis_evaluation
     praxis_eigen_headers praxis_optimization praxis_rigid_motion praxis_trajectory praxis_manipulator
-    praxis_rigid_presets praxis_manipulator_presets praxis_all praxis_extensions
+    praxis_rigid_presets praxis_manipulator_presets praxis_optimization_presets praxis_all praxis_extensions
 )
 
 add_test(NAME out_of_tree_probe COMMAND ${CMAKE_CURRENT_BINARY_DIR}/probe/out_of_tree_probe)
@@ -38,7 +38,7 @@ ExternalProject_Add(out_of_tree_checker_project
     TEST_COMMAND ""
     DEPENDS praxis_compat praxis_config praxis_extension praxis_scheduler praxis_scene praxis_evaluation
     praxis_eigen_headers praxis_optimization praxis_rigid_motion praxis_trajectory praxis_manipulator
-    praxis_rigid_presets praxis_manipulator_presets praxis_all praxis_extensions Catch2 Catch2WithMain
+    praxis_rigid_presets praxis_manipulator_presets praxis_optimization_presets praxis_all praxis_extensions Catch2 Catch2WithMain
 )
 
 add_test(NAME out_of_tree_checker COMMAND ${CMAKE_CURRENT_BINARY_DIR}/checker/out_of_tree_checker)

@@ -35,14 +35,17 @@ build and the gates both read.
 | `praxis::scheduler` | core | the strand model everything else runs on: clocks, tasks, strands, the snapshot a strand publishes, the ownership gate that is the only route to a value a strand owns, and the rejection and overrun reports a refused or late task lands in |
 | `praxis::scene` | core | the renderer, the window framework, the preset registry and the reusable widgets — general enough that a second domain reuses them unchanged |
 | `praxis::evaluation` | core | what an implementation bound to a slot is measured with: the project tolerance, the residual kinds a discrepancy is reported in, the comparators over them, the seeded case source that draws a slot's inputs from the bulk of its range or from the neighborhood where its mathematics degenerates, and the per-slot report they assemble into. It names no domain — what it measures is whatever a capability published |
-| `praxis::optimization` | extension | the iterative-solve seam whole: its residual-form vocabulary — a problem given by its error, its Jacobian and its stopping test, with optional bounds on its coordinates — the solver slot with its descriptor and an inert default behind it, and the reference implementation behind it, Newton-Raphson written from Lynch & Park, Modern Robotics, sec. 6.2.1. It names no robotics and links no other extension |
+| `praxis::optimization` | extension | the iterative-solve seam whole: its residual-form vocabulary — a problem given by its error, its Jacobian and its stopping test, with optional bounds on its coordinates — the solver slot with its descriptor and an inert default behind it, and the reference implementation behind it, Newton-Raphson written from Lynch & Park, Modern Robotics, sec. 6.2.1; and the scene contribution: a robot-free scenario that solves a function handed to it by name on a strand of its own, and a graph drawing that function with every iterate of the solve. It names no robotics and links no other extension |
 | `praxis::rigid_motion` | extension | the rigid-motion seam whole: the pose vocabulary every extension speaks — transforms, screw axes, angle conversions, Euler axis orders, the project tolerance — the frame and screw slots with their descriptors and an inert default behind each, and the reference implementations behind them, written from Lynch & Park, Modern Robotics, ch. 3; and the scene contribution: a stencil rendering one object with its coordinate frame, the window whose Euler controls drive that frame, and the preset composing the two |
 | `praxis::trajectory` | extension | the trajectory seam whole: its own N-DOF vocabulary — a configuration vector and the bounds on it — the time-scaling, path, SE(3) pose-trajectory and via-point slots with their descriptors and an inert default behind each, and the reference implementations behind them, written from Lynch & Park, Modern Robotics, ch. 9, from Biagiotti & Melchiorri, Trajectory Planning for Automatic Machines and Robots, eq. (2.3), and built on the rigid-motion reference; and the scene contribution: a preset sweeping the rigid-motion extension's stencil along a screw motion under a time scaling |
 | `praxis::manipulator` | extension | everything specific to serial arms: its own joint vocabulary — joint vectors, Jacobians, the screw chain and the joint bounds, the last two of them names it gives the trajectory extension's types — the forward-kinematics, differential-kinematics, inverse-kinematics, robot, motion, modeling and task-space via-point slots with their descriptors and an inert default behind each, and the reference implementations behind them, written from Lynch & Park, Modern Robotics, ch. 4-6, alongside this extension's own screw-chain derivation, and built on the rigid-motion reference; and the scene contribution: that derivation from a robot description, the scene adapter, the controller and playback, and the operator windows |
 
 `praxis::praxis` is a convenience target over the Foundation, and `praxis::extensions` one over every
-extension shipped here. Each extension ships one preset, so linking `praxis::extensions` compiles all of
-them in; a consumer wanting one preset links that extension instead.
+extension shipped here. The named scenarios the demonstrations offer are composed in three preset
+targets beside the extensions, each publishing from `presets/include`: `praxis::rigid_presets`,
+`praxis::manipulator_presets` and `praxis::optimization_presets`, the last composing the robot-free
+scenario over the functions a consumer registers with it. A consumer wanting a scenario links the
+preset target that composes it, and no preset target links another.
 
 ## Build
 
@@ -74,7 +77,7 @@ adds praxis gets none of them:
 | Option | Default | Effect |
 | ------ | ------- | ------ |
 | `PRAXIS_BUILD_TESTS` | top-level | the unit tests, run with `ctest --test-dir build` |
-| `PRAXIS_BUILD_EXAMPLES` | top-level | the `rigid_demo` and `manipulator_demo` executables |
+| `PRAXIS_BUILD_EXAMPLES` | top-level | the `rigid_demo`, `manipulator_demo` and `optimization_demo` executables |
 | `PRAXIS_BUILD_DISPLAY_TESTS` | off | the tests that need a display, on top of the rest |
 | `PRAXIS_BUILD_CONSUMER_TESTS` | off | the rebuild-avoidance gate, which configures and builds a consuming project of its own |
 | `PRAXIS_ENABLE_CTAGS_GATES` | top-level | the public-surface gate, which needs Universal Ctags |
@@ -83,6 +86,9 @@ adds praxis gets none of them:
 `rigid_demo` offers the frame workbench, the two Euler-angle scenarios, and the screw, twist-axis,
 two-pose and rotation-axis scenarios. It carries no robot description and no mesh file, and needs
 none.
+`optimization_demo` offers the robot-free scenario over three functions of its own, x^3 - 2x - 5,
+cos(x) - x and atan(x), each registered with its derivative written out beside it; it needs no
+resource either.
 `manipulator_demo` offers the arm presets and carries their resources: the robot descriptions and
 mesh files are fetched during configure and deployed next to that executable as part of its build.
 Each entry point resolves what it reads relative to its own binary, so run each from its own output
@@ -96,6 +102,11 @@ cd build/examples/manipulator && ./manipulator_demo
 ```shell
 cmake --build build --target rigid_demo -j
 cd build/examples/rigid && ./rigid_demo
+```
+
+```shell
+cmake --build build --target optimization_demo -j
+cd build/examples/optimization && ./optimization_demo
 ```
 
 A project consuming praxis with `add_subdirectory` gets neither the tests nor the demonstration,

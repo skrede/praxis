@@ -3548,6 +3548,16 @@ presets/include/praxis/presets/kept_modeling.h	bound	member	-	typename:config::b
 presets/include/praxis/presets/kept_modeling.h	carried	member	-	typename:config::document
 presets/include/praxis/presets/kept_modeling.h	composed	member	-	typename:manipulator::arm_composition
 presets/include/praxis/presets/kept_modeling.h	arm_windows_kept_modeling	prototype	(const arm_scenario & chosen,const config::binding & keeping,modeling_beside beside=modeling_beside::pose)	typename:kept_modeling
+presets/include/praxis/presets/optimization.h	praxis	namespace	-	-
+presets/include/praxis/presets/optimization.h	presets	namespace	-	-
+presets/include/praxis/presets/optimization.h	optimization_keyspace	prototype	()	typename:config::declaration
+presets/include/praxis/presets/optimization.h	optimization_scenario	enum	-	typename:std::uint8_t
+presets/include/praxis/presets/optimization.h	curve	enumerator	-	-
+presets/include/praxis/presets/optimization.h	optimization_scenario_labels	prototype	()	typename:std::span<const char * const>
+presets/include/praxis/presets/optimization.h	optimization_composer	typedef	-	-
+presets/include/praxis/presets/optimization.h	composer_for	prototype	(optimization_scenario scenario,const optimization::capabilities & solving,std::vector<optimization::registered_curve> curves)	typename:optimization_composer
+presets/include/praxis/presets/optimization.h	optimization_binding	prototype	(const std::filesystem::path & named,const std::filesystem::path & beside)	typename:config::binding
+presets/include/praxis/presets/optimization.h	register_optimization	prototype	(const std::shared_ptr<scene::preset_registry> & registry,std::span<const config::location> documents,document_route located,composed_route announced,const optimization::capabilities & solving,std::span<const optimization::registered_curve> curves)	typename:std::vector<std::string>
 presets/include/praxis/presets/rotation_axis.h	praxis	namespace	-	-
 presets/include/praxis/presets/rotation_axis.h	presets	namespace	-	-
 presets/include/praxis/presets/rotation_axis.h	rotation_axis_preset	prototype	(const scene::preset_site & site,const rigid_motion::capabilities & motions)	typename:std::shared_ptr<scene::preset>
