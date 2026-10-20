@@ -2836,22 +2836,34 @@ lib/praxis-scene/include/praxis/scene/log_buffer.h	set_reporting_level	prototype
 lib/praxis-scene/include/praxis/scene/log_buffer.h	reporting_level	prototype	()	typename:severity
 lib/praxis-scene/include/praxis/scene/plot_window.h	praxis	namespace	-	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	scene	namespace	-	-
+lib/praxis-scene/include/praxis/scene/plot_window.h	plot_mark	enum	-	typename:std::uint8_t
+lib/praxis-scene/include/praxis/scene/plot_window.h	line	enumerator	-	-
+lib/praxis-scene/include/praxis/scene/plot_window.h	markers	enumerator	-	-
+lib/praxis-scene/include/praxis/scene/plot_window.h	segments	enumerator	-	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	plot_series	struct	-	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	name	member	-	typename:std::string
 lib/praxis-scene/include/praxis/scene/plot_window.h	abscissa	member	-	typename:std::vector<double>
 lib/praxis-scene/include/praxis/scene/plot_window.h	ordinate	member	-	typename:std::vector<double>
+lib/praxis-scene/include/praxis/scene/plot_window.h	mark	member	-	typename:plot_mark
+lib/praxis-scene/include/praxis/scene/plot_window.h	plot_limits	struct	-	-
+lib/praxis-scene/include/praxis/scene/plot_window.h	lower	member	-	typename:double
+lib/praxis-scene/include/praxis/scene/plot_window.h	upper	member	-	typename:double
 lib/praxis-scene/include/praxis/scene/plot_window.h	plot_frame	struct	-	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	ordinate_label	member	-	typename:std::string
 lib/praxis-scene/include/praxis/scene/plot_window.h	logarithmic_ordinate	member	-	typename:bool
 lib/praxis-scene/include/praxis/scene/plot_window.h	series	member	-	typename:std::vector<plot_series>
+lib/praxis-scene/include/praxis/scene/plot_window.h	abscissa_limits	member	-	typename:std::optional<plot_limits>
 lib/praxis-scene/include/praxis/scene/plot_window.h	plot_reading	struct	-	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	message	member	-	typename:std::string
 lib/praxis-scene/include/praxis/scene/plot_window.h	abscissa_label	member	-	typename:std::string
 lib/praxis-scene/include/praxis/scene/plot_window.h	frames	member	-	typename:std::vector<plot_frame>
 lib/praxis-scene/include/praxis/scene/plot_window.h	plot_source	typedef	-	-
+lib/praxis-scene/include/praxis/scene/plot_window.h	plot_pick	typedef	-	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	plot_window	class	-	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	plot_window	prototype	(std::string name,std::function<void ()> controls,plot_source source)	-
+lib/praxis-scene/include/praxis/scene/plot_window.h	plot_window	prototype	(std::string name,std::function<void ()> controls,plot_source source,plot_pick pick)	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	render	prototype	()	typename:void
+lib/praxis-scene/include/praxis/scene/plot_window.h	m_pick	member	-	typename:plot_pick
 lib/praxis-scene/include/praxis/scene/plot_window.h	m_source	member	-	typename:plot_source
 lib/praxis-scene/include/praxis/scene/plot_window.h	m_controls	member	-	typename:std::function<void ()>
 lib/praxis-scene/include/praxis/scene/preset.h	praxis	namespace	-	-

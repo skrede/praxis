@@ -14,6 +14,7 @@
 #include <vector>
 #include <cstddef>
 #include <utility>
+#include <optional>
 #include <algorithm>
 
 namespace praxis::manipulator {
@@ -52,7 +53,7 @@ void draw(std::vector<std::size_t> &hidden, std::size_t joint, bool shown)
 // value to draw, and the samples around it are still drawn.
 scene::plot_series curve_of(std::string name, const preview_run &shown, Eigen::Index joint, joint_quantity value)
 {
-    scene::plot_series curve{std::move(name), {}, {}};
+    scene::plot_series curve{std::move(name), {}, {}, scene::plot_mark::line};
     curve.abscissa.reserve(shown.samples.size());
     curve.ordinate.reserve(shown.samples.size());
     for(const preview_sample &one : shown.samples)
@@ -67,7 +68,7 @@ scene::plot_series curve_of(std::string name, const preview_run &shown, Eigen::I
 
 scene::plot_frame frame_of(const char *ordinate, const preview_run &shown, const std::vector<std::string> &named, const std::vector<std::size_t> &hidden, joint_quantity value)
 {
-    scene::plot_frame frame{.ordinate_label = ordinate, .logarithmic_ordinate = false, .series = std::vector<scene::plot_series>()};
+    scene::plot_frame frame{.ordinate_label = ordinate, .logarithmic_ordinate = false, .series = std::vector<scene::plot_series>(), .abscissa_limits = std::nullopt};
     frame.series.reserve(named.size());
     for(std::size_t joint = 0u; joint < named.size(); ++joint)
         if(drawn(hidden, joint))

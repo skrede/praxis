@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 #include <utility>
+#include <optional>
 
 using namespace praxis::scene;
 using namespace praxis::scheduler;
@@ -57,27 +58,27 @@ plot_source answering(plot_reading given)
 
 plot_series curve_named(const std::string &name, double first)
 {
-    return plot_series{name, {0.0, 1.0, 2.0, 3.0}, {first, first + 2.0, first + 4.0, first + 8.0}};
+    return plot_series{name, {0.0, 1.0, 2.0, 3.0}, {first, first + 2.0, first + 4.0, first + 8.0}, plot_mark::line};
 }
 
 plot_reading two_curves()
 {
-    return plot_reading{"", "s", stacked{plot_frame{"value", false, curves{curve_named("cubic", 1.0), curve_named("quintic", 16.0)}}}};
+    return plot_reading{"", "s", stacked{plot_frame{"value", false, curves{curve_named("cubic", 1.0), curve_named("quintic", 16.0)}, std::nullopt}}};
 }
 
 plot_reading three_frames()
 {
     return plot_reading{"", "s",
-                        stacked{plot_frame{"path", false, curves{curve_named("value", 1.0)}}, plot_frame{"rate", false, curves{curve_named("value", 16.0)}},
-                                plot_frame{"change of rate", false, curves{curve_named("value", 32.0)}}}};
+                        stacked{plot_frame{"path", false, curves{curve_named("value", 1.0)}, std::nullopt}, plot_frame{"rate", false, curves{curve_named("value", 16.0)}, std::nullopt},
+                                plot_frame{"change of rate", false, curves{curve_named("value", 32.0)}, std::nullopt}}};
 }
 
 // Four decades of ordinate, which is the span a logarithmic scale exists to show.
 plot_reading four_decades()
 {
-    const plot_series falling{"residual", {0.0, 1.0, 2.0, 3.0, 4.0}, {1.0, 0.1, 0.01, 0.001, 0.0001}};
+    const plot_series falling{"residual", {0.0, 1.0, 2.0, 3.0, 4.0}, {1.0, 0.1, 0.01, 0.001, 0.0001}, plot_mark::line};
 
-    return plot_reading{"", "iteration", stacked{plot_frame{"error", true, curves{falling}}}};
+    return plot_reading{"", "iteration", stacked{plot_frame{"error", true, curves{falling}, std::nullopt}}};
 }
 
 preset_registry::factory plotting()

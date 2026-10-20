@@ -84,18 +84,36 @@ drawing panel_empty()
     };
 }
 
+void draw_curve(const scene::plot_series &curve)
+{
+    const int count = static_cast<int>(std::min(curve.abscissa.size(), curve.ordinate.size()));
+    ImPlotSpec spec;
+    if(curve.mark == scene::plot_mark::markers)
+    {
+        spec.Marker = ImPlotMarker_Circle;
+        ImPlot::PlotScatter(curve.name.c_str(), curve.abscissa.data(), curve.ordinate.data(), count, spec);
+        return;
+    }
+
+    if(curve.mark == scene::plot_mark::segments)
+        spec.Flags = ImPlotLineFlags_Segments;
+    ImPlot::PlotLine(curve.name.c_str(), curve.abscissa.data(), curve.ordinate.data(), count, spec);
+}
+
 void draw_frame(const scene::plot_frame &shown, const std::string &abscissa_label, std::size_t index, float height, ImPlotLocation where)
 {
     if(!ImPlot::BeginPlot(("##plot" + std::to_string(index)).c_str(), ImVec2(-1.f, height)))
         return;
 
-    ImPlot::SetupAxes(abscissa_label.c_str(), shown.ordinate_label.c_str());
+    ImPlot::SetupAxes(abscissa_label.c_str(), shown.ordinate_label.c_str(), ImPlotAxisFlags_None, shown.abscissa_limits ? ImPlotAxisFlags_AutoFit : ImPlotAxisFlags_None);
+    if(shown.abscissa_limits)
+        ImPlot::SetupAxisLimits(ImAxis_X1, shown.abscissa_limits->lower, shown.abscissa_limits->upper, ImPlotCond_Always);
     if(shown.logarithmic_ordinate)
         ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
     ImPlot::SetupLegend(where);
 
     for(const scene::plot_series &curve : shown.series)
-        ImPlot::PlotLine(curve.name.c_str(), curve.abscissa.data(), curve.ordinate.data(), static_cast<int>(std::min(curve.abscissa.size(), curve.ordinate.size())));
+        draw_curve(curve);
 
     ImPlot::EndPlot();
 }
@@ -139,22 +157,22 @@ scene::plot_source answering(scene::plot_reading given)
 // Values single precision carries exactly, so a comparison against a hand-written panel is exact.
 scene::plot_series curve_named(const std::string &name, double first)
 {
-    return scene::plot_series{name, {0.0, 1.0, 2.0, 3.0}, {first, first + 2.0, first + 4.0, first + 8.0}};
+    return scene::plot_series{name, {0.0, 1.0, 2.0, 3.0}, {first, first + 2.0, first + 4.0, first + 8.0}, scene::plot_mark::line};
 }
 
 scene::plot_frame frame_of(const std::string &label, double first)
 {
-    return scene::plot_frame{label, false, curves{curve_named(label, first)}};
+    return scene::plot_frame{label, false, curves{curve_named(label, first)}, std::nullopt};
 }
 
 scene::plot_reading one_curve()
 {
-    return scene::plot_reading{"", "s", stacked{scene::plot_frame{"value", false, curves{curve_named("first", 1.0)}}}};
+    return scene::plot_reading{"", "s", stacked{scene::plot_frame{"value", false, curves{curve_named("first", 1.0)}, std::nullopt}}};
 }
 
 scene::plot_reading two_curves()
 {
-    return scene::plot_reading{"", "s", stacked{scene::plot_frame{"value", false, curves{curve_named("first", 1.0), curve_named("second", 16.0)}}}};
+    return scene::plot_reading{"", "s", stacked{scene::plot_frame{"value", false, curves{curve_named("first", 1.0), curve_named("second", 16.0)}, std::nullopt}}};
 }
 
 // One abscissa under three ordinates, which is the shape a reading of several frames exists for.
@@ -166,9 +184,33 @@ scene::plot_reading three_frames()
 // Four decades of ordinate, which is the span a logarithmic scale exists to show.
 scene::plot_reading four_decades()
 {
-    const scene::plot_series falling{"residual", {0.0, 1.0, 2.0, 3.0, 4.0}, {1.0, 0.1, 0.01, 0.001, 0.0001}};
+    const scene::plot_series falling{"residual", {0.0, 1.0, 2.0, 3.0, 4.0}, {1.0, 0.1, 0.01, 0.001, 0.0001}, scene::plot_mark::line};
 
-    return scene::plot_reading{"", "iteration", stacked{scene::plot_frame{"error", true, curves{falling}}}};
+    return scene::plot_reading{"", "iteration", stacked{scene::plot_frame{"error", true, curves{falling}, std::nullopt}}};
+}
+
+// The same four points under each mark, and a fifth and sixth repeating the last two so that a
+// segment series of six covers the extents of four with one segment more.
+scene::plot_reading marked(scene::plot_mark mark, std::size_t points = 4u)
+{
+    scene::plot_series curve = curve_named("first", 1.0);
+    curve.mark               = mark;
+    for(std::size_t extra = 4u; extra < points; ++extra)
+    {
+        curve.abscissa.push_back(curve.abscissa[extra - 2u]);
+        curve.ordinate.push_back(curve.ordinate[extra - 2u]);
+    }
+
+    return scene::plot_reading{"", "s", stacked{scene::plot_frame{"value", false, curves{curve}, std::nullopt}}};
+}
+
+std::size_t vertices_of(const scene::plot_reading &shown)
+{
+    scene::plot_window panel(title, nullptr, answering(shown));
+    tests::imgui_frame frames;
+    frames.draw([&panel] { panel.render(); });
+
+    return static_cast<std::size_t>(frames.vertices());
 }
 
 }
@@ -425,5 +467,72 @@ TEST_CASE("a plot window drawn while no plotting context is current says so rath
     }
 
     CHECK(frames.has_draw_data());
+    CHECK(frames.signature() == expected);
+}
+
+TEST_CASE("a series marked as markers draws a circle at each point and no line between them", "[scene]")
+{
+    scene::plot_window panel(title, nullptr, answering(marked(scene::plot_mark::markers)));
+
+    CHECK(geometry_of([&panel] { panel.render(); }) == geometry_of(panel_of(marked(scene::plot_mark::markers))));
+    CHECK(geometry_of([&panel] { panel.render(); }) != geometry_of(panel_of(marked(scene::plot_mark::line))));
+}
+
+TEST_CASE("a series of four points marked as segments draws two disjoint segments", "[scene]")
+{
+    scene::plot_window panel(title, nullptr, answering(marked(scene::plot_mark::segments)));
+
+    CHECK(geometry_of([&panel] { panel.render(); }) == geometry_of(panel_of(marked(scene::plot_mark::segments))));
+    CHECK(vertices_of(marked(scene::plot_mark::segments)) < vertices_of(marked(scene::plot_mark::line)));
+    CHECK(vertices_of(marked(scene::plot_mark::segments, 6u)) == vertices_of(marked(scene::plot_mark::line)));
+}
+
+TEST_CASE("a line, a marker and a segment series draw together in one frame", "[scene]")
+{
+    scene::plot_reading together = marked(scene::plot_mark::line);
+    for(const scene::plot_mark mark : {scene::plot_mark::markers, scene::plot_mark::segments})
+    {
+        scene::plot_series beside = marked(mark).frames.front().series.front();
+        beside.name               = mark == scene::plot_mark::markers ? "markers" : "segments";
+        together.frames.front().series.push_back(beside);
+    }
+    scene::plot_window panel(title, nullptr, answering(together));
+
+    CHECK(geometry_of([&panel] { panel.render(); }) == geometry_of(panel_of(together)));
+    CHECK(vertices_of(together) > vertices_of(marked(scene::plot_mark::line)));
+}
+
+TEST_CASE("a frame carrying abscissa limits holds its horizontal axis at them", "[scene]")
+{
+    scene::plot_reading held            = two_curves();
+    held.frames.front().abscissa_limits = scene::plot_limits{-1.0, 7.0};
+    scene::plot_window panel(title, nullptr, answering(held));
+
+    CHECK(geometry_of([&panel] { panel.render(); }) == geometry_of(panel_of(held)));
+    CHECK(geometry_of([&panel] { panel.render(); }) != geometry_of(panel_of(two_curves())));
+}
+
+TEST_CASE("held limits and the ordinate fitted under them follow a reading that changes between frames", "[scene]")
+{
+    scene::plot_reading changed            = two_curves();
+    changed.frames.front().abscissa_limits = scene::plot_limits{1.0, 2.0};
+    for(double &value : changed.frames.front().series.front().ordinate)
+        value *= 16.0;
+    std::size_t expected = 0u;
+    {
+        tests::imgui_frame reference;
+        reference.draw(panel_of(changed), 4);
+        expected = reference.signature();
+    }
+
+    scene::plot_reading held            = two_curves();
+    held.frames.front().abscissa_limits = scene::plot_limits{-1.0, 7.0};
+    scene::plot_window panel(title, nullptr, [&held] { return held; });
+
+    tests::imgui_frame frames;
+    frames.draw([&panel] { panel.render(); });
+    held = changed;
+    frames.draw([&panel] { panel.render(); });
+
     CHECK(frames.signature() == expected);
 }

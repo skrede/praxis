@@ -7,6 +7,7 @@
 #include <vector>
 #include <cstddef>
 #include <utility>
+#include <optional>
 
 namespace praxis::manipulator {
 
@@ -31,7 +32,7 @@ std::string named(std::size_t which, time_scaling_choice chosen)
 // than carried a second time beside them.
 scene::plot_series curve_of(std::string name, std::span<const trajectory::scaling_sample> sampled, const preview_run &shown, double trajectory::scaling_sample::*value)
 {
-    scene::plot_series drawn{std::move(name), {}, {}};
+    scene::plot_series drawn{std::move(name), {}, {}, scene::plot_mark::line};
     drawn.abscissa.reserve(sampled.size());
     drawn.ordinate.reserve(sampled.size());
     for(std::size_t at = 0; at < sampled.size() && at < shown.samples.size(); ++at)
@@ -54,7 +55,7 @@ bool stands_beside(const preview_run &shown)
 
 scene::plot_frame frame_of(const char *ordinate, const preview_run &shown, time_scaling_choice chosen, double trajectory::scaling_sample::*value)
 {
-    scene::plot_frame frame{.ordinate_label = ordinate, .logarithmic_ordinate = false, .series = std::vector<scene::plot_series>()};
+    scene::plot_frame frame{.ordinate_label = ordinate, .logarithmic_ordinate = false, .series = std::vector<scene::plot_series>(), .abscissa_limits = std::nullopt};
     if(!stands_beside(shown))
     {
         frame.series.push_back(curve_of(own_timing, shown.parameter, shown, value));

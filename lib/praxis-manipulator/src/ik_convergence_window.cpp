@@ -7,6 +7,7 @@
 #include <vector>
 #include <cstddef>
 #include <utility>
+#include <optional>
 #include <algorithm>
 
 namespace praxis::manipulator {
@@ -24,7 +25,7 @@ constexpr const char *nothing_stepped = "Ask for a solve to see how its error fa
 // keep the positions they were taken at, which is what the abscissa carries them at.
 scene::plot_series drawn(std::string name, const std::vector<iteration_state> &steps, double iteration_state::*error)
 {
-    scene::plot_series curve{std::move(name), {}, {}};
+    scene::plot_series curve{std::move(name), {}, {}, scene::plot_mark::line};
     for(const iteration_state &step : steps)
         if(step.*error > 0.0)
         {
@@ -72,7 +73,7 @@ scene::plot_reading ik_convergence_window::reading() const
 {
     const std::vector<iteration_state> steps = m_followed.iterates();
 
-    scene::plot_frame errors{.ordinate_label = error_axis, .logarithmic_ordinate = true, .series = std::vector<scene::plot_series>()};
+    scene::plot_frame errors{.ordinate_label = error_axis, .logarithmic_ordinate = true, .series = std::vector<scene::plot_series>(), .abscissa_limits = std::nullopt};
     if(m_angular)
         errors.series.push_back(drawn("Angular error", steps, &iteration_state::angular_error));
     if(m_linear)

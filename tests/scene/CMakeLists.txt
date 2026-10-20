@@ -10,6 +10,7 @@ praxis_add_test(widget_callable_test.cpp LIBS praxis::scene praxis_test_support)
 praxis_add_test(preset_registration_test.cpp LIBS praxis::scene)
 praxis_add_test(labeled_value_window_test.cpp LIBS praxis::scene praxis_test_support)
 praxis_add_test(plot_window_test.cpp LIBS praxis::scene implot praxis_test_support)
+praxis_add_test(plot_pick_test.cpp LIBS praxis::scene implot praxis_test_support)
 
 set_tests_properties(preset_lifetime_test preset_composition_test PROPERTIES TIMEOUT 30)
 
