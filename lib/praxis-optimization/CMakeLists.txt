@@ -7,6 +7,7 @@ praxis_add_module(optimization
     include/praxis/optimization/evaluation.h
     include/praxis/optimization/capabilities.h
     include/praxis/optimization/baseline/solver.h
+    include/praxis/optimization/projected/solver.h
     src/evaluation.cpp
     src/descriptors.cpp
     src/inert_solver.cpp
@@ -14,6 +15,8 @@ praxis_add_module(optimization
     src/evaluation_problems.cpp
     src/baseline/solver.cpp
     src/baseline/capabilities.cpp
+    src/projected/solver.cpp
+    src/projected/step_constants.h
     PUBLIC_LIBS
     praxis::extension
     praxis::evaluation

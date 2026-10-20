@@ -1,15 +1,21 @@
+#include "joint_bounds.h"
 #include "iterated_solve.h"
 
 #include "praxis/manipulator/capabilities.h"
 #include "praxis/manipulator/baseline/kinematics.h"
+#include "praxis/rigid_motion/angles.h"
 #include "praxis/rigid_motion/capabilities.h"
 
 #include "praxis/optimization/capabilities.h"
 
+#include "praxis/evaluation/tolerance.h"
+
 #include <catch2/catch_test_macros.hpp>
 
+#include <array>
 #include <limits>
 #include <cstddef>
+#include <optional>
 
 using namespace praxis;
 using namespace praxis::manipulator;
@@ -98,6 +104,49 @@ refusal refused_before_stepping(const screw_chain &chain, const transform &targe
     return solved.error();
 }
 
+screw_chain one_joint_about_z(double lower, double upper)
+{
+    screw_axis about_z;
+    about_z << 0.0, 0.0, 1.0, 0.0, 0.0, 0.0;
+    joint_limits bounds{};
+    bounds.lower_position = joint_vector::Constant(1, lower);
+    bounds.upper_position = joint_vector::Constant(1, upper);
+    transform home        = transform::Identity();
+    home(0, 3)            = 0.5;
+
+    return screw_chain(home, {about_z}, bounds);
+}
+
+transform pose_of(const screw_chain &chain, const joint_vector &q)
+{
+    const expected<transform, refusal> pose = manipulator::forward_kinematics(reference_screw, chain.home, chain.space_screws, q);
+    REQUIRE(pose);
+
+    return *pose;
+}
+
+constexpr double unbounded = std::numeric_limits<double>::infinity();
+
+// {lower, upper, value, named} in degrees.
+constexpr std::array<std::array<double, 4>, 18> whole_turns_past_a_bound{{{-120.0, 120.0, 240.0, -120.0},
+                                                                          {-120.0, 120.0, 840.0, 120.0},
+                                                                          {-120.0, 120.0, -840.0, -120.0},
+                                                                          {-135.0, 135.0, 495.0, 135.0},
+                                                                          {-135.0, 135.0, -495.0, -135.0},
+                                                                          {-99.0, 99.0, 459.0, 99.0},
+                                                                          {-99.0, 99.0, -459.0, -99.0},
+                                                                          {-93.0, 93.0, 1173.0, 93.0},
+                                                                          {-93.0, 93.0, -1173.0, -93.0},
+                                                                          {-100.0, 150.0, 510.0, 150.0},
+                                                                          {-100.0, 150.0, -460.0, -100.0},
+                                                                          {-183.0, 183.0, 1983.0, 183.0},
+                                                                          {-183.0, 183.0, -1983.0, -183.0},
+                                                                          {-unbounded, 135.0, 495.0, 135.0},
+                                                                          {-135.0, unbounded, -495.0, -135.0},
+                                                                          {-unbounded, 120.0, 840.0, 120.0},
+                                                                          {-120.0, unbounded, -840.0, -120.0},
+                                                                          {-unbounded, unbounded, 495.0, 495.0}}};
+
 }
 
 TEST_CASE("a_step_answering_a_configuration_of_another_width_is_refused_before_it_is_used")
@@ -143,4 +192,25 @@ TEST_CASE("every_entry_refusal_is_answered_before_any_step_is_taken")
     CHECK(refused_before_stepping(planar_arm(), target, configuration(nan, -0.1)) == refusal::no_solution);
     CHECK(refused_before_stepping(planar_arm(), target, configuration(0.1, inf)) == refusal::no_solution);
     CHECK(steps_taken == 0);
+}
+
+TEST_CASE("seeds_a_whole_number_of_turns_past_a_bound_are_named_inside_the_bounds_and_answered_there_by_the_book_solve")
+{
+    for(const auto &[lower, upper, value, named] : whole_turns_past_a_bound)
+    {
+        CAPTURE(lower, upper, value, named);
+        const screw_chain chain                      = one_joint_about_z(lower * radians_per_degree, upper * radians_per_degree);
+        const joint_vector seed                      = joint_vector::Constant(1, value * radians_per_degree);
+        const std::optional<joint_vector> named_seed = named_inside_bounds(chain, seed);
+        REQUIRE(named_seed.has_value());
+        CHECK(is_approx_equal((*named_seed)[0], named * radians_per_degree, 1.0e-12));
+        CHECK(named_inside_bounds(chain, *named_seed) == named_seed);
+
+        ik_result answer;
+        CHECK(manipulator::baseline().ik.inverse_kinematics(reference_screw, reference_frames, manipulator::baseline().fk, manipulator::baseline().dk, optimization::baseline().solver,
+                                                            chain, pose_of(chain, seed), seed, tight_parameters, answer));
+        REQUIRE(answer.solutions.size() == 1u);
+        CHECK(is_approx_equal(answer.solutions.front()[0], named * radians_per_degree, 1.0e-12));
+        CHECK(is_approx_equal(pose_of(chain, answer.solutions.front()), pose_of(chain, seed), 1.0e-9));
+    }
 }

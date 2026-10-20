@@ -4,7 +4,7 @@
 #include "praxis/presets/arm_registration.h"
 
 #include "praxis/manipulator/capabilities.h"
-#include "praxis/manipulator/projected/kinematics.h"
+#include "praxis/manipulator/solver_adapters.h"
 
 #include "praxis/scene/coverage_report.h"
 
@@ -13,6 +13,7 @@
 #include "praxis/rigid_motion/capabilities.h"
 
 #include "praxis/optimization/capabilities.h"
+#include "praxis/optimization/projected/solver.h"
 
 #include "praxis/config/store.h"
 
@@ -63,9 +64,12 @@ std::array<capability_view, 14> composed_views(composed_capabilities &&) = delet
 composed_capabilities bound_capabilities()
 {
     manipulator::capabilities arm = manipulator::baseline();
-    arm.ik.inverse_kinematics     = &manipulator::projected::inverse_kinematics;
+    arm.ik.inverse_kinematics     = &manipulator::body_inverse_kinematics;
 
-    return composed_capabilities{arm, trajectory::baseline(), rigid_motion::baseline(), optimization::baseline()};
+    optimization::capabilities solving = optimization::baseline();
+    solving.solver.solve               = &optimization::projected::solve;
+
+    return composed_capabilities{arm, trajectory::baseline(), rigid_motion::baseline(), solving};
 }
 
 }
