@@ -108,8 +108,8 @@ if (TARGET praxis_manipulator)
     # A bound solve is handed the maps its own mathematics reads, a solver of residual problems and the
     # chain it solves over, and none of those carries an inverse-kinematics solve, so a slot body asking
     # one of them for one names a member that is not there. The families word an absent member
-    # differently, and the call is the only expression in each unit, so that wording is the one text no
-    # other failure there composes.
-    praxis_add_failing_compile(manipulator_solver_reentry.cpp DIAGNOSTIC "no member named|is not a member" LIBS praxis::manipulator)
-    praxis_add_failing_compile(manipulator_solver_ops_reentry.cpp DIAGNOSTIC "no member named|is not a member" LIBS praxis::manipulator)
+    # differently, and the pattern names the member because one family words an undeclared parameter
+    # type the same way.
+    praxis_add_failing_compile(manipulator_solver_reentry.cpp DIAGNOSTIC "no member named [^ ]*inverse_kinematics|inverse_kinematics[^ ]* is not a member" LIBS praxis::manipulator)
+    praxis_add_failing_compile(manipulator_solver_ops_reentry.cpp DIAGNOSTIC "no member named [^ ]*inverse_kinematics|inverse_kinematics[^ ]* is not a member" LIBS praxis::manipulator)
 endif ()
