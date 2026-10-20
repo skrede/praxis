@@ -66,7 +66,7 @@ void check_circle_drawn(threepp::Scene &scene, const scenario_snapshot &ran)
 {
     const std::size_t n      = ran.grid->count;
     const drawn_field field  = field_of(scene);
-    const placement standing = placement_of(field, *ran.grid);
+    const placement standing = placement_of(field, ran);
     CHECK(field.triangles == 2u * (n - 1u) * (n - 1u));
     for(std::size_t at = 0; at < n * n; at += 97u)
         CHECK(std::abs(vertex(field, at).z() - standing.scale * ran.grid->heights[at]) < 1.0e-6);
@@ -162,4 +162,18 @@ TEST_CASE("a shorter run leaves one marker in the scene per iterate it recorded"
     CHECK(built.scene->getObjectByName("iterates")->children.size() == 2u);
 
     taken.composed->tear_down();
+}
+
+TEST_CASE("a surface sampled over ranges other than the default places its field and its iterates by those ranges", "[optimization][surface]")
+{
+    scheduler::scheduler loop(scheduler::inline_workers);
+    staged built(loop);
+
+    const scenario_settings shifted{"circle", {interval{-1.0, 3.0}, interval{-1.0, 3.0}}, Eigen::Vector2d(1.5, 0.5), 70u, 0u};
+    const opened taken                                 = open_surface(built.site, {registered_surface("circle", &circle_value, &circle_gradient)}, shifted);
+    const std::shared_ptr<const scenario_snapshot> ran = settled(loop, taken);
+    taken.composed->stencil->render();
+
+    REQUIRE(ran != nullptr);
+    check_circle_drawn(*built.scene, *ran);
 }

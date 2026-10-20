@@ -63,27 +63,43 @@ inline Eigen::Vector3d vertex(const drawn_field &field, std::size_t at)
 struct placement
 {
     Eigen::Vector3d origin;
+    Eigen::Vector2d lower;
     Eigen::Vector2d across;
     double scale;
 
     Eigen::Vector3d at(double x, double y, double f) const
     {
-        return Eigen::Vector3d(origin.x() + across.x() * (x + 2.0), origin.y() + across.y() * (y + 2.0), scale * f);
+        return Eigen::Vector3d(origin.x() + across.x() * (x - lower.x()), origin.y() + across.y() * (y - lower.y()), scale * f);
+    }
+
+    // The point of the ranges a drawn point stands over.
+    Eigen::Vector2d over(const Eigen::Vector3d &drawn) const
+    {
+        return Eigen::Vector2d(lower.x() + (drawn.x() - origin.x()) / across.x(), lower.y() + (drawn.y() - origin.y()) / across.y());
     }
 };
 
-inline placement placement_of(const drawn_field &field, const scenario_grid &grid)
+inline placement placement_of(const drawn_field &field, const scenario_snapshot &shown)
 {
-    const std::size_t n = grid.count;
-    std::size_t tallest = 0u;
-    for(std::size_t at = 0; at < grid.heights.size(); ++at)
+    REQUIRE(shown.grid != nullptr);
+    REQUIRE(shown.ranges.size() == 2u);
+    const scenario_grid &grid = *shown.grid;
+    const auto finite         = std::ranges::find_if(grid.heights, [](double height) { return std::isfinite(height); });
+    REQUIRE(finite != grid.heights.end());
+
+    auto tallest = static_cast<std::size_t>(finite - grid.heights.begin());
+    for(std::size_t at = tallest; at < grid.heights.size(); ++at)
         if(std::isfinite(grid.heights[at]) && std::abs(grid.heights[at]) > std::abs(grid.heights[tallest]))
             tallest = at;
+    REQUIRE(grid.heights[tallest] != 0.0);
 
+    const std::size_t n = grid.count;
+    const Eigen::Vector2d lower(shown.ranges[0].lower, shown.ranges[1].lower);
     const Eigen::Vector3d first = vertex(field, 0u);
-    const Eigen::Vector2d across((vertex(field, n - 1u).x() - first.x()) / 4.0, (vertex(field, (n - 1u) * n).y() - first.y()) / 4.0);
+    const Eigen::Vector2d across((vertex(field, n - 1u).x() - first.x()) / (shown.ranges[0].upper - lower.x()),
+                                 (vertex(field, (n - 1u) * n).y() - first.y()) / (shown.ranges[1].upper - lower.y()));
 
-    return placement{first, across, vertex(field, tallest).z() / grid.heights[tallest]};
+    return placement{first, lower, across, vertex(field, tallest).z() / grid.heights[tallest]};
 }
 
 inline std::vector<Eigen::Vector3d> shown_markers(threepp::Scene &scene)

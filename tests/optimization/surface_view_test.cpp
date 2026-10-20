@@ -102,7 +102,7 @@ TEST_CASE("a surface in a box draws the box on the zero plane, an infinite side 
 {
     viewed_surface viewed(false);
     threepp::Scene &scene    = *viewed.built.scene;
-    const placement standing = placement_of(field_of(scene), *viewed.taken.inputs->seen.read()->grid);
+    const placement standing = placement_of(field_of(scene), *viewed.taken.inputs->seen.read());
 
     const std::vector<Eigen::Vector3d> sides = drawn_points(scene, "box");
     REQUIRE(sides.size() == 8u);
@@ -123,10 +123,9 @@ TEST_CASE("with no graph window the zero curve, the selected step's construction
     CHECK(drawn_visible(scene, "zero line"));
     CHECK(drawn_visible(scene, "box"));
 
-    const placement standing = placement_of(field_of(scene), *viewed.taken.inputs->seen.read()->grid);
+    const placement standing = placement_of(field_of(scene), *viewed.taken.inputs->seen.read());
     for(const Eigen::Vector3d &end : drawn_points(scene, "zero curve"))
-        CHECK(std::abs(Eigen::Vector2d((end.x() - standing.origin.x()) / standing.across.x() - 2.0, (end.y() - standing.origin.y()) / standing.across.y() - 2.0).norm() - 1.0) <=
-              1.0e-3);
+        CHECK(std::abs(standing.over(end).norm() - 1.0) <= 1.0e-3);
 }
 
 TEST_CASE("the graph window's switches hide and show the zero curve, the selected step's construction and the box", "[optimization][surface][view]")

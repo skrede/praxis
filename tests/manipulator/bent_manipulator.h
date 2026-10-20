@@ -80,24 +80,38 @@ inline expected<jacobian, refusal> moved_body_jacobian(const rigid_motion::screw
 
 inline expected<transform, refusal> displaced_tool_pose(const transform &flange_pose, const transform &tool_offset)
 {
-    return displaced(tool_pose_from_flange_pose(flange_pose, tool_offset).value());
+    const expected<transform, refusal> reached = tool_pose_from_flange_pose(flange_pose, tool_offset);
+    if(!reached)
+        return reached;
+
+    return displaced(reached.value());
 }
 
 inline expected<transform, refusal> displaced_flange_pose(const rigid_motion::frame_ops &frames, const transform &tool_pose, const transform &tool_offset)
 {
-    return displaced(flange_pose_from_tool_pose(frames, tool_pose, tool_offset).value());
+    const expected<transform, refusal> reached = flange_pose_from_tool_pose(frames, tool_pose, tool_offset);
+    if(!reached)
+        return reached;
+
+    return displaced(reached.value());
 }
 
 inline expected<Eigen::Vector3d, refusal> moved_position(const transform &pose)
 {
-    return Eigen::Vector3d(position_from_pose(pose).value() + bent_by(bent::element_wise) * Eigen::Vector3d::UnitX());
+    const expected<Eigen::Vector3d, refusal> read = position_from_pose(pose);
+    if(!read)
+        return read;
+
+    return Eigen::Vector3d(read.value() + bent_by(bent::element_wise) * Eigen::Vector3d::UnitX());
 }
 
 inline expected<rotation, refusal> turned_orientation(const transform &pose)
 {
-    const rotation further(Eigen::AngleAxisd(bent_by(bent::geodesic), Eigen::Vector3d::UnitX()).toRotationMatrix());
+    const expected<rotation, refusal> read = orientation_from_pose(pose);
+    if(!read)
+        return read;
 
-    return rotation(further * orientation_from_pose(pose).value());
+    return rotation(Eigen::AngleAxisd(bent_by(bent::geodesic), Eigen::Vector3d::UnitX()).toRotationMatrix() * read.value());
 }
 
 inline expected<joint_vector, refusal> nudged_solve_pose(const kinematics &solver, const rigid_motion::frame_ops &frames, const transform &tool_pose, const joint_vector &j0,

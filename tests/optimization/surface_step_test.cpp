@@ -136,7 +136,7 @@ TEST_CASE("the stencil draws the selected step's tangent plane, its zero line an
     REQUIRE(ran.step == 1u);
 
     threepp::Scene &scene       = *staged_surface.built.scene;
-    const placement standing    = placement_of(field_of(scene), *ran.grid);
+    const placement standing    = placement_of(field_of(scene), ran);
     const Eigen::VectorXd &next = ran.run.iterates[2];
     CHECK((drawn_position(scene, "nearest point") - standing.at(next[0], next[1], 0.0)).norm() <= 1.0e-5);
     CHECK(drawn_visible(scene, "tangent plane"));
@@ -163,7 +163,7 @@ TEST_CASE("under the projected solver in a box the recorded next iterate is draw
     CHECK((built->nearest - ran.run.iterates[1]).norm() > 1.0e-3);
 
     threepp::Scene &scene       = *staged_surface.built.scene;
-    const placement standing    = placement_of(field_of(scene), *ran.grid);
+    const placement standing    = placement_of(field_of(scene), ran);
     const Eigen::VectorXd &next = ran.run.iterates[1];
     CHECK(next[0] == region.upper.x());
     const std::vector<Eigen::Vector3d> recorded = drawn_points(scene, "x_(k+1)");

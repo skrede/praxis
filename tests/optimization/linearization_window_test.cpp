@@ -62,7 +62,7 @@ struct linearizing_stage
         return [shown = panel] { shown->render(); };
     }
 
-    const scenario_linearization &at() const
+    scenario_linearization at() const
     {
         const std::shared_ptr<const scenario_snapshot> shown = stage.taken.inputs->seen.read();
         REQUIRE(shown->linearization.has_value());
@@ -100,8 +100,8 @@ TEST_CASE("a point typed into the field is evaluated, shown with its value and d
     linearizing_stage staged_panel(cubic(), false);
     CHECK(staged_panel.at().point[0] == 0.0);
 
-    const scene::plot_frame frame    = typed_point(staged_panel, "1.5");
-    const scenario_linearization &at = staged_panel.at();
+    const scene::plot_frame frame   = typed_point(staged_panel, "1.5");
+    const scenario_linearization at = staged_panel.at();
     REQUIRE(at.point.size() == 1);
     CHECK(at.point[0] == 1.5);
     REQUIRE(at.error.has_value());
@@ -126,8 +126,8 @@ TEST_CASE("the slider moves the point along the range and the point is evaluated
 
     tests::imgui_frame frames;
     tweak_from(frames, staged_panel.draw(), slider_row, 3u);
-    const scene::plot_frame frame    = staged_panel.stage.drained();
-    const scenario_linearization &at = staged_panel.at();
+    const scene::plot_frame frame   = staged_panel.stage.drained();
+    const scenario_linearization at = staged_panel.at();
     CHECK(at.point[0] != 1.5);
     CHECK((at.point[0] >= -4.0 && at.point[0] <= 4.0));
     CHECK(-(*at.error)[0] == cubic_value(at.point[0]));
@@ -142,7 +142,7 @@ TEST_CASE("with the check opted in, a derivative wrong by its sign is stated and
     linearizing_stage staged_panel(wrong_by_sign(), true);
     const scene::plot_frame frame = typed_point(staged_panel, "1.5");
 
-    const scenario_linearization &at = staged_panel.at();
+    const scenario_linearization at = staged_panel.at();
     REQUIRE(at.check.has_value());
     CHECK(at.check->disagrees);
     CHECK(std::abs(at.check->central(0, 0) - cubic_slope(1.5)) <= 1.0e-6);
@@ -162,7 +162,7 @@ TEST_CASE("with the check opted in, a correct derivative raises nothing and only
     linearizing_stage staged_panel(cubic(), true);
     const scene::plot_frame frame = typed_point(staged_panel, "1.5");
 
-    const scenario_linearization &at = staged_panel.at();
+    const scenario_linearization at = staged_panel.at();
     REQUIRE(at.check.has_value());
     CHECK_FALSE(at.check->disagrees);
     CHECK(staged_panel.lines(true).size() == 3u);

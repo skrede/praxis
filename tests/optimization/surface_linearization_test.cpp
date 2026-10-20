@@ -83,7 +83,7 @@ struct linearized_surface
         return [shown = panel] { shown->render(); };
     }
 
-    const scenario_linearization &at()
+    scenario_linearization at()
     {
         REQUIRE(loop.drain().has_value());
         taken.composed->stencil->render();
@@ -102,15 +102,14 @@ struct linearized_surface
 };
 
 // Every vertex of the drawn plane stands on z = f + g . (q - p), mapped back through the field's corners.
-void check_plane(threepp::Scene &scene, const char *name, const Eigen::Vector2d &p, double f, const Eigen::Vector2d &gradient, const scenario_grid &grid)
+void check_plane(threepp::Scene &scene, const char *name, const Eigen::Vector2d &p, double f, const Eigen::Vector2d &gradient, const scenario_snapshot &shown)
 {
-    const placement standing                   = placement_of(field_of(scene), grid);
+    const placement standing                   = placement_of(field_of(scene), shown);
     const std::vector<Eigen::Vector3d> corners = drawn_points(scene, name);
     REQUIRE(corners.size() >= 3u);
     for(const Eigen::Vector3d &corner : corners)
     {
-        const Eigen::Vector2d q((corner.x() - standing.origin.x()) / standing.across.x() - 2.0, (corner.y() - standing.origin.y()) / standing.across.y() - 2.0);
-        CHECK(std::abs(corner.z() - standing.scale * (f + gradient.dot(q - p))) <= 1.0e-4);
+        CHECK(std::abs(corner.z() - standing.scale * (f + gradient.dot(standing.over(corner) - p))) <= 1.0e-4);
     }
 }
 
@@ -123,7 +122,7 @@ TEST_CASE("a point typed into both fields is evaluated, its value and gradient s
     CHECK(drawn_visible(*staged_surface.built.scene, "tangent plane at p"));
 
     staged_surface.type_point("1.5", "0.5");
-    const scenario_linearization &at = staged_surface.at();
+    const scenario_linearization at = staged_surface.at();
     CHECK(at.point == Eigen::Vector2d(1.5, 0.5));
 
     const std::vector<std::string> lines = linearization_lines(at, false);
@@ -134,7 +133,7 @@ TEST_CASE("a point typed into both fields is evaluated, its value and gradient s
     threepp::Scene &scene = *staged_surface.built.scene;
     CHECK(drawn_visible(scene, "tangent plane at p"));
     CHECK_FALSE(drawn_visible(scene, "central difference at p"));
-    check_plane(scene, "tangent plane at p", Eigen::Vector2d(1.5, 0.5), 1.5, Eigen::Vector2d(3.0, 1.0), *staged_surface.taken.inputs->seen.read()->grid);
+    check_plane(scene, "tangent plane at p", Eigen::Vector2d(1.5, 0.5), 1.5, Eigen::Vector2d(3.0, 1.0), *staged_surface.taken.inputs->seen.read());
 }
 
 TEST_CASE("the y slider moves the point along its range and leaves x where it was", "[optimization][surface][linearization]")
@@ -145,7 +144,7 @@ TEST_CASE("the y slider moves the point along its range and leaves x where it wa
 
     tests::imgui_frame frames;
     tweak_from(frames, staged_surface.draw(), y_slider_row, 3u);
-    const scenario_linearization &at = staged_surface.at();
+    const scenario_linearization at = staged_surface.at();
     CHECK(at.point[0] == 1.5);
     CHECK(at.point[1] != 0.5);
     CHECK((at.point[1] >= -2.0 && at.point[1] <= 2.0));
@@ -156,7 +155,7 @@ TEST_CASE("with the check opted in, a gradient with its components swapped is st
 {
     linearized_surface staged_surface(&swapped_gradient, true);
     staged_surface.type_point("1.5", "0.5");
-    const scenario_linearization &at = staged_surface.at();
+    const scenario_linearization at = staged_surface.at();
     REQUIRE(at.check.has_value());
     CHECK(at.check->disagrees);
     CHECK((at.check->central.row(0).transpose() - Eigen::Vector2d(3.0, 1.0)).norm() <= 1.0e-6);
@@ -168,14 +167,14 @@ TEST_CASE("with the check opted in, a gradient with its components swapped is st
     threepp::Scene &scene = *staged_surface.built.scene;
     CHECK(drawn_visible(scene, "tangent plane at p"));
     REQUIRE(drawn_visible(scene, "central difference at p"));
-    check_plane(scene, "central difference at p", Eigen::Vector2d(1.5, 0.5), 1.5, at.check->central.row(0).transpose(), *staged_surface.taken.inputs->seen.read()->grid);
+    check_plane(scene, "central difference at p", Eigen::Vector2d(1.5, 0.5), 1.5, at.check->central.row(0).transpose(), *staged_surface.taken.inputs->seen.read());
 }
 
 TEST_CASE("with the check opted in, a correct gradient raises nothing and only the registered plane is drawn", "[optimization][surface][linearization]")
 {
     linearized_surface staged_surface(&circle_gradient, true);
     staged_surface.type_point("1.5", "0.5");
-    const scenario_linearization &at = staged_surface.at();
+    const scenario_linearization at = staged_surface.at();
     REQUIRE(at.check.has_value());
     CHECK_FALSE(at.check->disagrees);
     CHECK(linearization_lines(at, true).size() == 3u);
@@ -187,7 +186,7 @@ TEST_CASE("with the check not opted in, nothing of it is evaluated, written or d
 {
     linearized_surface staged_surface(&swapped_gradient, false);
     staged_surface.type_point("1.5", "0.5");
-    const scenario_linearization &at = staged_surface.at();
+    const scenario_linearization at = staged_surface.at();
 
     CHECK_FALSE(at.check.has_value());
     CHECK(linearization_lines(at, false).size() == 2u);
