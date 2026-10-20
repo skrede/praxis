@@ -1774,6 +1774,10 @@ lib/praxis-manipulator/include/praxis/manipulator/slots.h	capability_slots	struc
 lib/praxis-manipulator/include/praxis/manipulator/slots.h	type	typedef	-	typename:manipulator::task_trajectory_slot
 lib/praxis-manipulator/include/praxis/manipulator/slots.h	capability_slots	struct	-	-
 lib/praxis-manipulator/include/praxis/manipulator/slots.h	type	typedef	-	typename:manipulator::modeling_slot
+lib/praxis-manipulator/include/praxis/manipulator/solver_adapters.h	manipulator	namespace	-	-
+lib/praxis-manipulator/include/praxis/manipulator/solver_adapters.h	praxis	namespace	-	-
+lib/praxis-manipulator/include/praxis/manipulator/solver_adapters.h	body_inverse_kinematics	prototype	(const rigid_motion::screw_ops & screw,const rigid_motion::frame_ops & frames,const forward_kinematics_ops & forward,const differential_kinematics_ops & differential,const optimization::solver_ops & solver,const screw_chain & chain,const transform & desired,const joint_vector & j0,const solver_parameters & parameters,ik_result & answer)	typename:expected<void,refusal>
+lib/praxis-manipulator/include/praxis/manipulator/solver_adapters.h	space_inverse_kinematics	prototype	(const rigid_motion::screw_ops & screw,const rigid_motion::frame_ops & frames,const forward_kinematics_ops & forward,const differential_kinematics_ops & differential,const optimization::solver_ops & solver,const screw_chain & chain,const transform & desired,const joint_vector & j0,const solver_parameters & parameters,ik_result & answer)	typename:expected<void,refusal>
 lib/praxis-manipulator/include/praxis/manipulator/supplied_chain.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/supplied_chain.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/supplied_chain.h	withheld_cause	enum	-	typename:std::uint8_t

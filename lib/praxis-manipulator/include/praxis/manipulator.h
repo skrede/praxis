@@ -11,6 +11,7 @@
 #include "praxis/manipulator/conversions.h"
 #include "praxis/manipulator/screw_chain.h"
 #include "praxis/manipulator/capabilities.h"
+#include "praxis/manipulator/solver_adapters.h"
 #include "praxis/manipulator/task_trajectory.h"
 
 #endif
