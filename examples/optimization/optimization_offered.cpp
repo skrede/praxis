@@ -60,10 +60,11 @@ std::vector<std::string> register_offered(const std::shared_ptr<scene::preset_re
                                           const std::shared_ptr<write_back> &writing)
 {
     const std::vector<config::location> reading = preset_locations(values, mine);
+    const bool checks_derivative                = true;
 
     return presets::register_optimization(
             registry, reading, [mine](const std::filesystem::path &named) { return mine.reading(named); },
-            [writing](const config::binding &at, const config::document &carried) { writing->composing(at, carried); }, optimization::baseline(), example_curves());
+            [writing](const config::binding &at, const config::document &carried) { writing->composing(at, carried); }, optimization::baseline(), example_curves(), checks_derivative);
 }
 
 }

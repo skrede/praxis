@@ -43,7 +43,8 @@ struct plot_frame
     // The scale governs this frame's ordinate alone, and a value at or below zero is not plotted on it.
     bool logarithmic_ordinate;
     std::vector<plot_series> series;
-    // Held limits fix the abscissa there on every frame, and the ordinate is fitted to the data.
+    // Held limits fix the abscissa there on every frame, and the ordinate is fitted to the points
+    // lying within them.
     std::optional<plot_limits> abscissa_limits;
 };
 

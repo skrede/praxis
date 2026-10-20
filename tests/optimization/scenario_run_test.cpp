@@ -57,7 +57,7 @@ void check_broken_below_cut(const scene::plot_series &line)
 const scene::plot_series &marks_of(const scene::plot_reading &shown)
 {
     REQUIRE(shown.frames.size() == 1u);
-    REQUIRE(shown.frames.front().series.size() == 2u);
+    REQUIRE(shown.frames.front().series.size() >= 2u);
 
     return shown.frames.front().series[1];
 }

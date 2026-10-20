@@ -13,5 +13,6 @@
 #include "praxis/optimization/function_window.h"
 #include "praxis/optimization/compose_scenario.h"
 #include "praxis/optimization/scenario_snapshot.h"
+#include "praxis/optimization/linearization_window.h"
 
 #endif

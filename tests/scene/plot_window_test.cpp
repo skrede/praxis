@@ -6,6 +6,7 @@
 
 #include <imgui.h>
 #include <implot.h>
+#include <implot_internal.h>
 
 #include <string>
 #include <vector>
@@ -105,7 +106,8 @@ void draw_frame(const scene::plot_frame &shown, const std::string &abscissa_labe
     if(!ImPlot::BeginPlot(("##plot" + std::to_string(index)).c_str(), ImVec2(-1.f, height)))
         return;
 
-    ImPlot::SetupAxes(abscissa_label.c_str(), shown.ordinate_label.c_str(), ImPlotAxisFlags_None, shown.abscissa_limits ? ImPlotAxisFlags_AutoFit : ImPlotAxisFlags_None);
+    ImPlot::SetupAxes(abscissa_label.c_str(), shown.ordinate_label.c_str(), ImPlotAxisFlags_None,
+                      shown.abscissa_limits ? ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_RangeFit : ImPlotAxisFlags_None);
     if(shown.abscissa_limits)
         ImPlot::SetupAxisLimits(ImAxis_X1, shown.abscissa_limits->lower, shown.abscissa_limits->upper, ImPlotCond_Always);
     if(shown.logarithmic_ordinate)
@@ -168,6 +170,16 @@ scene::plot_frame frame_of(const std::string &label, double first)
 scene::plot_reading one_curve()
 {
     return scene::plot_reading{"", "s", stacked{scene::plot_frame{"value", false, curves{curve_named("first", 1.0)}, std::nullopt}}};
+}
+
+// The top of the first plot's ordinate once the window has fitted it.
+double fitted_top(const scene::plot_reading &shown)
+{
+    scene::plot_window panel(title, nullptr, answering(shown));
+    tests::imgui_frame frames;
+    frames.draw([&panel] { panel.render(); }, 4);
+
+    return ImPlot::GetCurrentContext()->Plots.GetByIndex(0)->Axes[ImAxis_Y1].Range.Max;
 }
 
 scene::plot_reading two_curves()
@@ -535,4 +547,16 @@ TEST_CASE("held limits and the ordinate fitted under them follow a reading that 
     frames.draw([&panel] { panel.render(); });
 
     CHECK(frames.signature() == expected);
+}
+
+TEST_CASE("held limits fit the ordinate to the points lying within them alone", "[scene]")
+{
+    scene::plot_reading inside            = two_curves();
+    inside.frames.front().abscissa_limits = scene::plot_limits{-1.0, 7.0};
+    scene::plot_reading beyond            = inside;
+    beyond.frames.front().series.back().abscissa.push_back(100.0);
+    beyond.frames.front().series.back().ordinate.push_back(1.0e6);
+
+    CHECK(fitted_top(beyond) == fitted_top(inside));
+    CHECK(fitted_top(inside) < 1.0e3);
 }

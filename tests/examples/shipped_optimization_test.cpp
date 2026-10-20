@@ -156,7 +156,7 @@ TEST_CASE("every shipped optimization preset composes over the demonstration's f
     {
         INFO(named);
         const drawn seen = composed_and_drawn(*shipped.registry, named);
-        CHECK(seen.windows == std::vector<std::string>{"Function", "Graph", "Solve"});
+        CHECK(seen.windows == std::vector<std::string>{"Function", "Graph", "Solve", "Linearization"});
         CHECK(seen.after > seen.before);
     }
 }

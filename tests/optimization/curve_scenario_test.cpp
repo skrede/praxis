@@ -33,7 +33,7 @@ void check_held_line(const scene::plot_frame &frame)
     REQUIRE(frame.abscissa_limits.has_value());
     CHECK(frame.abscissa_limits->lower == -4.0);
     CHECK(frame.abscissa_limits->upper == 4.0);
-    REQUIRE(frame.series.size() == 2u);
+    REQUIRE(frame.series.size() >= 2u);
 
     const scene::plot_series &line = frame.series[0];
     CHECK(line.mark == scene::plot_mark::line);

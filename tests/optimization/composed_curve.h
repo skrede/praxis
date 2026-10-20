@@ -78,7 +78,7 @@ struct opened
 // The composer keeps what it was offered, so a case reads the publication whether or not it composed
 // a window.
 inline opened open_composing(const scene::preset_site &site, std::vector<registered_curve> curves, const capabilities &solving, const scenario_settings &settings,
-                             const scenario_window_composer &windows)
+                             const scenario_window_composer &windows, bool checks_derivative = false)
 {
     opened taken;
     const scenario_window_composer kept = [&taken, &windows](const scenario_window_inputs &offered)
@@ -88,7 +88,7 @@ inline opened open_composing(const scene::preset_site &site, std::vector<registe
         return windows(offered);
     };
 
-    taken.composed = compose_curve_scenario(site, std::move(curves), solving, settings, scenario_composition{kept});
+    taken.composed = compose_curve_scenario(site, std::move(curves), solving, settings, scenario_composition{kept, checks_derivative});
 
     return taken;
 }

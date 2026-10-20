@@ -13,6 +13,7 @@ praxis_add_module(optimization
     include/praxis/optimization/function_window.h
     include/praxis/optimization/compose_scenario.h
     include/praxis/optimization/scenario_snapshot.h
+    include/praxis/optimization/linearization_window.h
     include/praxis/optimization/baseline/solver.h
     include/praxis/optimization/projected/solver.h
     src/evaluation.cpp
@@ -24,9 +25,12 @@ praxis_add_module(optimization
     src/scenario_state.cpp
     src/function_window.cpp
     src/compose_scenario.cpp
+    src/scenario_answers.cpp
     src/evaluation_tables.h
+    src/scenario_answers.h
     src/scenario_defaults.h
     src/evaluation_problems.cpp
+    src/linearization_window.cpp
     src/baseline/solver.cpp
     src/baseline/capabilities.cpp
     src/projected/solver.cpp

@@ -20,6 +20,7 @@
 #include <threepp/scenes/Scene.hpp>
 
 #include <cmath>
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
@@ -52,13 +53,19 @@ double newton_step(double x)
 }
 
 // Every x the registered functions were evaluated at, in the order they were asked. The derivative is
-// evaluated only by the solve and at its iterates, and the curve is sampled last, up to its range's
-// upper end.
+// evaluated by the solve and at its iterates, the curve is sampled up to its range's upper end, and the
+// Linearization window's point, the middle of the range, is evaluated last.
 struct evaluations
 {
     std::vector<double> valued;
     std::vector<double> sloped;
 };
+
+// Second to last: the run's last iterate or the range's upper end, before the point's evaluation.
+double second_to_last(const std::vector<double> &evaluated)
+{
+    return evaluated.at(evaluated.size() - 2u);
+}
 
 optimization::registered_curve recording(const std::shared_ptr<evaluations> &into)
 {
@@ -115,13 +122,13 @@ void run_composed(const scene::preset_registry::factory &compose, opened &taken)
     REQUIRE(loop.drain().has_value());
 }
 
-opened open_from(const std::vector<config::location> &documents)
+opened open_from(const std::vector<config::location> &documents, bool checks_derivative = false)
 {
     opened taken{{}, false, {}, std::make_shared<evaluations>()};
     const std::vector<optimization::registered_curve> curves{recording(taken.seen)};
     const auto registry = std::make_shared<scene::preset_registry>();
 
-    taken.named = presets::register_optimization(registry, documents, nullptr, nullptr, optimization::baseline(), curves);
+    taken.named = presets::register_optimization(registry, documents, nullptr, nullptr, optimization::baseline(), curves, checks_derivative);
     if(!taken.named.empty())
         run_composed(registry->load_preset(taken.named.front()), taken);
 
@@ -136,15 +143,26 @@ TEST_CASE("a curve document opens the curve scenario and its run is published", 
 
     REQUIRE(taken.named == std::vector<std::string>{"Root finding: a cubic"});
     REQUIRE(taken.composed);
-    CHECK(taken.windows == std::vector<std::string>{"Function", "Graph", "Solve"});
+    CHECK(taken.windows == std::vector<std::string>{"Function", "Graph", "Solve", "Linearization"});
 
     const std::vector<double> &sloped = taken.seen->sloped;
-    REQUIRE(sloped.size() >= 3u);
+    REQUIRE(sloped.size() >= 4u);
     CHECK(sloped[0] == -2.25);
     CHECK(sloped[1] == newton_step(-2.25));
-    CHECK(std::abs(cubic(sloped.back())) < 1.0e-12);
+    CHECK(std::abs(cubic(second_to_last(taken.seen->sloped))) < 1.0e-12);
     CHECK(std::ranges::find(taken.seen->valued, -3.0) != taken.seen->valued.end());
-    CHECK(taken.seen->valued.back() == 3.0);
+    CHECK(second_to_last(taken.seen->valued) == 3.0);
+    CHECK((sloped.back() == 0.0 && taken.seen->valued.back() == 0.0));
+}
+
+TEST_CASE("a registration checking derivatives has the point's central difference evaluated", "[presets][optimization]")
+{
+    const opened taken = open_from({config::resolve("curve.xml", PRAXIS_SHIPPED_OPTIMIZATION_DIR)}, true);
+
+    REQUIRE(taken.composed);
+    const double h = std::cbrt(std::numeric_limits<double>::epsilon());
+    CHECK(second_to_last(taken.seen->valued) == h);
+    CHECK(taken.seen->valued.back() == -h);
 }
 
 TEST_CASE("the document's seed, range and iteration limit are the run's", "[presets][optimization]")
@@ -154,11 +172,11 @@ TEST_CASE("the document's seed, range and iteration limit are the run's", "[pres
                                             "<range x_lower=\"-1\" x_upper=\"2.5\"/><seed x=\"2\"/><solve limit=\"2\"/></optimization>")});
 
     REQUIRE(taken.composed);
-    REQUIRE_FALSE(taken.seen->sloped.empty());
+    REQUIRE(taken.seen->sloped.size() >= 2u);
     CHECK(taken.seen->sloped.front() == 2.0);
-    CHECK(taken.seen->sloped.back() == newton_step(newton_step(2.0)));
+    CHECK(second_to_last(taken.seen->sloped) == newton_step(newton_step(2.0)));
     CHECK(std::ranges::find(taken.seen->valued, -1.0) != taken.seen->valued.end());
-    CHECK(taken.seen->valued.back() == 2.5);
+    CHECK(second_to_last(taken.seen->valued) == 2.5);
 }
 
 TEST_CASE("a document that leaves the range, seed and limit out opens at the keyspace's defaults", "[presets][optimization]")
@@ -166,11 +184,11 @@ TEST_CASE("a document that leaves the range, seed and limit out opens at the key
     const opened taken = open_from({written("bare.xml", "<optimization><preset name=\"bare\" scenario=\"curve\"/><function name=\"x^3 - 2x - 5\"/></optimization>")});
 
     REQUIRE(taken.composed);
-    REQUIRE_FALSE(taken.seen->sloped.empty());
+    REQUIRE(taken.seen->sloped.size() >= 2u);
     CHECK(taken.seen->sloped.front() == 0.75);
     CHECK(std::ranges::find(taken.seen->valued, -3.0) != taken.seen->valued.end());
-    CHECK(taken.seen->valued.back() == 3.0);
-    CHECK(std::abs(cubic(taken.seen->sloped.back())) < 1.0e-12);
+    CHECK(second_to_last(taken.seen->valued) == 3.0);
+    CHECK(std::abs(cubic(second_to_last(taken.seen->sloped))) < 1.0e-12);
 }
 
 TEST_CASE("a document selecting a function the registration does not carry composes nothing", "[presets][optimization]")
@@ -191,7 +209,7 @@ TEST_CASE("a document stating a name another one has taken, or none, is left out
 
     const auto registry = std::make_shared<scene::preset_registry>();
     const std::vector<std::string> named =
-            presets::register_optimization(registry, std::vector<config::location>{first, second, unnamed, missing}, nullptr, nullptr, optimization::baseline(), {});
+            presets::register_optimization(registry, std::vector<config::location>{first, second, unnamed, missing}, nullptr, nullptr, optimization::baseline(), {}, false);
 
     CHECK(named == std::vector<std::string>{"taken"});
     CHECK(registry->preset_names() == std::vector<std::string>{"taken"});

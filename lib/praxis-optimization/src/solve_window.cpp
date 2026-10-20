@@ -136,11 +136,14 @@ void solve_window::render_controls()
 }
 
 // A publication not seen before is what the slider and the table are brought to, so a selection
-// made elsewhere is the one shown.
+// made elsewhere is the one shown; so is a seed a run was started from elsewhere, while a seed typed
+// and not yet run stays in its field through any publication that keeps the last run's seed.
 void solve_window::render_run(const std::shared_ptr<const scenario_snapshot> &shown)
 {
     if(shown != m_last)
     {
+        if(m_last == nullptr || m_last->run.seed != shown->run.seed)
+            m_seed = shown->run.seed;
         m_last = shown;
         m_step = shown->step;
         m_rows = iterate_rows(shown->run);

@@ -12,8 +12,13 @@
 namespace praxis::optimization {
 
 // The published curve as a line held to its range and every iterate x_k as a marker at (x_k, g(x_k)).
+// At the selected step k it adds the tangent at x_k, the point where that tangent is zero, and the
+// recorded x_(k+1) as a segment from the abscissa to the curve; where the problem has a box, its ends;
+// at a point p asked for, the point and its tangent, and the central difference's tangent where the
+// check disagrees. Each added line is held to the range and to the ordinates the points span.
 scene::plot_reading curve_reading(const scenario_reader &seen);
 
+// A left press with Shift held over the plot runs from the abscissa pressed.
 std::shared_ptr<scene::plot_window> curve_graph(const scenario_window_inputs &inputs, std::string name);
 
 }

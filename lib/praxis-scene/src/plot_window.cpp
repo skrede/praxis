@@ -35,7 +35,7 @@ float shared_height(std::size_t count)
 
 void setup_axes(const plot_frame &shown, const std::string &abscissa_label)
 {
-    const ImPlotAxisFlags fitted = shown.abscissa_limits ? ImPlotAxisFlags_AutoFit : ImPlotAxisFlags_None;
+    const ImPlotAxisFlags fitted = shown.abscissa_limits ? ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_RangeFit : ImPlotAxisFlags_None;
     ImPlot::SetupAxes(abscissa_label.c_str(), shown.ordinate_label.c_str(), ImPlotAxisFlags_None, fitted);
     if(shown.abscissa_limits)
         ImPlot::SetupAxisLimits(ImAxis_X1, shown.abscissa_limits->lower, shown.abscissa_limits->upper, ImPlotCond_Always);

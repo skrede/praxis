@@ -21,11 +21,12 @@ namespace praxis::optimization {
 // What a window of one composed scenario is built from. It carries no function and no solver, so a
 // window has nothing it could evaluate or solve on the render strand: it reads the publication and
 // asks for a run through the gate. `opened` is what the composition opened at, which a window holding
-// settings of its own starts from.
+// settings of its own starts from, and `checks_derivative` is the composition's own.
 struct scenario_window_inputs
 {
     scenario_reader seen;
     std::size_t dimension;
+    bool checks_derivative;
     scenario_settings opened;
     std::vector<std::string> registered;
     std::weak_ptr<owned_scenario> scenario;
@@ -35,6 +36,8 @@ struct scenario_window_inputs
 // is constructed.
 using scenario_window_composer = std::function<std::vector<std::shared_ptr<scene::imgui_window>>(const scenario_window_inputs &)>;
 
+// A composition checking derivatives has each linearization's registered derivative compared with a
+// central difference of the value; one that does not has nothing of the check evaluated or shown.
 struct scenario_composition
 {
     scenario_window_composer windows;

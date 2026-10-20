@@ -1,6 +1,8 @@
 #ifndef HPP_GUARD_PRAXIS_OPTIMIZATION_SCENARIO_SNAPSHOT_H
 #define HPP_GUARD_PRAXIS_OPTIMIZATION_SCENARIO_SNAPSHOT_H
 
+#include "praxis/optimization/problem.h"
+
 #include "praxis/extension/refusal.h"
 
 #include "praxis/compat/expected.h"
@@ -35,10 +37,30 @@ struct scenario_run
     std::optional<refusal> refused;
 };
 
+// A Jacobian's central-difference estimate and the largest relative difference of their entries,
+// |J - J_cd| / max(1, |J|, |J_cd|), which disagrees above the check's tolerance.
+struct derivative_check
+{
+    Eigen::MatrixXd central;
+    double difference;
+    bool disagrees;
+};
+
+// The problem's own answers at one point; the check is present only where the composition opted
+// into it and every value it needed was answered.
+struct scenario_linearization
+{
+    Eigen::VectorXd point;
+    expected<Eigen::VectorXd, refusal> error;
+    expected<Eigen::MatrixXd, refusal> jacobian;
+    std::optional<derivative_check> check;
+};
+
 // The selected function sampled evenly over the range, ends included; a sample the function did not
 // answer finitely is NaN, which breaks the drawn line there. `step` is the step k selected, from x_k
 // to x_(k+1), and `stepped` says the run was stopped by stepping once short of the iteration limit,
-// so a refusal it carries says only that its steps ran out.
+// so a refusal it carries says only that its steps ran out. `bounds` is the box the run was solved in,
+// and `linearization` is present once a point has been asked for.
 struct scenario_snapshot
 {
     bool stepped;
@@ -48,6 +70,8 @@ struct scenario_snapshot
     std::vector<double> abscissa;
     std::vector<double> ordinate;
     scenario_run run;
+    std::optional<box> bounds;
+    std::optional<scenario_linearization> linearization;
 };
 
 using scenario_publisher = scheduler::snapshot_publisher<std::shared_ptr<const scenario_snapshot>>;

@@ -90,7 +90,7 @@ struct composed_scenario
             , preset()
     {
         const auto registry = std::make_shared<scene::preset_registry>();
-        REQUIRE(presets::register_optimization(registry, std::vector<config::location>{at}, nullptr, nullptr, optimization::baseline(), two_curves()).size() == 1u);
+        REQUIRE(presets::register_optimization(registry, std::vector<config::location>{at}, nullptr, nullptr, optimization::baseline(), two_curves(), false).size() == 1u);
 
         preset = registry->load_preset("saved")(site);
         REQUIRE(preset != nullptr);

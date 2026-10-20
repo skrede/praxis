@@ -9,6 +9,7 @@
 #include "praxis/optimization/solve_window.h"
 #include "praxis/optimization/function_window.h"
 #include "praxis/optimization/compose_scenario.h"
+#include "praxis/optimization/linearization_window.h"
 
 #include "praxis/scene/preset.h"
 #include "praxis/scene/preset_site.h"
@@ -45,16 +46,16 @@ constexpr std::array<const char *, 1> scenario_spellings{"curve"};
 std::vector<std::shared_ptr<scene::imgui_window>> curve_windows(const optimization::scenario_window_inputs &inputs)
 {
     return {std::make_shared<optimization::function_window>("Function", inputs), optimization::curve_graph(inputs, "Graph"),
-            std::make_shared<optimization::solve_window>("Solve", inputs)};
+            std::make_shared<optimization::solve_window>("Solve", inputs), std::make_shared<optimization::linearization_window>("Linearization", inputs)};
 }
 
-optimization_composer curve_composer(const optimization::capabilities &solving, std::vector<optimization::registered_curve> curves)
+optimization_composer curve_composer(const optimization::capabilities &solving, std::vector<optimization::registered_curve> curves, bool checks_derivative)
 {
-    return [solving, curves = std::move(curves)](const scene::preset_site &site, const config::document &carried)
-    { return optimization::compose_curve_scenario(site, curves, solving, keys::curve_settings(carried), optimization::scenario_composition{&curve_windows}); };
+    return [solving, curves = std::move(curves), checks_derivative](const scene::preset_site &site, const config::document &carried)
+    { return optimization::compose_curve_scenario(site, curves, solving, keys::curve_settings(carried), optimization::scenario_composition{&curve_windows, checks_derivative}); };
 }
 
-using composer_factory = optimization_composer (*)(const optimization::capabilities &, std::vector<optimization::registered_curve>);
+using composer_factory = optimization_composer (*)(const optimization::capabilities &, std::vector<optimization::registered_curve>, bool);
 
 constexpr std::array<composer_factory, 1> offered_scenarios{&curve_composer};
 
@@ -117,13 +118,14 @@ std::span<const char *const> optimization_scenario_labels()
     return scenario_spellings;
 }
 
-optimization_composer composer_for(optimization_scenario scenario, const optimization::capabilities &solving, std::vector<optimization::registered_curve> curves)
+optimization_composer composer_for(optimization_scenario scenario, const optimization::capabilities &solving, std::vector<optimization::registered_curve> curves, bool checks_derivative)
 {
-    return offered_scenarios.at(static_cast<std::size_t>(scenario))(solving, std::move(curves));
+    return offered_scenarios.at(static_cast<std::size_t>(scenario))(solving, std::move(curves), checks_derivative);
 }
 
 std::vector<std::string> register_optimization(const std::shared_ptr<scene::preset_registry> &registry, std::span<const config::location> documents, document_route located,
-                                               composed_route announced, const optimization::capabilities &solving, std::span<const optimization::registered_curve> curves)
+                                               composed_route announced, const optimization::capabilities &solving, std::span<const optimization::registered_curve> curves,
+                                               bool checks_derivative)
 {
     const std::vector<optimization::registered_curve> offered(curves.begin(), curves.end());
 
@@ -137,7 +139,7 @@ std::vector<std::string> register_optimization(const std::shared_ptr<scene::pres
             continue;
 
         registered.push_back(*named);
-        registry->register_preset(*named, optimization_factory(at, located, announced, composer_for(read_scenario(read.values), solving, offered)));
+        registry->register_preset(*named, optimization_factory(at, located, announced, composer_for(read_scenario(read.values), solving, offered, checks_derivative)));
     }
 
     return registered;

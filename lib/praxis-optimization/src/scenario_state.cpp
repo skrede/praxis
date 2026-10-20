@@ -1,3 +1,4 @@
+#include "scenario_answers.h"
 #include "scenario_defaults.h"
 
 #include "praxis/optimization/scenario_state.h"
@@ -6,6 +7,7 @@
 
 #include <span>
 #include <cmath>
+#include <format>
 #include <limits>
 #include <memory>
 #include <string>
@@ -29,26 +31,6 @@ std::optional<std::size_t> index_of(const std::vector<registered_curve> &curves,
     return static_cast<std::size_t>(found - curves.begin());
 }
 
-// A seed the solve did not record is still where the run started, so it is kept as the one iterate.
-scenario_run solved(const problem &posed, const solver_ops &solver, double seed, std::uint32_t steps)
-{
-    scenario_run ran{Eigen::VectorXd::Constant(1, seed), steps, {}, {}, {}, std::nullopt};
-
-    const expected<Eigen::VectorXd, refusal> answered = solver.solve(posed, ran.seed, ran.limit, ran.iterates);
-    if(!answered)
-        ran.refused = answered.error();
-    if(ran.iterates.empty())
-        ran.iterates.push_back(ran.seed);
-
-    for(const Eigen::VectorXd &x : ran.iterates)
-    {
-        ran.errors.push_back(posed.error(x));
-        ran.jacobians.push_back(posed.jacobian(x));
-    }
-
-    return ran;
-}
-
 std::uint32_t steps_taken(const scenario_run &ran)
 {
     return static_cast<std::uint32_t>(ran.iterates.size() - 1u);
@@ -61,25 +43,14 @@ std::uint32_t held_to(std::uint32_t step, const scenario_run &ran)
     return taken == 0u ? 0u : std::min(step, taken - 1u);
 }
 
-// g = -e, read back through the problem so a sample it refuses breaks the line rather than vanishing.
-void sample(const problem &posed, const interval &range, std::vector<double> &abscissa, std::vector<double> &ordinate)
-{
-    const double step = (range.upper - range.lower) / static_cast<double>(curve_samples - 1);
-    for(std::size_t at = 0; at < curve_samples; ++at)
-    {
-        const double x                             = at + 1 == curve_samples ? range.upper : range.lower + step * static_cast<double>(at);
-        const expected<Eigen::VectorXd, refusal> e = posed.error(Eigen::VectorXd::Constant(1, x));
-
-        abscissa.push_back(x);
-        ordinate.push_back(e ? -(*e)[0] : std::numeric_limits<double>::quiet_NaN());
-    }
 }
 
-}
-
-scenario_state::scenario_state(std::vector<registered_curve> curves, capabilities solving, scenario_settings opened, std::shared_ptr<scenario_publisher> published)
-        : m_solving(solving)
+scenario_state::scenario_state(std::vector<registered_curve> curves, capabilities solving, scenario_settings opened, std::shared_ptr<scenario_publisher> published,
+                               bool checks_derivative)
+        : m_checks(checks_derivative)
+        , m_solving(solving)
         , m_settings(std::move(opened))
+        , m_point()
         , m_curves(std::move(curves))
         , m_published(std::move(published))
 {
@@ -92,7 +63,7 @@ void scenario_state::run()
 
 void scenario_state::run(const Eigen::VectorXd &seed, std::uint32_t limit)
 {
-    if(!takes(seed))
+    if(!takes(seed, "solved from one finite seed"))
         return;
 
     m_settings.seed  = seed[0];
@@ -102,7 +73,7 @@ void scenario_state::run(const Eigen::VectorXd &seed, std::uint32_t limit)
 
 void scenario_state::step_once(const Eigen::VectorXd &seed)
 {
-    if(!takes(seed))
+    if(!takes(seed, "solved from one finite seed"))
         return;
 
     const bool continuing     = m_shown != nullptr && m_shown->run.seed == seed;
@@ -121,14 +92,26 @@ void scenario_state::select_step(std::uint32_t step)
     auto moved      = std::make_shared<scenario_snapshot>(*m_shown);
     moved->step     = held_to(step, moved->run);
     m_settings.step = moved->step;
-
-    m_shown = moved;
-    m_published->publish(m_shown);
+    republish(std::move(moved));
 }
 
 void scenario_state::set_limit(std::uint32_t limit)
 {
     m_settings.limit = limit;
+}
+
+void scenario_state::linearize(const Eigen::VectorXd &point)
+{
+    if(!takes(point, "linearized at one finite point"))
+        return;
+
+    m_point = point;
+    if(m_shown == nullptr)
+        return;
+
+    auto moved           = std::make_shared<scenario_snapshot>(*m_shown);
+    moved->linearization = linearized_at(curve_problem(m_curves[moved->selected], curve_tolerance), point, m_checks);
+    republish(std::move(moved));
 }
 
 void scenario_state::select(std::size_t index)
@@ -170,19 +153,27 @@ void scenario_state::solve(std::uint32_t steps, std::uint32_t selecting)
     scenario_run ran    = solved(posed, m_solving.solver, m_settings.seed, steps);
     m_settings.step     = held_to(selecting, ran);
 
-    auto shown = std::make_shared<scenario_snapshot>(scenario_snapshot{steps < m_settings.limit, m_settings.step, *selected, m_settings.range, {}, {}, std::move(ran)});
+    auto shown = std::make_shared<scenario_snapshot>(
+            scenario_snapshot{steps < m_settings.limit, m_settings.step, *selected, m_settings.range, {}, {}, std::move(ran), posed.bounds, std::nullopt});
     sample(posed, m_settings.range, shown->abscissa, shown->ordinate);
+    if(m_point)
+        shown->linearization = linearized_at(posed, *m_point, m_checks);
+    republish(std::move(shown));
+}
 
-    m_shown = shown;
+void scenario_state::republish(std::shared_ptr<scenario_snapshot> moved)
+{
+    m_shown = std::move(moved);
     m_published->publish(m_shown);
 }
 
-bool scenario_state::takes(const Eigen::VectorXd &seed) const
+bool scenario_state::takes(const Eigen::VectorXd &x, const char *as) const
 {
-    if(seed.size() == 1 && std::isfinite(seed[0]))
+    if(x.size() == 1 && std::isfinite(x[0]))
         return true;
 
-    spdlog::error("praxis: a function of one variable is solved from one finite seed, which a seed of {} values is not; the last run stays shown", seed.size());
+    const std::string handed = x.size() == 1 ? std::string("a value that is not finite") : std::format("a vector of {} values", x.size());
+    spdlog::error("praxis: a function of one variable is {}, which {} is not; the last run stays shown", as, handed);
 
     return false;
 }

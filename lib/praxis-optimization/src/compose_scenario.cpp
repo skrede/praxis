@@ -70,11 +70,11 @@ std::shared_ptr<scene::preset> compose_curve_scenario(const scene::preset_site &
         return refused("it opens at '" + opened.selected + "', which is not registered (registered: " + listed(registered) + ")");
 
     auto published = std::make_shared<scenario_publisher>();
-    auto owned     = std::make_shared<owned_scenario>(site.work, std::move(curves), solving, opened, published);
+    auto owned     = std::make_shared<owned_scenario>(site.work, std::move(curves), solving, opened, published, composed.checks_derivative);
     if(!owned->with([](scenario_state &state) { state.run(); }))
         return refused("its work strand admits no run");
 
-    const scenario_window_inputs built{published->reader(), 1u, opened, registered, owned};
+    const scenario_window_inputs built{published->reader(), 1u, composed.checks_derivative, opened, registered, owned};
     std::vector<std::shared_ptr<scene::imgui_window>> windows = composed.windows ? composed.windows(built) : std::vector<std::shared_ptr<scene::imgui_window>>{};
 
     auto preset        = std::make_shared<scene::preset>(std::make_shared<empty_stencil>(), std::move(windows), site.add_window, site.remove_window);

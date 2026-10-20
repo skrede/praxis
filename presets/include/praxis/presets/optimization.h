@@ -43,8 +43,11 @@ std::span<const char *const> optimization_scenario_labels();
 using optimization_composer = std::function<std::shared_ptr<scene::preset>(const scene::preset_site &, const config::document &)>;
 
 // The capabilities and the registered functions are copied into the composer, so neither argument
-// need outlive the call. The document selects one of the functions by its name.
-optimization_composer composer_for(optimization_scenario scenario, const optimization::capabilities &solving, std::vector<optimization::registered_curve> curves);
+// need outlive the call. The document selects one of the functions by its name. A composer checking
+// derivatives has the Linearization window compare each registered derivative with a central
+// difference of its function.
+optimization_composer composer_for(optimization_scenario scenario, const optimization::capabilities &solving, std::vector<optimization::registered_curve> curves,
+                                   bool checks_derivative);
 
 // The document is named by the caller and resolved against the directory it is expected to sit
 // beside: nothing is searched for, and a document that is not there is not an error.
@@ -53,9 +56,11 @@ config::binding optimization_binding(const std::filesystem::path &named, const s
 // One preset per document: each states the name it is shown under and which scenario it is, so a
 // document that is not there is a preset that does not exist. The names registered are answered in
 // the order the span carried them, and a document whose name another one has already taken is left
-// out and named. Every preset is composed over the functions and the capabilities handed in here.
+// out and named. Every preset is composed over the functions, the capabilities and the derivative
+// check handed in here.
 std::vector<std::string> register_optimization(const std::shared_ptr<scene::preset_registry> &registry, std::span<const config::location> documents, document_route located,
-                                               composed_route announced, const optimization::capabilities &solving, std::span<const optimization::registered_curve> curves);
+                                               composed_route announced, const optimization::capabilities &solving, std::span<const optimization::registered_curve> curves,
+                                               bool checks_derivative);
 
 }
 

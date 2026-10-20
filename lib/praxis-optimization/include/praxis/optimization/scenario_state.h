@@ -16,6 +16,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <utility>
+#include <optional>
 #include <concepts>
 
 namespace praxis::optimization {
@@ -32,11 +33,12 @@ struct scenario_settings
 
 // The registered functions and the bound solver are called here and only here, on the strand that
 // owns this state, so a function or a solve that is slow or never returns stalls no frame. A request
-// naming a seed or a range the function cannot take is logged and changes nothing.
+// naming a seed, a point or a range the function cannot take is logged and changes nothing. The
+// central difference of a linearization is evaluated only where the state checks derivatives.
 class scenario_state
 {
 public:
-    scenario_state(std::vector<registered_curve> curves, capabilities solving, scenario_settings opened, std::shared_ptr<scenario_publisher> published);
+    scenario_state(std::vector<registered_curve> curves, capabilities solving, scenario_settings opened, std::shared_ptr<scenario_publisher> published, bool checks_derivative);
 
     // A selection naming no registered function leaves the last publication standing.
     template<typename operation>
@@ -59,18 +61,24 @@ public:
     // Taken by the next run; nothing is solved again.
     void set_limit(std::uint32_t limit);
 
+    // Evaluated at once and with every later run, which publishes it beside the solve.
+    void linearize(const Eigen::VectorXd &point);
+
     void select(std::size_t index);
     void set_range(std::span<const interval> ranges);
 
 private:
+    bool m_checks;
     capabilities m_solving;
     scenario_settings m_settings;
+    std::optional<Eigen::VectorXd> m_point;
     std::vector<registered_curve> m_curves;
     std::shared_ptr<scenario_publisher> m_published;
     std::shared_ptr<const scenario_snapshot> m_shown;
 
     void solve(std::uint32_t steps, std::uint32_t selecting);
-    bool takes(const Eigen::VectorXd &seed) const;
+    void republish(std::shared_ptr<scenario_snapshot> moved);
+    bool takes(const Eigen::VectorXd &x, const char *as) const;
 };
 
 using owned_scenario = scheduler::strand_owned<scenario_state>;
