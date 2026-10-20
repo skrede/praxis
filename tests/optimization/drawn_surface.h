@@ -1,7 +1,14 @@
 #ifndef HPP_GUARD_PRAXIS_TESTS_OPTIMIZATION_DRAWN_SURFACE_H
 #define HPP_GUARD_PRAXIS_TESTS_OPTIMIZATION_DRAWN_SURFACE_H
 
+#include "composed_curve.h"
+
+#include "praxis/optimization/registered.h"
+#include "praxis/optimization/capabilities.h"
+#include "praxis/optimization/compose_scenario.h"
 #include "praxis/optimization/scenario_snapshot.h"
+
+#include "praxis/scene/preset_site.h"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -18,6 +25,7 @@
 #include <memory>
 #include <vector>
 #include <cstddef>
+#include <algorithm>
 
 namespace praxis::fixture {
 
@@ -89,6 +97,59 @@ inline std::vector<Eigen::Vector3d> shown_markers(threepp::Scene &scene)
             standing.emplace_back(marker->position.x, marker->position.y, marker->position.z);
 
     return standing;
+}
+
+// The composer keeps what it was offered and builds the windows handed in, none by default.
+inline opened open_surface_with(const scene::preset_site &site, std::vector<registered_surface> surfaces, const capabilities &solving, const scenario_settings &settings,
+                                const scenario_window_composer &windows = {}, bool checks_derivative = false)
+{
+    opened taken;
+    const scenario_window_composer kept = [&taken, &windows](const scenario_window_inputs &offered)
+    {
+        taken.inputs = offered;
+
+        return windows ? windows(offered) : std::vector<std::shared_ptr<scene::imgui_window>>{};
+    };
+    taken.composed = compose_surface_scenario(site, std::move(surfaces), solving, settings, scenario_composition{kept, checks_derivative});
+
+    return taken;
+}
+
+// Shown only where the object and every node above it are.
+inline bool drawn_visible(threepp::Scene &scene, const char *name)
+{
+    const threepp::Object3D *found = scene.getObjectByName(name);
+    REQUIRE(found != nullptr);
+    for(; found != nullptr; found = found->parent)
+        if(!found->visible)
+            return false;
+
+    return true;
+}
+
+inline Eigen::Vector3d drawn_position(threepp::Scene &scene, const char *name)
+{
+    const threepp::Object3D *found = scene.getObjectByName(name);
+    REQUIRE(found != nullptr);
+
+    return Eigen::Vector3d(found->position.x, found->position.y, found->position.z);
+}
+
+// The vertices within the drawn range of a geometry written point by point.
+inline std::vector<Eigen::Vector3d> drawn_points(threepp::Scene &scene, const char *name)
+{
+    threepp::Object3D *found = scene.getObjectByName(name);
+    REQUIRE(found != nullptr);
+    REQUIRE(found->geometry() != nullptr);
+    const auto *positions = found->geometry()->getAttribute<float>("position");
+    REQUIRE(positions != nullptr);
+
+    const auto used = std::min(static_cast<std::size_t>(std::max(found->geometry()->drawRange.count, 0)), positions->array().size() / 3u);
+    std::vector<Eigen::Vector3d> points;
+    for(std::size_t at = 0; at < used; ++at)
+        points.emplace_back(positions->array()[3u * at], positions->array()[3u * at + 1u], positions->array()[3u * at + 2u]);
+
+    return points;
 }
 
 }

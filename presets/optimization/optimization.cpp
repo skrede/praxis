@@ -59,7 +59,7 @@ std::vector<std::shared_ptr<scene::imgui_window>> curve_windows(const optimizati
 std::vector<std::shared_ptr<scene::imgui_window>> surface_windows(const optimization::scenario_window_inputs &inputs)
 {
     return {std::make_shared<optimization::function_window>("Function", inputs), std::make_shared<optimization::surface_graph_window>("Graph", inputs),
-            std::make_shared<optimization::solve_window>("Solve", inputs)};
+            std::make_shared<optimization::solve_window>("Solve", inputs), std::make_shared<optimization::linearization_window>("Linearization", inputs)};
 }
 
 optimization_composer curve_composer(const optimization::capabilities &solving, offered_functions offered, bool checks_derivative)

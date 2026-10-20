@@ -20,6 +20,9 @@ void surface_graph_window::render()
     ImGui::Begin(display_name().c_str());
     ImGui::Checkbox("Surface", &m_drawn->field);
     ImGui::Checkbox("Iterates", &m_drawn->iterates);
+    ImGui::Checkbox("Zero curve", &m_drawn->zero_curve);
+    ImGui::Checkbox("Step", &m_drawn->step);
+    ImGui::Checkbox("Box", &m_drawn->bounds);
     ImGui::End();
 }
 

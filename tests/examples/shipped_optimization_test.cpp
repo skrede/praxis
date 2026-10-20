@@ -165,7 +165,7 @@ TEST_CASE("every shipped optimization preset composes over the demonstration's f
     CHECK(curve.field == 0);
 
     const drawn surface = composed_and_drawn(*shipped.registry, shipped.names[1]);
-    CHECK(surface.windows == std::vector<std::string>{"Function", "Graph", "Solve"});
+    CHECK(surface.windows == std::vector<std::string>{"Function", "Graph", "Solve", "Linearization"});
     CHECK(surface.after > surface.before);
     CHECK(surface.field > 0);
 }

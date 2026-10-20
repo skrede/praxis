@@ -2159,6 +2159,7 @@ lib/praxis-optimization/include/praxis/optimization/linearization_window.h	m_che
 lib/praxis-optimization/include/praxis/optimization/linearization_window.h	m_point	member	-	typename:Eigen::VectorXd
 lib/praxis-optimization/include/praxis/optimization/linearization_window.h	m_seen	member	-	typename:scenario_reader
 lib/praxis-optimization/include/praxis/optimization/linearization_window.h	m_scenario	member	-	typename:std::weak_ptr<owned_scenario>
+lib/praxis-optimization/include/praxis/optimization/linearization_window.h	edit_point	prototype	(const std::vector<interval> & ranges)	typename:bool
 lib/praxis-optimization/include/praxis/optimization/linearization_window.h	post	prototype	() const	typename:void
 lib/praxis-optimization/include/praxis/optimization/problem.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/problem.h	praxis	namespace	-	-
@@ -2321,6 +2322,9 @@ lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	praxis	nam
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	surface_view	struct	-	-
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	field	member	-	typename:bool
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	iterates	member	-	typename:bool
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	zero_curve	member	-	typename:bool
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	step	member	-	typename:bool
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	bounds	member	-	typename:bool
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	surface_stencil	class	-	-
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	surface_stencil	prototype	(threepp::Scene & parent,scenario_reader seen,std::shared_ptr<const surface_view> drawn)	-
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	~surface_stencil	prototype	()	-
@@ -2336,8 +2340,19 @@ lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_iterates
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_iterate_tone	member	-	typename:std::shared_ptr<threepp::Material>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_selected_tone	member	-	typename:std::shared_ptr<threepp::Material>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_sphere	member	-	typename:std::shared_ptr<threepp::BufferGeometry>
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_zero_curve	member	-	typename:std::shared_ptr<threepp::Object3D>
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_box	member	-	typename:std::shared_ptr<threepp::Object3D>
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_step	member	-	typename:std::shared_ptr<threepp::Group>
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_patch	member	-	typename:std::shared_ptr<threepp::Mesh>
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_zero_line	member	-	typename:std::shared_ptr<threepp::Object3D>
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_nearest	member	-	typename:std::shared_ptr<threepp::Mesh>
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_recorded	member	-	typename:std::shared_ptr<threepp::Object3D>
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_plane	member	-	typename:std::shared_ptr<threepp::Mesh>
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_central	member	-	typename:std::shared_ptr<threepp::Mesh>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_sampled	member	-	typename:std::shared_ptr<const scenario_grid>
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_heights	member	-	typename:interval
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_markers	member	-	typename:std::vector<std::shared_ptr<threepp::Mesh>>
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	resample	prototype	(const scenario_snapshot & shown) const	typename:void
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	place_iterates	prototype	(const scenario_snapshot & shown) const	typename:void
 lib/praxis-rigid_motion/include/praxis/rigid_motion/angles.h	praxis	namespace	-	-
 lib/praxis-rigid_motion/include/praxis/rigid_motion/angles.h	radians_per_degree	variable	-	typename:double

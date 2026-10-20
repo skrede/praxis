@@ -6,10 +6,14 @@
 
 #include <imgui.h>
 
+#include <Eigen/Core>
+
+#include <array>
 #include <format>
 #include <memory>
 #include <string>
 #include <vector>
+#include <cstddef>
 #include <utility>
 
 namespace praxis::optimization {
@@ -18,39 +22,75 @@ namespace {
 
 constexpr const char *nothing_published = "The function has not been evaluated yet.";
 
-// g = -e and g' = J, each a single entry for a function of one variable.
-expected<double, refusal> value_of(const scenario_linearization &at)
+constexpr std::array<const char *, 2> point_labels{"Point x", "Point y"};
+constexpr std::array<const char *, 2> slider_labels{"##along the range of x", "##along the range of y"};
+
+// The value is -e and the slope J, a single entry for a function of one variable and a row of two for
+// one of two.
+expected<Eigen::VectorXd, refusal> value_of(const scenario_linearization &at)
 {
     if(!at.error)
         return unexpected(at.error.error());
 
-    return at.error->size() == 1 ? expected<double, refusal>(-(*at.error)[0]) : unexpected(refusal::unsupported_input);
+    return at.error->size() == 1 ? expected<Eigen::VectorXd, refusal>(-*at.error) : unexpected(refusal::unsupported_input);
 }
 
-expected<double, refusal> slope_of(const scenario_linearization &at)
+expected<Eigen::VectorXd, refusal> slope_of(const scenario_linearization &at)
 {
     if(!at.jacobian)
         return unexpected(at.jacobian.error());
 
-    return at.jacobian->size() == 1 ? expected<double, refusal>((*at.jacobian)(0, 0)) : unexpected(refusal::unsupported_input);
+    return at.jacobian->rows() == 1 && at.jacobian->cols() == at.point.size() ? expected<Eigen::VectorXd, refusal>(at.jacobian->row(0).transpose())
+                                                                              : unexpected(refusal::unsupported_input);
 }
 
-std::string written(const char *named, const expected<double, refusal> &answered)
+std::string components(const Eigen::VectorXd &v)
 {
-    return answered ? std::format("{} = {:.10g}", named, *answered) : std::format("{}: refused, {}", named, refusal_text(answered.error()));
+    if(v.size() == 1)
+        return std::format("{:.10g}", v[0]);
+
+    std::string joined;
+    for(Eigen::Index i = 0; i < v.size(); ++i)
+        joined += (i == 0 ? "(" : ", ") + std::format("{:.10g}", v[i]);
+
+    return joined + ")";
+}
+
+std::string written(const char *named, const expected<Eigen::VectorXd, refusal> &answered)
+{
+    return answered ? std::format("{} = {}", named, components(*answered)) : std::format("{}: refused, {}", named, refusal_text(answered.error()));
+}
+
+struct naming
+{
+    const char *value;
+    const char *slope;
+    const char *slope_handed_in;
+    const char *at;
+};
+
+naming named_for(Eigen::Index dimension)
+{
+    if(dimension == 1)
+        return naming{"g(x)", "g'(x)", "The derivative", "x"};
+
+    return naming{"f(x, y)", "grad f(x, y)", "The gradient", "(x, y)"};
 }
 
 }
 
 std::vector<std::string> linearization_lines(const scenario_linearization &at, bool checks_derivative)
 {
-    std::vector<std::string> lines{written("g(x)", value_of(at)), written("g'(x)", slope_of(at))};
-    if(!checks_derivative || !at.check || at.check->central.size() != 1)
+    const naming names = named_for(at.point.size());
+    std::vector<std::string> lines{written(names.value, value_of(at)), written(names.slope, slope_of(at))};
+    if(!checks_derivative || !at.check || at.check->central.rows() != 1 || at.check->central.cols() != at.point.size())
         return lines;
 
-    lines.push_back(std::format("g'(x) by central difference = {:.10g}", at.check->central(0, 0)));
+    const Eigen::VectorXd central = at.check->central.row(0).transpose();
+    lines.push_back(std::format("{} by central difference = {}", names.slope, components(central)));
     if(at.check->disagrees)
-        lines.push_back(std::format("The derivative handed in and the central difference differ at x = {:.10g} by a relative {:.2e}.", at.point[0], at.check->difference));
+        lines.push_back(std::format("{} handed in and the central difference differ at {} = {} by a relative {:.2e}.", names.slope_handed_in, names.at, components(at.point),
+                                    at.check->difference));
 
     return lines;
 }
@@ -58,10 +98,12 @@ std::vector<std::string> linearization_lines(const scenario_linearization &at, b
 linearization_window::linearization_window(std::string name, const scenario_window_inputs &inputs)
         : imgui_window(std::move(name))
         , m_checks(inputs.checks_derivative)
-        , m_point(Eigen::VectorXd::Constant(1, (inputs.opened.ranges.front().lower + inputs.opened.ranges.front().upper) / 2.0))
+        , m_point(Eigen::VectorXd::Zero(static_cast<Eigen::Index>(inputs.opened.ranges.size())))
         , m_seen(inputs.seen)
         , m_scenario(inputs.scenario)
 {
+    for(std::size_t axis = 0; axis < inputs.opened.ranges.size(); ++axis)
+        m_point[static_cast<Eigen::Index>(axis)] = (inputs.opened.ranges[axis].lower + inputs.opened.ranges[axis].upper) / 2.0;
     post();
 }
 
@@ -77,15 +119,26 @@ void linearization_window::render()
         return;
     }
 
-    const bool typed = ImGui::InputDouble("Point x", &m_point[0], 0.0, 0.0, "%.10g");
-    const bool slid  = ImGui::SliderScalar("##along the range", ImGuiDataType_Double, &m_point[0], &shown->ranges.front().lower, &shown->ranges.front().upper, "%.6g");
-    if(typed || slid)
+    if(edit_point(shown->ranges))
         post();
 
     if(shown->linearization)
         for(const std::string &line : linearization_lines(*shown->linearization, m_checks))
             ImGui::TextWrapped("%s", line.c_str());
     ImGui::End();
+}
+
+bool linearization_window::edit_point(const std::vector<interval> &ranges)
+{
+    bool edited = false;
+    for(std::size_t axis = 0; axis < point_labels.size() && axis < ranges.size() && axis < static_cast<std::size_t>(m_point.size()); ++axis)
+    {
+        double &coordinate = m_point[static_cast<Eigen::Index>(axis)];
+        edited |= ImGui::InputDouble(point_labels[axis], &coordinate, 0.0, 0.0, "%.10g");
+        edited |= ImGui::SliderScalar(slider_labels[axis], ImGuiDataType_Double, &coordinate, &ranges[axis].lower, &ranges[axis].upper, "%.6g");
+    }
+
+    return edited;
 }
 
 void linearization_window::post() const

@@ -15,12 +15,14 @@
 
 namespace praxis::optimization {
 
-// The value and the derivative at the point as the window writes them; where the check is on and was
-// evaluated, the central difference, and a line stating a disagreement.
+// The value and the derivative, or for a function of two variables the gradient, at the point as the
+// window writes them; where the check is on and was evaluated, the central difference, and a line
+// stating a disagreement.
 std::vector<std::string> linearization_lines(const scenario_linearization &at, bool checks_derivative);
 
-// A point taken by a field and by a slider over the range, asked of the scenario through its gate as
-// either is edited; the window asks for the middle of the range it opened at when it is built.
+// A point taken by a field and by a slider over the range of each variable, asked of the scenario
+// through its gate as any is edited; the window asks for the middle of the ranges it opened at when
+// it is built.
 class linearization_window : public scene::imgui_window
 {
 public:
@@ -34,6 +36,7 @@ private:
     scenario_reader m_seen;
     std::weak_ptr<owned_scenario> m_scenario;
 
+    bool edit_point(const std::vector<interval> &ranges);
     void post() const;
 };
 

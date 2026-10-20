@@ -136,7 +136,7 @@ TEST_CASE("a surface document opens the surface scenario over the registered sur
     std::vector<std::string> windows;
     for(const std::shared_ptr<scene::imgui_window> &window : opened.built->windows)
         windows.push_back(window->display_name());
-    CHECK(windows == std::vector<std::string>{"Function", "Graph", "Solve"});
+    CHECK(windows == std::vector<std::string>{"Function", "Graph", "Solve", "Linearization"});
 
     REQUIRE_FALSE(opened.seen->sloped.empty());
     CHECK(opened.seen->sloped.front() == Eigen::Vector2d(-2.0, -1.5));
