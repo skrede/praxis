@@ -28,11 +28,10 @@ namespace {
 
 using composed_windows = std::vector<std::shared_ptr<scene::imgui_window>>;
 
-// Said once, at composition, rather than branched on at every read: the four transformations cannot
-// refuse, so a window opened over an unbound one would show a plausible pose forever and no reader
-// downstream could tell. Only the slots this scenario itself reads are counted, so binding a solver
-// is not the price of attaching a tool. The models were chosen before this was reached, and a
-// composition offering no window to hide them with draws neither.
+// Said once, at composition, rather than branched on at every read: an unbound transformation refuses
+// every pose read through it, so no window is opened over one. Only the slots this scenario itself
+// reads are counted, so binding a solver is not the price of attaching a tool. The models were chosen
+// before this was reached, and a composition offering no window to hide them with draws neither.
 composed_windows declined(manipulator::loadable_robot_stencil &on, const std::string &unbound)
 {
     on.clear_flange_attachment(manipulator::flange_attachment::tool);

@@ -24,8 +24,8 @@
 
 namespace praxis::manipulator {
 
-// The stopping criteria of the iterative solve: the linear and the angular half of the body twist
-// are each driven below their own tolerance. Lynch & Park, Modern Robotics, section 6.2.
+// The stopping criteria of the iterative solve: the linear and the angular half of the twist it
+// iterates on, V_b or V_s, each below its own tolerance. Lynch & Park, Modern Robotics, section 6.2.
 struct solver_parameters
 {
     double position_tol;
@@ -36,9 +36,9 @@ struct solver_parameters
     solver_parameters(double position_tolerance, double orientation_tolerance, std::uint32_t iteration_limit);
 };
 
-// One step of the solve. The two errors are the norms of the angular and the linear half of the body
-// twist, against which the two tolerances above are compared; the step norm is the distance from the
-// iterate before this one.
+// One iterate of the solve, the seed being entry 0 with a step norm of zero. The two errors are the
+// norms of the angular and the linear half of the twist the solve iterates on, against which the two
+// tolerances above are compared; the step norm is the distance from the iterate before this one.
 struct iteration_state
 {
     joint_vector joint_positions;
