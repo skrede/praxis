@@ -10,6 +10,8 @@ praxis_add_module(optimization
     include/praxis/optimization/capabilities.h
     include/praxis/optimization/solve_window.h
     include/praxis/optimization/scenario_state.h
+    include/praxis/optimization/surface_stencil.h
+    include/praxis/optimization/surface_graph_window.h
     include/praxis/optimization/function_window.h
     include/praxis/optimization/compose_scenario.h
     include/praxis/optimization/scenario_snapshot.h
@@ -23,11 +25,16 @@ praxis_add_module(optimization
     src/inert_solver.cpp
     src/solve_window.cpp
     src/scenario_state.cpp
+    src/surface_mesh.cpp
+    src/surface_stencil.cpp
+    src/surface_graph_window.cpp
     src/function_window.cpp
     src/compose_scenario.cpp
     src/scenario_answers.cpp
     src/evaluation_tables.h
     src/scenario_answers.h
+    src/surface_mesh.h
+    src/registered_list.h
     src/scenario_defaults.h
     src/evaluation_problems.cpp
     src/linearization_window.cpp

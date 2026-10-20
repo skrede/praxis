@@ -55,7 +55,7 @@ registered_curve boxed_cubic()
 
 scenario_settings seeded(std::string selected, double seed)
 {
-    return scenario_settings{std::move(selected), interval{-4.0, 4.0}, seed, 70u, 0u};
+    return scenario_settings{std::move(selected), {interval{-4.0, 4.0}}, Eigen::VectorXd::Constant(1, seed), 70u, 0u};
 }
 
 bool near(double value, double expected)
@@ -161,7 +161,7 @@ TEST_CASE("a box draws its two ends as vertical segments across the drawn ordina
 
 TEST_CASE("an iterate beyond the range widens neither the box's ends nor the ordinates they span", "[optimization][graph]")
 {
-    graph_stage stage(boxed_cubic(), baseline(), scenario_settings{"boxed", interval{-3.0, 3.0}, -2.25, 200u, 0u});
+    graph_stage stage(boxed_cubic(), baseline(), scenario_settings{"boxed", {interval{-3.0, 3.0}}, Eigen::VectorXd::Constant(1, -2.25), 200u, 0u});
     REQUIRE(std::ranges::any_of(stage.ran->run.iterates, [](const Eigen::VectorXd &x) { return std::abs(x[0]) > 10.0; }));
 
     const scene::plot_frame frame   = stage.at_step(0u);

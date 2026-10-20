@@ -1,6 +1,7 @@
 #ifndef HPP_GUARD_PRAXIS_OPTIMIZATION_SCENARIO_STATE_H
 #define HPP_GUARD_PRAXIS_OPTIMIZATION_SCENARIO_STATE_H
 
+#include "praxis/optimization/problem.h"
 #include "praxis/optimization/registered.h"
 #include "praxis/optimization/capabilities.h"
 #include "praxis/optimization/scenario_snapshot.h"
@@ -21,12 +22,13 @@
 
 namespace praxis::optimization {
 
-// `step` is the step k selected, from x_k to x_(k+1).
+// One range and one seed coordinate per variable of the function; `step` is the step k selected,
+// from x_k to x_(k+1).
 struct scenario_settings
 {
     std::string selected;
-    interval range;
-    double seed;
+    std::vector<interval> ranges;
+    Eigen::VectorXd seed;
     std::uint32_t limit;
     std::uint32_t step;
 };
@@ -39,6 +41,7 @@ class scenario_state
 {
 public:
     scenario_state(std::vector<registered_curve> curves, capabilities solving, scenario_settings opened, std::shared_ptr<scenario_publisher> published, bool checks_derivative);
+    scenario_state(std::vector<registered_surface> surfaces, capabilities solving, scenario_settings opened, std::shared_ptr<scenario_publisher> published, bool checks_derivative);
 
     // A selection naming no registered function leaves the last publication standing.
     template<typename operation>
@@ -69,12 +72,17 @@ public:
 
 private:
     bool m_checks;
+    std::size_t m_dimension;
     capabilities m_solving;
     scenario_settings m_settings;
+    std::vector<std::string> m_names;
+    std::vector<problem> m_problems;
     std::optional<Eigen::VectorXd> m_point;
-    std::vector<registered_curve> m_curves;
     std::shared_ptr<scenario_publisher> m_published;
     std::shared_ptr<const scenario_snapshot> m_shown;
+
+    scenario_state(std::size_t dimension, std::vector<std::string> names, std::vector<problem> problems, capabilities solving, scenario_settings opened,
+                   std::shared_ptr<scenario_publisher> published, bool checks_derivative);
 
     void solve(std::uint32_t steps, std::uint32_t selecting);
     void republish(std::shared_ptr<scenario_snapshot> moved);

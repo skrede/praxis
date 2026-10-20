@@ -29,11 +29,13 @@ namespace praxis::presets {
 // document read against another one is refused rather than answered from fallbacks throughout.
 config::declaration optimization_keyspace();
 
-// curve solves a registered function of one variable for a root. The order is the label table's,
-// which is what reading a spelling back as an index and casting relies on.
+// curve solves a registered function of one variable for a root, surface one of two variables for a
+// point of its zero set. The order is the label table's, which is what reading a spelling back as an
+// index and casting relies on.
 enum class optimization_scenario : std::uint8_t
 {
-    curve
+    curve,
+    surface
 };
 
 // The spellings a document's scenario leaf may carry. A document naming anything else is refused
@@ -43,11 +45,11 @@ std::span<const char *const> optimization_scenario_labels();
 using optimization_composer = std::function<std::shared_ptr<scene::preset>(const scene::preset_site &, const config::document &)>;
 
 // The capabilities and the registered functions are copied into the composer, so neither argument
-// need outlive the call. The document selects one of the functions by its name. A composer checking
-// derivatives has the Linearization window compare each registered derivative with a central
-// difference of its function.
+// need outlive the call. The document selects one of the functions its scenario takes, curves or
+// surfaces, by its name. A composer checking derivatives has the Linearization window compare each
+// registered derivative with a central difference of its function.
 optimization_composer composer_for(optimization_scenario scenario, const optimization::capabilities &solving, std::vector<optimization::registered_curve> curves,
-                                   bool checks_derivative);
+                                   std::vector<optimization::registered_surface> surfaces, bool checks_derivative);
 
 // The document is named by the caller and resolved against the directory it is expected to sit
 // beside: nothing is searched for, and a document that is not there is not an error.
@@ -60,7 +62,7 @@ config::binding optimization_binding(const std::filesystem::path &named, const s
 // check handed in here.
 std::vector<std::string> register_optimization(const std::shared_ptr<scene::preset_registry> &registry, std::span<const config::location> documents, document_route located,
                                                composed_route announced, const optimization::capabilities &solving, std::span<const optimization::registered_curve> curves,
-                                               bool checks_derivative);
+                                               std::span<const optimization::registered_surface> surfaces, bool checks_derivative);
 
 }
 

@@ -142,7 +142,7 @@ TEST_CASE("a command through the gate runs again, and one selecting an unregiste
     const opened taken = open_with(built.site, {cubic()}, baseline(), opening());
     REQUIRE(settled(loop, taken) != nullptr);
 
-    command(taken.inputs->scenario, [](scenario_settings &settings) { settings.seed = -1.0; });
+    command(taken.inputs->scenario, [](scenario_settings &settings) { settings.seed = Eigen::VectorXd::Constant(1, -1.0); });
     REQUIRE(loop.drain().has_value());
     const std::shared_ptr<const scenario_snapshot> moved = taken.inputs->seen.read();
     CHECK(moved->run.iterates.front()[0] == -1.0);

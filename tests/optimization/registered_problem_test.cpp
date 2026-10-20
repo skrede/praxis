@@ -104,3 +104,78 @@ TEST_CASE("a registration with a box hands that box to its problem and one witho
     CHECK(bounded.bounds->period.size() == 0);
     CHECK_FALSE(unbounded.bounds.has_value());
 }
+
+namespace {
+
+double circle_value(double x, double y)
+{
+    return x * x + y * y - 1.0;
+}
+
+Eigen::Vector2d circle_gradient(double x, double y)
+{
+    return Eigen::Vector2d(2.0 * x, 2.0 * y);
+}
+
+Eigen::VectorXd at(double x, double y)
+{
+    return Eigen::Vector2d(x, y);
+}
+
+}
+
+TEST_CASE("a registered surface's problem answers the residual -f and its gradient as one row", "[optimization][registered]")
+{
+    const problem posed = surface_problem(registered_surface("circle", &circle_value, &circle_gradient), 1.0e-3);
+
+    for(const Eigen::Vector2d &x : {Eigen::Vector2d(-2.0, 0.5), Eigen::Vector2d(0.0, 0.0), Eigen::Vector2d(1.5, -3.0)})
+    {
+        const expected<Eigen::VectorXd, refusal> e = posed.error(x);
+        const expected<Eigen::MatrixXd, refusal> j = posed.jacobian(x);
+
+        REQUIRE(e);
+        REQUIRE(j);
+        REQUIRE(e->size() == 1);
+        REQUIRE(j->rows() == 1);
+        REQUIRE(j->cols() == 2);
+        CHECK((*e)[0] == -circle_value(x[0], x[1]));
+        CHECK((*j)(0, 0) == 2.0 * x[0]);
+        CHECK((*j)(0, 1) == 2.0 * x[1]);
+    }
+
+    CHECK(posed.converged(Eigen::VectorXd::Constant(1, 1.0e-4)));
+    CHECK_FALSE(posed.converged(Eigen::VectorXd::Constant(1, 1.0e-2)));
+    CHECK_FALSE(posed.bounds.has_value());
+}
+
+TEST_CASE("a registered surface's problem refuses a value or a gradient that is not finite as degenerate", "[optimization][registered]")
+{
+    const std::function<double(double, double)> undefined          = [](double, double) { return std::numeric_limits<double>::quiet_NaN(); };
+    const std::function<Eigen::Vector2d(double, double)> unbounded = [](double, double) { return Eigen::Vector2d(1.0, std::numeric_limits<double>::infinity()); };
+
+    const problem unvalued = surface_problem(registered_surface("undefined", undefined, &circle_gradient), 1.0e-10);
+    const problem unsloped = surface_problem(registered_surface("unbounded", &circle_value, unbounded), 1.0e-10);
+
+    REQUIRE_FALSE(unvalued.error(at(1.0, 2.0)));
+    CHECK(unvalued.error(at(1.0, 2.0)).error() == refusal::degenerate);
+    CHECK(unvalued.jacobian(at(1.0, 2.0)));
+
+    REQUIRE_FALSE(unsloped.jacobian(at(1.0, 2.0)));
+    CHECK(unsloped.jacobian(at(1.0, 2.0)).error() == refusal::degenerate);
+    CHECK(unsloped.error(at(1.0, 2.0)));
+}
+
+TEST_CASE("a registered surface's problem refuses a missing function and an x of other than two coordinates as unsupported input", "[optimization][registered]")
+{
+    const box region{Eigen::Vector2d(-1.0, -1.0), Eigen::Vector2d(1.0, 2.0)};
+
+    const problem unbound = surface_problem(registered_surface("unbound", {}, {}), 1.0e-10);
+    const problem boxed   = surface_problem(registered_surface("circle", &circle_value, &circle_gradient, region), 1.0e-10);
+
+    CHECK(unbound.error(at(1.0, 2.0)).error() == refusal::unsupported_input);
+    CHECK(unbound.jacobian(at(1.0, 2.0)).error() == refusal::unsupported_input);
+    CHECK(boxed.error(Eigen::VectorXd::Zero(1)).error() == refusal::unsupported_input);
+    CHECK(boxed.jacobian(Eigen::VectorXd::Zero(3)).error() == refusal::unsupported_input);
+    REQUIRE(boxed.bounds.has_value());
+    CHECK(boxed.bounds->upper == region.upper);
+}

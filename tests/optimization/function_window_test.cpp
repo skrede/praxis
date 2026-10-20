@@ -139,7 +139,7 @@ TEST_CASE("an edited range moves the samples and the graph's limits, and a minim
 
     type_into(frames, stage.draw(), lower_row, "-2");
     const std::shared_ptr<const scenario_snapshot> narrowed = stage.drained();
-    CHECK((narrowed->range.lower == -2.0 && narrowed->range.upper == 4.0));
+    CHECK((narrowed->ranges.front().lower == -2.0 && narrowed->ranges.front().upper == 4.0));
     CHECK(narrowed->abscissa.front() == -2.0);
     const scene::plot_reading drawn = curve_reading(stage.taken.inputs->seen);
     REQUIRE(drawn.frames.size() == 1u);

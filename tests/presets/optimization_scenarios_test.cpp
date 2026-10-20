@@ -128,7 +128,7 @@ opened open_from(const std::vector<config::location> &documents, bool checks_der
     const std::vector<optimization::registered_curve> curves{recording(taken.seen)};
     const auto registry = std::make_shared<scene::preset_registry>();
 
-    taken.named = presets::register_optimization(registry, documents, nullptr, nullptr, optimization::baseline(), curves, checks_derivative);
+    taken.named = presets::register_optimization(registry, documents, nullptr, nullptr, optimization::baseline(), curves, {}, checks_derivative);
     if(!taken.named.empty())
         run_composed(registry->load_preset(taken.named.front()), taken);
 
@@ -209,7 +209,7 @@ TEST_CASE("a document stating a name another one has taken, or none, is left out
 
     const auto registry = std::make_shared<scene::preset_registry>();
     const std::vector<std::string> named =
-            presets::register_optimization(registry, std::vector<config::location>{first, second, unnamed, missing}, nullptr, nullptr, optimization::baseline(), {}, false);
+            presets::register_optimization(registry, std::vector<config::location>{first, second, unnamed, missing}, nullptr, nullptr, optimization::baseline(), {}, {}, false);
 
     CHECK(named == std::vector<std::string>{"taken"});
     CHECK(registry->preset_names() == std::vector<std::string>{"taken"});

@@ -9,5 +9,6 @@
 <demonstration>
     <presets>
         <preset name="curve" document="curve.xml"/>
+        <preset name="surface" document="surface.xml"/>
     </presets>
 </demonstration>

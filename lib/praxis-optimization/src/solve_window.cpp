@@ -91,7 +91,7 @@ solve_window::solve_window(std::string name, const scenario_window_inputs &input
         : imgui_window(std::move(name))
         , m_step(inputs.opened.step)
         , m_limit(inputs.opened.limit)
-        , m_seed(Eigen::VectorXd::Constant(1, inputs.opened.seed))
+        , m_seed(inputs.opened.seed)
         , m_seen(inputs.seen)
         , m_rows()
         , m_scenario(inputs.scenario)

@@ -50,7 +50,7 @@ function_window::function_window(std::string name, const scenario_window_inputs 
         : imgui_window(std::move(name))
         , m_source(function_source::registered)
         , m_selected(position_of(inputs.registered, inputs.opened.selected))
-        , m_typed{inputs.opened.range}
+        , m_typed(inputs.opened.ranges)
         , m_posted(m_typed)
         , m_registered(inputs.registered)
         , m_scenario(inputs.scenario)

@@ -56,19 +56,31 @@ struct scenario_linearization
     std::optional<derivative_check> check;
 };
 
-// The selected function sampled evenly over the range, ends included; a sample the function did not
-// answer finitely is NaN, which breaks the drawn line there. `step` is the step k selected, from x_k
-// to x_(k+1), and `stepped` says the run was stopped by stepping once short of the iteration limit,
-// so a refusal it carries says only that its steps ran out. `bounds` is the box the run was solved in,
-// and `linearization` is present once a point has been asked for.
+// A function of two variables sampled at `count` evenly spaced points along each range, ends
+// included, x varying fastest: f(x_i, y_j) is heights[j count + i], and NaN where f was not answered
+// finitely.
+struct scenario_grid
+{
+    std::size_t count;
+    std::vector<double> heights;
+};
+
+// A function of one variable is sampled evenly over its range, ends included, into the abscissa and
+// the ordinate, and one of two variables into the grid, which publications that solve nothing again
+// share; a sample the function did not answer finitely is NaN, which breaks the drawing there.
+// `step` is the step k selected, from x_k to x_(k+1), and `stepped` says the run was stopped by
+// stepping once short of the iteration limit, so a refusal it carries says only that its steps ran
+// out. `bounds` is the box the run was solved in, and `linearization` is present once a point has
+// been asked for.
 struct scenario_snapshot
 {
     bool stepped;
     std::uint32_t step;
     std::size_t selected;
-    interval range;
+    std::vector<interval> ranges;
     std::vector<double> abscissa;
     std::vector<double> ordinate;
+    std::shared_ptr<const scenario_grid> grid;
     scenario_run run;
     std::optional<box> bounds;
     std::optional<scenario_linearization> linearization;

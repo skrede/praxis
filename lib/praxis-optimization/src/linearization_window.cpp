@@ -58,7 +58,7 @@ std::vector<std::string> linearization_lines(const scenario_linearization &at, b
 linearization_window::linearization_window(std::string name, const scenario_window_inputs &inputs)
         : imgui_window(std::move(name))
         , m_checks(inputs.checks_derivative)
-        , m_point(Eigen::VectorXd::Constant(1, (inputs.opened.range.lower + inputs.opened.range.upper) / 2.0))
+        , m_point(Eigen::VectorXd::Constant(1, (inputs.opened.ranges.front().lower + inputs.opened.ranges.front().upper) / 2.0))
         , m_seen(inputs.seen)
         , m_scenario(inputs.scenario)
 {
@@ -78,7 +78,7 @@ void linearization_window::render()
     }
 
     const bool typed = ImGui::InputDouble("Point x", &m_point[0], 0.0, 0.0, "%.10g");
-    const bool slid  = ImGui::SliderScalar("##along the range", ImGuiDataType_Double, &m_point[0], &shown->range.lower, &shown->range.upper, "%.6g");
+    const bool slid  = ImGui::SliderScalar("##along the range", ImGuiDataType_Double, &m_point[0], &shown->ranges.front().lower, &shown->ranges.front().upper, "%.6g");
     if(typed || slid)
         post();
 

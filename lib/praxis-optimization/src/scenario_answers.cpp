@@ -1,8 +1,10 @@
 #include "scenario_answers.h"
 #include "scenario_defaults.h"
 
+#include <span>
 #include <cmath>
 #include <limits>
+#include <memory>
 #include <vector>
 #include <cstddef>
 #include <cstdint>
@@ -47,9 +49,17 @@ double relative_difference(const Eigen::MatrixXd &given, const Eigen::MatrixXd &
 
 }
 
-scenario_run solved(const problem &posed, const solver_ops &solver, double seed, std::uint32_t steps)
+double evenly(const interval &range, std::size_t at, std::size_t count)
 {
-    scenario_run ran{Eigen::VectorXd::Constant(1, seed), steps, {}, {}, {}, std::nullopt};
+    if(at + 1 == count)
+        return range.upper;
+
+    return range.lower + (range.upper - range.lower) / static_cast<double>(count - 1) * static_cast<double>(at);
+}
+
+scenario_run solved(const problem &posed, const solver_ops &solver, const Eigen::VectorXd &seed, std::uint32_t steps)
+{
+    scenario_run ran{seed, steps, {}, {}, {}, std::nullopt};
 
     const expected<Eigen::VectorXd, refusal> answered = solver.solve(posed, ran.seed, ran.limit, ran.iterates);
     if(!answered)
@@ -68,15 +78,28 @@ scenario_run solved(const problem &posed, const solver_ops &solver, double seed,
 
 void sample(const problem &posed, const interval &range, std::vector<double> &abscissa, std::vector<double> &ordinate)
 {
-    const double step = (range.upper - range.lower) / static_cast<double>(curve_samples - 1);
     for(std::size_t at = 0; at < curve_samples; ++at)
     {
-        const double x                             = at + 1 == curve_samples ? range.upper : range.lower + step * static_cast<double>(at);
+        const double x                             = evenly(range, at, curve_samples);
         const expected<Eigen::VectorXd, refusal> e = posed.error(Eigen::VectorXd::Constant(1, x));
 
         abscissa.push_back(x);
         ordinate.push_back(e ? -(*e)[0] : std::numeric_limits<double>::quiet_NaN());
     }
+}
+
+std::shared_ptr<const scenario_grid> sampled_grid(const problem &posed, std::span<const interval> ranges)
+{
+    auto grid = std::make_shared<scenario_grid>(scenario_grid{surface_samples, {}});
+    grid->heights.reserve(surface_samples * surface_samples);
+    for(std::size_t j = 0; j < surface_samples; ++j)
+        for(std::size_t i = 0; i < surface_samples; ++i)
+        {
+            const expected<Eigen::VectorXd, refusal> e = posed.error(Eigen::Vector2d(evenly(ranges[0], i, surface_samples), evenly(ranges[1], j, surface_samples)));
+            grid->heights.push_back(e ? -(*e)[0] : std::numeric_limits<double>::quiet_NaN());
+        }
+
+    return grid;
 }
 
 scenario_linearization linearized_at(const problem &posed, const Eigen::VectorXd &point, bool checked)

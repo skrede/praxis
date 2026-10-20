@@ -13,10 +13,14 @@
 
 #include "praxis/compat/expected.h"
 
+#include <Eigen/Core>
+
 #include <span>
+#include <array>
 #include <limits>
 #include <string>
 #include <vector>
+#include <cstddef>
 #include <cstdint>
 #include <algorithm>
 #include <filesystem>
@@ -26,11 +30,12 @@ namespace praxis::presets {
 namespace {
 
 constexpr const char *function_name_key = "function/name";
-constexpr const char *x_lower_key       = "range/x_lower";
-constexpr const char *x_upper_key       = "range/x_upper";
-constexpr const char *seed_x_key        = "seed/x";
 constexpr const char *limit_key         = "solve/limit";
 constexpr const char *step_key          = "solve/step";
+
+constexpr std::array<const char *, 2> lower_keys{"range/x_lower", "range/y_lower"};
+constexpr std::array<const char *, 2> upper_keys{"range/x_upper", "range/y_upper"};
+constexpr std::array<const char *, 2> seed_keys{"seed/x", "seed/y"};
 
 void declare_preset(config::declaration &shape)
 {
@@ -46,13 +51,13 @@ void declare_preset(config::declaration &shape)
 void declare_solve(config::declaration &shape)
 {
     shape.group("range");
-    shape.field(x_lower_key, config::field_kind::real, "-3");
-    shape.field(x_upper_key, config::field_kind::real, "3");
-    shape.field("range/y_lower", config::field_kind::real, "-4");
-    shape.field("range/y_upper", config::field_kind::real, "4");
+    shape.field(lower_keys[0], config::field_kind::real, "-3");
+    shape.field(upper_keys[0], config::field_kind::real, "3");
+    shape.field(lower_keys[1], config::field_kind::real, "-3");
+    shape.field(upper_keys[1], config::field_kind::real, "3");
     shape.group("seed");
-    shape.field(seed_x_key, config::field_kind::real, "0.75");
-    shape.field("seed/y", config::field_kind::real, "1");
+    shape.field(seed_keys[0], config::field_kind::real, "0.75");
+    shape.field(seed_keys[1], config::field_kind::real, "1");
     shape.group("solve");
     shape.field(limit_key, config::field_kind::integer, "200");
     shape.field(step_key, config::field_kind::integer, "0");
@@ -93,11 +98,20 @@ config::binding optimization_binding(const std::filesystem::path &named, const s
     return config::binding{optimization_keyspace(), config::resolve(named, beside), config::expectation::partial};
 }
 
-optimization::scenario_settings keys::curve_settings(const config::document &values)
+optimization::scenario_settings keys::opened_settings(const config::document &values, std::size_t dimension)
 {
-    const optimization::interval range{real_at(values, x_lower_key), real_at(values, x_upper_key)};
+    optimization::scenario_settings opened{selected_name(values),
+                                           {},
+                                           Eigen::VectorXd::Constant(static_cast<Eigen::Index>(dimension), std::numeric_limits<double>::quiet_NaN()),
+                                           count_at(values, limit_key),
+                                           count_at(values, step_key)};
+    for(std::size_t at = 0; at < dimension && at < seed_keys.size(); ++at)
+    {
+        opened.ranges.push_back(optimization::interval{real_at(values, lower_keys[at]), real_at(values, upper_keys[at])});
+        opened.seed[static_cast<Eigen::Index>(at)] = real_at(values, seed_keys[at]);
+    }
 
-    return optimization::scenario_settings{selected_name(values), range, real_at(values, seed_x_key), count_at(values, limit_key), count_at(values, step_key)};
+    return opened;
 }
 
 }

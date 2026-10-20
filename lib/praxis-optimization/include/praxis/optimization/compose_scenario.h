@@ -2,6 +2,7 @@
 #define HPP_GUARD_PRAXIS_OPTIMIZATION_COMPOSE_SCENARIO_H
 
 #include "praxis/optimization/registered.h"
+#include "praxis/optimization/surface_stencil.h"
 #include "praxis/optimization/capabilities.h"
 #include "praxis/optimization/scenario_state.h"
 #include "praxis/optimization/scenario_snapshot.h"
@@ -21,7 +22,8 @@ namespace praxis::optimization {
 // What a window of one composed scenario is built from. It carries no function and no solver, so a
 // window has nothing it could evaluate or solve on the render strand: it reads the publication and
 // asks for a run through the gate. `opened` is what the composition opened at, which a window holding
-// settings of its own starts from, and `checks_derivative` is the composition's own.
+// settings of its own starts from, and `checks_derivative` is the composition's own. `drawn` is what a
+// surface's stencil draws, which a window may switch; a curve's is null.
 struct scenario_window_inputs
 {
     scenario_reader seen;
@@ -30,6 +32,7 @@ struct scenario_window_inputs
     scenario_settings opened;
     std::vector<std::string> registered;
     std::weak_ptr<owned_scenario> scenario;
+    std::shared_ptr<surface_view> drawn;
 };
 
 // Invoked once per composition, after the publisher and the gated state exist and before the preset
@@ -44,10 +47,15 @@ struct scenario_composition
     bool checks_derivative = false;
 };
 
-// Answers nothing, and logs why, where the settings select a function the list does not register or
-// the work strand admits no run.
+// Each answers nothing, and logs why, where the settings select a function the list does not
+// register, carry other than one range and one seed coordinate per variable, or the work strand
+// admits no run.
 std::shared_ptr<scene::preset> compose_curve_scenario(const scene::preset_site &site, std::vector<registered_curve> curves, const capabilities &solving, const scenario_settings &opened,
                                                       const scenario_composition &composed);
+
+// The surface is drawn in the site's scene as a height field with every iterate on it.
+std::shared_ptr<scene::preset> compose_surface_scenario(const scene::preset_site &site, std::vector<registered_surface> surfaces, const capabilities &solving,
+                                                        const scenario_settings &opened, const scenario_composition &composed);
 
 }
 

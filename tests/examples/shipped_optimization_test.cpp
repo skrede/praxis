@@ -21,6 +21,8 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <threepp/objects/Mesh.hpp>
+
 #include <threepp/scenes/Scene.hpp>
 
 #include <memory>
@@ -79,6 +81,7 @@ struct drawn
     std::vector<std::string> windows;
     int before;
     int after;
+    int field;
 };
 
 int vertices_of(const std::vector<std::shared_ptr<scene::imgui_window>> &windows)
@@ -105,13 +108,16 @@ drawn composed_and_drawn(scene::preset_registry &registry, const std::string &na
     REQUIRE(composed != nullptr);
     REQUIRE(composed->initialize().has_value());
 
-    drawn seen{{}, 0, 0};
+    drawn seen{{}, 0, 0, 0};
     for(const std::shared_ptr<scene::imgui_window> &window : composed->windows)
         seen.windows.push_back(window->display_name());
     REQUIRE_FALSE(composed->windows.empty());
     seen.before = vertices_of(composed->windows);
     REQUIRE(loop.drain().has_value());
     seen.after = vertices_of(composed->windows);
+    composed->stencil->render();
+    if(const auto *field = target->getObjectByName<threepp::Mesh>("surface"))
+        seen.field = field->geometry()->drawRange.count;
 
     composed->tear_down();
     REQUIRE(loop.retire_strand(composed->work, std::move(composed->release_cb)).has_value());
@@ -128,7 +134,7 @@ TEST_CASE("every shipped optimization document loads and states its scenario", "
     const offered shipped(where);
 
     const std::vector<config::location> named = demo::preset_locations(demonstration(), shipped.mine);
-    REQUIRE(named.size() == 1u);
+    REQUIRE(named.size() == 2u);
     for(const config::location &at : named)
     {
         INFO(at.resolved.string());
@@ -143,7 +149,7 @@ TEST_CASE("the shipped optimization documents register under the names they stat
 {
     const scratch where("shipped-optimization-names");
 
-    CHECK(offered(where).names == std::vector<std::string>{"Root finding: a cubic"});
+    CHECK(offered(where).names == std::vector<std::string>{"Root finding: a cubic", "Root finding: a paraboloid"});
 }
 
 TEST_CASE("every shipped optimization preset composes over the demonstration's functions and draws its run", "[examples][optimization]")
@@ -151,12 +157,15 @@ TEST_CASE("every shipped optimization preset composes over the demonstration's f
     const scratch where("shipped-optimization-runs");
     const offered shipped(where);
 
-    REQUIRE_FALSE(shipped.names.empty());
-    for(const std::string &named : shipped.names)
-    {
-        INFO(named);
-        const drawn seen = composed_and_drawn(*shipped.registry, named);
-        CHECK(seen.windows == std::vector<std::string>{"Function", "Graph", "Solve", "Linearization"});
-        CHECK(seen.after > seen.before);
-    }
+    REQUIRE(shipped.names.size() == 2u);
+
+    const drawn curve = composed_and_drawn(*shipped.registry, shipped.names[0]);
+    CHECK(curve.windows == std::vector<std::string>{"Function", "Graph", "Solve", "Linearization"});
+    CHECK(curve.after > curve.before);
+    CHECK(curve.field == 0);
+
+    const drawn surface = composed_and_drawn(*shipped.registry, shipped.names[1]);
+    CHECK(surface.windows == std::vector<std::string>{"Function", "Graph", "Solve"});
+    CHECK(surface.after > surface.before);
+    CHECK(surface.field > 0);
 }

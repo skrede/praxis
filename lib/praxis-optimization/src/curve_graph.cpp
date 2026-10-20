@@ -1,5 +1,7 @@
 #include "praxis/optimization/curve_graph.h"
 
+#include <Eigen/Core>
+
 #include <cmath>
 #include <limits>
 #include <memory>
@@ -98,7 +100,7 @@ void add_step(const scenario_snapshot &shown, const interval &span, std::vector<
         return;
 
     const linearized at{coordinate(run.iterates[k]), value_of(run.errors[k]), slope_of(run.jacobians[k])};
-    if(std::optional<scene::plot_series> line = tangent("tangent at x_k", at, shown.range, span))
+    if(std::optional<scene::plot_series> line = tangent("tangent at x_k", at, shown.ranges.front(), span))
         drawn.push_back(std::move(*line));
 
     const double zero = at.slope != 0.0 ? at.x - at.g / at.slope : unanswered;
@@ -163,16 +165,18 @@ scene::plot_reading curve_reading(const scenario_reader &seen)
 
     std::vector<scene::plot_series> drawn{scene::plot_series{ordinate_axis, shown->abscissa, shown->ordinate, scene::plot_mark::line}, iterate_marks(shown->run)};
     const std::optional<linearized> here = linearized_point(shown->linearization, drawn);
-    if(const std::optional<interval> span = finite_span(drawn, shown->range))
+    if(const std::optional<interval> span = finite_span(drawn, shown->ranges.front()))
     {
         add_step(*shown, *span, drawn);
         add_bounds(shown->bounds, *span, drawn);
         if(here)
-            add_linearization(shown->linearization, *here, shown->range, *span, drawn);
+            add_linearization(shown->linearization, *here, shown->ranges.front(), *span, drawn);
     }
 
-    scene::plot_frame frame{
-            .ordinate_label = ordinate_axis, .logarithmic_ordinate = false, .series = std::move(drawn), .abscissa_limits = scene::plot_limits{shown->range.lower, shown->range.upper}};
+    scene::plot_frame frame{.ordinate_label       = ordinate_axis,
+                            .logarithmic_ordinate = false,
+                            .series               = std::move(drawn),
+                            .abscissa_limits      = scene::plot_limits{shown->ranges.front().lower, shown->ranges.front().upper}};
 
     return scene::plot_reading{.message = std::string(), .abscissa_label = abscissa_axis, .frames = {std::move(frame)}};
 }
@@ -180,7 +184,7 @@ scene::plot_reading curve_reading(const scenario_reader &seen)
 std::shared_ptr<scene::plot_window> curve_graph(const scenario_window_inputs &inputs, std::string name)
 {
     scene::plot_pick seeding = [scenario = inputs.scenario](std::size_t, double abscissa, double)
-    { command(scenario, [abscissa](scenario_settings &settings) { settings.seed = abscissa; }); };
+    { command(scenario, [abscissa](scenario_settings &settings) { settings.seed = Eigen::VectorXd::Constant(1, abscissa); }); };
 
     return std::make_shared<scene::plot_window>(std::move(name), std::function<void()>(), [seen = inputs.seen] { return curve_reading(seen); }, std::move(seeding));
 }

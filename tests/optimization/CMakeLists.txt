@@ -10,3 +10,4 @@ praxis_add_test(solve_window_test.cpp HEADERS composed_curve.h LIBS praxis::opti
 praxis_add_test(function_window_test.cpp HEADERS composed_curve.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
 praxis_add_test(curve_graph_test.cpp HEADERS composed_curve.h drawn_graph.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog implot praxis_test_support)
 praxis_add_test(linearization_window_test.cpp HEADERS composed_curve.h drawn_graph.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog implot praxis_test_support)
+praxis_add_test(surface_scenario_test.cpp HEADERS composed_curve.h drawn_surface.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
