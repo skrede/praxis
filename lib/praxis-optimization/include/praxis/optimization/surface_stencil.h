@@ -21,6 +21,7 @@
 
 #include <memory>
 #include <vector>
+#include <cstddef>
 
 namespace praxis::optimization {
 
@@ -87,6 +88,7 @@ private:
 
     void resample(const scenario_snapshot &shown) const;
     void place_iterates(const scenario_snapshot &shown) const;
+    void hold_markers(std::size_t count) const;
 };
 
 }

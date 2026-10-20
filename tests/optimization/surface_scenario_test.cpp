@@ -145,3 +145,21 @@ TEST_CASE("settings naming no registered surface, or other than two ranges and t
         CHECK_FALSE(taken.inputs.has_value());
     }
 }
+
+TEST_CASE("a shorter run leaves one marker in the scene per iterate it recorded", "[optimization][surface]")
+{
+    scheduler::scheduler loop(scheduler::inline_workers);
+    staged built(loop);
+    const opened taken                                 = open_surface(built.site, {registered_surface("circle", &circle_value, &circle_gradient)}, surface_opening("circle"));
+    const std::shared_ptr<const scenario_snapshot> ran = settled(loop, taken);
+    taken.composed->stencil->render();
+    REQUIRE(ran->run.iterates.size() > 2u);
+
+    command(taken.inputs->scenario, [](scenario_state &state) { state.run(Eigen::Vector2d(1.5, 0.5), 1u); });
+    REQUIRE(loop.drain().has_value());
+    taken.composed->stencil->render();
+
+    CHECK(built.scene->getObjectByName("iterates")->children.size() == 2u);
+
+    taken.composed->tear_down();
+}

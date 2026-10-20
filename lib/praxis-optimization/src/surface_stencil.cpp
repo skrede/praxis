@@ -142,24 +142,34 @@ void surface_stencil::resample(const scenario_snapshot &shown) const
 void surface_stencil::place_iterates(const scenario_snapshot &shown) const
 {
     const field_placement placed = placement_of(shown.ranges, *shown.grid);
-    const std::size_t count      = shown.run.iterates.size();
-    while(m_markers.size() < count)
-    {
-        m_markers.push_back(threepp::Mesh::create(m_sphere, m_iterate_tone));
-        m_markers.back()->name = "iterate";
-        m_iterates->add(m_markers.back());
-    }
+    hold_markers(shown.run.iterates.size());
 
     for(std::size_t k = 0; k < m_markers.size(); ++k)
     {
         threepp::Mesh &marker = *m_markers[k];
-        marker.visible        = k < count && within_ranges(shown.ranges, shown.run.iterates[k]) && k < shown.run.errors.size() && shown.run.errors[k].has_value();
+        marker.visible        = within_ranges(shown.ranges, shown.run.iterates[k]) && k < shown.run.errors.size() && shown.run.errors[k].has_value();
         if(!marker.visible)
             continue;
 
         const Eigen::Vector3d at = placed.at(shown.run.iterates[k][0], shown.run.iterates[k][1], -(*shown.run.errors[k])[0]);
         marker.position.set(static_cast<float>(at.x()), static_cast<float>(at.y()), static_cast<float>(at.z()));
         marker.setMaterial(k == shown.step ? m_selected_tone : m_iterate_tone);
+    }
+}
+
+// One marker per iterate the run recorded, made as a run grows and dropped as it shrinks.
+void surface_stencil::hold_markers(std::size_t count) const
+{
+    while(m_markers.size() < count)
+    {
+        m_markers.push_back(threepp::Mesh::create(m_sphere, m_iterate_tone));
+        m_markers.back()->name = "iterate";
+        m_iterates->add(m_markers.back());
+    }
+    while(m_markers.size() > count)
+    {
+        m_iterates->remove(*m_markers.back());
+        m_markers.pop_back();
     }
 }
 

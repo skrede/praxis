@@ -2355,6 +2355,7 @@ lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_heights	
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_markers	member	-	typename:std::vector<std::shared_ptr<threepp::Mesh>>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	resample	prototype	(const scenario_snapshot & shown) const	typename:void
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	place_iterates	prototype	(const scenario_snapshot & shown) const	typename:void
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	hold_markers	prototype	(std::size_t count) const	typename:void
 lib/praxis-rigid_motion/include/praxis/rigid_motion/angles.h	praxis	namespace	-	-
 lib/praxis-rigid_motion/include/praxis/rigid_motion/angles.h	radians_per_degree	variable	-	typename:double
 lib/praxis-rigid_motion/include/praxis/rigid_motion/angles.h	degrees_per_radian	variable	-	typename:double
