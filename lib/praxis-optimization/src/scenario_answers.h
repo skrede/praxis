@@ -20,6 +20,7 @@ namespace praxis::optimization {
 double evenly(const interval &range, std::size_t at, std::size_t count);
 
 // A seed the solve did not record is still where the run started, so it is kept as the one iterate.
+// An answer is judged by the problem's own converged test rather than taken on the solver's word.
 scenario_run solved(const problem &posed, const solver_ops &solver, const Eigen::VectorXd &seed, std::uint32_t steps);
 
 // g = -e at the curve's samples over the range, read back through the problem so a sample it refuses

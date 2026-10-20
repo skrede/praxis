@@ -2206,6 +2206,7 @@ lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	iterates
 lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	errors	member	-	typename:std::vector<expected<Eigen::VectorXd,refusal>>
 lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	jacobians	member	-	typename:std::vector<expected<Eigen::MatrixXd,refusal>>
 lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	refused	member	-	typename:std::optional<refusal>
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	answer	member	-	typename:std::optional<Eigen::VectorXd>
 lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	derivative_check	struct	-	-
 lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	central	member	-	typename:Eigen::MatrixXd
 lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	difference	member	-	typename:double

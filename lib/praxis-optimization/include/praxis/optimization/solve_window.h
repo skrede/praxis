@@ -33,7 +33,8 @@ struct iterate_row
 
 std::vector<iterate_row> iterate_rows(const scenario_run &run);
 
-// The steps the run took and what it came to: converged, stepped short of the limit, or refused.
+// The steps the run took and what it came to: converged, answered where the problem has not
+// converged, stepped short of the limit, or refused.
 std::string run_status(const scenario_snapshot &shown);
 
 // The seed, the iteration limit and the selected step are held here and asked of the scenario

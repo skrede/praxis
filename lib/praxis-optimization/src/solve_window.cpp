@@ -81,7 +81,9 @@ std::string run_status(const scenario_snapshot &shown)
     const std::uint32_t taken = steps_of(shown.run);
     if(!shown.run.refused)
         return std::format("Converged. Steps taken: {}.", taken);
-    if(shown.stepped)
+    if(shown.run.answer)
+        return std::format("Answered where the problem has not converged. Steps taken: {}.", taken);
+    if(shown.stepped && *shown.run.refused == refusal::no_solution)
         return std::format("Steps taken: {}.", taken);
 
     return std::format("Refused: {}. Steps taken: {}.", refusal_text(*shown.run.refused), taken);

@@ -40,6 +40,15 @@ std::optional<Eigen::MatrixXd> central_difference(const problem &posed, const Ei
     return estimated;
 }
 
+std::optional<refusal> judged(const problem &posed, const Eigen::VectorXd &answer)
+{
+    const expected<Eigen::VectorXd, refusal> e = posed.error(answer);
+    if(e && posed.converged(*e))
+        return std::nullopt;
+
+    return refusal::no_solution;
+}
+
 double relative_difference(const Eigen::MatrixXd &given, const Eigen::MatrixXd &estimated)
 {
     const Eigen::ArrayXXd scale = given.array().abs().max(estimated.array().abs()).max(1.0);
@@ -59,11 +68,12 @@ double evenly(const interval &range, std::size_t at, std::size_t count)
 
 scenario_run solved(const problem &posed, const solver_ops &solver, const Eigen::VectorXd &seed, std::uint32_t steps)
 {
-    scenario_run ran{seed, steps, {}, {}, {}, std::nullopt};
+    scenario_run ran{seed, steps, {}, {}, {}, std::nullopt, std::nullopt};
 
     const expected<Eigen::VectorXd, refusal> answered = solver.solve(posed, ran.seed, ran.limit, ran.iterates);
-    if(!answered)
-        ran.refused = answered.error();
+    if(answered)
+        ran.answer = *answered;
+    ran.refused = answered ? judged(posed, *answered) : std::optional<refusal>(answered.error());
     if(ran.iterates.empty())
         ran.iterates.push_back(ran.seed);
 

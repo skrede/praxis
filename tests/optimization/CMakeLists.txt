@@ -7,6 +7,7 @@ target_include_directories(periodic_bounds_test PRIVATE ${PROJECT_SOURCE_DIR}/li
 praxis_add_test(registered_problem_test.cpp LIBS praxis::optimization)
 praxis_add_test(curve_scenario_test.cpp HEADERS composed_curve.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
 praxis_add_test(scenario_run_test.cpp HEADERS composed_curve.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
+praxis_add_test(scenario_guard_test.cpp HEADERS composed_curve.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
 praxis_add_test(solve_window_test.cpp HEADERS composed_curve.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
 praxis_add_test(function_window_test.cpp HEADERS composed_curve.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
 praxis_add_test(curve_graph_test.cpp HEADERS composed_curve.h drawn_graph.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog implot praxis_test_support)

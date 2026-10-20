@@ -26,7 +26,9 @@ struct interval
 };
 
 // One solve from one seed. The error and the Jacobian are the problem's own answers at each
-// iterate, index for index, so a reader draws a step without calling a registered function.
+// iterate, index for index, so a reader draws a step without calling a registered function. `answer`
+// is what the solve answered, and `refused` its refusal, or no_solution where the problem's own
+// converged test does not hold at the answer.
 struct scenario_run
 {
     Eigen::VectorXd seed;
@@ -35,6 +37,7 @@ struct scenario_run
     std::vector<expected<Eigen::VectorXd, refusal>> errors;
     std::vector<expected<Eigen::MatrixXd, refusal>> jacobians;
     std::optional<refusal> refused;
+    std::optional<Eigen::VectorXd> answer;
 };
 
 // A Jacobian's central-difference estimate and the largest relative difference of their entries,
@@ -69,9 +72,9 @@ struct scenario_grid
 // the ordinate, and one of two variables into the grid, which publications that solve nothing again
 // share; a sample the function did not answer finitely is NaN, which breaks the drawing there.
 // `step` is the step k selected, from x_k to x_(k+1), and `stepped` says the run was stopped by
-// stepping once short of the iteration limit, so a refusal it carries says only that its steps ran
-// out. `bounds` is the box the run was solved in, and `linearization` is present once a point has
-// been asked for.
+// stepping once short of the iteration limit, so a no_solution it carries without an answer says
+// only that its steps ran out. `bounds` is the box the run was solved in, and `linearization` is
+// present once a point has been asked for.
 struct scenario_snapshot
 {
     bool stepped;
