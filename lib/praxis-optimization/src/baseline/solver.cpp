@@ -17,8 +17,8 @@ expected<Eigen::VectorXd, refusal> solve(const problem &p, const Eigen::VectorXd
     for(std::uint32_t k = 0; e && !p.converged(*e) && k < max_iterations; ++k)
     {
         const expected<Eigen::MatrixXd, refusal> j = p.jacobian(x);
-        if(!j)
-            return praxis::unexpected(j.error());
+        if(!j || j->rows() != e->size() || j->cols() != x.size())
+            return praxis::unexpected(j ? refusal::degenerate : j.error());
 
         x += Eigen::CompleteOrthogonalDecomposition<Eigen::MatrixXd>(*j).solve(*e);
         iterates.push_back(x);

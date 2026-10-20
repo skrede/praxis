@@ -1,6 +1,7 @@
 praxis_add_test(solver_test.cpp LIBS praxis::optimization)
 praxis_add_test(solver_row_test.cpp LIBS praxis::optimization praxis::evaluation praxis_test_support)
 praxis_add_test(projected_solver_test.cpp LIBS praxis::optimization)
+praxis_add_test(solver_refusals_test.cpp LIBS praxis::optimization)
 praxis_add_test(periodic_bounds_test.cpp LIBS praxis::optimization)
 target_include_directories(periodic_bounds_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src)
 praxis_add_test(registered_problem_test.cpp LIBS praxis::optimization)

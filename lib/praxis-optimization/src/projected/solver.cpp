@@ -28,12 +28,19 @@ bool well_posed(const problem &p, const Eigen::VectorXd &x0)
 }
 
 // Sugihara's damping at W_E = I: d = (J^T J + (E + bias) I)^-1 J^T e, E = 1/2 e^T e.
-Eigen::VectorXd damped_step(const Eigen::MatrixXd &j, const Eigen::VectorXd &e)
+expected<Eigen::VectorXd, refusal> damped_step(const Eigen::MatrixXd &j, const Eigen::VectorXd &e)
 {
     const Eigen::Index n               = j.cols();
     const Eigen::MatrixXd coefficients = j.transpose() * j + (0.5 * e.dot(e) + bias) * Eigen::MatrixXd::Identity(n, n);
+    const Eigen::LLT<Eigen::MatrixXd> factored(coefficients);
+    if(!coefficients.allFinite() || factored.info() != Eigen::Success)
+        return praxis::unexpected(refusal::degenerate);
 
-    return coefficients.llt().solve(j.transpose() * e);
+    Eigen::VectorXd d = factored.solve(j.transpose() * e);
+    if(!d.allFinite())
+        return praxis::unexpected(refusal::degenerate);
+
+    return d;
 }
 
 // The Euclidean projection onto a box is the componentwise clamp; a wrapping coordinate is named inside it first.
@@ -52,10 +59,14 @@ Eigen::VectorXd projected(const std::optional<box> &bounds, Eigen::VectorXd x)
 expected<Eigen::VectorXd, refusal> stepped(const problem &p, const Eigen::VectorXd &x, const Eigen::VectorXd &e)
 {
     const expected<Eigen::MatrixXd, refusal> j = p.jacobian(x);
-    if(!j)
-        return praxis::unexpected(j.error());
+    if(!j || j->rows() != e.size() || j->cols() != x.size())
+        return praxis::unexpected(j ? refusal::degenerate : j.error());
 
-    Eigen::VectorXd next = projected(p.bounds, x + damped_step(*j, e));
+    const expected<Eigen::VectorXd, refusal> d = damped_step(*j, e);
+    if(!d)
+        return praxis::unexpected(d.error());
+
+    Eigen::VectorXd next = projected(p.bounds, x + *d);
     if(next == x)
         return praxis::unexpected(refusal::no_solution);
 

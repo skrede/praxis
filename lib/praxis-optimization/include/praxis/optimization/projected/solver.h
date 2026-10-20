@@ -10,7 +10,8 @@
 // 2004), local version, damped as Sugihara (IEEE Trans. Robotics 27(5), 2011). The declaration below
 // matches the slot of solver_ops by signature. Every iterate after the handed seed lies inside the
 // problem's box. A box of another width than the seed, or with a lower bound above its upper, is
-// refused unsupported_input, and a step the box returns to the iterate it left is refused no_solution.
+// refused unsupported_input, a damped system that overflows or does not factor is refused degenerate,
+// and a step the box returns to the iterate it left is refused no_solution.
 namespace praxis::optimization::projected {
 
 expected<Eigen::VectorXd, refusal> solve(const problem &p, const Eigen::VectorXd &x0, std::uint32_t max_iterations, std::vector<Eigen::VectorXd> &iterates);
