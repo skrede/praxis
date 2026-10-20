@@ -48,8 +48,9 @@ struct scenario_composition
 };
 
 // Each answers nothing, and logs why, where the settings select a function the list does not
-// register, carry other than one range and one seed coordinate per variable, or the work strand
-// admits no run.
+// register, carry other than one range and one seed coordinate per variable, carry a range that is
+// not finite or whose minimum does not lie below its maximum or a seed that is not finite, or the
+// work strand admits no run.
 std::shared_ptr<scene::preset> compose_curve_scenario(const scene::preset_site &site, std::vector<registered_curve> curves, const capabilities &solving, const scenario_settings &opened,
                                                       const scenario_composition &composed);
 

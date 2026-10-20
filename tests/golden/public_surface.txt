@@ -2264,7 +2264,7 @@ lib/praxis-optimization/include/praxis/optimization/scenario_state.h	m_shown	mem
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	scenario_state	prototype	(std::size_t dimension,std::vector<std::string> names,std::vector<problem> problems,capabilities solving,scenario_settings opened,std::shared_ptr<scenario_publisher> published,bool checks_derivative)	-
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	solve	prototype	(std::uint32_t steps,std::uint32_t selecting)	typename:void
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	republish	prototype	(std::shared_ptr<scenario_snapshot> moved)	typename:void
-lib/praxis-optimization/include/praxis/optimization/scenario_state.h	takes	prototype	(const Eigen::VectorXd & x,const char * as) const	typename:bool
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	admits	prototype	(const scenario_settings & edited) const	typename:bool
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	owned_scenario	typedef	-	typename:scheduler::strand_owned<scenario_state>
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	command	function	(const std::weak_ptr<owned_scenario> & scenario,operation work)	typename:void
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	__anon02515bbe0102	function	(scenario_state &state) 	-

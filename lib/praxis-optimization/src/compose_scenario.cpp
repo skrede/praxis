@@ -1,4 +1,5 @@
 #include "registered_list.h"
+#include "scenario_admission.h"
 
 #include "praxis/optimization/surface_stencil.h"
 #include "praxis/optimization/compose_scenario.h"
@@ -61,6 +62,10 @@ std::optional<std::string> unopenable(const std::vector<std::string> &registered
         return "it opens at '" + opened.selected + "', which is not registered (registered: " + listed(registered) + ")";
     if(opened.ranges.size() != dimension || static_cast<std::size_t>(opened.seed.size()) != dimension)
         return std::format("it opens over {} ranges from a seed of {} coordinates, and its functions take {}", opened.ranges.size(), opened.seed.size(), dimension);
+    if(!drawable(opened.ranges, dimension))
+        return "it opens over a range that is not finite or whose minimum does not lie below its maximum";
+    if(!opened.seed.allFinite())
+        return "it opens from a seed that is not finite";
 
     return std::nullopt;
 }

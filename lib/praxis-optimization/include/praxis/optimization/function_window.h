@@ -31,9 +31,9 @@ enum class function_source : std::uint8_t
 std::span<const char *const> function_source_labels();
 
 // Which registered function is drawn and solved, and the range it is drawn over, held here and asked
-// of the scenario through its gate as they are edited. A range whose minimum does not lie below its
-// maximum stays in the fields and is not asked for. Their keys sit at the root of the scenario's
-// document.
+// of the scenario through its gate as they are edited. A range that is not finite, or whose minimum
+// does not lie below its maximum, stays in the fields and is not asked for. Their keys sit at the
+// root of the scenario's document.
 class function_window : public scene::imgui_window, public config::configurable
 {
 public:

@@ -43,11 +43,17 @@ public:
     scenario_state(std::vector<registered_curve> curves, capabilities solving, scenario_settings opened, std::shared_ptr<scenario_publisher> published, bool checks_derivative);
     scenario_state(std::vector<registered_surface> surfaces, capabilities solving, scenario_settings opened, std::shared_ptr<scenario_publisher> published, bool checks_derivative);
 
-    // A selection naming no registered function leaves the last publication standing.
+    // An edit leaving a selection, a range or a seed the requests below would refuse is logged, and
+    // the settings stay as they were.
     template<typename operation>
     void mutate(operation work)
     {
-        work(m_settings);
+        scenario_settings edited = m_settings;
+        work(edited);
+        if(!admits(edited))
+            return;
+
+        m_settings = std::move(edited);
         run();
     }
 
@@ -86,7 +92,7 @@ private:
 
     void solve(std::uint32_t steps, std::uint32_t selecting);
     void republish(std::shared_ptr<scenario_snapshot> moved);
-    bool takes(const Eigen::VectorXd &x, const char *as) const;
+    bool admits(const scenario_settings &edited) const;
 };
 
 using owned_scenario = scheduler::strand_owned<scenario_state>;

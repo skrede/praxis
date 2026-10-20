@@ -132,7 +132,7 @@ TEST_CASE("the function list walks the registered functions in the order handed 
     }
 }
 
-TEST_CASE("an edited range moves the samples and the graph's limits, and a minimum not below the maximum is not posted", "[optimization][function]")
+TEST_CASE("an edited range moves the samples and the graph's limits, and a minimum not below the maximum or an end not finite is not posted", "[optimization][function]")
 {
     function_stage stage;
     tests::imgui_frame frames;
@@ -147,6 +147,8 @@ TEST_CASE("an edited range moves the samples and the graph's limits, and a minim
 
     const tests::captured_log captured;
     type_into(frames, stage.draw(), upper_row, "-3");
+    CHECK(stage.drained() == narrowed);
+    type_into(frames, stage.draw(), upper_row, "1e400");
     CHECK(stage.drained() == narrowed);
     CHECK(captured.text().empty());
 }

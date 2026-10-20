@@ -6,6 +6,7 @@
 
 #include <span>
 #include <array>
+#include <cmath>
 #include <memory>
 #include <string>
 #include <vector>
@@ -25,7 +26,7 @@ constexpr std::array<const char *, 2> lower_keys{"range/x_lower", "range/y_lower
 constexpr std::array<const char *, 2> upper_keys{"range/x_upper", "range/y_upper"};
 
 constexpr const char *function_key    = "function/name";
-constexpr const char *unordered_range = "The minimum must lie below the maximum.";
+constexpr const char *unaskable_range = "The minimum and the maximum must be finite, and the minimum must lie below the maximum.";
 
 std::size_t position_of(const std::vector<std::string> &names, const std::string &named)
 {
@@ -34,9 +35,9 @@ std::size_t position_of(const std::vector<std::string> &names, const std::string
     return found == names.end() ? 0u : static_cast<std::size_t>(found - names.begin());
 }
 
-bool ordered(const std::vector<interval> &ranges)
+bool askable(const std::vector<interval> &ranges)
 {
-    return std::ranges::all_of(ranges, [](const interval &range) { return range.lower < range.upper; });
+    return std::ranges::all_of(ranges, [](const interval &range) { return std::isfinite(range.lower) && std::isfinite(range.upper) && range.lower < range.upper; });
 }
 
 }
@@ -83,8 +84,8 @@ void function_window::render()
         edited = render_range(at) || edited;
     if(edited)
         post_range();
-    if(!ordered(m_typed))
-        ImGui::TextUnformatted(unordered_range);
+    if(!askable(m_typed))
+        ImGui::TextUnformatted(unaskable_range);
     ImGui::End();
 }
 
@@ -102,7 +103,7 @@ bool function_window::render_range(std::size_t coordinate)
 
 void function_window::post_range()
 {
-    if(!ordered(m_typed))
+    if(!askable(m_typed))
         return;
 
     m_posted = m_typed;

@@ -35,8 +35,10 @@ praxis_add_module(optimization
     src/function_window.cpp
     src/compose_scenario.cpp
     src/scenario_answers.cpp
+    src/scenario_admission.cpp
     src/evaluation_tables.h
     src/scenario_answers.h
+    src/scenario_admission.h
     src/level_curve.h
     src/surface_mesh.h
     src/surface_step.h

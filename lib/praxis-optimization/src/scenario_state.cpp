@@ -1,14 +1,13 @@
 #include "registered_list.h"
 #include "scenario_answers.h"
 #include "scenario_defaults.h"
+#include "scenario_admission.h"
 
 #include "praxis/optimization/scenario_state.h"
 
 #include <spdlog/spdlog.h>
 
 #include <span>
-#include <cmath>
-#include <format>
 #include <memory>
 #include <string>
 #include <vector>
@@ -32,17 +31,6 @@ std::uint32_t held_to(std::uint32_t step, const scenario_run &ran)
     const std::uint32_t taken = steps_taken(ran);
 
     return taken == 0u ? 0u : std::min(step, taken - 1u);
-}
-
-const char *variables(std::size_t dimension)
-{
-    return dimension == 1u ? "one variable" : "two variables";
-}
-
-bool drawable(std::span<const interval> ranges, std::size_t dimension)
-{
-    return ranges.size() == dimension &&
-            std::ranges::all_of(ranges, [](const interval &range) { return std::isfinite(range.lower) && std::isfinite(range.upper) && range.lower < range.upper; });
 }
 
 }
@@ -79,7 +67,7 @@ void scenario_state::run()
 
 void scenario_state::run(const Eigen::VectorXd &seed, std::uint32_t limit)
 {
-    if(!takes(seed, "solved from one finite seed"))
+    if(!taken_at(seed, m_dimension, "solved from one finite seed"))
         return;
 
     m_settings.seed  = seed;
@@ -89,7 +77,7 @@ void scenario_state::run(const Eigen::VectorXd &seed, std::uint32_t limit)
 
 void scenario_state::step_once(const Eigen::VectorXd &seed)
 {
-    if(!takes(seed, "solved from one finite seed"))
+    if(!taken_at(seed, m_dimension, "solved from one finite seed"))
         return;
 
     const bool continuing     = m_shown != nullptr && m_shown->run.seed == seed;
@@ -118,7 +106,7 @@ void scenario_state::set_limit(std::uint32_t limit)
 
 void scenario_state::linearize(const Eigen::VectorXd &point)
 {
-    if(!takes(point, "linearized at one finite point"))
+    if(!taken_at(point, m_dimension, "linearized at one finite point"))
         return;
 
     m_point = point;
@@ -145,12 +133,8 @@ void scenario_state::select(std::size_t index)
 
 void scenario_state::set_range(std::span<const interval> ranges)
 {
-    if(!drawable(ranges, m_dimension))
-    {
-        spdlog::error("praxis: a function of {} is drawn over a finite range per variable whose minimum lies below its maximum; the last run stays shown", variables(m_dimension));
-
+    if(!drawn_over(ranges, m_dimension))
         return;
-    }
 
     m_settings.ranges.assign(ranges.begin(), ranges.end());
     run();
@@ -158,12 +142,9 @@ void scenario_state::set_range(std::span<const interval> ranges)
 
 void scenario_state::solve(std::uint32_t steps, std::uint32_t selecting)
 {
-    const std::optional<std::size_t> selected = index_of(m_names, m_settings.selected);
+    const std::optional<std::size_t> selected = selected_among(m_names, m_settings.selected);
     if(!selected)
-    {
-        spdlog::error("praxis: no function named '{}' is registered with this scenario; the last run stays shown", m_settings.selected);
         return;
-    }
 
     const problem &posed = m_problems[*selected];
     scenario_run ran     = solved(posed, m_solving.solver, m_settings.seed, steps);
@@ -186,15 +167,9 @@ void scenario_state::republish(std::shared_ptr<scenario_snapshot> moved)
     m_published->publish(m_shown);
 }
 
-bool scenario_state::takes(const Eigen::VectorXd &x, const char *as) const
+bool scenario_state::admits(const scenario_settings &edited) const
 {
-    if(static_cast<std::size_t>(x.size()) == m_dimension && x.allFinite())
-        return true;
-
-    const std::string handed = static_cast<std::size_t>(x.size()) == m_dimension ? std::string("a value that is not finite") : std::format("a vector of {} values", x.size());
-    spdlog::error("praxis: a function of {} is {}, which {} is not; the last run stays shown", variables(m_dimension), as, handed);
-
-    return false;
+    return admitted(edited, m_names, m_dimension);
 }
 
 }
