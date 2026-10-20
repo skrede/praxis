@@ -6,6 +6,8 @@
 
 #include "praxis/evaluation/tolerance.h"
 
+#include <spdlog/spdlog.h>
+
 #include <Eigen/Core>
 
 #include <limits>
@@ -96,6 +98,16 @@ expected<Dynamic, refusal> finite(const expected<Fixed, refusal> &value)
     return Dynamic(*value);
 }
 
+// A Jacobian of another width than the iterate cannot be stepped through.
+expected<Eigen::MatrixXd, refusal> columns_at(const arm_residual &arm, columns_map columns, const Eigen::VectorXd &x)
+{
+    expected<Eigen::MatrixXd, refusal> j = finite<Eigen::MatrixXd>(columns(arm, x));
+    if(j && j->cols() != x.size())
+        return unexpected(refusal::degenerate);
+
+    return j;
+}
+
 bool within(const Eigen::VectorXd &error, const solver_parameters &parameters)
 {
     return error.size() == 6 && error.head<3>().norm() <= parameters.orientation_tol && error.tail<3>().norm() <= parameters.position_tol;
@@ -132,7 +144,7 @@ optimization::problem residual_problem(const std::shared_ptr<const arm_residual>
 {
     return optimization::problem{
             .error     = [arm, error](const Eigen::VectorXd &x) { return finite<Eigen::VectorXd>(error(*arm, x)); },
-            .jacobian  = [arm, columns](const Eigen::VectorXd &x) { return finite<Eigen::MatrixXd>(columns(*arm, x)); },
+            .jacobian  = [arm, columns](const Eigen::VectorXd &x) { return columns_at(*arm, columns, x); },
             .converged = [parameters](const Eigen::VectorXd &e) { return within(e, parameters); },
             .bounds    = joint_box(arm->chain),
     };
@@ -165,9 +177,22 @@ std::optional<refusal> refused_at_entry(const arm_residual &arm, const joint_vec
 }
 
 // A solve that did not converge is no_solution at the slot; one that could not be run passes as it came.
-refusal answered(refusal refused)
+refusal answered(const optimization::solver_ops &solver, refusal refused)
 {
+    if(refused == refusal::not_implemented && solver.solve == &optimization::inert::solve)
+        spdlog::warn("praxis: 'solver.solve' is not implemented, so the inverse kinematics handed it answers no configuration");
+
     return refused == refusal::not_implemented || refused == refusal::unsupported_input ? refused : refusal::no_solution;
+}
+
+// The solver's word that it converged is not taken: the problem is asked again at the root.
+bool converged_at(const optimization::problem &p, const Eigen::VectorXd &root, Eigen::Index width)
+{
+    if(root.size() != width || !root.allFinite())
+        return false;
+
+    const expected<Eigen::VectorXd, refusal> e = p.error(root);
+    return e && p.converged(*e);
 }
 
 expected<void, refusal> solved(const std::shared_ptr<const arm_residual> &arm, residual_map error, columns_map columns, const optimization::solver_ops &solver, const joint_vector &j0,
@@ -181,8 +206,8 @@ expected<void, refusal> solved(const std::shared_ptr<const arm_residual> &arm, r
     const expected<Eigen::VectorXd, refusal> root = solver.solve(p, j0, parameters.max_iterations_per_attempt, iterates);
     mapped(p, iterates, answer);
     if(!root)
-        return unexpected(answered(root.error()));
-    if(root->size() != j0.size() || !root->allFinite())
+        return unexpected(answered(solver, root.error()));
+    if(!converged_at(p, *root, j0.size()))
         return unexpected(refusal::no_solution);
 
     answer.solutions.push_back(*root);

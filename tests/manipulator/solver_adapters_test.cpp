@@ -1,3 +1,5 @@
+#include "captured_log.h"
+
 #include "praxis/manipulator/kinematics.h"
 #include "praxis/manipulator/capabilities.h"
 #include "praxis/manipulator/solver_adapters.h"
@@ -15,12 +17,14 @@
 #include <array>
 #include <cmath>
 #include <limits>
+#include <string>
 #include <vector>
 #include <cstddef>
 #include <cstdint>
 #include <numbers>
 #include <utility>
 #include <optional>
+#include <algorithm>
 
 using namespace praxis;
 using namespace praxis::manipulator;
@@ -87,6 +91,30 @@ expected<jacobian, refusal> marked_body_jacobian(const rigid_motion::screw_ops &
     return body_jacobian(screw, frames, forward, m, space_screws, theta);
 }
 
+Eigen::Index answered_width = 2;
+
+expected<jacobian, refusal> of_answered_width(const expected<jacobian, refusal> &full)
+{
+    if(!full)
+        return full;
+
+    jacobian resized        = jacobian::Zero(6, answered_width);
+    const Eigen::Index kept = std::min(answered_width, full->cols());
+    resized.leftCols(kept)  = full->leftCols(kept);
+    return resized;
+}
+
+expected<jacobian, refusal> resized_space_jacobian(const rigid_motion::screw_ops &screw, std::span<const screw_axis> space_screws, const joint_vector &theta)
+{
+    return of_answered_width(space_jacobian(screw, space_screws, theta));
+}
+
+expected<jacobian, refusal> resized_body_jacobian(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward, const transform &m,
+                                                  std::span<const screw_axis> space_screws, const joint_vector &theta)
+{
+    return of_answered_width(body_jacobian(screw, frames, forward, m, space_screws, theta));
+}
+
 expected<transform, refusal> refusing_past_the_seed(const rigid_motion::screw_ops &screw, const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta)
 {
     if(theta != seed)
@@ -116,10 +144,17 @@ expected<Eigen::VectorXd, refusal> answering_a_narrower_root(const optimization:
     return Eigen::VectorXd(x0.head(1));
 }
 
-expected<void, refusal> asked(adapter solve, const forward_kinematics_ops &forward, optimization::solver_ops solver, const screw_chain &chain, const transform &desired,
-                              const joint_vector &j0, ik_result &answer)
+// Answers its last iterate whether or not the error converged there.
+expected<Eigen::VectorXd, refusal> answering_its_last_iterate(const optimization::problem &p, const Eigen::VectorXd &x0, std::uint32_t, std::vector<Eigen::VectorXd> &iterates)
 {
-    return solve(rigid_motion::baseline().screw, rigid_motion::baseline().frame, forward, manipulator::baseline().dk, solver, chain, desired, j0, tight, answer);
+    static_cast<void>(optimization::baseline().solver.solve(p, x0, 1u, iterates));
+    return iterates.back();
+}
+
+expected<void, refusal> asked(adapter solve, const forward_kinematics_ops &forward, optimization::solver_ops solver, const screw_chain &chain, const transform &desired,
+                              const joint_vector &j0, ik_result &answer, const differential_kinematics_ops &differential = manipulator::baseline().dk)
+{
+    return solve(rigid_motion::baseline().screw, rigid_motion::baseline().frame, forward, differential, solver, chain, desired, j0, tight, answer);
 }
 
 void reaches_the_target(inverse_kinematics_ops inverse, differential_kinematics_ops differential)
@@ -141,6 +176,7 @@ void reaches_the_target(inverse_kinematics_ops inverse, differential_kinematics_
 }
 
 const differential_kinematics_ops marked_columns{.space_jacobian = &marked_space_jacobian, .body_jacobian = &marked_body_jacobian};
+const differential_kinematics_ops resized_columns{.space_jacobian = &resized_space_jacobian, .body_jacobian = &resized_body_jacobian};
 
 }
 
@@ -196,15 +232,47 @@ TEST_CASE("the problem wraps a joint that turns whole by a turn and neither a sl
         }
 }
 
-TEST_CASE("handed the inert solver an adapter refuses not_implemented and names no configuration")
+TEST_CASE("handed the inert solver an adapter refuses not_implemented, names no configuration and says the solver is unbound")
 {
     for(const adapter solve : adapters)
     {
         ik_result answer;
-        const expected<void, refusal> solved = asked(solve, manipulator::baseline().fk, optimization::solver_ops{}, planar_arm(), target(), seed, answer);
+        expected<void, refusal> solved;
+        const std::string said = tests::reported_by([&] { solved = asked(solve, manipulator::baseline().fk, optimization::solver_ops{}, planar_arm(), target(), seed, answer); });
         REQUIRE_FALSE(solved);
         CHECK(solved.error() == refusal::not_implemented);
         CHECK(answer.solutions.empty());
+        CHECK(said.find("'solver.solve' is not implemented") != std::string::npos);
+    }
+}
+
+TEST_CASE("a bound Jacobian of another width than the seed is refused before a step is taken through it")
+{
+    for(const adapter solve : adapters)
+        for(const Eigen::Index width : {Eigen::Index{3}, Eigen::Index{1}})
+        {
+            answered_width = width;
+            seen           = {};
+            ik_result answer;
+            const expected<void, refusal> solved = asked(solve, manipulator::baseline().fk, {&recording_reference}, planar_arm(), target(), seed, answer, resized_columns);
+            REQUIRE_FALSE(solved);
+            CHECK(solved.error() == refusal::no_solution);
+            CHECK(seen.refused == refusal::degenerate);
+            CHECK(seen.iterates.size() == 1u);
+            CHECK(answer.solutions.empty());
+        }
+}
+
+TEST_CASE("a root the solver answers where the problem has not converged is answered no_solution")
+{
+    for(const adapter solve : adapters)
+    {
+        ik_result answer;
+        const expected<void, refusal> solved = asked(solve, manipulator::baseline().fk, {&answering_its_last_iterate}, planar_arm(), target(), seed, answer);
+        REQUIRE_FALSE(solved);
+        CHECK(solved.error() == refusal::no_solution);
+        CHECK(answer.solutions.empty());
+        CHECK(answer.iterations.size() == 2u);
     }
 }
 

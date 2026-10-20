@@ -174,7 +174,7 @@ praxis_add_test(book_task_waypoint_test.cpp LIBS praxis::manipulator praxis::eva
 praxis_add_test(book_chain_rows_test.cpp LIBS praxis::manipulator praxis::evaluation praxis_test_support)
 praxis_add_test(book_inverse_kinematics_test.cpp LIBS praxis::manipulator praxis::evaluation praxis_test_support)
 praxis_add_test(book_inverse_kinematics_row_test.cpp LIBS praxis::manipulator praxis::evaluation praxis_test_support)
-praxis_add_test(solver_adapters_test.cpp LIBS praxis::manipulator praxis::evaluation praxis_test_support)
+praxis_add_test(solver_adapters_test.cpp LIBS praxis::manipulator praxis::evaluation spdlog::spdlog praxis_test_support)
 praxis_add_test(solver_adapter_row_test.cpp LIBS praxis::manipulator praxis::evaluation praxis_test_support)
 praxis_add_test(solver_route_row_test.cpp LIBS praxis::manipulator praxis::evaluation praxis_test_support)
 praxis_add_test(task_waypoint_non_finite_test.cpp LIBS praxis::manipulator praxis::evaluation praxis::trajectory)
