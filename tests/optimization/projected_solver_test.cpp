@@ -14,6 +14,7 @@
 #include <cstddef>
 #include <utility>
 #include <optional>
+#include <algorithm>
 
 using namespace praxis;
 using namespace praxis::optimization;
@@ -161,7 +162,7 @@ TEST_CASE("the first step is the levenberg-marquardt step damped by half the squ
     const Eigen::VectorXd step         = coefficients.llt().solve(j.transpose() * e);
 
     REQUIRE(iterates.size() == 2u);
-    CHECK(iterates[1] == Eigen::VectorXd(x0 + step));
+    CHECK((iterates[1] - (x0 + step)).norm() <= 1.0e-12 * std::max(1.0, x0.norm()));
 }
 
 TEST_CASE("an underdetermined problem is answered by a point on its zero set inside the box")

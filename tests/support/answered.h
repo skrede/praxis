@@ -19,6 +19,14 @@ const T &answered(const expected<T, refusal> &result)
     return *result;
 }
 
+template<typename T>
+refusal refused(const expected<T, refusal> &result)
+{
+    REQUIRE_FALSE(result.has_value());
+
+    return result.error();
+}
+
 }
 
 #endif

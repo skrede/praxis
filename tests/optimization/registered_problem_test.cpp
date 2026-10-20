@@ -1,3 +1,5 @@
+#include "answered.h"
+
 #include "praxis/optimization/problem.h"
 #include "praxis/optimization/registered.h"
 
@@ -71,12 +73,10 @@ TEST_CASE("a registered curve's problem refuses a value or a slope that is not f
     const problem unvalued = curve_problem(registered_curve("undefined", undefined, &cubic_slope), 1.0e-10);
     const problem unsloped = curve_problem(registered_curve("vertical", &cubic_value, vertical), 1.0e-10);
 
-    REQUIRE_FALSE(unvalued.error(at(1.0)));
-    CHECK(unvalued.error(at(1.0)).error() == refusal::degenerate);
+    CHECK(tests::refused(unvalued.error(at(1.0))) == refusal::degenerate);
     CHECK(unvalued.jacobian(at(1.0)));
 
-    REQUIRE_FALSE(unsloped.jacobian(at(1.0)));
-    CHECK(unsloped.jacobian(at(1.0)).error() == refusal::degenerate);
+    CHECK(tests::refused(unsloped.jacobian(at(1.0))) == refusal::degenerate);
     CHECK(unsloped.error(at(1.0)));
 }
 
@@ -85,10 +85,10 @@ TEST_CASE("a registered curve's problem refuses a missing function and an x of o
     const problem unbound = curve_problem(registered_curve("unbound", {}, {}), 1.0e-10);
     const problem posed   = curve_problem(registered_curve("cubic", &cubic_value, &cubic_slope), 1.0e-10);
 
-    CHECK(unbound.error(at(1.0)).error() == refusal::unsupported_input);
-    CHECK(unbound.jacobian(at(1.0)).error() == refusal::unsupported_input);
-    CHECK(posed.error(Eigen::VectorXd::Zero(2)).error() == refusal::unsupported_input);
-    CHECK(posed.jacobian(Eigen::VectorXd()).error() == refusal::unsupported_input);
+    CHECK(tests::refused(unbound.error(at(1.0))) == refusal::unsupported_input);
+    CHECK(tests::refused(unbound.jacobian(at(1.0))) == refusal::unsupported_input);
+    CHECK(tests::refused(posed.error(Eigen::VectorXd::Zero(2))) == refusal::unsupported_input);
+    CHECK(tests::refused(posed.jacobian(Eigen::VectorXd())) == refusal::unsupported_input);
 }
 
 TEST_CASE("a registration with a box hands that box to its problem and one without hands none", "[optimization][registered]")
@@ -156,12 +156,10 @@ TEST_CASE("a registered surface's problem refuses a value or a gradient that is 
     const problem unvalued = surface_problem(registered_surface("undefined", undefined, &circle_gradient), 1.0e-10);
     const problem unsloped = surface_problem(registered_surface("unbounded", &circle_value, unbounded), 1.0e-10);
 
-    REQUIRE_FALSE(unvalued.error(at(1.0, 2.0)));
-    CHECK(unvalued.error(at(1.0, 2.0)).error() == refusal::degenerate);
+    CHECK(tests::refused(unvalued.error(at(1.0, 2.0))) == refusal::degenerate);
     CHECK(unvalued.jacobian(at(1.0, 2.0)));
 
-    REQUIRE_FALSE(unsloped.jacobian(at(1.0, 2.0)));
-    CHECK(unsloped.jacobian(at(1.0, 2.0)).error() == refusal::degenerate);
+    CHECK(tests::refused(unsloped.jacobian(at(1.0, 2.0))) == refusal::degenerate);
     CHECK(unsloped.error(at(1.0, 2.0)));
 }
 
@@ -172,10 +170,10 @@ TEST_CASE("a registered surface's problem refuses a missing function and an x of
     const problem unbound = surface_problem(registered_surface("unbound", {}, {}), 1.0e-10);
     const problem boxed   = surface_problem(registered_surface("circle", &circle_value, &circle_gradient, region), 1.0e-10);
 
-    CHECK(unbound.error(at(1.0, 2.0)).error() == refusal::unsupported_input);
-    CHECK(unbound.jacobian(at(1.0, 2.0)).error() == refusal::unsupported_input);
-    CHECK(boxed.error(Eigen::VectorXd::Zero(1)).error() == refusal::unsupported_input);
-    CHECK(boxed.jacobian(Eigen::VectorXd::Zero(3)).error() == refusal::unsupported_input);
+    CHECK(tests::refused(unbound.error(at(1.0, 2.0))) == refusal::unsupported_input);
+    CHECK(tests::refused(unbound.jacobian(at(1.0, 2.0))) == refusal::unsupported_input);
+    CHECK(tests::refused(boxed.error(Eigen::VectorXd::Zero(1))) == refusal::unsupported_input);
+    CHECK(tests::refused(boxed.jacobian(Eigen::VectorXd::Zero(3))) == refusal::unsupported_input);
     REQUIRE(boxed.bounds.has_value());
     CHECK(boxed.bounds->upper == region.upper);
 }

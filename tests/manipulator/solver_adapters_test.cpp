@@ -1,3 +1,4 @@
+#include "answered.h"
 #include "captured_log.h"
 
 #include "praxis/manipulator/kinematics.h"
@@ -301,10 +302,10 @@ TEST_CASE("an adapter refuses at entry in the order the reference does")
     {
         ik_result answer;
         const joint_vector unread = configuration(std::numeric_limits<double>::quiet_NaN(), 0.0);
-        CHECK(asked(solve, manipulator::baseline().fk, {}, planar_arm(), target(), joint_vector::Constant(3, std::nan("")), answer).error() == refusal::unsupported_input);
-        CHECK(asked(solve, manipulator::baseline().fk, {}, planar_arm(), transform(2.0 * target()), unread, answer).error() == refusal::degenerate);
-        CHECK(asked(solve, manipulator::baseline().fk, {}, planar_arm(), target(), unread, answer).error() == refusal::no_solution);
-        CHECK(asked(solve, manipulator::baseline().fk, {&answering_a_narrower_root}, planar_arm(), target(), seed, answer).error() == refusal::no_solution);
+        CHECK(tests::refused(asked(solve, manipulator::baseline().fk, {}, planar_arm(), target(), joint_vector::Constant(3, std::nan("")), answer)) == refusal::unsupported_input);
+        CHECK(tests::refused(asked(solve, manipulator::baseline().fk, {}, planar_arm(), transform(2.0 * target()), unread, answer)) == refusal::degenerate);
+        CHECK(tests::refused(asked(solve, manipulator::baseline().fk, {}, planar_arm(), target(), unread, answer)) == refusal::no_solution);
+        CHECK(tests::refused(asked(solve, manipulator::baseline().fk, {&answering_a_narrower_root}, planar_arm(), target(), seed, answer)) == refusal::no_solution);
         CHECK(answer.solutions.empty());
     }
 }

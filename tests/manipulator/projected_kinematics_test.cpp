@@ -207,7 +207,7 @@ TEST_CASE("every_iterate_lies_inside_the_bounds_where_the_book_iterates_leave_th
 
     REQUIRE(book.ik_solve(target, seed, tight_parameters));
     CHECK_FALSE(all_inside(chain, book.iterations()));
-    static_cast<void>(solver.ik_solve(target, seed, tight_parameters));
+    REQUIRE(solver.ik_solve(target, seed, tight_parameters));
 
     const std::span<const iteration_state> states = solver.iterations();
     REQUIRE(states.size() > 1u);
@@ -251,6 +251,7 @@ TEST_CASE("every_entry_refusal_is_the_adapters_and_the_one_the_book_solve_answer
         CHECK(route.error() == one.kind);
         CHECK(book.error() == one.kind);
         CHECK(routed_answer.iterations.empty());
+        CHECK(book_answer.iterations.empty());
     }
 }
 
