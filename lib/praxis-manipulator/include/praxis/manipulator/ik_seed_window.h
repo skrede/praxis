@@ -41,9 +41,9 @@ public:
         explicit settings(std::vector<joint_vector> chosen = std::vector<joint_vector>());
     };
 
-    // The starts a chain of `joints` joints opens at: its home configuration first, then a Halton
-    // spread over a whole turn in every joint -- Halton, Numerische Mathematik 2 (1960), 84-90 --
-    // so the first n of them are the spread of n. A chain of no joints has no start to run from.
+    // The starts a chain of `joints` joints opens at: eight points of a Halton spread over a whole
+    // turn in every joint -- Halton, Numerische Mathematik 2 (1960), 84-90 -- none of them the zero
+    // configuration. A chain of no joints has no start to run from.
     // A settings value carrying no start at all opens at these, an empty list being the absence of
     // a choice rather than one.
     static std::vector<joint_vector> opening_seeds(std::size_t joints);

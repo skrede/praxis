@@ -1,5 +1,6 @@
 #include "window_stage.h"
 #include "captured_log.h"
+#include "halton_spread.h"
 
 #include "praxis/manipulator/ik_seed_window.h"
 
@@ -115,11 +116,14 @@ TEST_CASE("a seed list window opened with no start at all opens at the spread th
     const std::vector<joint_vector> opened = ik_seed_window::opening_seeds(2u);
     const ik_seed_window::settings held    = panel.state();
 
-    REQUIRE(opened.size() == 8u);
+    REQUIRE(opened.size() == opening_spread_indices.size());
     REQUIRE(held.seeds.size() == opened.size());
     for(std::size_t start = 0; start < opened.size(); ++start)
+    {
         stands_at(held.seeds[start], opened[start]);
-    CHECK(opened.front().isZero(float_step));
+        CHECK(opened[start].isApprox(halton_start(2u, opening_spread_indices[start]), 1.0e-12));
+        CHECK_FALSE(opened[start].isZero(float_step));
+    }
 }
 
 TEST_CASE("appending a start puts a row at the joint count the publication reports", "[manipulator][seeds]")

@@ -9,6 +9,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <array>
 #include <memory>
 #include <string>
 #include <vector>
@@ -21,7 +22,8 @@ namespace praxis::manipulator {
 
 namespace {
 
-constexpr std::size_t opening_starts = 8;
+// The points of the Halton spread a window opened with no start runs from, in order.
+constexpr std::array<std::size_t, 8> opening_indices{1, 2, 3, 4, 5, 6, 7, 8};
 
 constexpr const char *unpublished_arm = "The arm has published nothing yet.";
 
@@ -77,8 +79,8 @@ ik_seed_window::settings::settings(std::vector<joint_vector> chosen)
 std::vector<joint_vector> ik_seed_window::opening_seeds(std::size_t joints)
 {
     std::vector<joint_vector> seeds;
-    for(std::size_t start = 0; joints != 0u && start < opening_starts; ++start)
-        seeds.push_back(spread_start(joints, start));
+    for(std::size_t at = 0; joints != 0u && at < opening_indices.size(); ++at)
+        seeds.push_back(spread_start(joints, opening_indices[at]));
 
     return seeds;
 }

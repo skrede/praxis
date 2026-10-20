@@ -1,3 +1,5 @@
+#include "halton_spread.h"
+
 #include "praxis/presets/arm.h"
 
 #include "praxis/manipulator/tool_window.h"
@@ -22,6 +24,7 @@
 
 #include <Eigen/Core>
 
+#include <vector>
 #include <cstddef>
 
 using namespace praxis;
@@ -81,8 +84,13 @@ TEST_CASE("each inverse-kinematics window's settings defaults to the state the s
     // A shipped document names no start, so the list opens at the spread the joint count answers
     // rather than at a list somebody had to write out.
     REQUIRE(manipulator::ik_seed_window::settings().seeds.empty());
-    REQUIRE(manipulator::ik_seed_window::opening_seeds(6u).size() == 8u);
-    REQUIRE(manipulator::ik_seed_window::opening_seeds(6u).front().isZero());
+    const std::vector<manipulator::joint_vector> opened = manipulator::ik_seed_window::opening_seeds(6u);
+    REQUIRE(opened.size() == tests::opening_spread_indices.size());
+    for(std::size_t start = 0; start < opened.size(); ++start)
+    {
+        REQUIRE_FALSE(opened[start].isZero());
+        REQUIRE(opened[start].isApprox(tests::halton_start(6u, tests::opening_spread_indices[start]), 1.0e-12));
+    }
 
     const manipulator::ik_solutions_window::settings solutions;
     REQUIRE(solutions.mode == manipulator::control_mode::simulation);

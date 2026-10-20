@@ -22,7 +22,7 @@ praxis_add_test(screw_preset_test.cpp HEADERS drawn_lines.h composed_panels.h LI
 praxis_add_test(twist_axis_preset_test.cpp HEADERS drawn_lines.h composed_panels.h LIBS praxis::rigid_presets praxis::rigid_motion praxis::scene praxis_test_support)
 praxis_add_test(rotation_axis_preset_test.cpp HEADERS drawn_lines.h labeled_panels.h composed_panels.h LIBS praxis::rigid_presets praxis::rigid_motion praxis::scene praxis_test_support)
 praxis_add_test(two_pose_preset_test.cpp HEADERS drawn_lines.h composed_panels.h opened_two_pose.h substituted_rigid_motion.h LIBS praxis::rigid_presets praxis::rigid_motion praxis::scene praxis_test_support)
-praxis_add_test(scenario_defaults_test.cpp LIBS praxis::manipulator_presets praxis::manipulator)
+praxis_add_test(scenario_defaults_test.cpp LIBS praxis::manipulator_presets praxis::manipulator praxis_test_support)
 praxis_add_test(registered_presets_test.cpp HEADERS scratch_directory.h LIBS praxis::rigid_presets praxis::scene praxis::rigid_motion praxis::config)
 praxis_add_test(arm_keyspace_test.cpp HEADERS scratch_directory.h LIBS praxis::manipulator_presets praxis::manipulator praxis::rigid_motion praxis::trajectory praxis::scene praxis::config spdlog::spdlog praxis_test_support)
 praxis_add_test(registered_arms_test.cpp HEADERS described_arm.h scratch_directory.h LIBS praxis::manipulator_presets praxis::rigid_motion praxis::trajectory praxis::manipulator praxis::scene praxis::config praxis_test_support)
