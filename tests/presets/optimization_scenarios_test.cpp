@@ -2,6 +2,7 @@
 
 #include "praxis/presets/optimization.h"
 
+#include "praxis/optimization/problem.h"
 #include "praxis/optimization/registered.h"
 #include "praxis/optimization/capabilities.h"
 
@@ -19,11 +20,15 @@
 
 #include <threepp/scenes/Scene.hpp>
 
+#include <Eigen/Core>
+
 #include <cmath>
 #include <limits>
 #include <memory>
 #include <string>
 #include <vector>
+#include <cstddef>
+#include <cstdint>
 #include <fstream>
 #include <utility>
 #include <algorithm>
@@ -50,6 +55,15 @@ double cubic_slope(double x)
 double newton_step(double x)
 {
     return x - cubic(x) / cubic_slope(x);
+}
+
+std::size_t solves_asked = 0;
+
+expected<Eigen::VectorXd, refusal> counted_solve(const optimization::problem &posed, const Eigen::VectorXd &x0, std::uint32_t max_iterations, std::vector<Eigen::VectorXd> &iterates)
+{
+    ++solves_asked;
+
+    return optimization::baseline().solver.solve(posed, x0, max_iterations, iterates);
 }
 
 // Every x the registered functions were evaluated at, in the order they were asked. The derivative is
@@ -122,13 +136,13 @@ void run_composed(const scene::preset_registry::factory &compose, opened &taken)
     REQUIRE(loop.drain().has_value());
 }
 
-opened open_from(const std::vector<config::location> &documents, bool checks_derivative = false)
+opened open_from(const std::vector<config::location> &documents, bool checks_derivative = false, const optimization::capabilities &solving = optimization::baseline())
 {
     opened taken{{}, false, {}, std::make_shared<evaluations>()};
     const std::vector<optimization::registered_curve> curves{recording(taken.seen)};
     const auto registry = std::make_shared<scene::preset_registry>();
 
-    taken.named = presets::register_optimization(registry, documents, nullptr, nullptr, optimization::baseline(), curves, {}, checks_derivative);
+    taken.named = presets::register_optimization(registry, documents, nullptr, nullptr, solving, curves, {}, checks_derivative);
     if(!taken.named.empty())
         run_composed(registry->load_preset(taken.named.front()), taken);
 
@@ -213,4 +227,15 @@ TEST_CASE("a document stating a name another one has taken, or none, is left out
 
     CHECK(named == std::vector<std::string>{"taken"});
     CHECK(registry->preset_names() == std::vector<std::string>{"taken"});
+}
+
+TEST_CASE("a registration handed a solver of its own runs every document's preset with that solver", "[presets][optimization]")
+{
+    solves_asked = 0;
+    const optimization::capabilities counted{.solver = optimization::solver_ops{.solve = &counted_solve}};
+    const opened taken = open_from({config::resolve("curve.xml", PRAXIS_SHIPPED_OPTIMIZATION_DIR)}, false, counted);
+
+    REQUIRE(taken.composed);
+    CHECK(solves_asked == 1u);
+    CHECK(std::abs(cubic(second_to_last(taken.seen->sloped))) < 1.0e-12);
 }

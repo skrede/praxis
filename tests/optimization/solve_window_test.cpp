@@ -18,6 +18,7 @@
 #include <memory>
 #include <vector>
 #include <cstddef>
+#include <utility>
 
 using namespace praxis;
 using namespace praxis::fixture;
@@ -34,6 +35,29 @@ double newton_from(double x)
     return x - cubic_value(x) / cubic_slope(x);
 }
 
+// How often the registered curve's value and its slope were asked for.
+struct asked_count
+{
+    std::size_t valued;
+    std::size_t sloped;
+};
+
+registered_curve counting(const std::shared_ptr<asked_count> &into)
+{
+    return registered_curve(
+            "cubic",
+            [into](double x)
+            {
+                ++into->valued;
+                return cubic_value(x);
+            },
+            [into](double x)
+            {
+                ++into->sloped;
+                return cubic_slope(x);
+            });
+}
+
 struct solving_stage
 {
     scheduler::scheduler loop;
@@ -41,7 +65,7 @@ struct solving_stage
     std::shared_ptr<solve_window> panel;
     opened taken;
 
-    explicit solving_stage(const scenario_settings &settings = opening())
+    explicit solving_stage(const scenario_settings &settings = opening(), registered_curve curve = cubic())
             : loop(scheduler::inline_workers)
             , built(loop)
             , panel()
@@ -53,7 +77,7 @@ struct solving_stage
 
             return std::vector<std::shared_ptr<scene::imgui_window>>{panel};
         };
-        taken = open_composing(built.site, {cubic()}, baseline(), settings, windows);
+        taken = open_composing(built.site, {std::move(curve)}, baseline(), settings, windows);
         REQUIRE(settled(loop, taken) != nullptr);
     }
 
@@ -124,10 +148,12 @@ TEST_CASE("run and step once re-run the solver from the seed", "[optimization][s
 
 TEST_CASE("the step slider walks the run forward and back without solving again", "[optimization][solve]")
 {
-    solving_stage stage;
+    const auto asked = std::make_shared<asked_count>(asked_count{0u, 0u});
+    solving_stage stage(opening(), counting(asked));
     const std::shared_ptr<const scenario_snapshot> first = stage.taken.inputs->seen.read();
     REQUIRE(first->run.iterates.size() >= 4u);
     REQUIRE(first->step == 0u);
+    const asked_count before = *asked;
 
     tests::imgui_frame frames;
     tweak_from(frames, stage.draw(), step_row, 2);
@@ -138,6 +164,8 @@ TEST_CASE("the step slider walks the run forward and back without solving again"
     CHECK(forward->step == 2u);
     CHECK(back->step == 1u);
     CHECK(back->run.iterates == first->run.iterates);
+    CHECK(asked->valued == before.valued);
+    CHECK(asked->sloped == before.sloped);
 }
 
 TEST_CASE("a limit edited in the window is the one the next run stops at", "[optimization][solve]")

@@ -15,6 +15,7 @@
 
 #include "praxis/rigid_motion/capabilities.h"
 
+#include "praxis/optimization/problem.h"
 #include "praxis/optimization/capabilities.h"
 
 #include "praxis/scene/preset.h"
@@ -89,16 +90,26 @@ scheduler::clock_source dictating()
     return scheduler::clock_source{&reading};
 }
 
-std::size_t solves_entered = 0;
+std::size_t solves_entered                             = 0;
+decltype(optimization::solver_ops::solve) handed_solve = nullptr;
 
 expected<void, refusal> recorded_search(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const manipulator::forward_kinematics_ops &,
-                                        const manipulator::differential_kinematics_ops &, const optimization::solver_ops &, const manipulator::screw_chain &, const transform &,
+                                        const manipulator::differential_kinematics_ops &, const optimization::solver_ops &solver, const manipulator::screw_chain &, const transform &,
                                         const manipulator::joint_vector &, const manipulator::solver_parameters &, manipulator::ik_result &)
 {
     ++solves_entered;
+    handed_solve = solver.solve;
 
     return praxis::unexpected(refusal::not_implemented);
 }
+
+// Never called: the recording search refuses without asking the solver it is handed.
+expected<Eigen::VectorXd, refusal> marked_solve(const optimization::problem &, const Eigen::VectorXd &, std::uint32_t, std::vector<Eigen::VectorXd> &)
+{
+    return praxis::unexpected(refusal::not_implemented);
+}
+
+const optimization::capabilities marked_solving{.solver = optimization::solver_ops{.solve = &marked_solve}};
 
 manipulator::capabilities recording_solves()
 {
@@ -185,18 +196,15 @@ struct opened_comparison
             , composed()
     {
         solves_entered = 0;
+        handed_solve   = nullptr;
     }
 
     opened_comparison(const opened_comparison &) = delete;
 
-    std::shared_ptr<scene::preset> open(const presets::arm_scenario &chosen, const manipulator::capabilities &arm)
+    std::shared_ptr<scene::preset> open(const presets::arm_scenario &chosen, const manipulator::capabilities &arm, const optimization::capabilities &solving = optimization::baseline())
     {
-        return open(
-                [&](const scene::preset_site &site)
-                {
-                    return presets::arm_preset(site, arm, trajectory::baseline(), rigid_motion::baseline(), optimization::baseline(), chosen,
-                                               presets::arm_windows_path_comparison(chosen));
-                });
+        return open([&](const scene::preset_site &site)
+                    { return presets::arm_preset(site, arm, trajectory::baseline(), rigid_motion::baseline(), solving, chosen, presets::arm_windows_path_comparison(chosen)); });
     }
 
     std::shared_ptr<scene::preset> open(const scene::preset_registry::factory &compose)
@@ -424,7 +432,7 @@ TEST_CASE("a play through an arm registered with capabilities of its own enters 
     const std::array<std::filesystem::path, 1> roots{described.directory};
 
     const auto registry = std::make_shared<scene::preset_registry>();
-    REQUIRE(presets::register_arms(registry, documents, roots, {}, {}, recording_solves(), trajectory::baseline(), rigid_motion::baseline(), optimization::baseline()).size() == 1u);
+    REQUIRE(presets::register_arms(registry, documents, roots, {}, {}, recording_solves(), trajectory::baseline(), rigid_motion::baseline(), marked_solving).size() == 1u);
 
     opened_comparison stage;
     REQUIRE(stage.open(registry->load_preset("Compared")) != nullptr);
@@ -434,7 +442,23 @@ TEST_CASE("a play through an arm registered with capabilities of its own enters 
     REQUIRE(stage.loop.drain().has_value());
 
     CHECK(solves_entered > 0u);
+    CHECK(handed_solve == &marked_solve);
     CHECK_FALSE(stage.unloaded);
+}
+
+TEST_CASE("a play through an arm composed with a solver of its own hands that solver to the solve", "[presets][comparison]")
+{
+    const described_arm described(6, "six");
+
+    opened_comparison stage;
+    REQUIRE(stage.open(described_by(described.where), recording_solves(), marked_solving) != nullptr);
+
+    choose(comparison_of(stage), manipulator::compared_path::screw);
+    press_at(*stage.panel("Comparison"), play_control);
+    REQUIRE(stage.loop.drain().has_value());
+
+    REQUIRE(solves_entered > 0u);
+    CHECK(handed_solve == &marked_solve);
 }
 
 TEST_CASE("a play through an arm registered without capabilities enters none of a recording solve", "[presets][comparison]")
