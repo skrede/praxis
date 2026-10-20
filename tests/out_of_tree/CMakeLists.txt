@@ -14,7 +14,7 @@ ExternalProject_Add(out_of_tree_probe_project
     INSTALL_COMMAND ""
     TEST_COMMAND ""
     DEPENDS praxis_compat praxis_config praxis_extension praxis_scheduler praxis_scene praxis_evaluation
-    praxis_eigen_headers praxis_rigid_motion praxis_trajectory praxis_manipulator
+    praxis_eigen_headers praxis_optimization praxis_rigid_motion praxis_trajectory praxis_manipulator
     praxis_rigid_presets praxis_manipulator_presets praxis_all praxis_extensions
 )
 
@@ -37,7 +37,7 @@ ExternalProject_Add(out_of_tree_checker_project
     INSTALL_COMMAND ""
     TEST_COMMAND ""
     DEPENDS praxis_compat praxis_config praxis_extension praxis_scheduler praxis_scene praxis_evaluation
-    praxis_eigen_headers praxis_rigid_motion praxis_trajectory praxis_manipulator
+    praxis_eigen_headers praxis_optimization praxis_rigid_motion praxis_trajectory praxis_manipulator
     praxis_rigid_presets praxis_manipulator_presets praxis_all praxis_extensions Catch2 Catch2WithMain
 )
 

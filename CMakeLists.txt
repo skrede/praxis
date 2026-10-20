@@ -81,7 +81,7 @@ export(TARGETS ${praxis_dependency_targets}
     FILE ${CMAKE_BINARY_DIR}/praxis-dependency-targets.cmake)
 
 export(TARGETS praxis_compat praxis_config praxis_extension praxis_scheduler praxis_scene praxis_evaluation
-    praxis_rigid_motion praxis_trajectory praxis_manipulator praxis_rigid_presets praxis_manipulator_presets praxis_all praxis_extensions
+    praxis_optimization praxis_rigid_motion praxis_trajectory praxis_manipulator praxis_rigid_presets praxis_manipulator_presets praxis_all praxis_extensions
     NAMESPACE praxis:: FILE ${CMAKE_BINARY_DIR}/praxis-targets.cmake)
 
 if (PRAXIS_BUILD_EXAMPLES)

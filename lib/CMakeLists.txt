@@ -5,7 +5,7 @@
 # walks the interface of every target it links, skipping a name that is not yet a target, so a module
 # has to be added after everything it links.
 set(PRAXIS_CORE_MODULES compat config extension scheduler scene evaluation CACHE INTERNAL "")
-set(PRAXIS_EXTENSIONS rigid_motion trajectory manipulator CACHE INTERNAL "")
+set(PRAXIS_EXTENSIONS optimization rigid_motion trajectory manipulator CACHE INTERNAL "")
 
 # A synchronization primitive is policed in every module the two lists above name, and these are the
 # files inside them where one is a reviewed hand-off across a boundary rather than the discipline by

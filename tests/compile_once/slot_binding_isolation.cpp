@@ -1,3 +1,5 @@
+#include "praxis/optimization/slots.h"
+
 #include "praxis/rigid_motion/slots.h"
 #include "praxis/rigid_motion/types.h"
 
@@ -16,13 +18,16 @@
 #endif
 
 #include <span>
+#include <vector>
+#include <cstdint>
 
 namespace robotics_course {
 
 // One slot of each extension, in the shape a consumer writes: a free function whose signature
-// carries robotics and nothing else, composed into the aggregate that decides the arity and the
-// order. A signature that named a scheduling type would still compile here; what this translation
-// unit answers is whether the headers reached to write one can see the scheduler at all.
+// carries the extension's own vocabulary and nothing else, composed into the aggregate that decides
+// the arity and the order. A signature that named a scheduling type would still compile here; what
+// this translation unit answers is whether the headers reached to write one can see the scheduler at
+// all.
 praxis::rotation rotate_z(double radians)
 {
     static_cast<void>(radians);
@@ -42,6 +47,18 @@ praxis::expected<praxis::transform, praxis::refusal> forward_kinematics(const pr
                                                                         const praxis::manipulator::joint_vector &)
 {
     return m;
+}
+
+praxis::expected<Eigen::VectorXd, praxis::refusal> solve(const praxis::optimization::problem &, const Eigen::VectorXd &x0, std::uint32_t, std::vector<Eigen::VectorXd> &iterates)
+{
+    iterates.push_back(x0);
+
+    return x0;
+}
+
+praxis::optimization::solver_ops solvers()
+{
+    return praxis::optimization::solver_ops{.solve = &solve};
 }
 
 praxis::rigid_motion::frame_ops frames()

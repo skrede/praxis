@@ -16,6 +16,10 @@
     #include "praxis/compat/detail/callable.h"
 #endif
 
+#if __has_include("praxis/optimization/solver.h")
+    #include "praxis/optimization/solver.h"
+#endif
+
 #if __has_include("praxis/rigid_motion/baseline/frame.h")
     #include "praxis/rigid_motion/baseline/frame.h"
 #endif
@@ -35,6 +39,7 @@
 #include <span>
 #include <array>
 #include <memory>
+#include <vector>
 #include <cstddef>
 #include <cstdint>
 
@@ -58,6 +63,11 @@ praxis::expected<praxis::transform, praxis::refusal> (*praxis_trajectory_path_sy
 praxis::expected<std::unique_ptr<praxis::trajectory::pose_trajectory_generator>, praxis::refusal> (*praxis_trajectory_inert_symbol)(
         const praxis::rigid_motion::screw_ops &, const praxis::rigid_motion::frame_ops &, const praxis::trajectory::path_ops &, const praxis::trajectory::time_scaling_ops &,
         std::span<const praxis::transform>, const praxis::transform &, double, double) = &praxis::trajectory::inert::decoupled_pose_waypoints;
+#endif
+
+#if __has_include("praxis/optimization/solver.h")
+praxis::expected<Eigen::VectorXd, praxis::refusal> (*praxis_optimization_symbol)(const praxis::optimization::problem &, const Eigen::VectorXd &, std::uint32_t,
+                                                                                 std::vector<Eigen::VectorXd> &) = &praxis::optimization::inert::solve;
 #endif
 
 #if __has_include("praxis/rigid_motion/baseline/frame.h")

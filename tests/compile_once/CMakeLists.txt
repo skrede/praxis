@@ -48,12 +48,25 @@ if (TARGET praxis_trajectory)
     target_link_libraries(praxis_compile_once_trajectory_probe PRIVATE praxis::trajectory)
 endif ()
 
+# The same assertion for the optimization extension, which links no other extension. It compiles with
+# warnings as errors, so a designated initializer omitting a member that carries no initializer fails
+# the build rather than warning at every call site that composes a problem.
+if (TARGET praxis_optimization)
+    add_library(praxis_compile_once_optimization_probe OBJECT
+        optimization_isolation.cpp
+    )
+
+    praxis_target_warnings(praxis_compile_once_optimization_probe)
+    target_compile_options(praxis_compile_once_optimization_probe PRIVATE $<IF:$<CXX_COMPILER_ID:MSVC>,/WX,-Werror>)
+    target_link_libraries(praxis_compile_once_optimization_probe PRIVATE praxis::optimization)
+endif ()
+
 # The per-target include-leak assertion walks a target's transitive interface, and every extension
 # legitimately links the scheduler because its presets register tasks, so it cannot answer the
 # per-header question. This probe links no praxis target at all and its include path is built here:
-# the Foundation's two published roots, the three extensions', and the dependencies those headers
+# the Foundation's two published roots, every extension's, and the dependencies those headers
 # publish. A slot table reaching the scheduler's or the scene's tree is then a missing header.
-if (TARGET praxis_compat AND TARGET praxis_extension AND TARGET praxis_rigid_motion AND TARGET praxis_trajectory AND TARGET praxis_manipulator)
+if (TARGET praxis_compat AND TARGET praxis_extension AND TARGET praxis_optimization AND TARGET praxis_rigid_motion AND TARGET praxis_trajectory AND TARGET praxis_manipulator)
     set(praxis_slot_binding_includes
         ${PROJECT_SOURCE_DIR}/lib/praxis-compat/include
         ${PROJECT_SOURCE_DIR}/lib/praxis-extension/include
