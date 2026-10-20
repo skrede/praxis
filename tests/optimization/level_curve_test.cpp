@@ -23,7 +23,7 @@ namespace {
 
 const std::vector<interval> square{interval{-2.0, 2.0}, interval{-2.0, 2.0}};
 
-// The record's resolution criterion: a segment end within 1e-4 of the range's width of the zero set.
+// A segment end within 1e-4 of the range's width of the zero set.
 constexpr double within = 1.0e-4 * 4.0;
 
 double along(std::size_t at, std::size_t count)
@@ -110,6 +110,7 @@ TEST_CASE("a level of one half traces the circle of radius sqrt(1.5)", "[optimiz
 
     bool closed = false;
     CHECK(components(segments, closed) == 1u);
+    CHECK(closed);
 }
 
 TEST_CASE("a cell with a corner that was not answered contributes no segment", "[optimization][level]")

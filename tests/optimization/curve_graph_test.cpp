@@ -48,9 +48,12 @@ double bowl_slope(double x)
     return 2.0 * x;
 }
 
+// Above the root and below where the first damped step from 1.5 lands, so that step is clamped.
+constexpr double boxed_upper = 2.1;
+
 registered_curve boxed_cubic()
 {
-    return registered_curve("boxed", &cubic_value, &cubic_slope, box{Eigen::VectorXd::Constant(1, 0.0), Eigen::VectorXd::Constant(1, 2.5)});
+    return registered_curve("boxed", &cubic_value, &cubic_slope, box{Eigen::VectorXd::Constant(1, 0.0), Eigen::VectorXd::Constant(1, boxed_upper)});
 }
 
 scenario_settings seeded(std::string selected, double seed)
@@ -126,6 +129,7 @@ TEST_CASE("under a projected step the tangent's zero and the recorded next itera
     const double crossing         = 1.5 - cubic_value(1.5) / cubic_slope(1.5);
     const double next             = stage.ran->run.iterates[1][0];
     REQUIRE(std::abs(crossing - next) > 1.0e-6);
+    CHECK(next == boxed_upper);
 
     const scene::plot_series *zero = named(frame, "zero of the tangent");
     REQUIRE(zero != nullptr);
@@ -155,7 +159,7 @@ TEST_CASE("a box draws its two ends as vertical segments across the drawn ordina
     const scene::plot_series *edges = named(frame, "bounds");
     REQUIRE(edges != nullptr);
     CHECK(edges->mark == scene::plot_mark::segments);
-    CHECK(edges->abscissa == std::vector<double>{0.0, 0.0, 2.5, 2.5});
+    CHECK(edges->abscissa == std::vector<double>{0.0, 0.0, boxed_upper, boxed_upper});
     CHECK(edges->ordinate == std::vector<double>{span.lower, span.upper, span.lower, span.upper});
 }
 

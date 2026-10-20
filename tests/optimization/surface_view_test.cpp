@@ -149,7 +149,7 @@ TEST_CASE("the graph window's switches hide and show the zero curve, the selecte
 
     for(const char *label : {"Zero curve", "Step", "Box"})
         viewed.press(label);
-    for(const char *name : {"zero curve", "tangent plane", "box"})
+    for(const char *name : {"zero curve", "tangent plane", "nearest point", "zero line", "box"})
         CHECK(drawn_visible(scene, name));
 }
 

@@ -85,7 +85,7 @@ void check_steps_from(const Eigen::Vector2d &seed)
     std::vector<Eigen::VectorXd> iterates;
     REQUIRE(optimization::solve(surface_problem(circle(), 1.0e-12), seed, 70u, iterates).has_value());
     REQUIRE(iterates.size() >= 3u);
-    for(std::size_t k = 0; k + 2 < iterates.size(); ++k)
+    for(std::size_t k = 0; k + 1 < iterates.size(); ++k)
         check_step(iterates[k], iterates[k + 1]);
 }
 
@@ -152,7 +152,7 @@ TEST_CASE("the stencil draws the selected step's tangent plane, its zero line an
 TEST_CASE("under the projected solver in a box the recorded next iterate is drawn apart from the nearest point", "[optimization][surface][step]")
 {
     const Eigen::Vector2d unbounded = Eigen::Vector2d::Constant(std::numeric_limits<double>::infinity());
-    const box region{Eigen::Vector2d(-unbounded.x(), -2.0), Eigen::Vector2d(1.2, unbounded.y())};
+    const box region{Eigen::Vector2d(-unbounded.x(), -2.0), Eigen::Vector2d(1.0, unbounded.y())};
     composed_surface staged_surface(registered_surface("circle", &circle_value, &circle_gradient, region), capabilities{solver_ops{&projected::solve}}, Eigen::Vector2d(1.5, 0.5));
     const scenario_snapshot &ran = *staged_surface.ran;
     REQUIRE(ran.run.iterates.size() >= 2u);
@@ -162,9 +162,10 @@ TEST_CASE("under the projected solver in a box the recorded next iterate is draw
     REQUIRE(built.has_value());
     CHECK((built->nearest - ran.run.iterates[1]).norm() > 1.0e-3);
 
-    threepp::Scene &scene                       = *staged_surface.built.scene;
-    const placement standing                    = placement_of(field_of(scene), *ran.grid);
-    const Eigen::VectorXd &next                 = ran.run.iterates[1];
+    threepp::Scene &scene       = *staged_surface.built.scene;
+    const placement standing    = placement_of(field_of(scene), *ran.grid);
+    const Eigen::VectorXd &next = ran.run.iterates[1];
+    CHECK(next[0] == region.upper.x());
     const std::vector<Eigen::Vector3d> recorded = drawn_points(scene, "x_(k+1)");
     REQUIRE(recorded.size() == 2u);
     CHECK((recorded[0] - standing.at(next[0], next[1], 0.0)).norm() <= 1.0e-5);

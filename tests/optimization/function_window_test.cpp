@@ -145,11 +145,15 @@ TEST_CASE("an edited range moves the samples and the graph's limits, and a minim
     REQUIRE(drawn.frames.size() == 1u);
     CHECK(drawn.frames.front().abscissa_limits->lower == -2.0);
 
+    type_into(frames, stage.draw(), upper_row, "3.5");
+    const std::shared_ptr<const scenario_snapshot> widened = stage.drained();
+    CHECK((widened->ranges.front().lower == -2.0 && widened->ranges.front().upper == 3.5));
+
     const tests::captured_log captured;
     type_into(frames, stage.draw(), upper_row, "-3");
-    CHECK(stage.drained() == narrowed);
+    CHECK(stage.drained() == widened);
     type_into(frames, stage.draw(), upper_row, "1e400");
-    CHECK(stage.drained() == narrowed);
+    CHECK(stage.drained() == widened);
     CHECK(captured.text().empty());
 }
 
