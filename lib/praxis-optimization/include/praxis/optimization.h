@@ -4,6 +4,7 @@
 #include "praxis/optimization/slots.h"
 #include "praxis/optimization/solver.h"
 #include "praxis/optimization/problem.h"
+#include "praxis/optimization/evaluation.h"
 #include "praxis/optimization/capabilities.h"
 
 #endif

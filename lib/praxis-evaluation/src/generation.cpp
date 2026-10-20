@@ -210,4 +210,9 @@ std::size_t case_source::axis_count()
     return static_cast<std::size_t>(fewest_axes + drawn_below(m_engine, most_axes - fewest_axes + 1));
 }
 
+double case_source::uniform(double lower, double upper)
+{
+    return drawn_between(m_engine, lower, upper);
+}
+
 }

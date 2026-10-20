@@ -100,6 +100,9 @@ public:
     // Uniform over the closed range one to eight, the lengths a drawn sequence of unit twists takes.
     std::size_t axis_count();
 
+    // Uniform over [lower, upper), under either spread.
+    double uniform(double lower, double upper);
+
 private:
     spread m_spread;
     std::uint64_t m_seed;

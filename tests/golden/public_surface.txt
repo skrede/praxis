@@ -170,6 +170,7 @@ lib/praxis-evaluation/include/praxis/evaluation/generation.h	unit_twist	prototyp
 lib/praxis-evaluation/include/praxis/evaluation/generation.h	twist_member	prototype	()	typename:Eigen::Vector<double,6>
 lib/praxis-evaluation/include/praxis/evaluation/generation.h	axis_order_index	prototype	()	typename:std::uint8_t
 lib/praxis-evaluation/include/praxis/evaluation/generation.h	axis_count	prototype	()	typename:std::size_t
+lib/praxis-evaluation/include/praxis/evaluation/generation.h	uniform	prototype	(double lower,double upper)	typename:double
 lib/praxis-evaluation/include/praxis/evaluation/generation.h	m_spread	member	-	typename:spread
 lib/praxis-evaluation/include/praxis/evaluation/generation.h	m_seed	member	-	typename:std::uint64_t
 lib/praxis-evaluation/include/praxis/evaluation/generation.h	m_engine	member	-	typename:std::mt19937_64
@@ -2098,6 +2099,12 @@ lib/praxis-optimization/include/praxis/optimization/capabilities.h	solver	member
 lib/praxis-optimization/include/praxis/optimization/capabilities.h	baseline	prototype	()	typename:capabilities
 lib/praxis-optimization/include/praxis/optimization/capabilities.h	capability_views	prototype	(const capabilities & c)	typename:std::array<capability_view,1>
 lib/praxis-optimization/include/praxis/optimization/capabilities.h	capability_views	prototype	(capabilities &&)	typename:std::array<capability_view,1>
+lib/praxis-optimization/include/praxis/optimization/evaluation.h	optimization	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/evaluation.h	praxis	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/evaluation.h	evaluation_views	prototype	(const capabilities & first,const capabilities & second)	typename:std::array<evaluation::evaluation_view,1>
+lib/praxis-optimization/include/praxis/optimization/evaluation.h	evaluation_views	prototype	(capabilities &&,const capabilities &)	typename:std::array<evaluation::evaluation_view,1>
+lib/praxis-optimization/include/praxis/optimization/evaluation.h	evaluation_views	prototype	(const capabilities &,capabilities &&)	typename:std::array<evaluation::evaluation_view,1>
+lib/praxis-optimization/include/praxis/optimization/evaluation.h	evaluation_views	prototype	(capabilities &&,capabilities &&)	typename:std::array<evaluation::evaluation_view,1>
 lib/praxis-optimization/include/praxis/optimization/problem.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/problem.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/problem.h	box	struct	-	-

@@ -4,10 +4,14 @@ praxis_add_module(optimization
     include/praxis/optimization/slots.h
     include/praxis/optimization/solver.h
     include/praxis/optimization/problem.h
+    include/praxis/optimization/evaluation.h
     include/praxis/optimization/capabilities.h
     include/praxis/optimization/baseline/solver.h
+    src/evaluation.cpp
     src/descriptors.cpp
     src/inert_solver.cpp
+    src/evaluation_tables.h
+    src/evaluation_problems.cpp
     src/baseline/solver.cpp
     src/baseline/capabilities.cpp
     PUBLIC_LIBS

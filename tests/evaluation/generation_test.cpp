@@ -190,3 +190,31 @@ TEST_CASE("a_drawn_axis_count_answers_every_length_the_range_admits_and_none_out
     REQUIRE(every_inside);
     REQUIRE(std::count(seen.begin(), seen.end(), 0) == 0);
 }
+
+TEST_CASE("a_drawn_uniform_value_stays_inside_its_half_open_range_and_is_redrawn_from_its_seed")
+{
+    case_source drawn   = case_source::for_slot(recorded_seed, "uniform");
+    case_source redraw  = case_source::for_slot(recorded_seed, "uniform");
+    case_source other   = case_source::for_slot(recorded_seed + 1u, "uniform");
+    bool every_inside   = true;
+    bool every_repeated = true;
+    bool ever_apart     = false;
+    double lowest       = 3.0;
+    double highest      = -1.0;
+
+    for(int sample = 0; sample < draws; ++sample)
+    {
+        const double value = drawn.uniform(-1.0, 3.0);
+
+        every_inside   = every_inside && value >= -1.0 && value < 3.0;
+        every_repeated = every_repeated && value == redraw.uniform(-1.0, 3.0);
+        ever_apart     = ever_apart || value != other.uniform(-1.0, 3.0);
+        lowest         = std::min(lowest, value);
+        highest        = std::max(highest, value);
+    }
+
+    REQUIRE(every_inside);
+    REQUIRE(every_repeated);
+    REQUIRE(ever_apart);
+    REQUIRE((lowest < -0.99 && highest > 2.99));
+}
