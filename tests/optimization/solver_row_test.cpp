@@ -108,5 +108,8 @@ TEST_CASE("a solve stepping against the book's sign fails the solver row")
     INFO("agreed " << row.outcomes.agreed << ", both refused " << row.outcomes.both_refused << ", one refused " << row.outcomes.one_refused << ", differed " << row.outcomes.differed
                    << ", refused differently " << row.outcomes.refused_differently);
     REQUIRE(row.slot == "solver.solve");
+    REQUIRE(row.cases == default_cases_per_slot);
+    CHECK(row.outcomes.agreed == 0u);
+    CHECK(row.outcomes.one_refused > 0u);
     CHECK(row.verdict != agreement::agreed);
 }

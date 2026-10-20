@@ -81,6 +81,7 @@ TEST_CASE("every literal solver driven through the inverse kinematics adapters p
             REQUIRE(row.cases == default_cases_per_slot);
             CHECK(row.outcomes.differed + row.outcomes.refused_differently + row.outcomes.unusable == 0u);
             CHECK(row.outcomes.agreed > 0u);
+            CHECK(row.verdict == agreement::agreed);
         }
     }
 }
@@ -92,5 +93,8 @@ TEST_CASE("a solver stepping away from the root fails the adapter route")
     const slot_report row = judged(away, reference, default_seed);
 
     REQUIRE(row.slot == "solver.solve");
+    REQUIRE(row.cases == default_cases_per_slot);
+    CHECK(row.outcomes.agreed == 0u);
+    CHECK(row.outcomes.one_refused > 0u);
     CHECK(row.verdict != agreement::agreed);
 }

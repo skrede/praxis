@@ -49,6 +49,7 @@ void passes_the_row(adapter solve)
         REQUIRE(row.cases == default_cases_per_slot);
         CHECK(row.outcomes.differed + row.outcomes.refused_differently + row.outcomes.unusable == 0u);
         CHECK(row.outcomes.agreed > 0u);
+        CHECK(row.verdict == agreement::agreed);
     }
 }
 
