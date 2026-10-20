@@ -33,7 +33,7 @@ using fixture::compared_slots;
 // of the bound instead of a decade: a case standing on a bound the comparison is inclusive at decides
 // nothing.
 constexpr std::array<double, static_cast<std::size_t>(fixture::bent::count)> above_the_bound{1.0e-11, 1.0e-12, 1.0e-4, 1.0e-3, 1.0e-6, 3.0e-7};
-constexpr std::array<double, static_cast<std::size_t>(fixture::bent::count)> beneath_the_bound{1.0e-14, 1.0e-14, 1.0e-14, 1.0e-13, 1.0e-8, 3.0e-8};
+constexpr std::array<double, static_cast<std::size_t>(fixture::bent::count)> beneath_the_bound{1.0e-14, 1.0e-14, 1.0e-14, 1.0e-13, 1.0e-9, 3.0e-8};
 
 std::vector<std::string_view> rows_one_bend_names(const evaluation_report &reported, fixture::bent which)
 {

@@ -1,10 +1,10 @@
 #include "praxis/manipulator/solver_adapters.h"
 
-#include "joint_bounds.h"
-
 #include "baseline/chain_maps.h"
 
 #include "praxis/optimization/problem.h"
+
+#include "praxis/evaluation/tolerance.h"
 
 #include <Eigen/Core>
 
@@ -13,6 +13,7 @@
 #include <vector>
 #include <cstddef>
 #include <cstdint>
+#include <numbers>
 #include <utility>
 #include <optional>
 #include <algorithm>
@@ -98,6 +99,15 @@ expected<Dynamic, refusal> finite(const expected<Fixed, refusal> &value)
 bool within(const Eigen::VectorXd &error, const solver_parameters &parameters)
 {
     return error.size() == 6 && error.head<3>().norm() <= parameters.orientation_tol && error.tail<3>().norm() <= parameters.position_tol;
+}
+
+// Lynch & Park, Modern Robotics, Def. 3.24: a unit screw of pitch w . v = 0 is a pure rotation, so a
+// whole turn about it is no displacement. Any other screw answers zero.
+double whole_turn(const screw_axis &s)
+{
+    const bool rotation = is_approx_equal(s.head<3>().norm(), 1.0) && is_approx_equal(s.head<3>().dot(s.tail<3>()), 0.0);
+
+    return rotation ? 2.0 * std::numbers::pi : 0.0;
 }
 
 // A joint the limits do not cover is free on both sides; one that turns whole wraps by its turn.

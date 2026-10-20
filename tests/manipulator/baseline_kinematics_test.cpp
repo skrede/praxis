@@ -476,16 +476,17 @@ TEST_CASE("the_iteration_sequence_is_the_one_the_solve_passed_through")
     }
 }
 
-TEST_CASE("a_seed_already_at_the_target_is_answered_inside_the_bounds_without_a_step")
+TEST_CASE("a_seed_already_at_the_target_outside_the_bounds_is_answered_as_it_is_with_only_the_seed_recorded")
 {
-    const kinematics solver      = reference(planar_arm());
-    const joint_vector at_target = configuration(0.4, -0.7);
-    const transform target       = reached(solver, at_target);
+    const kinematics solver = reference(planar_arm());
+    const joint_vector seed = joint_vector(configuration(0.4, -0.7) + configuration(2.0 * std::numbers::pi, 0.0));
+    const transform target  = reached(solver, configuration(0.4, -0.7));
 
-    const joint_vector solution = solved(solver, target, at_target + configuration(2.0 * std::numbers::pi, 0.0), tight_parameters);
+    const joint_vector solution = solved(solver, target, seed, tight_parameters);
 
-    CHECK(solver.iterations().empty());
-    CHECK(is_approx_equal(solution, at_target));
+    REQUIRE(solver.iterations().size() == 1u);
+    CHECK(solver.iterations().front().joint_positions == seed);
+    CHECK(solution == seed);
 }
 
 TEST_CASE("a_solve_its_budget_does_not_carry_to_the_target_records_every_step_and_answers_nothing")
@@ -499,11 +500,10 @@ TEST_CASE("a_solve_its_budget_does_not_carry_to_the_target_records_every_step_an
 
     REQUIRE_FALSE(solution.has_value());
     CHECK(solution.error() == refusal::no_solution);
-    CHECK(solver.iterations().size() == 5u);
+    CHECK(solver.iterations().size() == 6u);
 }
 
-// The iterates are the ones the solve walked; only the configuration it converged at is named again.
-TEST_CASE("a_configuration_converged_a_whole_turn_outside_the_bounds_is_answered_at_its_naming_inside_them")
+TEST_CASE("a_configuration_converged_a_whole_turn_outside_the_bounds_is_answered_where_it_converged")
 {
     screw_chain chain           = planar_arm();
     chain.limits.lower_position = joint_vector::Constant(2, -std::numbers::pi);
@@ -515,11 +515,11 @@ TEST_CASE("a_configuration_converged_a_whole_turn_outside_the_bounds_is_answered
     const joint_vector solution = solved(solver, target, configuration(2.0 * std::numbers::pi - 2.8, 0.55), tight_parameters);
 
     REQUIRE_FALSE(solver.iterations().empty());
-    CHECK(is_approx_equal(solver.iterations().back().joint_positions, joint_vector(inside + configuration(2.0 * std::numbers::pi, 0.0)), 1.0e-9));
-    CHECK(is_approx_equal(solution, inside, 1.0e-9));
+    CHECK(is_approx_equal(solution, joint_vector(inside + configuration(2.0 * std::numbers::pi, 0.0)), 1.0e-9));
+    CHECK(solver.iterations().back().joint_positions == solution);
 }
 
-TEST_CASE("a_configuration_converged_where_no_whole_turn_names_it_inside_the_bounds_is_not_answered")
+TEST_CASE("a_configuration_converged_where_no_whole_turn_names_it_inside_the_bounds_is_answered_outside_them")
 {
     screw_chain chain           = planar_arm();
     chain.limits.lower_position = configuration(0.0, -3.0);
@@ -527,17 +527,13 @@ TEST_CASE("a_configuration_converged_where_no_whole_turn_names_it_inside_the_bou
     const kinematics solver     = reference(chain);
     const transform target      = reached(solver, configuration(0.4, -0.7));
 
-    const expected<joint_vector, refusal> solution = solver.ik_solve(target, configuration(0.35, -0.65), tight_parameters);
+    const joint_vector solution = solved(solver, target, configuration(0.35, -0.65), tight_parameters);
 
-    REQUIRE_FALSE(solution.has_value());
-    CHECK(solution.error() == refusal::no_solution);
-    REQUIRE_FALSE(solver.iterations().empty());
-    CHECK(is_approx_equal(reached(solver, solver.iterations().back().joint_positions), target, 1.0e-9));
+    CHECK(solution[0] > 0.2);
+    CHECK(is_approx_equal(reached(solver, solution), target, 1.0e-9));
 }
 
-// A sliding joint is moved by a whole turn of its value, so a turn names a different pose rather than
-// the same one again.
-TEST_CASE("a_sliding_joint_converged_outside_its_bounds_is_not_named_a_turn_away_inside_them")
+TEST_CASE("a_sliding_joint_converged_outside_its_bounds_is_answered_outside_them")
 {
     screw_axis slide;
     slide << 0.0, 0.0, 0.0, 1.0, 0.0, 0.0;
@@ -549,12 +545,10 @@ TEST_CASE("a_sliding_joint_converged_outside_its_bounds_is_not_named_a_turn_away
     const kinematics solver     = reference(chain);
     const transform target      = reached(solver, configuration(0.4, 0.5));
 
-    const expected<joint_vector, refusal> solution = solver.ik_solve(target, configuration(0.35, 0.45), tight_parameters);
+    const joint_vector solution = solved(solver, target, configuration(0.35, 0.45), tight_parameters);
 
-    REQUIRE_FALSE(solution.has_value());
-    CHECK(solution.error() == refusal::no_solution);
-    REQUIRE_FALSE(solver.iterations().empty());
-    CHECK(is_approx_equal(reached(solver, solver.iterations().back().joint_positions), target, 1.0e-9));
+    CHECK(solution[1] > 0.2);
+    CHECK(is_approx_equal(reached(solver, solution), target, 1.0e-9));
 }
 
 TEST_CASE("a_seed_of_the_wrong_width_is_refused_before_any_of_its_values_is_read")

@@ -1,9 +1,7 @@
-#include "joint_bounds.h"
 #include "iterated_solve.h"
 
 #include "praxis/manipulator/capabilities.h"
 #include "praxis/manipulator/baseline/kinematics.h"
-#include "praxis/rigid_motion/angles.h"
 #include "praxis/rigid_motion/capabilities.h"
 
 #include "praxis/optimization/capabilities.h"
@@ -12,10 +10,11 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <array>
+#include <span>
+#include <cmath>
 #include <limits>
 #include <cstddef>
-#include <optional>
+#include <utility>
 
 using namespace praxis;
 using namespace praxis::manipulator;
@@ -31,7 +30,7 @@ const rigid_motion::frame_ops reference_frames = rigid_motion::baseline().frame;
 // A planar two-link arm: both joints rotate about the world z, the second sits at the far end of the
 // first link, and the tool frame is the far end of the second. Lynch & Park, Modern Robotics,
 // example 4.3 -- a screw axis of a revolute joint is (w, -w x q) for a point q on the axis.
-screw_chain planar_arm()
+screw_chain planar_arm(double bound = 3.0)
 {
     screw_axis shoulder;
     shoulder << 0.0, 0.0, 1.0, 0.0, 0.0, 0.0;
@@ -44,8 +43,8 @@ screw_chain planar_arm()
     joint_limits bounds{};
     bounds.velocity       = joint_vector::Constant(2, 1.0);
     bounds.acceleration   = joint_vector::Constant(2, 2.0);
-    bounds.lower_position = joint_vector::Constant(2, -3.0);
-    bounds.upper_position = joint_vector::Constant(2, 3.0);
+    bounds.lower_position = joint_vector::Constant(2, -bound);
+    bounds.upper_position = joint_vector::Constant(2, bound);
 
     return screw_chain(home, {shoulder, elbow}, bounds);
 }
@@ -60,43 +59,82 @@ joint_vector configuration(double first, double second)
 
 const solver_parameters tight_parameters(1.0e-10, 1.0e-10, 400u);
 
+std::size_t body_forward_calls  = 0;
+std::size_t body_jacobian_calls = 0;
+
+expected<transform, refusal> counted_body_forward(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const transform &m,
+                                                  std::span<const screw_axis> space_screws, const joint_vector &theta)
+{
+    ++body_forward_calls;
+
+    return manipulator::body_forward_kinematics(screw, frames, m, space_screws, theta);
+}
+
+expected<jacobian, refusal> counted_body_jacobian(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward, const transform &m,
+                                                  std::span<const screw_axis> space_screws, const joint_vector &theta)
+{
+    ++body_jacobian_calls;
+
+    return manipulator::body_jacobian(screw, frames, forward, m, space_screws, theta);
+}
+
+expected<jacobian, refusal> refusing_on_second(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward, const transform &m,
+                                               std::span<const screw_axis> space_screws, const joint_vector &theta)
+{
+    if(body_jacobian_calls++ > 0)
+        return unexpected(refusal::degenerate);
+
+    return manipulator::body_jacobian(screw, frames, forward, m, space_screws, theta);
+}
+
+expected<jacobian, refusal> one_column_short(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const forward_kinematics_ops &, const transform &,
+                                             std::span<const screw_axis>, const joint_vector &theta)
+{
+    return jacobian(jacobian::Zero(6, theta.size() - 1));
+}
+
+forward_kinematics_ops counted_forward()
+{
+    forward_kinematics_ops forward  = manipulator::baseline().fk;
+    forward.body_forward_kinematics = &counted_body_forward;
+
+    return forward;
+}
+
+differential_kinematics_ops differential_with(decltype(differential_kinematics_ops::body_jacobian) body)
+{
+    differential_kinematics_ops differential = manipulator::baseline().dk;
+    differential.body_jacobian               = body;
+
+    return differential;
+}
+
+kinematics reference_composition(const screw_chain &chain, const forward_kinematics_ops &forward, const differential_kinematics_ops &differential)
+{
+    expected<kinematics, refusal> composed =
+            kinematics::compose(chain, forward, differential, manipulator::baseline().ik, reference_screw, reference_frames, optimization::baseline().solver);
+    REQUIRE(composed);
+
+    return std::move(*composed);
+}
+
 transform reached(const joint_vector &q)
 {
-    expected<kinematics, refusal> solver = manipulator::make_kinematics(planar_arm(), manipulator::baseline().fk, manipulator::baseline().dk, manipulator::baseline().ik,
-                                                                        reference_screw, reference_frames, optimization::baseline().solver);
-    REQUIRE(solver);
-    const expected<transform, refusal> pose = solver->fk_solve(q);
+    const expected<transform, refusal> pose = reference_composition(planar_arm(), manipulator::baseline().fk, manipulator::baseline().dk).fk_solve(q);
     REQUIRE(pose);
 
     return *pose;
 }
 
-std::size_t steps_taken = 0;
-
-expected<joint_vector, refusal> one_short(const body_target &, const joint_vector &theta, const jacobian &, const twist &)
+expected<void, refusal> solved_under(const differential_kinematics_ops &differential, const screw_chain &chain, const transform &target, const joint_vector &seed, ik_result &answer)
 {
-    return joint_vector(theta.head(theta.size() - 1));
-}
-
-expected<joint_vector, refusal> refusing_on_second(const body_target &, const joint_vector &theta, const jacobian &, const twist &)
-{
-    if(steps_taken++ > 0)
-        return unexpected(refusal::degenerate);
-
-    return joint_vector(theta + configuration(0.01, 0.01));
-}
-
-expected<joint_vector, refusal> counted(const body_target &, const joint_vector &theta, const jacobian &, const twist &)
-{
-    ++steps_taken;
-
-    return theta;
+    return iterated(reference_screw, reference_frames, manipulator::baseline().fk, differential, chain, target, seed, tight_parameters, answer);
 }
 
 refusal refused_before_stepping(const screw_chain &chain, const transform &target, const joint_vector &seed)
 {
     ik_result answer;
-    const expected<void, refusal> solved = iterated(chain, target, seed, tight_parameters, &counted, answer);
+    const expected<void, refusal> solved = solved_under(differential_with(&counted_body_jacobian), chain, target, seed, answer);
     REQUIRE_FALSE(solved.has_value());
     CHECK(answer.solutions.empty());
     CHECK(answer.iterations.empty());
@@ -104,80 +142,79 @@ refusal refused_before_stepping(const screw_chain &chain, const transform &targe
     return solved.error();
 }
 
-screw_chain one_joint_about_z(double lower, double upper)
+}
+
+TEST_CASE("a_target_reached_only_outside_the_joint_bounds_is_answered_there_as_the_iteration_converges")
 {
-    screw_axis about_z;
-    about_z << 0.0, 0.0, 1.0, 0.0, 0.0, 0.0;
-    joint_limits bounds{};
-    bounds.lower_position = joint_vector::Constant(1, lower);
-    bounds.upper_position = joint_vector::Constant(1, upper);
-    transform home        = transform::Identity();
-    home(0, 3)            = 0.5;
+    const kinematics solver = reference_composition(planar_arm(1.0), manipulator::baseline().fk, manipulator::baseline().dk);
+    const transform target  = reached(configuration(2.0, -1.5));
 
-    return screw_chain(home, {about_z}, bounds);
+    const expected<joint_vector, refusal> answer = solver.ik_solve(target, configuration(1.8, -1.3), tight_parameters);
+
+    REQUIRE(answer.has_value());
+    CHECK(std::abs((*answer)[0]) > 1.0);
+    const expected<transform, refusal> pose = solver.fk_solve(*answer);
+    REQUIRE(pose.has_value());
+    CHECK(is_approx_equal(*pose, target, 1.0e-6));
 }
 
-transform pose_of(const screw_chain &chain, const joint_vector &q)
+TEST_CASE("the_reference_reads_its_pose_and_jacobian_through_the_operations_it_is_handed")
 {
-    const expected<transform, refusal> pose = manipulator::forward_kinematics(reference_screw, chain.home, chain.space_screws, q);
-    REQUIRE(pose);
+    const kinematics solver = reference_composition(planar_arm(), counted_forward(), differential_with(&counted_body_jacobian));
+    body_forward_calls      = 0;
+    body_jacobian_calls     = 0;
 
-    return *pose;
+    REQUIRE(solver.ik_solve(reached(configuration(0.4, -0.7)), configuration(0.1, -0.1), tight_parameters).has_value());
+
+    CHECK(body_forward_calls > 0);
+    CHECK(body_jacobian_calls > 0);
 }
 
-constexpr double unbounded = std::numeric_limits<double>::infinity();
+TEST_CASE("the_record_opens_with_the_seed_at_index_zero_with_no_step_behind_it")
+{
+    const kinematics solver = reference_composition(planar_arm(), manipulator::baseline().fk, manipulator::baseline().dk);
+    const joint_vector seed = configuration(0.1, -0.1);
 
-// {lower, upper, value, named} in degrees.
-constexpr std::array<std::array<double, 4>, 18> whole_turns_past_a_bound{{{-120.0, 120.0, 240.0, -120.0},
-                                                                          {-120.0, 120.0, 840.0, 120.0},
-                                                                          {-120.0, 120.0, -840.0, -120.0},
-                                                                          {-135.0, 135.0, 495.0, 135.0},
-                                                                          {-135.0, 135.0, -495.0, -135.0},
-                                                                          {-99.0, 99.0, 459.0, 99.0},
-                                                                          {-99.0, 99.0, -459.0, -99.0},
-                                                                          {-93.0, 93.0, 1173.0, 93.0},
-                                                                          {-93.0, 93.0, -1173.0, -93.0},
-                                                                          {-100.0, 150.0, 510.0, 150.0},
-                                                                          {-100.0, 150.0, -460.0, -100.0},
-                                                                          {-183.0, 183.0, 1983.0, 183.0},
-                                                                          {-183.0, 183.0, -1983.0, -183.0},
-                                                                          {-unbounded, 135.0, 495.0, 135.0},
-                                                                          {-135.0, unbounded, -495.0, -135.0},
-                                                                          {-unbounded, 120.0, 840.0, 120.0},
-                                                                          {-120.0, unbounded, -840.0, -120.0},
-                                                                          {-unbounded, unbounded, 495.0, 495.0}}};
+    REQUIRE(solver.ik_solve(reached(configuration(0.4, -0.7)), seed, tight_parameters).has_value());
 
+    REQUIRE(solver.iterations().size() > 1u);
+    const iteration_state &first = solver.iterations().front();
+    CHECK(first.joint_positions == seed);
+    CHECK(first.step_norm == 0.0);
+    CHECK(first.index == 0u);
+    CHECK(first.linear_error > 0.0);
 }
 
-TEST_CASE("a_step_answering_a_configuration_of_another_width_is_refused_before_it_is_used")
+TEST_CASE("a_jacobian_of_another_width_ends_the_solve_with_no_solution_before_it_is_used")
 {
     ik_result answer;
 
-    const expected<void, refusal> solved = iterated(planar_arm(), reached(configuration(0.4, -0.7)), configuration(0.1, -0.1), tight_parameters, &one_short, answer);
+    const expected<void, refusal> solved = solved_under(differential_with(&one_column_short), planar_arm(), reached(configuration(0.4, -0.7)), configuration(0.1, -0.1), answer);
 
     REQUIRE_FALSE(solved.has_value());
     CHECK(solved.error() == refusal::no_solution);
     CHECK(answer.solutions.empty());
-    CHECK(answer.iterations.empty());
+    REQUIRE(answer.iterations.size() == 1u);
+    CHECK(answer.iterations.front().joint_positions == configuration(0.1, -0.1));
 }
 
-TEST_CASE("a_step_that_refuses_ends_the_solve_with_no_solution_keeping_the_steps_already_taken")
+TEST_CASE("a_jacobian_that_refuses_ends_the_solve_with_no_solution_keeping_the_steps_already_taken")
 {
-    steps_taken = 0;
+    body_jacobian_calls = 0;
     ik_result answer;
 
-    const expected<void, refusal> solved = iterated(planar_arm(), reached(configuration(0.4, -0.7)), configuration(0.1, -0.1), tight_parameters, &refusing_on_second, answer);
+    const expected<void, refusal> solved = solved_under(differential_with(&refusing_on_second), planar_arm(), reached(configuration(0.4, -0.7)), configuration(0.1, -0.1), answer);
 
     REQUIRE_FALSE(solved.has_value());
     CHECK(solved.error() == refusal::no_solution);
     CHECK(answer.solutions.empty());
-    REQUIRE(answer.iterations.size() == 1);
-    CHECK(answer.iterations.front().joint_positions.isApprox(configuration(0.11, -0.09)));
+    REQUIRE(answer.iterations.size() == 2u);
+    CHECK(answer.iterations.back().index == 1u);
 }
 
 TEST_CASE("every_entry_refusal_is_answered_before_any_step_is_taken")
 {
-    steps_taken            = 0;
+    body_jacobian_calls    = 0;
     const transform target = reached(configuration(0.4, -0.7));
     transform stretched    = target;
     stretched.block<3, 3>(0, 0) *= 2.0;
@@ -191,26 +228,5 @@ TEST_CASE("every_entry_refusal_is_answered_before_any_step_is_taken")
     CHECK(refused_before_stepping(off_unit, target, configuration(0.1, -0.1)) == refusal::degenerate);
     CHECK(refused_before_stepping(planar_arm(), target, configuration(nan, -0.1)) == refusal::no_solution);
     CHECK(refused_before_stepping(planar_arm(), target, configuration(0.1, inf)) == refusal::no_solution);
-    CHECK(steps_taken == 0);
-}
-
-TEST_CASE("seeds_a_whole_number_of_turns_past_a_bound_are_named_inside_the_bounds_and_answered_there_by_the_book_solve")
-{
-    for(const auto &[lower, upper, value, named] : whole_turns_past_a_bound)
-    {
-        CAPTURE(lower, upper, value, named);
-        const screw_chain chain                      = one_joint_about_z(lower * radians_per_degree, upper * radians_per_degree);
-        const joint_vector seed                      = joint_vector::Constant(1, value * radians_per_degree);
-        const std::optional<joint_vector> named_seed = named_inside_bounds(chain, seed);
-        REQUIRE(named_seed.has_value());
-        CHECK(is_approx_equal((*named_seed)[0], named * radians_per_degree, 1.0e-12));
-        CHECK(named_inside_bounds(chain, *named_seed) == named_seed);
-
-        ik_result answer;
-        CHECK(manipulator::baseline().ik.inverse_kinematics(reference_screw, reference_frames, manipulator::baseline().fk, manipulator::baseline().dk, optimization::baseline().solver,
-                                                            chain, pose_of(chain, seed), seed, tight_parameters, answer));
-        REQUIRE(answer.solutions.size() == 1u);
-        CHECK(is_approx_equal(answer.solutions.front()[0], named * radians_per_degree, 1.0e-12));
-        CHECK(is_approx_equal(pose_of(chain, answer.solutions.front()), pose_of(chain, seed), 1.0e-9));
-    }
+    CHECK(body_jacobian_calls == 0u);
 }

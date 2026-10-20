@@ -120,8 +120,6 @@ praxis_add_module(manipulator
     src/inert_task_trajectory.cpp
     src/iterated_solve.h
     src/iterated_solve.cpp
-    src/joint_bounds.h
-    src/joint_bounds.cpp
     src/joint_control_window.cpp
     src/joint_curve_configuration.cpp
     src/joint_curve_window.cpp

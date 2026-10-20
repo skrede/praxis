@@ -2,27 +2,15 @@
 #include "iterated_solve.h"
 #include "praxis/manipulator/baseline/kinematics.h"
 
-#include <Eigen/QR>
-
 #include <spdlog/spdlog.h>
 
 namespace praxis::manipulator {
 
-namespace {
-
-// Lynch & Park, Modern Robotics, sec. 6.2.2; the step is eq. (6.6) in the body frame.
-expected<joint_vector, refusal> newton_step(const body_target &, const joint_vector &theta, const jacobian &jb, const twist &error)
+expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward,
+                                           const differential_kinematics_ops &differential, const optimization::solver_ops &, const screw_chain &chain, const transform &desired,
+                                           const joint_vector &j0, const solver_parameters &parameters, ik_result &answer)
 {
-    return joint_vector(theta + Eigen::CompleteOrthogonalDecomposition<Eigen::MatrixXd>(jb).solve(error));
-}
-
-}
-
-expected<void, refusal> inverse_kinematics(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const forward_kinematics_ops &, const differential_kinematics_ops &,
-                                           const optimization::solver_ops &, const screw_chain &chain, const transform &desired, const joint_vector &j0,
-                                           const solver_parameters &parameters, ik_result &answer)
-{
-    return iterated(chain, desired, j0, parameters, &newton_step, answer);
+    return iterated(screw, frames, forward, differential, chain, desired, j0, parameters, answer);
 }
 
 expected<kinematics, refusal> make_kinematics(const screw_chain &chain, forward_kinematics_ops forward, differential_kinematics_ops differential, inverse_kinematics_ops inverse,

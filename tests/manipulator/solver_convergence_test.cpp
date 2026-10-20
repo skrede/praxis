@@ -198,9 +198,9 @@ TEST_CASE("the_recorded_errors_are_the_two_halves_of_the_body_twist")
 
     // Both halves are a material fraction of the whole twist, and they differ from each other, which
     // is what a collapsed split cannot reproduce.
-    const iteration_state &first = states.front();
-    const double whole           = std::hypot(first.angular_error, first.linear_error);
-    CHECK(first.angular_error > 0.3 * whole);
-    CHECK(first.linear_error > 0.3 * whole);
-    CHECK(first.angular_error > 2.0 * first.linear_error);
+    const iteration_state &first_step = states[1];
+    const double whole                = std::hypot(first_step.angular_error, first_step.linear_error);
+    CHECK(first_step.angular_error > 0.3 * whole);
+    CHECK(first_step.linear_error > 0.3 * whole);
+    CHECK(first_step.angular_error > 2.0 * first_step.linear_error);
 }
