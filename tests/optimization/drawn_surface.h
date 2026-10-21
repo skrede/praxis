@@ -13,8 +13,12 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <threepp/objects/Mesh.hpp>
+#include <threepp/objects/InstancedMesh.hpp>
 
 #include <threepp/scenes/Scene.hpp>
+
+#include <threepp/math/Color.hpp>
+#include <threepp/math/Matrix4.hpp>
 
 #include <threepp/core/BufferGeometry.hpp>
 #include <threepp/core/BufferAttribute.hpp>
@@ -102,15 +106,36 @@ inline placement placement_of(const drawn_field &field, const scenario_snapshot 
     return placement{first, lower, across, vertex(field, tallest).z() / grid.heights[tallest]};
 }
 
-inline std::vector<Eigen::Vector3d> shown_markers(threepp::Scene &scene)
+// The one mesh the iterates are drawn as, or none.
+inline threepp::InstancedMesh *iterate_marks(threepp::Scene &scene)
 {
     threepp::Object3D *markers = scene.getObjectByName("iterates");
     REQUIRE(markers != nullptr);
+    REQUIRE(markers->children.size() <= 1u);
+    threepp::InstancedMesh *marks = markers->children.empty() ? nullptr : markers->children.front()->as<threepp::InstancedMesh>();
+    REQUIRE((markers->children.empty() || marks != nullptr));
 
+    return marks;
+}
+
+inline threepp::Color tone_at(const threepp::InstancedMesh &marks, std::size_t k)
+{
+    threepp::Color tone;
+    marks.getColorAt(k, tone);
+
+    return tone;
+}
+
+inline std::vector<Eigen::Vector3d> shown_markers(threepp::Scene &scene)
+{
+    const threepp::InstancedMesh *marks = iterate_marks(scene);
     std::vector<Eigen::Vector3d> standing;
-    for(const threepp::Object3D *marker : markers->children)
-        if(marker->visible)
-            standing.emplace_back(marker->position.x, marker->position.y, marker->position.z);
+    threepp::Matrix4 placed;
+    for(std::size_t k = 0; marks != nullptr && k < marks->count(); ++k)
+    {
+        marks->getMatrixAt(k, placed);
+        standing.emplace_back(placed.elements[12], placed.elements[13], placed.elements[14]);
+    }
 
     return standing;
 }

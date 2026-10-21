@@ -7,6 +7,8 @@
 
 #include "praxis/optimization/surface_stencil.h"
 
+#include <threepp/math/Color.hpp>
+#include <threepp/math/Matrix4.hpp>
 #include <threepp/math/MathUtils.hpp>
 
 #include <threepp/materials/MeshPhongMaterial.hpp>
@@ -50,6 +52,15 @@ void hang(threepp::Object3D &under, std::initializer_list<std::shared_ptr<threep
         under.add(figure);
 }
 
+// The first `drawn` instances are uploaded on the next frame and culled by where they now stand.
+void show_written(threepp::InstancedMesh &marks, std::size_t drawn)
+{
+    marks.setCount(drawn);
+    marks.instanceMatrix()->needsUpdate();
+    marks.instanceColor()->needsUpdate();
+    marks.computeBoundingSphere();
+}
+
 std::vector<Eigen::Vector3d> on_zero_plane(const std::vector<level_segment> &segments)
 {
     std::vector<Eigen::Vector3d> points;
@@ -71,8 +82,7 @@ surface_stencil::surface_stencil(threepp::Scene &parent, scenario_reader seen, s
         , m_root(threepp::Group::create())
         , m_field(threepp::Mesh::create(field_geometry(surface_samples), lit(surface_tone, true)))
         , m_iterates(threepp::Group::create())
-        , m_iterate_tone(lit(iterate_tone, false))
-        , m_selected_tone(lit(selected_iterate_tone, false))
+        , m_iterate_material(lit(0xffffff, false))
         , m_sphere(threepp::SphereGeometry::create(static_cast<float>(iterate_radius)))
         , m_zero_curve(overlay_lines("zero curve", zero_curve_tone, zero_curve_room, false))
         , m_box(overlay_lines("box", box_tone, 8u, false))
@@ -84,8 +94,9 @@ surface_stencil::surface_stencil(threepp::Scene &parent, scenario_reader seen, s
         , m_plane(plane_patch("tangent plane at p", tangent_plane_tone, plane_corners, false))
         , m_central(plane_patch("central difference at p", tangent_plane_tone, plane_corners, true))
         , m_sampled()
+        , m_placed()
         , m_heights{0.0, 0.0}
-        , m_markers()
+        , m_iterate_marks()
 {
     m_root->rotation.x = -threepp::math::PI / 2.f;
     m_field->name      = "surface";
@@ -124,7 +135,7 @@ void surface_stencil::render() const
     m_zero_curve->visible = shown_parts.zero_curve && m_zero_curve->geometry()->drawRange.count > 0;
     write_points(*m_box, box_outline(shown->bounds, shown->ranges), placed);
     m_box->visible = m_box->visible && shown_parts.bounds;
-    place_iterates(*shown);
+    place_iterates(shown);
     draw_step(step_figures{*m_patch, *m_zero_line, *m_nearest, *m_recorded}, *shown, placed);
     draw_planes(point_figures{*m_plane, *m_central}, *shown, placed, m_heights);
     m_plane->visible   = m_plane->visible && shown_parts.point;
@@ -141,38 +152,49 @@ void surface_stencil::resample(const scenario_snapshot &shown) const
     m_sampled = shown.grid;
 }
 
-void surface_stencil::place_iterates(const scenario_snapshot &shown) const
+void surface_stencil::place_iterates(const std::shared_ptr<const scenario_snapshot> &shown) const
 {
-    const field_placement placed = placement_of(shown.ranges, *shown.grid);
-    hold_markers(shown.run.iterates.size());
+    if(shown == m_placed)
+        return;
 
-    for(std::size_t k = 0; k < m_markers.size(); ++k)
+    m_placed = shown;
+    hold_marks(shown->run.iterates.size());
+    if(m_iterate_marks == nullptr)
+        return;
+
+    const scenario_run &run      = shown->run;
+    const field_placement placed = placement_of(shown->ranges, *shown->grid);
+    std::size_t drawn            = 0;
+    for(std::size_t k = 0; k < run.iterates.size(); ++k)
     {
-        threepp::Mesh &marker = *m_markers[k];
-        marker.visible        = within_ranges(shown.ranges, shown.run.iterates[k]) && k < shown.run.errors.size() && shown.run.errors[k].has_value();
-        if(!marker.visible)
+        if(!within_ranges(shown->ranges, run.iterates[k]) || k >= run.errors.size() || !run.errors[k].has_value())
             continue;
 
-        const Eigen::Vector3d at = placed.at(shown.run.iterates[k][0], shown.run.iterates[k][1], -(*shown.run.errors[k])[0]);
-        marker.position.set(static_cast<float>(at.x()), static_cast<float>(at.y()), static_cast<float>(at.z()));
-        marker.setMaterial(k == shown.step ? m_selected_tone : m_iterate_tone);
+        const Eigen::Vector3d at = placed.at(run.iterates[k][0], run.iterates[k][1], -(*run.errors[k])[0]);
+        m_iterate_marks->setMatrixAt(drawn, threepp::Matrix4().makeTranslation(static_cast<float>(at.x()), static_cast<float>(at.y()), static_cast<float>(at.z())));
+        m_iterate_marks->setColorAt(drawn, threepp::Color(k == shown->step ? selected_iterate_tone : iterate_tone));
+        ++drawn;
     }
+    show_written(*m_iterate_marks, drawn);
 }
 
-// One marker per iterate the run recorded, made as a run grows and dropped as it shrinks.
-void surface_stencil::hold_markers(std::size_t count) const
+// One instance per iterate the run recorded, and a mesh of its own for a run of another length.
+void surface_stencil::hold_marks(std::size_t count) const
 {
-    while(m_markers.size() < count)
-    {
-        m_markers.push_back(threepp::Mesh::create(m_sphere, m_iterate_tone));
-        m_markers.back()->name = "iterate";
-        m_iterates->add(m_markers.back());
-    }
-    while(m_markers.size() > count)
-    {
-        m_iterates->remove(*m_markers.back());
-        m_markers.pop_back();
-    }
+    if(m_iterate_marks != nullptr && static_cast<std::size_t>(m_iterate_marks->instanceMatrix()->count()) == count)
+        return;
+
+    if(m_iterate_marks != nullptr)
+        m_iterates->remove(*m_iterate_marks);
+    m_iterate_marks = nullptr;
+    if(count == 0u)
+        return;
+
+    m_iterate_marks       = threepp::InstancedMesh::create(m_sphere, m_iterate_material, count);
+    m_iterate_marks->name = "iterate";
+    // threepp picks the shader by whether instance colors exist at the first draw, so they exist from the start.
+    m_iterate_marks->setColorAt(0u, threepp::Color(iterate_tone));
+    m_iterates->add(m_iterate_marks);
 }
 
 }

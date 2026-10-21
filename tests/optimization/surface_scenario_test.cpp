@@ -1,5 +1,6 @@
 #include "drawn_surface.h"
 #include "composed_curve.h"
+#include "scenario_defaults.h"
 
 #include "praxis/optimization/registered.h"
 #include "praxis/optimization/capabilities.h"
@@ -146,20 +147,35 @@ TEST_CASE("settings naming no registered surface, or other than two ranges and t
     }
 }
 
-TEST_CASE("a shorter run leaves one marker in the scene per iterate it recorded", "[optimization][surface]")
+TEST_CASE("a surface's iterates are one mesh, toned by the selected step, rewritten on a new publication and cut to a shorter run", "[optimization][surface]")
 {
     scheduler::scheduler loop(scheduler::inline_workers);
     staged built(loop);
-    const opened taken                                 = open_surface(built.site, {registered_surface("circle", &circle_value, &circle_gradient)}, surface_opening("circle"));
-    const std::shared_ptr<const scenario_snapshot> ran = settled(loop, taken);
+    const opened taken = open_surface(built.site, {registered_surface("circle", &circle_value, &circle_gradient)}, surface_opening("circle"));
+    REQUIRE(settled(loop, taken)->run.iterates.size() > 2u);
     taken.composed->stencil->render();
-    REQUIRE(ran->run.iterates.size() > 2u);
+    const threepp::InstancedMesh *marks = iterate_marks(*built.scene);
+    REQUIRE(marks != nullptr);
+    CHECK(tone_at(*marks, 0u) == threepp::Color(optimization::selected_iterate_tone));
+    CHECK(tone_at(*marks, 1u) == threepp::Color(optimization::iterate_tone));
+
+    const unsigned int written = marks->instanceMatrix()->version;
+    taken.composed->stencil->render();
+    CHECK(marks->instanceMatrix()->version == written);
+
+    command(taken.inputs->scenario, [](scenario_state &state) { state.select_step(1u); });
+    REQUIRE(loop.drain().has_value());
+    taken.composed->stencil->render();
+    REQUIRE(iterate_marks(*built.scene) == marks);
+    CHECK(marks->instanceMatrix()->version != written);
+    CHECK(tone_at(*marks, 0u) == threepp::Color(optimization::iterate_tone));
+    CHECK(tone_at(*marks, 1u) == threepp::Color(optimization::selected_iterate_tone));
 
     command(taken.inputs->scenario, [](scenario_state &state) { state.run(Eigen::Vector2d(1.5, 0.5), 1u); });
     REQUIRE(loop.drain().has_value());
     taken.composed->stencil->render();
-
-    CHECK(built.scene->getObjectByName("iterates")->children.size() == 2u);
+    CHECK(built.scene->getObjectByName("iterates")->children.size() == 1u);
+    CHECK(shown_markers(*built.scene).size() == 2u);
 
     taken.composed->tear_down();
 }
