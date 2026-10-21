@@ -54,9 +54,7 @@ void recorded(tally &seen, const case_result &answer, std::size_t index)
     seen.worst_index = index;
 }
 
-// A one-sided case is counted and not folded: it says nothing about the two sides taken together, so
-// it neither carries a row nor lets one pass. A row none of whose cases had both sides answer
-// measured nothing about the pair and is not exercised.
+// A one-sided case decides only a row none of whose cases agreed.
 agreement folded(const tally &seen, std::size_t cases)
 {
     if(cases == 0)
@@ -69,6 +67,8 @@ agreement folded(const tally &seen, std::size_t cases)
         return agreement::refused_differently;
     if(seen.outcomes.both_refused == cases)
         return agreement::both_refused;
+    if(seen.outcomes.agreed == 0 && seen.outcomes.one_refused != 0)
+        return agreement::one_refused;
     if(seen.outcomes.agreed == 0)
         return agreement::not_exercised;
 

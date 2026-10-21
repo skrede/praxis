@@ -49,13 +49,13 @@ struct evaluation_report
 };
 
 // False for a report carrying no slot at all, and false for a slot no case exercised, so a run that
-// measured nothing is never a pass. A slot none of whose cases had both sides answer measured
-// nothing either, and is reported as not exercised rather than as agreement.
+// measured nothing is never a pass. A slot no case of which agreed and some case of which had one side
+// refuse is reported as `one_refused` rather than as agreement.
 bool every_slot_agreed(const evaluation_report &reported);
 
 // Every slot the run did not record as agreed, in the report's own order: one that differed, one
-// whose two sides refused apart, one whose input the harness could not build, and one that was never
-// exercised are all named here.
+// whose two sides refused apart, one only one side answered, one whose input the harness could not
+// build, and one that was never exercised are all named here.
 std::vector<std::string_view> disagreeing_slots(const evaluation_report &reported);
 
 }

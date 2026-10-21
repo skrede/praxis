@@ -77,7 +77,7 @@ TEST_CASE("a_generator_pair_exactly_one_side_built_is_one_refused_and_the_side_t
 
     REQUIRE(reported.slots.size() == first_generator_row + generator_rows + 1u);
     REQUIRE(driving.slot == "trajectory.joint_space_via_points");
-    REQUIRE(driving.verdict == agreement::not_exercised);
+    REQUIRE(driving.verdict == agreement::one_refused);
     REQUIRE(driving.outcomes.one_refused == cases_per_row);
     REQUIRE(driving.outcomes.agreed == 0u);
     REQUIRE(driving.outcomes.differed == 0u);
@@ -147,7 +147,7 @@ TEST_CASE("an_unbound_generator_slot_is_read_from_its_refusal_at_the_factory")
         REQUIRE(alike.slots.at(row).verdict == agreement::both_refused);
         REQUIRE(alike.slots.at(row).outcomes.both_refused == cases_per_row);
         REQUIRE(differing.slots.at(row).verdict == agreement::refused_differently);
-        REQUIRE(one_sided.slots.at(row).verdict == agreement::not_exercised);
+        REQUIRE(one_sided.slots.at(row).verdict == agreement::one_refused);
         REQUIRE(one_sided.slots.at(row).outcomes.one_refused == cases_per_row);
         REQUIRE(differing.slots.at(row).worst.magnitude == 0.0);
         REQUIRE(one_sided.slots.at(row).worst.magnitude == 0.0);

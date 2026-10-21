@@ -141,10 +141,10 @@ case_result agreed_or_refused(const expected<T, refusal> &first, const expected<
 // its worst residual are recorded as for any other run. Otherwise a slot's verdict is `unusable` if
 // any case was unusable; otherwise `differed` if any case differed; otherwise `refused_differently`
 // if any case had both sides refuse for different reasons; otherwise `both_refused` if every case had
-// both sides refuse; otherwise `agreed`. A run of zero cases, and a run no case of which had both
-// sides answer, report
-// `not_exercised` and never `agreed`: a case where exactly one side refused is carried as a count on
-// the slot's report and folds nothing. Every case's outcome is counted there whatever the verdict.
+// both sides refuse; otherwise `one_refused` if no case agreed and some case had exactly one side
+// refuse; otherwise `not_exercised` if no case agreed; otherwise `agreed`. A run of zero cases reports
+// `not_exercised` and never `agreed`. Every case's outcome is counted on the slot's report whatever
+// the verdict.
 evaluation_report evaluate(std::span<const evaluation_view> compared, std::uint64_t seed = default_seed, std::size_t cases_per_slot = default_cases_per_slot);
 
 // The two halves of the ledger, each total: an empty span answers an empty vector. The first names

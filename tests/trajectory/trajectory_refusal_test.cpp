@@ -177,7 +177,7 @@ TEST_CASE("the_row_over_the_bounded_profile_draws_only_durations_its_bounds_can_
     REQUIRE(bounded.outcomes.both_refused == 0u);
 }
 
-TEST_CASE("an_unbound_generator_slot_against_a_bound_one_is_refused_on_one_side_and_measures_nothing")
+TEST_CASE("an_unbound_generator_slot_against_a_bound_one_is_reported_as_refused_on_one_side_and_carries_no_number")
 {
     const trajectory::capabilities reference = trajectory::baseline();
     const trajectory::capabilities inert{};
@@ -186,7 +186,7 @@ TEST_CASE("an_unbound_generator_slot_against_a_bound_one_is_refused_on_one_side_
     for(std::size_t row = first_generator_row; row < first_generator_row + generator_rows; ++row)
     {
         INFO(reported.slots.at(row).slot);
-        REQUIRE(reported.slots.at(row).verdict == agreement::not_exercised);
+        REQUIRE(reported.slots.at(row).verdict == agreement::one_refused);
         REQUIRE(reported.slots.at(row).outcomes.one_refused == cases_per_row);
         REQUIRE(reported.slots.at(row).outcomes.agreed == 0u);
         REQUIRE(reported.slots.at(row).outcomes.differed == 0u);

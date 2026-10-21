@@ -164,7 +164,7 @@ TEST_CASE("two_bindings_that_declined_are_reported_as_having_declined_never_as_a
     REQUIRE(differently.verdict == agreement::refused_differently);
     REQUIRE(one.outcomes.one_refused == sampled_cases);
     REQUIRE(one.outcomes.agreed == 0u);
-    REQUIRE(one.verdict == agreement::not_exercised);
+    REQUIRE(one.verdict == agreement::one_refused);
     REQUIRE_FALSE(every_slot_agreed(judged(answering, alike)));
     REQUIRE(no_residual_was_produced(both));
     REQUIRE(no_residual_was_produced(differently));

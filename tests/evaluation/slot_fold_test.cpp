@@ -135,16 +135,27 @@ TEST_CASE("a_one_sided_case_does_not_fold_a_row_whose_answered_cases_all_agreed"
     REQUIRE(row.outcomes.one_refused == 1u);
 }
 
-TEST_CASE("a_row_no_case_of_which_had_both_sides_answer_is_never_a_pass")
+TEST_CASE("a_row_no_case_of_which_agreed_and_some_case_of_which_one_side_refused_is_reported_as_one_sided_and_never_as_a_pass")
 {
     const std::array<agreement, 3> every_case_one_sided{agreement::one_refused, agreement::one_refused, agreement::one_refused};
     const script written{every_case_one_sided, 0};
     const evaluation_report run = over(written);
 
-    REQUIRE(run.slots.front().verdict == agreement::not_exercised);
+    REQUIRE(run.slots.front().verdict == agreement::one_refused);
     REQUIRE(run.slots.front().outcomes.one_refused == 3u);
     REQUIRE_FALSE(every_slot_agreed(run));
     REQUIRE(disagreeing_slots(run) == std::vector<std::string_view>{scripted_slot});
+}
+
+TEST_CASE("a_one_sided_case_decides_a_row_below_a_refusal_apart_and_above_a_decline_by_both_sides_but_never_beside_an_agreed_case")
+{
+    const std::array<agreement, 3> among_declines{agreement::both_refused, agreement::one_refused, agreement::both_refused};
+    const std::array<agreement, 2> against_a_refusal_apart{agreement::refused_differently, agreement::one_refused};
+    const std::array<agreement, 3> beside_agreement{agreement::agreed, agreement::both_refused, agreement::one_refused};
+
+    REQUIRE(folded(among_declines).verdict == agreement::one_refused);
+    REQUIRE(folded(against_a_refusal_apart).verdict == agreement::refused_differently);
+    REQUIRE(folded(beside_agreement).verdict == agreement::agreed);
 }
 
 TEST_CASE("a_difference_outranks_a_one_sided_case_and_a_refusal_the_two_sides_gave_apart")

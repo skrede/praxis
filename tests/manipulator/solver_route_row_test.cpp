@@ -96,5 +96,6 @@ TEST_CASE("a solver stepping away from the root fails the adapter route")
     REQUIRE(row.cases == default_cases_per_slot);
     CHECK(row.outcomes.agreed == 0u);
     CHECK(row.outcomes.one_refused > 0u);
-    CHECK(row.verdict != agreement::agreed);
+    CHECK(row.outcomes.differed == 0u);
+    CHECK(row.verdict == agreement::one_refused);
 }

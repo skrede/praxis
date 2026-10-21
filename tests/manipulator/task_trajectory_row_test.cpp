@@ -120,6 +120,7 @@ TEST_CASE("a_generator_pair_where_exactly_one_side_answered_is_one_refused")
     REQUIRE(row.outcomes.one_refused > 0u);
     REQUIRE(row.outcomes.differed == 0u);
     REQUIRE(row.outcomes.agreed == 0u);
+    REQUIRE(row.verdict == agreement::one_refused);
 }
 
 // A factory that answered a null pointer named no motion, so the pair is a difference no residual
