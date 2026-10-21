@@ -27,6 +27,7 @@ praxis_add_module(optimization
     src/solve_window.cpp
     src/scenario_state.cpp
     src/level_curve.cpp
+    src/drawn_iterates.cpp
     src/surface_mesh.cpp
     src/surface_step.cpp
     src/surface_figures.cpp
@@ -41,6 +42,7 @@ praxis_add_module(optimization
     src/scenario_answers.h
     src/scenario_admission.h
     src/level_curve.h
+    src/drawn_iterates.h
     src/surface_mesh.h
     src/surface_step.h
     src/surface_figures.h

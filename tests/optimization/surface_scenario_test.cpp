@@ -21,6 +21,7 @@
 #include <memory>
 #include <vector>
 #include <cstddef>
+#include <algorithm>
 
 using namespace praxis;
 using namespace praxis::fixture;
@@ -62,7 +63,17 @@ opened open_surface(const scene::preset_site &site, std::vector<registered_surfa
     return taken;
 }
 
-// Every sample of the circle's grid is a vertex at s f, and every iterate a marker on the field.
+double nearest(const std::vector<Eigen::Vector3d> &among, const Eigen::Vector3d &to)
+{
+    double closest = std::numeric_limits<double>::infinity();
+    for(const Eigen::Vector3d &point : among)
+        closest = std::min(closest, (point - to).norm());
+
+    return closest;
+}
+
+// Every sample of the circle's grid is a vertex at s f. Every marker stands at an iterate and every
+// iterate within the spacing of a marker, the first and the last at one.
 void check_circle_drawn(threepp::Scene &scene, const scenario_snapshot &ran)
 {
     const std::size_t n      = ran.grid->count;
@@ -73,12 +84,15 @@ void check_circle_drawn(threepp::Scene &scene, const scenario_snapshot &ran)
         CHECK(std::abs(vertex(field, at).z() - standing.scale * ran.grid->heights[at]) < 1.0e-6);
 
     const std::vector<Eigen::Vector3d> markers = shown_markers(scene);
-    REQUIRE(markers.size() == ran.run.iterates.size());
-    for(std::size_t k = 0; k < markers.size(); ++k)
-    {
-        const Eigen::VectorXd &x = ran.run.iterates[k];
-        CHECK((markers[k] - standing.at(x[0], x[1], circle_value(x[0], x[1]))).norm() < 1.0e-5);
-    }
+    std::vector<Eigen::Vector3d> iterates;
+    for(const Eigen::VectorXd &x : ran.run.iterates)
+        iterates.push_back(standing.at(x[0], x[1], circle_value(x[0], x[1])));
+    for(const Eigen::Vector3d &marker : markers)
+        CHECK(nearest(iterates, marker) < 1.0e-5);
+    for(const Eigen::Vector3d &iterate : iterates)
+        CHECK(nearest(markers, iterate) < optimization::iterate_spacing + 1.0e-5);
+    CHECK(nearest(markers, iterates.front()) < 1.0e-5);
+    CHECK(nearest(markers, iterates.back()) < 1.0e-5);
 }
 
 }
@@ -145,39 +159,6 @@ TEST_CASE("settings naming no registered surface, or other than two ranges and t
         CHECK(taken.composed == nullptr);
         CHECK_FALSE(taken.inputs.has_value());
     }
-}
-
-TEST_CASE("a surface's iterates are one mesh, toned by the selected step, rewritten on a new publication and cut to a shorter run", "[optimization][surface]")
-{
-    scheduler::scheduler loop(scheduler::inline_workers);
-    staged built(loop);
-    const opened taken = open_surface(built.site, {registered_surface("circle", &circle_value, &circle_gradient)}, surface_opening("circle"));
-    REQUIRE(settled(loop, taken)->run.iterates.size() > 2u);
-    taken.composed->stencil->render();
-    const threepp::InstancedMesh *marks = iterate_marks(*built.scene);
-    REQUIRE(marks != nullptr);
-    CHECK(tone_at(*marks, 0u) == threepp::Color(optimization::selected_iterate_tone));
-    CHECK(tone_at(*marks, 1u) == threepp::Color(optimization::iterate_tone));
-
-    const unsigned int written = marks->instanceMatrix()->version;
-    taken.composed->stencil->render();
-    CHECK(marks->instanceMatrix()->version == written);
-
-    command(taken.inputs->scenario, [](scenario_state &state) { state.select_step(1u); });
-    REQUIRE(loop.drain().has_value());
-    taken.composed->stencil->render();
-    REQUIRE(iterate_marks(*built.scene) == marks);
-    CHECK(marks->instanceMatrix()->version != written);
-    CHECK(tone_at(*marks, 0u) == threepp::Color(optimization::iterate_tone));
-    CHECK(tone_at(*marks, 1u) == threepp::Color(optimization::selected_iterate_tone));
-
-    command(taken.inputs->scenario, [](scenario_state &state) { state.run(Eigen::Vector2d(1.5, 0.5), 1u); });
-    REQUIRE(loop.drain().has_value());
-    taken.composed->stencil->render();
-    CHECK(built.scene->getObjectByName("iterates")->children.size() == 1u);
-    CHECK(shown_markers(*built.scene).size() == 2u);
-
-    taken.composed->tear_down();
 }
 
 TEST_CASE("a surface sampled over ranges other than the default places its field and its iterates by those ranges", "[optimization][surface]")

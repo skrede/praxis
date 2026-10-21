@@ -1,6 +1,6 @@
 #include "level_curve.h"
 #include "surface_mesh.h"
-#include "surface_step.h"
+#include "drawn_iterates.h"
 #include "surface_figures.h"
 #include "surface_overlay.h"
 #include "scenario_defaults.h"
@@ -157,28 +157,22 @@ void surface_stencil::place_iterates(const std::shared_ptr<const scenario_snapsh
     if(shown == m_placed)
         return;
 
-    m_placed = shown;
-    hold_marks(shown->run.iterates.size());
+    m_placed                               = shown;
+    const std::vector<drawn_iterate> drawn = drawn_iterates(*shown, placement_of(shown->ranges, *shown->grid), iterate_spacing);
+    hold_marks(drawn.size());
     if(m_iterate_marks == nullptr)
         return;
 
-    const scenario_run &run      = shown->run;
-    const field_placement placed = placement_of(shown->ranges, *shown->grid);
-    std::size_t drawn            = 0;
-    for(std::size_t k = 0; k < run.iterates.size(); ++k)
+    for(std::size_t j = 0; j < drawn.size(); ++j)
     {
-        if(!within_ranges(shown->ranges, run.iterates[k]) || k >= run.errors.size() || !run.errors[k].has_value())
-            continue;
-
-        const Eigen::Vector3d at = placed.at(run.iterates[k][0], run.iterates[k][1], -(*run.errors[k])[0]);
-        m_iterate_marks->setMatrixAt(drawn, threepp::Matrix4().makeTranslation(static_cast<float>(at.x()), static_cast<float>(at.y()), static_cast<float>(at.z())));
-        m_iterate_marks->setColorAt(drawn, threepp::Color(k == shown->step ? selected_iterate_tone : iterate_tone));
-        ++drawn;
+        const Eigen::Vector3d &at = drawn[j].at;
+        m_iterate_marks->setMatrixAt(j, threepp::Matrix4().makeTranslation(static_cast<float>(at.x()), static_cast<float>(at.y()), static_cast<float>(at.z())));
+        m_iterate_marks->setColorAt(j, threepp::Color(drawn[j].iterate == shown->step ? selected_iterate_tone : iterate_tone));
     }
-    show_written(*m_iterate_marks, drawn);
+    show_written(*m_iterate_marks, drawn.size());
 }
 
-// One instance per iterate the run recorded, and a mesh of its own for a run of another length.
+// One instance per drawn iterate, and a mesh of its own for another count.
 void surface_stencil::hold_marks(std::size_t count) const
 {
     if(m_iterate_marks != nullptr && static_cast<std::size_t>(m_iterate_marks->instanceMatrix()->count()) == count)

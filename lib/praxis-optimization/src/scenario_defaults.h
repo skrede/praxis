@@ -27,6 +27,10 @@ inline constexpr double surface_height = 0.5;
 // The radius of the sphere an iterate is drawn as on a surface, in meters.
 inline constexpr double iterate_radius = 0.015;
 
+// An iterate whose center stands within this distance of one drawn before it is not drawn, unless it is
+// the run's last or the selected step's, in meters.
+inline constexpr double iterate_spacing = 0.75 * iterate_radius;
+
 // The half-side of the tangent plane drawn at a step from x, as a multiple of the distance from x to
 // the plane's zero line, dimensionless.
 inline constexpr double tangent_patch = 1.25;

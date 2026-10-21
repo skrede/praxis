@@ -49,17 +49,19 @@ struct surface_view
 
 // The surface a scenario publishes, drawn in the scene as a height field named "surface" with the
 // iterates the run recorded as one instanced sphere mesh on it, under a node named "iterates" in the
-// order recorded, and its zero-level curve, "zero curve", on the zero plane. The field and the curve
-// are rebuilt only when a publication carries other samples, and the iterates are placed only when a
-// publication is new. An iterate outside the ranges, or where f was not answered, is not drawn, and
-// the iterate the selected step starts from is drawn in a tone of its own. Under "step" the selected
-// step from x_k draws its "tangent plane", the plane's "zero line", the point of it nearest x_k,
-// "nearest point", and the recorded x_(k+1) as "x_(k+1)", a line from the zero plane up to the
-// surface. A problem carrying a box draws it, "box", on the zero plane. A point asked for by the
-// Linearization window draws the tangent plane there, "tangent plane at p", over the ranges and held
-// to the field's heights, and where the check disagrees the central difference's plane, "central
-// difference at p", in wire. Everything is read from the publication, so nothing here evaluates the
-// function, and nothing here picks: the seed is typed. The view says which of these is drawn.
+// order recorded with the selected step's last, and its zero-level curve, "zero curve", on the zero
+// plane. The field and the curve are rebuilt only when a publication carries other samples, and the
+// iterates are placed only when a publication is new. An iterate outside the ranges, or where f was
+// not answered, is not drawn, nor is one standing within a fixed distance of one drawn before it
+// unless it is the last or the selected step's, and the iterate the selected step starts from is drawn
+// in a tone of its own. Under "step" the selected step from x_k draws its "tangent plane", the plane's
+// "zero line", the point of it nearest x_k, "nearest point", and the recorded x_(k+1) as "x_(k+1)", a
+// line from the zero plane up to the surface. A problem carrying a box draws it, "box", on the zero
+// plane. A point asked for by the Linearization window draws the tangent plane there, "tangent plane
+// at p", over the ranges and held to the field's heights, and where the check disagrees the central
+// difference's plane, "central difference at p", in wire. Everything is read from the publication, so
+// nothing here evaluates the function, and nothing here picks: the seed is typed. The view says which
+// of these is drawn.
 class surface_stencil : public scene::stencil
 {
 public:
