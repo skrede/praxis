@@ -2,11 +2,14 @@
 
 #include "baseline/chain_maps.h"
 
+#include <spdlog/spdlog.h>
+
 #include <Eigen/QR>
 
 #include <cstdint>
 #include <utility>
 #include <optional>
+#include <string_view>
 
 namespace praxis::manipulator {
 
@@ -32,13 +35,38 @@ void record(ik_result &answer, const joint_vector &theta, const twist &error, do
     answer.iterations.push_back(iteration_state{theta, error.head<3>().norm(), error.tail<3>().norm(), step, static_cast<std::uint32_t>(answer.iterations.size())});
 }
 
+refusal answered(refusal refused, std::string_view slot)
+{
+    if(refused != refusal::not_implemented)
+        return refusal::no_solution;
+
+    spdlog::warn("praxis: '{}' is not implemented, so the inverse kinematics reading it answers no configuration", slot);
+
+    return refused;
+}
+
 expected<twist, refusal> body_error(const handed &ops, const joint_vector &theta)
 {
     const expected<transform, refusal> tsb = ops.forward.body_forward_kinematics(ops.screw, ops.frames, ops.chain.home, ops.chain.space_screws, theta);
     if(!tsb)
-        return unexpected(tsb.error());
+        return unexpected(answered(tsb.error(), "fk.body_forward_kinematics"));
 
-    return body_twist(ops.screw, ops.frames, *tsb, ops.desired);
+    const expected<twist, refusal> vb = body_twist(ops.screw, ops.frames, *tsb, ops.desired);
+    if(!vb)
+        return unexpected(answered(vb.error(), "screw.matrix_logarithm_se3"));
+
+    return vb;
+}
+
+expected<jacobian, refusal> columns_at(const handed &ops, const joint_vector &theta)
+{
+    const expected<jacobian, refusal> jb = ops.differential.body_jacobian(ops.screw, ops.frames, ops.forward, ops.chain.home, ops.chain.space_screws, theta);
+    if(!jb)
+        return unexpected(answered(jb.error(), "dk.body_jacobian"));
+    if(jb->cols() != theta.size())
+        return unexpected(refusal::no_solution);
+
+    return jb;
 }
 
 // The stop test runs before each step and once after the last; the step is eq. (6.6) in the body frame.
@@ -50,9 +78,9 @@ expected<joint_vector, refusal> stepped(const handed &ops, const joint_vector &j
         record(answer, theta, *error, 0.0);
     for(std::uint32_t i = 0; error && !within(*error, parameters) && i < parameters.max_iterations_per_attempt; ++i)
     {
-        const expected<jacobian, refusal> jb = ops.differential.body_jacobian(ops.screw, ops.frames, ops.forward, ops.chain.home, ops.chain.space_screws, theta);
-        if(!jb || jb->cols() != theta.size())
-            return unexpected(refusal::no_solution);
+        const expected<jacobian, refusal> jb = columns_at(ops, theta);
+        if(!jb)
+            return unexpected(jb.error());
 
         const joint_vector step = Eigen::CompleteOrthogonalDecomposition<Eigen::MatrixXd>(*jb).solve(*error);
         theta += step;
@@ -61,7 +89,7 @@ expected<joint_vector, refusal> stepped(const handed &ops, const joint_vector &j
             record(answer, theta, *error, step.norm());
     }
     if(!error || !within(*error, parameters) || !theta.allFinite())
-        return unexpected(refusal::no_solution);
+        return unexpected(error ? refusal::no_solution : error.error());
 
     return theta;
 }

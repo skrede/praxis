@@ -18,8 +18,9 @@ std::optional<refusal> refused_at_entry(const rigid_motion::frame_ops &frames, c
 // Lynch & Park, Modern Robotics, sec. 6.2.2, over T_sb, J_b and V_b read through the operations handed
 // in, refusing at entry as refused_at_entry does. x_0 is recorded first, then every step at whose
 // configuration V_b can be read; the configuration at which both halves of V_b are within the
-// tolerances is answered as it is, and a refused Jacobian or V_b, or no convergence within the
-// iteration limit, is no_solution.
+// tolerances is answered as it is. A handed operation refusing not_implemented is answered
+// not_implemented and named in the log; any other refused Jacobian or V_b, a Jacobian of another
+// width, or no convergence within the iteration limit is no_solution.
 expected<void, refusal> iterated(const rigid_motion::screw_ops &screw, const rigid_motion::frame_ops &frames, const forward_kinematics_ops &forward,
                                  const differential_kinematics_ops &differential, const screw_chain &chain, const transform &desired, const joint_vector &j0,
                                  const solver_parameters &parameters, ik_result &answer);

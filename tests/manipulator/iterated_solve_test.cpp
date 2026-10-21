@@ -1,5 +1,7 @@
 #include "iterated_solve.h"
 
+#include "captured_log.h"
+
 #include "praxis/manipulator/capabilities.h"
 #include "praxis/manipulator/baseline/kinematics.h"
 #include "praxis/rigid_motion/capabilities.h"
@@ -13,6 +15,7 @@
 #include <span>
 #include <cmath>
 #include <limits>
+#include <string>
 #include <cstddef>
 #include <utility>
 
@@ -93,6 +96,11 @@ expected<jacobian, refusal> one_column_short(const rigid_motion::screw_ops &, co
     return jacobian(jacobian::Zero(6, theta.size() - 1));
 }
 
+expected<transform, refusal> refusing_its_input(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const transform &, std::span<const screw_axis>, const joint_vector &)
+{
+    return unexpected(refusal::unsupported_input);
+}
+
 forward_kinematics_ops counted_forward()
 {
     forward_kinematics_ops forward  = manipulator::baseline().fk;
@@ -140,6 +148,39 @@ refusal refused_before_stepping(const screw_chain &chain, const transform &targe
     CHECK(answer.iterations.empty());
 
     return solved.error();
+}
+
+struct refused_solve
+{
+    refusal kind;
+    std::size_t iterates;
+    std::string said;
+};
+
+refused_solve refused_under(const rigid_motion::screw_ops &screw, const forward_kinematics_ops &forward, const differential_kinematics_ops &differential)
+{
+    const transform target = reached(configuration(0.4, -0.7));
+    ik_result answer;
+    const tests::captured_log captured;
+    const expected<void, refusal> solved = iterated(screw, reference_frames, forward, differential, planar_arm(), target, configuration(0.1, -0.1), tight_parameters, answer);
+    REQUIRE_FALSE(solved.has_value());
+    CHECK(answer.solutions.empty());
+
+    return refused_solve{solved.error(), answer.iterations.size(), captured.text()};
+}
+
+std::size_t occurrences(const std::string &text, const std::string &line)
+{
+    std::size_t count = 0;
+    for(std::size_t at = text.find(line); at != std::string::npos; at = text.find(line, at + line.size()))
+        ++count;
+
+    return count;
+}
+
+std::size_t times_named(const std::string &said, const std::string &slot)
+{
+    return occurrences(said, "'" + slot + "' is not implemented, so the inverse kinematics reading it answers no configuration");
 }
 
 }
@@ -229,4 +270,42 @@ TEST_CASE("every_entry_refusal_is_answered_before_any_step_is_taken")
     CHECK(refused_before_stepping(planar_arm(), target, configuration(nan, -0.1)) == refusal::no_solution);
     CHECK(refused_before_stepping(planar_arm(), target, configuration(0.1, inf)) == refusal::no_solution);
     CHECK(body_jacobian_calls == 0u);
+}
+
+TEST_CASE("a_forward_map_refusing_not_implemented_at_the_seed_is_answered_as_such_and_named_once_in_the_log")
+{
+    forward_kinematics_ops forward  = manipulator::baseline().fk;
+    forward.body_forward_kinematics = forward_kinematics_ops{}.body_forward_kinematics;
+
+    const refused_solve refused = refused_under(reference_screw, forward, manipulator::baseline().dk);
+
+    CHECK(refused.kind == refusal::not_implemented);
+    CHECK(refused.iterates == 0u);
+    CHECK(times_named(refused.said, "fk.body_forward_kinematics") == 1u);
+}
+
+TEST_CASE("a_jacobian_or_logarithm_refusing_not_implemented_is_answered_as_such_and_named_once_in_the_log")
+{
+    const refused_solve jacobian_refused = refused_under(reference_screw, manipulator::baseline().fk, differential_with(differential_kinematics_ops{}.body_jacobian));
+    CHECK(jacobian_refused.kind == refusal::not_implemented);
+    CHECK(jacobian_refused.iterates == 1u);
+    CHECK(times_named(jacobian_refused.said, "dk.body_jacobian") == 1u);
+
+    rigid_motion::screw_ops screw         = reference_screw;
+    screw.matrix_logarithm_se3            = rigid_motion::screw_ops{}.matrix_logarithm_se3;
+    const refused_solve logarithm_refused = refused_under(screw, manipulator::baseline().fk, manipulator::baseline().dk);
+    CHECK(logarithm_refused.kind == refusal::not_implemented);
+    CHECK(logarithm_refused.iterates == 0u);
+    CHECK(times_named(logarithm_refused.said, "screw.matrix_logarithm_se3") == 1u);
+}
+
+TEST_CASE("a_slot_refusing_anything_but_not_implemented_is_answered_no_solution_and_names_nothing")
+{
+    forward_kinematics_ops forward  = manipulator::baseline().fk;
+    forward.body_forward_kinematics = &refusing_its_input;
+
+    const refused_solve refused = refused_under(reference_screw, forward, manipulator::baseline().dk);
+
+    CHECK(refused.kind == refusal::no_solution);
+    CHECK(refused.said.find("is not implemented") == std::string::npos);
 }
