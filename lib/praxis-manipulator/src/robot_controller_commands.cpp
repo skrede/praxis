@@ -83,6 +83,14 @@ void report_via_point_refusal(refusal reason, std::size_t positions, std::string
         spdlog::error("praxis: the configuration-space via-point motion refused {} waypoints, so {}", positions, outcome);
 }
 
+void report_waypoint_refusal(refusal reason, std::size_t poses, std::string_view outcome)
+{
+    if(reason == refusal::not_implemented)
+        spdlog::warn("praxis: 'trajectory.task_space_waypoints' or a slot it reads is not implemented, so {}", outcome);
+    else
+        spdlog::error("praxis: the task-space waypoint factory refused {} waypoints, so {}", poses, outcome);
+}
+
 void append_leg(preview_run &whole, preview_run leg)
 {
     const std::size_t carried = whole.samples.size();
@@ -271,10 +279,7 @@ void robot_controller::task_space_trajectory(std::span<const transform> tool_pos
     asking();
     auto motion = m_task_trajectory.task_space_waypoints(m_joint_trajectory, m_motion, m_robot.solver(), *reaching, m_robot.joint_positions(), m_robot.limits());
     if(!motion)
-    {
-        spdlog::error("praxis: the task-space waypoint factory refused {} waypoints, so no motion is commanded", tool_poses.size());
-        return;
-    }
+        return report_waypoint_refusal(motion.error(), tool_poses.size(), "no motion is commanded");
 
     run(std::move(*motion));
 }
@@ -368,10 +373,7 @@ void robot_controller::preview_trajectory(std::span<const transform> tool_poses)
 
     auto motion = m_task_trajectory.task_space_waypoints(m_joint_trajectory, m_motion, m_robot.solver(), *reaching, m_robot.joint_positions(), m_robot.limits());
     if(!motion)
-    {
-        spdlog::error("praxis: the task-space waypoint factory refused {} waypoints, so no preview stands", tool_poses.size());
-        return;
-    }
+        return report_waypoint_refusal(motion.error(), tool_poses.size(), "no preview stands");
 
     previewed(std::move(*motion), {});
 }

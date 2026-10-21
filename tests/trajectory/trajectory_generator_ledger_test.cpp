@@ -36,24 +36,16 @@ evaluation_report reported_against(const trajectory::capabilities &reference, co
     return evaluate(trajectory::evaluation_views(reference, other), recorded_seed, cases);
 }
 
-trajectory::capabilities declining_every_generator()
+using via_point_factory     = decltype(trajectory::trajectory_ops::joint_space_via_points);
+using pose_waypoint_factory = decltype(trajectory::pose_trajectory_ops::decoupled_pose_waypoints);
+
+trajectory::capabilities generating_through(via_point_factory joined, pose_waypoint_factory posed)
 {
     trajectory::capabilities shapes = trajectory::baseline();
 
-    shapes.trajectory.joint_space_via_points        = &fixture::declining_joint_space_via_points;
-    shapes.pose_trajectory.decoupled_pose_waypoints = &fixture::declining_pose_waypoints;
-    shapes.pose_trajectory.screw_pose_waypoints     = &fixture::declining_pose_waypoints;
-
-    return shapes;
-}
-
-trajectory::capabilities building_no_generator()
-{
-    trajectory::capabilities shapes = trajectory::baseline();
-
-    shapes.trajectory.joint_space_via_points        = &fixture::unbuilt_joint_space_via_points;
-    shapes.pose_trajectory.decoupled_pose_waypoints = &fixture::unbuilt_pose_waypoints;
-    shapes.pose_trajectory.screw_pose_waypoints     = &fixture::unbuilt_pose_waypoints;
+    shapes.trajectory.joint_space_via_points        = joined;
+    shapes.pose_trajectory.decoupled_pose_waypoints = posed;
+    shapes.pose_trajectory.screw_pose_waypoints     = posed;
 
     return shapes;
 }
@@ -141,12 +133,33 @@ TEST_CASE("two_generators_reporting_one_duration_are_sampled_at_a_count_that_doe
     REQUIRE(fixture::samples_taken == 2u * over_one_run);
 }
 
-TEST_CASE("a_generator_row_reaches_its_refusal_channel_through_the_object_it_was_handed_and_not_through_the_factory")
+TEST_CASE("an_unbound_generator_slot_is_read_from_its_refusal_at_the_factory")
 {
     const trajectory::capabilities inert{};
     const evaluation_report alike     = reported_against(inert, inert, cases_per_row);
-    const evaluation_report differing = reported_against(inert, declining_every_generator(), cases_per_row);
-    const evaluation_report one_sided = reported_against(building_no_generator(), inert, cases_per_row);
+    const evaluation_report differing = reported_against(inert, generating_through(&fixture::unbuilt_joint_space_via_points, &fixture::unbuilt_pose_waypoints), cases_per_row);
+    const evaluation_report one_sided = reported_against(inert, generating_through(&fixture::declining_joint_space_via_points, &fixture::declining_pose_waypoints), cases_per_row);
+
+    REQUIRE(alike.slots.size() == first_generator_row + generator_rows + 1u);
+    for(std::size_t row = first_generator_row; row < first_generator_row + generator_rows; ++row)
+    {
+        INFO(alike.slots.at(row).slot);
+        REQUIRE(alike.slots.at(row).verdict == agreement::both_refused);
+        REQUIRE(alike.slots.at(row).outcomes.both_refused == cases_per_row);
+        REQUIRE(differing.slots.at(row).verdict == agreement::refused_differently);
+        REQUIRE(one_sided.slots.at(row).verdict == agreement::not_exercised);
+        REQUIRE(one_sided.slots.at(row).outcomes.one_refused == cases_per_row);
+        REQUIRE(differing.slots.at(row).worst.magnitude == 0.0);
+        REQUIRE(one_sided.slots.at(row).worst.magnitude == 0.0);
+    }
+}
+
+TEST_CASE("a_generator_refusing_its_samples_is_read_through_the_object_it_was_handed")
+{
+    const trajectory::capabilities degenerate    = generating_through(&fixture::declining_joint_space_via_points, &fixture::declining_pose_waypoints);
+    const trajectory::capabilities unimplemented = generating_through(&fixture::declining_unimplemented_joint_space_via_points, &fixture::declining_unimplemented_pose_waypoints);
+    const evaluation_report alike                = reported_against(degenerate, degenerate, cases_per_row);
+    const evaluation_report differing            = reported_against(unimplemented, degenerate, cases_per_row);
 
     REQUIRE(alike.slots.size() == first_generator_row + generator_rows + 1u);
     for(std::size_t row = first_generator_row; row < first_generator_row + generator_rows; ++row)
@@ -154,10 +167,7 @@ TEST_CASE("a_generator_row_reaches_its_refusal_channel_through_the_object_it_was
         INFO(alike.slots.at(row).slot);
         REQUIRE(alike.slots.at(row).verdict == agreement::both_refused);
         REQUIRE(differing.slots.at(row).verdict == agreement::refused_differently);
-        REQUIRE(one_sided.slots.at(row).verdict == agreement::not_exercised);
-        REQUIRE(one_sided.slots.at(row).outcomes.one_refused == cases_per_row);
         REQUIRE(differing.slots.at(row).worst.magnitude == 0.0);
-        REQUIRE(one_sided.slots.at(row).worst.magnitude == 0.0);
     }
 }
 

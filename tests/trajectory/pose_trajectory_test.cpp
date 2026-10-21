@@ -20,9 +20,7 @@
 
 #include <span>
 #include <array>
-#include <memory>
 #include <cstddef>
-#include <utility>
 
 using namespace praxis;
 using namespace praxis::trajectory;
@@ -56,15 +54,6 @@ expected<transform, refusal> counted_decoupled(const rigid_motion::screw_ops &sc
 // The pose capability's view, in the aggregate's member order.
 constexpr std::size_t pose_view = 2u;
 
-std::unique_ptr<pose_trajectory_generator> inert_generator()
-{
-    pose_trajectory_ops ops{};
-    auto motion = ops.decoupled_pose_waypoints(rigid_motion::screw_ops{}, rigid_motion::frame_ops{}, path_ops{}, time_scaling_ops{}, {}, seed_pose(), 1.0, 1.0);
-    REQUIRE(motion);
-
-    return std::move(*motion);
-}
-
 // Both pose rows at the default seed, the reference on one side and the binding given on the other.
 evaluation::evaluation_report judged_against(const pose_trajectory_ops &bound)
 {
@@ -79,45 +68,44 @@ evaluation::evaluation_report judged_against(const pose_trajectory_ops &bound)
 
 }
 
-TEST_CASE("the_pose_waypoint_slot_defaults_to_the_inert_factory")
+TEST_CASE("the_pose_waypoint_slots_default_to_inert_factories_that_refuse_as_not_implemented")
 {
     pose_trajectory_ops ops{};
 
     REQUIRE(ops.decoupled_pose_waypoints == &inert::decoupled_pose_waypoints);
     REQUIRE(ops.screw_pose_waypoints == &inert::screw_pose_waypoints);
-    REQUIRE(inert_generator() != nullptr);
-}
 
-TEST_CASE("the_inert_pose_generator_reports_a_duration_of_zero")
-{
-    REQUIRE(is_approx_equal(inert_generator()->duration(), 0.0));
-}
-
-// An unbound slot holds no plan, so it answers no pose at all: reporting the seed would read as a
-// motion that ran and arrived.
-TEST_CASE("the_inert_pose_generator_refuses_to_sample_rather_than_reporting_the_seed")
-{
-    const std::unique_ptr<pose_trajectory_generator> motion = inert_generator();
-
-    for(double t : std::array<double, 3>{0.0, 0.5, 12.0})
-    {
-        const expected<pose_sample, refusal> sampled = motion->sample(t);
-
-        REQUIRE(!sampled);
-        REQUIRE(sampled.error() == refusal::not_implemented);
-    }
+    const auto decoupled_run = ops.decoupled_pose_waypoints(rigid_motion::screw_ops{}, rigid_motion::frame_ops{}, path_ops{}, time_scaling_ops{}, {}, seed_pose(), 1.0, 1.0);
+    const auto screw_run     = ops.screw_pose_waypoints(rigid_motion::screw_ops{}, rigid_motion::frame_ops{}, path_ops{}, time_scaling_ops{}, {}, seed_pose(), 1.0, 1.0);
+    REQUIRE(!decoupled_run);
+    REQUIRE(decoupled_run.error() == refusal::not_implemented);
+    REQUIRE(!screw_run);
+    REQUIRE(screw_run.error() == refusal::not_implemented);
 }
 
 TEST_CASE("sampling_by_absolute_time_does_not_depend_on_the_order_the_times_arrive_in")
 {
-    const std::unique_ptr<pose_trajectory_generator> motion = inert_generator();
-    const std::array<double, 4> times{0.0, 0.25, 0.75, 2.0};
+    const rigid_motion::capabilities rigid = rigid_motion::baseline();
+    const capabilities reference           = trajectory::baseline();
+    const std::array<transform, 1> via{transform::Identity()};
+    const auto motion = trajectory::decoupled_pose_waypoints(rigid.screw, rigid.frame, reference.path, reference.time_scaling, via, seed_pose(), 0.5, 0.5);
+    REQUIRE(motion);
 
-    for(double t : times)
-        REQUIRE(!motion->sample(t));
+    const std::array<double, 4> fractions{0.0, 0.25, 0.75, 1.0};
+    std::array<transform, 4> forward;
+    for(std::size_t i = 0; i < fractions.size(); ++i)
+    {
+        const expected<pose_sample, refusal> sampled = (*motion)->sample(fractions[i] * (*motion)->duration());
+        REQUIRE(sampled);
+        forward[i] = sampled->position;
+    }
 
-    for(std::size_t i = times.size(); i > 0; --i)
-        REQUIRE(!motion->sample(times[i - 1]));
+    for(std::size_t i = fractions.size(); i > 0; --i)
+    {
+        const expected<pose_sample, refusal> sampled = (*motion)->sample(fractions[i - 1] * (*motion)->duration());
+        REQUIRE(sampled);
+        REQUIRE((sampled->position.array() == forward[i - 1].array()).all());
+    }
 }
 
 TEST_CASE("a_literal_pose_run_sweeping_the_path_and_the_scaling_it_is_handed_agrees_on_both_pose_rows")

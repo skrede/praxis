@@ -61,13 +61,13 @@ private:
     std::unique_ptr<trajectory_generator> m_held;
 };
 
-template<typename Generator, typename Sample>
+template<typename Generator, typename Sample, refusal Reason>
 class refusing_generator : public Generator
 {
 public:
     expected<Sample, refusal> sample(double) const override
     {
-        return unexpected(refusal::degenerate);
+        return unexpected(Reason);
     }
 
     double duration() const override
@@ -99,15 +99,20 @@ inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> stre
     return stretched_by(stretch, via_points);
 }
 
-template<typename Generator, typename Sample>
+template<typename Generator, typename Sample, refusal Reason>
 expected<std::unique_ptr<Generator>, refusal> answering_no_sample()
 {
-    return std::unique_ptr<Generator>(std::make_unique<refusing_generator<Generator, Sample>>());
+    return std::unique_ptr<Generator>(std::make_unique<refusing_generator<Generator, Sample, Reason>>());
 }
 
 inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> declining_joint_space_via_points(std::span<const trajectory::via_point>)
 {
-    return answering_no_sample<trajectory::trajectory_generator, trajectory::trajectory_sample>();
+    return answering_no_sample<trajectory::trajectory_generator, trajectory::trajectory_sample, refusal::degenerate>();
+}
+
+inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> declining_unimplemented_joint_space_via_points(std::span<const trajectory::via_point>)
+{
+    return answering_no_sample<trajectory::trajectory_generator, trajectory::trajectory_sample, refusal::not_implemented>();
 }
 
 inline expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> unbuilt_joint_space_via_points(std::span<const trajectory::via_point>)
@@ -119,7 +124,15 @@ inline expected<std::unique_ptr<trajectory::pose_trajectory_generator>, refusal>
                                                                                                           const trajectory::path_ops &, const trajectory::time_scaling_ops &,
                                                                                                           std::span<const transform>, const transform &, double, double)
 {
-    return answering_no_sample<trajectory::pose_trajectory_generator, trajectory::pose_sample>();
+    return answering_no_sample<trajectory::pose_trajectory_generator, trajectory::pose_sample, refusal::degenerate>();
+}
+
+inline expected<std::unique_ptr<trajectory::pose_trajectory_generator>, refusal> declining_unimplemented_pose_waypoints(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &,
+                                                                                                                        const trajectory::path_ops &,
+                                                                                                                        const trajectory::time_scaling_ops &, std::span<const transform>,
+                                                                                                                        const transform &, double, double)
+{
+    return answering_no_sample<trajectory::pose_trajectory_generator, trajectory::pose_sample, refusal::not_implemented>();
 }
 
 inline expected<std::unique_ptr<trajectory::pose_trajectory_generator>, refusal> unbuilt_pose_waypoints(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &,

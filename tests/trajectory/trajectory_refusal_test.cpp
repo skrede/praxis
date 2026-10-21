@@ -4,6 +4,7 @@
 #include "praxis/trajectory/trajectory.h"
 #include "praxis/trajectory/capabilities.h"
 #include "praxis/trajectory/time_scaling.h"
+#include "praxis/trajectory/pose_trajectory.h"
 
 #include "praxis/evaluation/report.h"
 #include "praxis/evaluation/residual.h"
@@ -18,7 +19,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <span>
-#include <cmath>
+#include <memory>
 #include <vector>
 #include <cstddef>
 #include <cstdint>
@@ -32,8 +33,7 @@ constexpr std::uint64_t recorded_seed = 0xC0FFEEu;
 constexpr std::size_t cases_per_row   = 24u;
 constexpr std::size_t compared_rows   = 13u;
 
-// The rows answering a prepared generator, which decline through it instead, are the three after the
-// first nine the report lists; every other row answers a value.
+// The rows answering a prepared generator are the three after the first nine the report lists.
 constexpr std::size_t first_generator_row = 9u;
 constexpr std::size_t generator_rows      = 3u;
 
@@ -71,9 +71,16 @@ expected<std::vector<trajectory::via_point>, refusal> degenerate_schedule(std::s
     return praxis::unexpected(refusal::degenerate);
 }
 
-bool answers_a_value(std::size_t row)
+expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> degenerate_via_points(std::span<const trajectory::via_point>)
 {
-    return row < first_generator_row || row >= first_generator_row + generator_rows;
+    return praxis::unexpected(refusal::degenerate);
+}
+
+expected<std::unique_ptr<trajectory::pose_trajectory_generator>, refusal> degenerate_pose_waypoints(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &,
+                                                                                                    const trajectory::path_ops &, const trajectory::time_scaling_ops &,
+                                                                                                    std::span<const transform>, const transform &, double, double)
+{
+    return praxis::unexpected(refusal::degenerate);
 }
 
 // Every slot declines, and every one of them declines for a reason the inert bindings never give.
@@ -91,6 +98,9 @@ trajectory::capabilities declining_for_another_reason()
     shapes.path.screw                                          = &degenerate_pose_path;
     shapes.path.decoupled                                      = &degenerate_pose_path;
     shapes.trajectory.via_point_schedule                       = &degenerate_schedule;
+    shapes.trajectory.joint_space_via_points                   = &degenerate_via_points;
+    shapes.pose_trajectory.decoupled_pose_waypoints            = &degenerate_pose_waypoints;
+    shapes.pose_trajectory.screw_pose_waypoints                = &degenerate_pose_waypoints;
 
     return shapes;
 }
@@ -128,12 +138,8 @@ TEST_CASE("two_bindings_declining_for_different_reasons_reach_an_outcome_of_thei
     const evaluation_report reported = reported_against(inert, declining_for_another_reason());
 
     REQUIRE(reported.slots.size() == compared_rows);
-    for(std::size_t at = 0; at < reported.slots.size(); ++at)
+    for(const slot_report &row : reported.slots)
     {
-        const slot_report &row = reported.slots.at(at);
-        if(!answers_a_value(at))
-            continue;
-
         INFO(row.slot);
         REQUIRE(row.verdict == agreement::refused_differently);
         REQUIRE(row.outcomes.refused_differently == cases_per_row);
@@ -148,12 +154,8 @@ TEST_CASE("a_case_exactly_one_side_declines_is_counted_and_folds_nothing")
     const evaluation_report reported = reported_against(reference, inert);
 
     REQUIRE(reported.slots.size() == compared_rows);
-    for(std::size_t at = 0; at < reported.slots.size(); ++at)
+    for(const slot_report &row : reported.slots)
     {
-        const slot_report &row = reported.slots.at(at);
-        if(!answers_a_value(at))
-            continue;
-
         INFO(row.slot);
         REQUIRE(row.outcomes.agreed == 0u);
         REQUIRE(row.outcomes.differed == 0u);
@@ -175,7 +177,7 @@ TEST_CASE("the_row_over_the_bounded_profile_draws_only_durations_its_bounds_can_
     REQUIRE(bounded.outcomes.both_refused == 0u);
 }
 
-TEST_CASE("an_unbound_generator_slot_against_a_bound_one_is_a_difference_in_what_the_two_span")
+TEST_CASE("an_unbound_generator_slot_against_a_bound_one_is_refused_on_one_side_and_measures_nothing")
 {
     const trajectory::capabilities reference = trajectory::baseline();
     const trajectory::capabilities inert{};
@@ -184,9 +186,10 @@ TEST_CASE("an_unbound_generator_slot_against_a_bound_one_is_a_difference_in_what
     for(std::size_t row = first_generator_row; row < first_generator_row + generator_rows; ++row)
     {
         INFO(reported.slots.at(row).slot);
-        REQUIRE(reported.slots.at(row).verdict == agreement::differed);
-        REQUIRE(reported.slots.at(row).outcomes.differed == cases_per_row);
+        REQUIRE(reported.slots.at(row).verdict == agreement::not_exercised);
+        REQUIRE(reported.slots.at(row).outcomes.one_refused == cases_per_row);
         REQUIRE(reported.slots.at(row).outcomes.agreed == 0u);
-        REQUIRE(std::isinf(reported.slots.at(row).worst.magnitude));
+        REQUIRE(reported.slots.at(row).outcomes.differed == 0u);
+        REQUIRE(carries_no_number(reported.slots.at(row).worst));
     }
 }

@@ -147,6 +147,24 @@ expected<std::vector<trajectory::via_point>, refusal> refused_schedule(std::span
     return praxis::unexpected(refusal::unsupported_input);
 }
 
+trajectory::trajectory_ops joining_unbound()
+{
+    trajectory::trajectory_ops composed = trajectory::baseline().trajectory;
+    composed.joint_space_via_points     = &trajectory::inert::joint_space_via_points;
+
+    return composed;
+}
+
+void check_unimplemented_and_unmoved(const robot_controller &controller, const scene_robot &robot, const joint_vector &held, const std::string &reported, const char *worded)
+{
+    CHECK_FALSE(controller.executing());
+    CHECK(controller.preview() == nullptr);
+    CHECK((robot.joint_positions().array() == held.array()).all());
+    CHECK(reported.find("[warning]") != std::string::npos);
+    CHECK(reported.find("[error]") == std::string::npos);
+    CHECK_THAT(reported, Catch::Matchers::ContainsSubstring(worded));
+}
+
 time_point dictated{};
 
 time_point reading()
@@ -537,6 +555,43 @@ TEST_CASE("a_task_space_run_to_the_pose_the_arm_stands_at_commands_nothing_and_i
     held_through(robot.joint_positions(), "the requested pose, so no motion is commanded", [&] { controller.task_space_trajectory(std::array<transform, 1>{reached}); });
 }
 
+TEST_CASE("a_via_point_slot_left_unbound_is_reported_as_not_implemented_and_neither_runs_nor_previews")
+{
+    scene_robot robot = adapter(manipulator::baseline().robot);
+    robot_controller controller(robot, composing_motion(), trajectory::path_ops{}, manipulator::baseline().trajectory, trajectory::time_scaling_ops{}, joining_unbound(),
+                                rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
+    robot.set_joint_positions(configuration(0.15, 0.0));
+    const joint_vector held = robot.joint_positions();
+    const std::array<joint_vector, 1> target{configuration(0.9, -0.9)};
+
+    const std::string commanded = reported_by([&] { controller.joint_space_trajectory(target); });
+    check_unimplemented_and_unmoved(controller, robot, held, commanded,
+                                    "'trajectory.via_point_schedule' or 'trajectory.joint_space_via_points' is not implemented, so no motion is commanded");
+
+    const std::string previewed = reported_by([&] { controller.preview_trajectory(std::span<const joint_vector>(target)); });
+    check_unimplemented_and_unmoved(controller, robot, held, previewed,
+                                    "'trajectory.via_point_schedule' or 'trajectory.joint_space_via_points' is not implemented, so no preview stands");
+}
+
+TEST_CASE("a_task_space_run_through_an_unbound_via_point_slot_is_reported_as_not_implemented")
+{
+    scene_robot robot = adapter(manipulator::baseline().robot);
+    robot_controller controller(robot, composing_motion(), trajectory::path_ops{}, manipulator::baseline().trajectory, trajectory::time_scaling_ops{}, joining_unbound(),
+                                rigid_motion::screw_ops{}, rigid_motion::frame_ops{});
+    robot.set_joint_positions(configuration(0.15, 0.0));
+    const joint_vector held = robot.joint_positions();
+    const std::array<transform, 1> target{planar_pose(0.6, 0.0)};
+    const char *factory_said = "'trajectory.via_point_schedule' or 'trajectory.joint_space_via_points' is not implemented, so no task-space motion is produced";
+
+    const std::string commanded = reported_by([&] { controller.task_space_trajectory(target); });
+    check_unimplemented_and_unmoved(controller, robot, held, commanded, "'trajectory.task_space_waypoints' or a slot it reads is not implemented, so no motion is commanded");
+    CHECK_THAT(commanded, Catch::Matchers::ContainsSubstring(factory_said));
+
+    const std::string previewed = reported_by([&] { controller.preview_trajectory(std::span<const transform>(target)); });
+    check_unimplemented_and_unmoved(controller, robot, held, previewed, "'trajectory.task_space_waypoints' or a slot it reads is not implemented, so no preview stands");
+    CHECK_THAT(previewed, Catch::Matchers::ContainsSubstring(factory_said));
+}
+
 TEST_CASE("a_request_a_thousand_tolerances_from_the_held_one_still_commands_a_motion")
 {
     scene_robot robot = adapter(manipulator::baseline().robot);
@@ -675,10 +730,13 @@ TEST_CASE("a_via_point_factory_that_refuses_commands_no_task_space_motion_at_all
     robot.set_joint_positions(configuration(0.15, 0.25));
     const joint_vector before = robot.joint_positions();
 
-    controller.task_space_trajectory(std::array<transform, 1>{planar_pose(0.9, -0.7)});
+    const std::string reported = reported_by([&] { controller.task_space_trajectory(std::array<transform, 1>{planar_pose(0.9, -0.7)}); });
 
     CHECK_FALSE(controller.executing());
     CHECK((robot.joint_positions().array() == before.array()).all());
+    CHECK(reported.find("[warning]") != std::string::npos);
+    CHECK(reported.find("[error]") == std::string::npos);
+    CHECK_THAT(reported, Catch::Matchers::ContainsSubstring("'trajectory.task_space_waypoints' or a slot it reads is not implemented, so no motion is commanded"));
 }
 
 TEST_CASE("a_point_to_point_command_a_resolution_refuses_starts_no_motion_and_moves_nothing")

@@ -36,6 +36,14 @@ expected<std::vector<joint_vector>, refusal> resolved_waypoints(const motion_ops
     return resolved;
 }
 
+void report_via_point_step_refusal(refusal reason, std::size_t resolved)
+{
+    if(reason == refusal::not_implemented)
+        spdlog::warn("praxis: 'trajectory.via_point_schedule' or 'trajectory.joint_space_via_points' is not implemented, so no task-space motion is produced");
+    else
+        spdlog::error("praxis: the via-point step or slot refused {} resolved waypoints, so no task-space motion is produced", resolved);
+}
+
 }
 
 expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> task_space_waypoints(const trajectory::trajectory_ops &trajectory, const motion_ops &motion,
@@ -55,7 +63,7 @@ expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> task_space_
     auto joined = via_point_motion(trajectory, *resolved, j0, limits);
     if(!joined)
     {
-        spdlog::error("praxis: the via-point step or slot refused {} resolved waypoints, so no task-space motion is produced", resolved->size());
+        report_via_point_step_refusal(joined.error(), resolved->size());
         return unexpected(joined.error());
     }
 

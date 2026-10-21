@@ -68,7 +68,7 @@ private:
 
 }
 
-TEST_CASE("the_via_point_slot_defaults_to_a_generator_that_refuses_to_sample")
+TEST_CASE("the_via_point_slot_defaults_to_refusing_as_not_implemented")
 {
     trajectory_ops ops{};
     const configuration at_rest = configuration::Zero(2);
@@ -76,14 +76,9 @@ TEST_CASE("the_via_point_slot_defaults_to_a_generator_that_refuses_to_sample")
 
     REQUIRE(ops.joint_space_via_points != nullptr);
 
-    auto held = ops.joint_space_via_points(via);
-    REQUIRE(held);
-    REQUIRE(*held != nullptr);
-    REQUIRE(is_approx_equal((*held)->duration(), 0.0));
-
-    const expected<trajectory_sample, refusal> sampled = (*held)->sample(0.5);
-    REQUIRE(!sampled);
-    REQUIRE(sampled.error() == refusal::not_implemented);
+    const auto held = ops.joint_space_via_points(via);
+    REQUIRE(!held);
+    REQUIRE(held.error() == refusal::not_implemented);
 }
 
 TEST_CASE("the_via_point_schedule_slot_defaults_to_refusing_as_not_implemented")
