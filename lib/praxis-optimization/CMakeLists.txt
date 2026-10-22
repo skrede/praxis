@@ -53,6 +53,7 @@ praxis_add_module(optimization
     src/registered_list.h
     src/scenario_defaults.h
     src/evaluation_problems.cpp
+    src/evaluation_minimizers.cpp
     src/linearization_window.cpp
     src/baseline/solver.cpp
     src/baseline/minimizer.cpp

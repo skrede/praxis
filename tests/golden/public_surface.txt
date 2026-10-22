@@ -2131,10 +2131,10 @@ lib/praxis-optimization/include/praxis/optimization/curve_graph.h	curve_reading	
 lib/praxis-optimization/include/praxis/optimization/curve_graph.h	curve_graph	prototype	(const scenario_window_inputs & inputs,std::string name)	typename:std::shared_ptr<scene::plot_window>
 lib/praxis-optimization/include/praxis/optimization/evaluation.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/evaluation.h	praxis	namespace	-	-
-lib/praxis-optimization/include/praxis/optimization/evaluation.h	evaluation_views	prototype	(const capabilities & first,const capabilities & second)	typename:std::array<evaluation::evaluation_view,1>
-lib/praxis-optimization/include/praxis/optimization/evaluation.h	evaluation_views	prototype	(capabilities &&,const capabilities &)	typename:std::array<evaluation::evaluation_view,1>
-lib/praxis-optimization/include/praxis/optimization/evaluation.h	evaluation_views	prototype	(const capabilities &,capabilities &&)	typename:std::array<evaluation::evaluation_view,1>
-lib/praxis-optimization/include/praxis/optimization/evaluation.h	evaluation_views	prototype	(capabilities &&,capabilities &&)	typename:std::array<evaluation::evaluation_view,1>
+lib/praxis-optimization/include/praxis/optimization/evaluation.h	evaluation_views	prototype	(const capabilities & first,const capabilities & second)	typename:std::array<evaluation::evaluation_view,2>
+lib/praxis-optimization/include/praxis/optimization/evaluation.h	evaluation_views	prototype	(capabilities &&,const capabilities &)	typename:std::array<evaluation::evaluation_view,2>
+lib/praxis-optimization/include/praxis/optimization/evaluation.h	evaluation_views	prototype	(const capabilities &,capabilities &&)	typename:std::array<evaluation::evaluation_view,2>
+lib/praxis-optimization/include/praxis/optimization/evaluation.h	evaluation_views	prototype	(capabilities &&,capabilities &&)	typename:std::array<evaluation::evaluation_view,2>
 lib/praxis-optimization/include/praxis/optimization/function_window.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/function_window.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/function_window.h	function_source	enum	-	typename:std::uint8_t
