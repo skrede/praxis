@@ -5,13 +5,13 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <string>
-#include <vector>
 #include <limits>
 #include <locale>
+#include <string>
+#include <vector>
 #include <fstream>
-#include <sstream>
 #include <iomanip>
+#include <sstream>
 #include <filesystem>
 #include <string_view>
 

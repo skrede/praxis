@@ -135,6 +135,9 @@ std::string name_of(std::optional<std::size_t> which, std::span<const std::strin
 
 std::optional<std::string> instance_at(const config::document &values, const std::string &collection, const std::string &named)
 {
+    if(named.empty())
+        return std::nullopt;
+
     const std::vector<std::string> present = values.identities(collection);
     for(std::size_t ordinal = 0u; ordinal < present.size(); ++ordinal)
         if(present[ordinal] == named)

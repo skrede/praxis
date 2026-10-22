@@ -24,8 +24,8 @@
 #include <cstddef>
 #include <fstream>
 #include <optional>
-#include <string_view>
 #include <filesystem>
+#include <string_view>
 
 using namespace praxis;
 
