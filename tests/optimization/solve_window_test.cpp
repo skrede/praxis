@@ -2,6 +2,7 @@
 
 #include "panel_keys.h"
 #include "imgui_frame.h"
+#include "panel_labels.h"
 
 #include "praxis/optimization/solve_window.h"
 #include "praxis/optimization/scenario_state.h"
@@ -94,20 +95,14 @@ struct solving_stage
     }
 };
 
-// The step below the limit field lands on whichever of Run and Step once lies nearer its middle, so
-// each is reached by a step sideways along their row.
 void press_run(tests::imgui_frame &frames, const drawing &draw)
 {
-    stand_below_top(frames, draw, run_row);
-    tap(frames, draw, ImGuiKey_LeftArrow);
-    tap(frames, draw, ImGuiKey_Space);
+    press_along(frames, draw, run_row, "Solve", "Run");
 }
 
 void press_step_once(tests::imgui_frame &frames, const drawing &draw)
 {
-    stand_below_top(frames, draw, run_row);
-    tap(frames, draw, ImGuiKey_RightArrow);
-    tap(frames, draw, ImGuiKey_Space);
+    press_along(frames, draw, run_row, "Solve", "Step once");
 }
 
 // Two steps from `seed`, the newest selected, and one table row for each iterate.

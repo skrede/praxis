@@ -23,8 +23,8 @@ std::vector<std::string> linearization_lines(const scenario_linearization &at, b
 
 // A point taken by a field and by a slider over the range of each variable, asked of the scenario
 // through its gate as a slider moves and once a field is left after an edit; the window asks for the
-// middle of the ranges it opened at when it is built. Its Show switch is the view's linearization, which
-// is not saved.
+// middle of the ranges it opened at when it is built, and for the middle of the ranges last published
+// on Reset. Its Show switch is the view's linearization, which is not saved.
 class linearization_window : public scene::imgui_window
 {
 public:

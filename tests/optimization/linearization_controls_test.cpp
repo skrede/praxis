@@ -10,6 +10,7 @@
 #include "praxis/optimization/capabilities.h"
 #include "praxis/optimization/scenario_state.h"
 #include "praxis/optimization/compose_scenario.h"
+#include "praxis/optimization/scenario_snapshot.h"
 #include "praxis/optimization/linearization_window.h"
 
 #include "praxis/scene/plot_window.h"
@@ -26,6 +27,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <utility>
 #include <algorithm>
 
 using namespace praxis;
@@ -74,13 +76,13 @@ struct linearized_surface
     std::shared_ptr<scene::imgui_window> panel;
     opened taken;
 
-    linearized_surface()
+    explicit linearized_surface(std::vector<interval> ranges = {interval{-2.0, 2.0}, interval{-2.0, 2.0}})
             : loop(scheduler::inline_workers)
             , built(loop)
             , panel()
             , taken(open_surface_with(
                       built.site, {registered_surface("circle", &circle_value, &swapped_gradient)}, baseline(),
-                      scenario_settings{"circle", {interval{-2.0, 2.0}, interval{-2.0, 2.0}}, Eigen::Vector2d(1.5, 0.5), 70u, 0u},
+                      scenario_settings{"circle", std::move(ranges), Eigen::Vector2d(1.5, 0.5), 70u, 0u},
                       [this](const scenario_window_inputs &offered)
                       {
                           panel = std::make_shared<linearization_window>("Linearization", offered);
@@ -105,6 +107,18 @@ struct linearized_surface
         taken.composed->stencil->render();
     }
 };
+
+// The point the latest publication carries once the window's Reset is pressed.
+Eigen::VectorXd reset_point(const std::shared_ptr<scene::imgui_window> &panel, scheduler::scheduler &loop, const opened &taken)
+{
+    tests::imgui_frame frames;
+    press_on(frames, [panel] { panel->render(); }, "Linearization", "Reset");
+    REQUIRE(loop.drain().has_value());
+    const std::shared_ptr<const scenario_snapshot> shown = taken.inputs->seen.read();
+    REQUIRE(shown->linearization.has_value());
+
+    return shown->linearization->point;
+}
 
 }
 
@@ -158,4 +172,27 @@ TEST_CASE("a surface draws its planes at the point and no object for the point i
 
     std::ranges::sort(at_p);
     CHECK(at_p == std::vector<std::string>{"central difference at p", "tangent plane at p"});
+}
+
+TEST_CASE("the Linearization window's Reset asks for the middle of the ranges the latest publication carries", "[optimization][linearization]")
+{
+    std::shared_ptr<scene::imgui_window> panel;
+    graph_stage stage(cubic(), graph_and_linearization(panel), false);
+    {
+        tests::imgui_frame frames;
+        type_into(frames, [panel] { panel->render(); }, 0, "2.5");
+    }
+    REQUIRE(stage.loop.drain().has_value());
+    REQUIRE(stage.taken.inputs->seen.read()->linearization->point == Eigen::VectorXd::Constant(1, 2.5));
+    CHECK(reset_point(panel, stage.loop, stage.taken) == Eigen::VectorXd::Constant(1, 0.0));
+
+    command(stage.taken.inputs->scenario, [](scenario_state &state) { state.set_range(std::vector<interval>{interval{0.0, 6.0}}); });
+    REQUIRE(stage.loop.drain().has_value());
+    CHECK(reset_point(panel, stage.loop, stage.taken) == Eigen::VectorXd::Constant(1, 3.0));
+}
+
+TEST_CASE("over a surface the Linearization window's Reset asks for the middle of both ranges", "[optimization][surface][linearization]")
+{
+    linearized_surface viewed({interval{-2.0, 2.0}, interval{0.0, 4.0}});
+    CHECK(reset_point(viewed.panel, viewed.loop, viewed.taken) == Eigen::VectorXd(Eigen::Vector2d(0.0, 2.0)));
 }

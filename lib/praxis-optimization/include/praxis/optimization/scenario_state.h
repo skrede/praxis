@@ -64,6 +64,9 @@ public:
     // from a seed it did not start at, never past the iteration limit; the newest step is selected.
     void step_once(const Eigen::VectorXd &seed);
 
+    // Solves again from `seed` with no step, so the shown run holds the seed alone.
+    void reset(const Eigen::VectorXd &seed);
+
     // Held to the steps the shown run took, and published without solving again.
     void select_step(std::uint32_t step);
 

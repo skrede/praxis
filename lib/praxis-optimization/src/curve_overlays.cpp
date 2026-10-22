@@ -68,7 +68,7 @@ void add_step(const scenario_snapshot &shown, const interval &span, std::vector<
 {
     const scenario_run &run = shown.run;
     const std::size_t k     = shown.step;
-    if(k >= run.iterates.size() || k >= run.errors.size() || k >= run.jacobians.size())
+    if(k + 1 >= run.iterates.size() || k >= run.errors.size() || k >= run.jacobians.size())
         return;
 
     const linearized at{coordinate(run.iterates[k]), value_of(run.errors[k]), slope_of(run.jacobians[k])};
@@ -79,7 +79,7 @@ void add_step(const scenario_snapshot &shown, const interval &span, std::vector<
     if(std::isfinite(zero))
         drawn.push_back(scene::plot_series{"zero of the tangent", {zero}, {0.0}, scene::plot_mark::markers});
 
-    if(k + 1 < run.iterates.size() && k + 1 < run.errors.size())
+    if(k + 1 < run.errors.size())
     {
         const double next = coordinate(run.iterates[k + 1]);
         drawn.push_back(scene::plot_series{"x_(k+1)", {next, next}, {0.0, value_of(run.errors[k + 1])}, scene::plot_mark::segments});

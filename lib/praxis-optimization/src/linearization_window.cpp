@@ -69,6 +69,15 @@ struct naming
     const char *at;
 };
 
+Eigen::VectorXd middle_of(const std::vector<interval> &ranges)
+{
+    Eigen::VectorXd middle(static_cast<Eigen::Index>(ranges.size()));
+    for(std::size_t axis = 0; axis < ranges.size(); ++axis)
+        middle[static_cast<Eigen::Index>(axis)] = (ranges[axis].lower + ranges[axis].upper) / 2.0;
+
+    return middle;
+}
+
 naming named_for(Eigen::Index dimension)
 {
     if(dimension == 1)
@@ -98,13 +107,11 @@ std::vector<std::string> linearization_lines(const scenario_linearization &at, b
 linearization_window::linearization_window(std::string name, const scenario_window_inputs &inputs)
         : imgui_window(std::move(name))
         , m_checks(inputs.checks_derivative)
-        , m_point(Eigen::VectorXd::Zero(static_cast<Eigen::Index>(inputs.opened.ranges.size())))
+        , m_point(middle_of(inputs.opened.ranges))
         , m_seen(inputs.seen)
         , m_drawn(inputs.drawn != nullptr ? inputs.drawn : std::make_shared<scenario_view>())
         , m_scenario(inputs.scenario)
 {
-    for(std::size_t axis = 0; axis < inputs.opened.ranges.size(); ++axis)
-        m_point[static_cast<Eigen::Index>(axis)] = (inputs.opened.ranges[axis].lower + inputs.opened.ranges[axis].upper) / 2.0;
     post();
 }
 
@@ -131,6 +138,11 @@ void linearization_window::controls(const std::vector<interval> &ranges)
 {
     if(edit_point(ranges))
         post();
+    if(ImGui::Button("Reset"))
+    {
+        m_point = middle_of(ranges);
+        post();
+    }
     ImGui::Checkbox("Show", &m_drawn->linearization);
 }
 

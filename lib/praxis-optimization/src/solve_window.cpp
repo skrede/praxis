@@ -127,6 +127,9 @@ void solve_window::render_controls()
     ImGui::SameLine();
     if(ImGui::Button("Step once"))
         command(m_scenario, [seed = m_seed](scenario_state &state) { state.step_once(seed); });
+    ImGui::SameLine();
+    if(ImGui::Button("Reset"))
+        command(m_scenario, [seed = m_seed](scenario_state &state) { state.reset(seed); });
 }
 
 // A publication not seen before is what the slider and the table are brought to, so a selection

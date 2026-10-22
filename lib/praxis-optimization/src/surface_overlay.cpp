@@ -24,7 +24,7 @@ struct answered
 
 std::optional<answered> answered_at(const scenario_run &run, std::size_t k, std::span<const interval> ranges)
 {
-    if(k >= run.iterates.size() || k >= run.errors.size() || k >= run.jacobians.size() || !within_ranges(ranges, run.iterates[k]))
+    if(k + 1 >= run.iterates.size() || k >= run.errors.size() || k >= run.jacobians.size() || !within_ranges(ranges, run.iterates[k]))
         return std::nullopt;
 
     const expected<Eigen::VectorXd, refusal> &e        = run.errors[k];

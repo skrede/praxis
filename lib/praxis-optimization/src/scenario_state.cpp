@@ -82,6 +82,15 @@ void scenario_state::step_once(const Eigen::VectorXd &seed)
     solve(std::min(steps, m_settings.limit), steps - 1u);
 }
 
+void scenario_state::reset(const Eigen::VectorXd &seed)
+{
+    if(!taken_at(seed, m_dimension, "solved from one finite seed"))
+        return;
+
+    m_settings.seed = seed;
+    solve(0u, 0u);
+}
+
 void scenario_state::select_step(std::uint32_t step)
 {
     m_settings.step = step;

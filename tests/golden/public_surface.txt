@@ -2275,6 +2275,7 @@ lib/praxis-optimization/include/praxis/optimization/scenario_state.h	mutate	func
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	run	prototype	()	typename:void
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	run	prototype	(const Eigen::VectorXd & seed,std::uint32_t limit)	typename:void
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	step_once	prototype	(const Eigen::VectorXd & seed)	typename:void
+lib/praxis-optimization/include/praxis/optimization/scenario_state.h	reset	prototype	(const Eigen::VectorXd & seed)	typename:void
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	select_step	prototype	(std::uint32_t step)	typename:void
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	set_limit	prototype	(std::uint32_t limit)	typename:void
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	linearize	prototype	(const Eigen::VectorXd & point)	typename:void

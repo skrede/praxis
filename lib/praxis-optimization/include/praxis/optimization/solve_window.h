@@ -38,8 +38,8 @@ std::vector<iterate_row> iterate_rows(const scenario_run &run);
 std::string run_status(const scenario_snapshot &shown);
 
 // The seed, the iteration limit and the selected step are held here and asked of the scenario
-// through its gate: the seed goes with Run and Step once, the limit and the step as they are edited.
-// Their keys sit at the root of the scenario's document.
+// through its gate: the seed goes with Run, Step once and Reset, the limit and the step as they are
+// edited. Their keys sit at the root of the scenario's document.
 class solve_window : public scene::imgui_window, public config::configurable
 {
 public:
