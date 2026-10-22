@@ -22,7 +22,6 @@
 #include <threepp/core/BufferGeometry.hpp>
 
 #include <memory>
-#include <cstddef>
 
 namespace praxis::optimization {
 
@@ -38,14 +37,18 @@ namespace praxis::optimization {
 // line from the zero plane up to the surface. A problem carrying a box draws it, "box", on the zero
 // plane. A point asked for by the Linearization window draws the tangent plane there, "tangent plane
 // at p", over the ranges and held to the field's heights, and where the check disagrees the central
-// difference's plane, "central difference at p", in wire. Everything is read from the publication, so
-// nothing here evaluates the function, and nothing here picks: the seed is typed. The view says which
-// of these is drawn.
+// difference's plane, "central difference at p", in wire. A run in the minimum form draws no zero curve
+// and no step construction: its level curves, its iterates, its gradient at x_k and its step are drawn
+// as a map on a floor beneath the field instead, "level map". Everything is read from the publication,
+// so nothing here evaluates the function, and nothing here picks: the seed is typed. The view says
+// which of these is drawn.
+class level_map;
+
 class surface_stencil : public scene::stencil
 {
 public:
     surface_stencil(threepp::Scene &parent, scenario_reader seen, std::shared_ptr<const scenario_view> drawn);
-    ~surface_stencil() override = default;
+    ~surface_stencil() override;
 
     expected<void, refusal> initialize() override;
     void tear_down() override;
@@ -70,6 +73,7 @@ private:
     std::shared_ptr<threepp::Object3D> m_recorded;
     std::shared_ptr<threepp::Mesh> m_plane;
     std::shared_ptr<threepp::Mesh> m_central;
+    std::unique_ptr<level_map> m_levels;
 
     // Written while drawing, which the base class asks for on a const stencil.
     mutable std::shared_ptr<const scenario_grid> m_sampled;
@@ -79,7 +83,6 @@ private:
 
     void resample(const scenario_snapshot &shown) const;
     void place_iterates(const std::shared_ptr<const scenario_snapshot> &shown) const;
-    void hold_marks(std::size_t count) const;
 };
 
 }

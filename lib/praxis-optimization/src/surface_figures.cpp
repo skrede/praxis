@@ -3,6 +3,9 @@
 #include <threepp/objects/Line.hpp>
 #include <threepp/objects/LineSegments.hpp>
 
+#include <threepp/math/Color.hpp>
+#include <threepp/math/Matrix4.hpp>
+
 #include <threepp/core/BufferAttribute.hpp>
 
 #include <threepp/materials/LineBasicMaterial.hpp>
@@ -38,14 +41,11 @@ std::shared_ptr<threepp::BufferGeometry> room_for(std::size_t points, bool lit)
     return geometry;
 }
 
-void lay_over(threepp::Object3D &drawn, threepp::Material &tone, std::string name)
+void lay_over(threepp::Object3D &drawn, threepp::Material &tone)
 {
-    tone.depthTest      = false;
-    tone.depthWrite     = false;
-    drawn.renderOrder   = over_the_field;
-    drawn.frustumCulled = false;
-    drawn.visible       = false;
-    drawn.name          = std::move(name);
+    tone.depthTest    = false;
+    tone.depthWrite   = false;
+    drawn.renderOrder = over_the_field;
 }
 
 std::size_t written(threepp::FloatBufferAttribute &into, std::span<const Eigen::Vector3d> points, const field_placement &placed)
@@ -66,13 +66,23 @@ std::size_t written(threepp::FloatBufferAttribute &into, std::span<const Eigen::
 
 std::shared_ptr<threepp::Object3D> overlay_lines(std::string name, std::uint32_t tone, std::size_t points, bool joined)
 {
+    std::shared_ptr<threepp::Object3D> drawn = occluded_lines(std::move(name), tone, points, joined);
+    lay_over(*drawn, *drawn->material());
+
+    return drawn;
+}
+
+std::shared_ptr<threepp::Object3D> occluded_lines(std::string name, std::uint32_t tone, std::size_t points, bool joined)
+{
     auto material = threepp::LineBasicMaterial::create({{"color", threepp::Color(tone)}});
     std::shared_ptr<threepp::Object3D> drawn;
     if(joined)
         drawn = threepp::Line::create(room_for(points, false), material);
     else
         drawn = threepp::LineSegments::create(room_for(points, false), material);
-    lay_over(*drawn, *material, std::move(name));
+    drawn->frustumCulled = false;
+    drawn->visible       = false;
+    drawn->name          = std::move(name);
 
     return drawn;
 }
@@ -82,7 +92,10 @@ std::shared_ptr<threepp::Mesh> overlay_point(std::string name, std::uint32_t ton
     auto material   = threepp::MeshPhongMaterial::create();
     material->color = threepp::Color(tone);
     auto drawn      = threepp::Mesh::create(std::move(sphere), material);
-    lay_over(*drawn, *material, std::move(name));
+    lay_over(*drawn, *material);
+    drawn->frustumCulled = false;
+    drawn->visible       = false;
+    drawn->name          = std::move(name);
 
     return drawn;
 }
@@ -135,6 +148,38 @@ void place_point(threepp::Object3D &drawn, const Eigen::Vector3d &point, const f
     const Eigen::Vector3d standing = placed.at(point.x(), point.y(), point.z());
     drawn.position.set(static_cast<float>(standing.x()), static_cast<float>(standing.y()), static_cast<float>(standing.z()));
     drawn.visible = true;
+}
+
+void hold_marks(threepp::Object3D &under, std::shared_ptr<threepp::InstancedMesh> &marks, std::size_t count, const marks_look &look)
+{
+    if(marks != nullptr && static_cast<std::size_t>(marks->instanceMatrix()->count()) == count)
+        return;
+
+    if(marks != nullptr)
+        under.remove(*marks);
+    marks = nullptr;
+    if(count == 0u)
+        return;
+
+    marks       = threepp::InstancedMesh::create(look.sphere, look.material, count);
+    marks->name = look.name;
+    // threepp picks the shader by whether instance colors exist at the first draw, so they exist from the start.
+    marks->setColorAt(0u, threepp::Color(look.tone));
+    under.add(marks);
+}
+
+void write_marks(threepp::InstancedMesh &marks, std::span<const Eigen::Vector3d> centers, std::span<const std::uint32_t> tones)
+{
+    for(std::size_t j = 0; j < centers.size(); ++j)
+    {
+        const Eigen::Vector3d &at = centers[j];
+        marks.setMatrixAt(j, threepp::Matrix4().makeTranslation(static_cast<float>(at.x()), static_cast<float>(at.y()), static_cast<float>(at.z())));
+        marks.setColorAt(j, threepp::Color(tones[j]));
+    }
+    marks.setCount(centers.size());
+    marks.instanceMatrix()->needsUpdate();
+    marks.instanceColor()->needsUpdate();
+    marks.computeBoundingSphere();
 }
 
 }

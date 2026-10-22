@@ -1,6 +1,7 @@
 #ifndef HPP_GUARD_PRAXIS_OPTIMIZATION_SURFACE_OVERLAY_H
 #define HPP_GUARD_PRAXIS_OPTIMIZATION_SURFACE_OVERLAY_H
 
+#include "level_curve.h"
 #include "surface_mesh.h"
 
 #include "praxis/optimization/problem.h"
@@ -45,6 +46,9 @@ void draw_planes(const point_figures &drawn, const scenario_snapshot &shown, con
 // The box's four sides on the zero plane as pairs of points, each bound held to its range, so an
 // infinite one stands at the range's edge; nothing where the box leaves no area within the ranges.
 std::vector<Eigen::Vector3d> box_outline(const std::optional<box> &bounds, std::span<const interval> ranges);
+
+// Each segment's two ends, in order, at the height f.
+std::vector<Eigen::Vector3d> ends_at(std::span<const level_segment> segments, double f);
 
 // The least and the greatest finite sample; both zero where none is finite.
 interval height_span(const scenario_grid &grid);

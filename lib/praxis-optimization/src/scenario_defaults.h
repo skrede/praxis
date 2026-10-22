@@ -41,6 +41,24 @@ inline constexpr double iterate_spacing = 0.75 * iterate_radius;
 // the plane's zero line, dimensionless.
 inline constexpr double tangent_patch = 1.25;
 
+// The level curves a minimized surface's map draws, a count, at the k/(count + 1) quantiles of the
+// grid's finite samples.
+inline constexpr std::size_t level_count = 16;
+
+// The distance the map's floor stands below the field's lowest drawn point, a fraction of the extent.
+inline constexpr double floor_gap = 0.1;
+
+// The length the gradient arrow is drawn at whatever |grad f|, a fraction of the extent.
+inline constexpr double gradient_arrow_fraction = 0.2;
+
+// The radius of the gradient arrow's shaft, and the radius and the length of its head, in meters.
+inline constexpr double gradient_shaft_radius = iterate_radius / 4.0;
+inline constexpr double gradient_head_radius  = iterate_radius;
+inline constexpr double gradient_head_length  = 2.0 * iterate_radius;
+
+// The opacity the field is drawn at over a minimized surface's map, from 0 (unseen) to 1 (opaque).
+inline constexpr double minimum_field_opacity = 0.8;
+
 // The tones a surface and what is drawn on it wear, as 0xRRGGBB.
 inline constexpr std::uint32_t surface_tone          = 0x4682b4;
 inline constexpr std::uint32_t iterate_tone          = 0xff4500;
@@ -49,6 +67,10 @@ inline constexpr std::uint32_t zero_curve_tone       = 0x0000cd;
 inline constexpr std::uint32_t tangent_plane_tone    = 0xf0e68c;
 inline constexpr std::uint32_t zero_line_tone        = 0x000080;
 inline constexpr std::uint32_t box_tone              = 0xa0522d;
+inline constexpr std::uint32_t level_curve_tone      = 0x0000cd;
+inline constexpr std::uint32_t floor_iterate_tone    = 0x000000;
+inline constexpr std::uint32_t gradient_tone         = 0xffd700;
+inline constexpr std::uint32_t floor_step_tone       = 0x8b0000;
 
 // |d - d_cd| / max(1, |d|, |d_cd|) above which a registered derivative d and the central difference
 // d_cd of the value disagree, a dimensionless relative difference.

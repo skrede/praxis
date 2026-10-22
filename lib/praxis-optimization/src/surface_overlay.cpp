@@ -114,6 +114,17 @@ std::vector<Eigen::Vector3d> box_outline(const std::optional<box> &bounds, std::
     return sides;
 }
 
+std::vector<Eigen::Vector3d> ends_at(std::span<const level_segment> segments, double f)
+{
+    std::vector<Eigen::Vector3d> points;
+    points.reserve(2u * segments.size());
+    for(const level_segment &segment : segments)
+        for(const Eigen::Vector2d &end : segment)
+            points.emplace_back(end.x(), end.y(), f);
+
+    return points;
+}
+
 interval height_span(const scenario_grid &grid)
 {
     interval span{std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity()};

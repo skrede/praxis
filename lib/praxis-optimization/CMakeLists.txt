@@ -37,7 +37,9 @@ praxis_add_module(optimization
     src/drawn_iterates.cpp
     src/surface_mesh.cpp
     src/surface_step.cpp
+    src/surface_arrow.cpp
     src/surface_figures.cpp
+    src/surface_levels.cpp
     src/surface_overlay.cpp
     src/surface_stencil.cpp
     src/display_window.cpp
@@ -57,7 +59,9 @@ praxis_add_module(optimization
     src/drawn_iterates.h
     src/surface_mesh.h
     src/surface_step.h
+    src/surface_arrow.h
     src/surface_figures.h
+    src/surface_levels.h
     src/surface_overlay.h
     src/curve_overlays.h
     src/curve_objective.h

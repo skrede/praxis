@@ -8,6 +8,7 @@
 #include <span>
 #include <array>
 #include <vector>
+#include <cstddef>
 
 namespace praxis::optimization {
 
@@ -18,6 +19,13 @@ using level_segment = std::array<Eigen::Vector2d, 2>;
 // cell's edges, a saddle cell split by the mean of its four corners. A cell with a corner that is not
 // finite contributes nothing, and a cell and its neighbor place their shared crossing at the same point.
 std::vector<level_segment> level_curve(const scenario_grid &grid, std::span<const interval> ranges, double level);
+
+// The points one level's segments can take over a grid of `count` samples per side: two segments at
+// most cross each cell, two points each.
+constexpr std::size_t level_curve_room(std::size_t count)
+{
+    return 4u * (count - 1u) * (count - 1u);
+}
 
 }
 

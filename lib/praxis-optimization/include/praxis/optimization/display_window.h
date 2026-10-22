@@ -12,8 +12,9 @@
 namespace praxis::optimization {
 
 // Switches for what the scenario's drawing shows: the iterates, the selected step's construction and
-// the box, and over a surface the field and the zero curve as well. A composition that opens no such
-// window draws them all. The switches are a view of the drawing and are not saved.
+// the box, and over a surface the field as well, with the zero curve in the root form and the level
+// curves and the gradient in the minimum form. A composition that opens no such window draws them
+// all. The switches are a view of the drawing and are not saved.
 class display_window : public scene::imgui_window
 {
 public:
@@ -23,6 +24,7 @@ public:
 
 private:
     bool m_surface;
+    bool m_minimum;
     std::shared_ptr<scenario_view> m_drawn;
 };
 
