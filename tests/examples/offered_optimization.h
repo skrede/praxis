@@ -3,6 +3,8 @@
 
 #include "scratch_documents.h"
 
+#include "imgui_frame.h"
+
 #include "demo_offered.h"
 #include "demo_documents.h"
 #include "demo_write_back.h"
@@ -23,10 +25,14 @@
 
 #include <threepp/scenes/Scene.hpp>
 
+#include <imgui.h>
+#include <imgui_internal.h>
+
 #include <memory>
 #include <string>
 #include <vector>
 #include <utility>
+#include <algorithm>
 #include <filesystem>
 
 #ifndef PRAXIS_SHIPPED_OPTIMIZATION_DIR
@@ -87,6 +93,31 @@ void on_own_scene(praxis::scene::preset_registry &registry, const std::string &n
     composed->tear_down();
     REQUIRE(loop.retire_strand(composed->work, std::move(composed->release_cb)).has_value());
     REQUIRE(loop.drain().has_value());
+}
+
+// The text the Solve window draws once the composition's work strand has run.
+inline std::string solve_text(praxis::scene::preset_registry &registry, const std::string &named)
+{
+    std::string drawn;
+    on_own_scene(registry, named,
+                 [&drawn](praxis::scene::preset &composed, praxis::scheduler::scheduler &loop, threepp::Scene &)
+                 {
+                     REQUIRE(loop.drain().has_value());
+                     const auto solve =
+                             std::ranges::find_if(composed.windows, [](const std::shared_ptr<praxis::scene::imgui_window> &window) { return window->display_name() == "Solve"; });
+                     REQUIRE(solve != composed.windows.end());
+                     praxis::tests::imgui_frame frames;
+                     frames.draw(
+                             [&solve, &drawn]
+                             {
+                                 ImGui::LogToBuffer();
+                                 (*solve)->render();
+                                 drawn = GImGui->LogBuffer.c_str();
+                                 ImGui::LogFinish();
+                             });
+                 });
+
+    return drawn;
 }
 
 }

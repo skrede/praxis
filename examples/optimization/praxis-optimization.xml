@@ -12,5 +12,7 @@
         <preset name="surface" document="surface.xml"/>
         <preset name="curve-minimum" document="curve-minimum.xml"/>
         <preset name="surface-minimum" document="surface-minimum.xml"/>
+        <preset name="curve-typed" document="curve-typed.xml"/>
+        <preset name="surface-typed" document="surface-typed.xml"/>
     </presets>
 </demonstration>

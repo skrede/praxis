@@ -1,65 +1,22 @@
 #include "scratch_documents.h"
 #include "offered_optimization.h"
 
-#include "imgui_frame.h"
-
 #include "praxis/presets/optimization.h"
 
 #include "praxis/optimization/settings_keys.h"
 
-#include "praxis/scene/preset.h"
-#include "praxis/scene/imgui_window.h"
-#include "praxis/scene/preset_registry.h"
-
 #include "praxis/config/store.h"
 #include "praxis/config/document.h"
 
-#include "praxis/scheduler/scheduler.h"
-
 #include <catch2/catch_test_macros.hpp>
 
-#include <threepp/scenes/Scene.hpp>
-
-#include <imgui.h>
-#include <imgui_internal.h>
-
-#include <memory>
 #include <string>
-#include <vector>
 #include <algorithm>
 #include <filesystem>
 
 using namespace praxis;
 using namespace scratch_documents;
 using namespace offered_optimization;
-
-namespace {
-
-// The text the Solve window draws once the composition's work strand has run.
-std::string solve_text(scene::preset_registry &registry, const std::string &named)
-{
-    std::string drawn;
-    on_own_scene(registry, named,
-                 [&drawn](scene::preset &composed, scheduler::scheduler &loop, threepp::Scene &)
-                 {
-                     REQUIRE(loop.drain().has_value());
-                     const auto solve = std::ranges::find_if(composed.windows, [](const std::shared_ptr<scene::imgui_window> &window) { return window->display_name() == "Solve"; });
-                     REQUIRE(solve != composed.windows.end());
-                     tests::imgui_frame frames;
-                     frames.draw(
-                             [&solve, &drawn]
-                             {
-                                 ImGui::LogToBuffer();
-                                 (*solve)->render();
-                                 drawn = GImGui->LogBuffer.c_str();
-                                 ImGui::LogFinish();
-                             });
-                 });
-
-    return drawn;
-}
-
-}
 
 TEST_CASE("the shipped minimum-form documents state the minimum form and Newton's method", "[examples][optimization]")
 {

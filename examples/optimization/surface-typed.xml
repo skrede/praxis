@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The values one preset of the demonstration composes from, read when that preset loads. The name is
+  what the preset selector shows it as, and the scenario is which composition it opens. The function
+  is the expression as typed, and every letter it names besides its variables is a parameter, carried
+  with its value and the range that value is chosen from. This file ships with the repository and is
+  read until the preset has been saved; a save writes a copy of it under the directory the application
+  keeps its state in, and that copy is what is read from then on.
+-->
+<optimization>
+    <preset name="Typed: x^2 + ay^2 - 1" scenario="surface"/>
+    <function source="manual" expression="x^2 + ay^2 - 1"/>
+    <parameters>
+        <parameter name="a" value="1" lower="-5" upper="5"/>
+    </parameters>
+    <range x_lower="-2" x_upper="2" y_lower="-2" y_upper="2"/>
+    <seed x="-2" y="-2"/>
+    <solve limit="200" step="0"/>
+</optimization>
