@@ -62,7 +62,7 @@ inline scenario_settings minimum_from(std::string selected, Eigen::VectorXd seed
 {
     std::vector<interval> ranges(static_cast<std::size_t>(seed.size()), interval{-2.5, 2.5});
 
-    return scenario_settings{std::move(selected), std::move(ranges), std::move(seed), limit, 0u, objective_settings{problem_form::minimum, method, step_length}};
+    return scenario_settings{std::move(selected), std::move(ranges), std::move(seed), limit, 0u, objective_settings{problem_form::minimum, method, step_length}, {}};
 }
 
 inline scenario_settings minimum_from(std::string selected, double seed, minimizer_slot method, double step_length, std::uint32_t limit)

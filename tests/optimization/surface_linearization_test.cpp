@@ -62,7 +62,7 @@ struct linearized_surface
             , panel()
             , taken(open_surface_with(
                       built.site, {registered_surface("circle", &circle_value, gradient)}, baseline(),
-                      scenario_settings{"circle", {interval{-2.0, 2.0}, interval{-2.0, 2.0}}, Eigen::Vector2d(1.0, 0.0), 70u, 0u, {}},
+                      scenario_settings{"circle", {interval{-2.0, 2.0}, interval{-2.0, 2.0}}, Eigen::Vector2d(1.0, 0.0), 70u, 0u, {}, {}},
                       [this](const scenario_window_inputs &offered)
                       {
                           panel = std::make_shared<linearization_window>("Linearization", offered);

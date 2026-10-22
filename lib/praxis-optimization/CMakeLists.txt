@@ -48,6 +48,7 @@ praxis_add_module(optimization
     src/scenario_answers.cpp
     src/scenario_admission.cpp
     src/scenario_objective.cpp
+    src/scenario_typed.cpp
     src/objective_answers.cpp
     src/solve_controls.cpp
     src/evaluation_tables.h

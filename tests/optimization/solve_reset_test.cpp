@@ -144,7 +144,7 @@ TEST_CASE("a run holding its seed alone draws one iterate marker and no step on 
     scheduler::scheduler loop(scheduler::inline_workers);
     staged built(loop);
     const opened taken = open_surface_with(built.site, {registered_surface("circle", &circle_value, &circle_gradient)}, baseline(),
-                                           scenario_settings{"circle", {interval{-2.0, 2.0}, interval{-2.0, 2.0}}, Eigen::Vector2d(1.5, 0.5), 70u, 0u, {}});
+                                           scenario_settings{"circle", {interval{-2.0, 2.0}, interval{-2.0, 2.0}}, Eigen::Vector2d(1.5, 0.5), 70u, 0u, {}, {}});
     REQUIRE(settled(loop, taken)->run.iterates.size() > 1u);
 
     command(taken.inputs->scenario, [](scenario_state &state) { state.reset(Eigen::Vector2d(1.5, 0.5)); });

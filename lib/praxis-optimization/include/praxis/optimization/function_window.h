@@ -16,18 +16,11 @@
 #include <string>
 #include <vector>
 #include <cstddef>
-#include <cstdint>
 #include <string_view>
 
 namespace praxis::optimization {
 
-// Where the functions a scenario offers come from. The order is the label table's, which is what
-// reading a label back as an index and casting relies on.
-enum class function_source : std::uint8_t
-{
-    registered
-};
-
+// The labels of the sources the window offers, in function_source's order.
 std::span<const char *const> function_source_labels();
 
 // Which registered function is drawn and solved, and the range it is drawn over, held here and asked

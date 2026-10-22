@@ -46,7 +46,7 @@ std::string logged_by(solve_stage &stage, const std::function<void()> &asked)
 TEST_CASE("in the minimum form the Solve window offers a method and a step length, and in the root form neither", "[optimization][objective]")
 {
     solve_stage minimum(quartic_curve(), minimum_from(quartic_name, 2.0, minimizer_slot::newton, 0.01, 50u));
-    solve_stage root(quartic_curve(), scenario_settings{quartic_name, {interval{-2.5, 2.5}}, Eigen::VectorXd::Constant(1, 2.0), 50u, 0u, {}});
+    solve_stage root(quartic_curve(), scenario_settings{quartic_name, {interval{-2.5, 2.5}}, Eigen::VectorXd::Constant(1, 2.0), 50u, 0u, {}, {}});
 
     std::size_t offered = 0;
     {

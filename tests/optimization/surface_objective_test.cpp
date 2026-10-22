@@ -57,7 +57,7 @@ expected<Eigen::VectorXd, refusal> leaping(const problem &, const Eigen::VectorX
 scenario_settings descended(std::string name, const Eigen::Vector2d &seed)
 {
     return scenario_settings{
-            std::move(name), {interval{-2.0, 2.0}, interval{-2.0, 2.0}}, seed, 500u, 0u, objective_settings{problem_form::minimum, minimizer_slot::gradient_descent, 0.1}};
+            std::move(name), {interval{-2.0, 2.0}, interval{-2.0, 2.0}}, seed, 500u, 0u, objective_settings{problem_form::minimum, minimizer_slot::gradient_descent, 0.1}, {}};
 }
 
 }

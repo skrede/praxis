@@ -46,7 +46,7 @@ double holed_value(double x, double y)
 
 scenario_settings surface_opening(std::string selected)
 {
-    return scenario_settings{std::move(selected), {interval{-2.0, 2.0}, interval{-2.0, 2.0}}, Eigen::Vector2d(1.5, 0.5), 70u, 0u, {}};
+    return scenario_settings{std::move(selected), {interval{-2.0, 2.0}, interval{-2.0, 2.0}}, Eigen::Vector2d(1.5, 0.5), 70u, 0u, {}, {}};
 }
 
 opened open_surface(const scene::preset_site &site, std::vector<registered_surface> surfaces, const scenario_settings &settings)
@@ -166,7 +166,7 @@ TEST_CASE("a surface sampled over ranges other than the default places its field
     scheduler::scheduler loop(scheduler::inline_workers);
     staged built(loop);
 
-    const scenario_settings shifted{"circle", {interval{-1.0, 3.0}, interval{-1.0, 3.0}}, Eigen::Vector2d(1.5, 0.5), 70u, 0u, {}};
+    const scenario_settings shifted{"circle", {interval{-1.0, 3.0}, interval{-1.0, 3.0}}, Eigen::Vector2d(1.5, 0.5), 70u, 0u, {}, {}};
     const opened taken                                 = open_surface(built.site, {registered_surface("circle", &circle_value, &circle_gradient)}, shifted);
     const std::shared_ptr<const scenario_snapshot> ran = settled(loop, taken);
     taken.composed->stencil->render();

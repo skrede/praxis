@@ -49,7 +49,7 @@ registered_surface circle()
 
 scenario_settings opening_at(const Eigen::Vector2d &seed)
 {
-    return scenario_settings{"circle", square, seed, 70u, 0u, {}};
+    return scenario_settings{"circle", square, seed, 70u, 0u, {}, {}};
 }
 
 double plane_at(const Eigen::Vector2d &x, double f, const Eigen::Vector2d &gradient, const Eigen::Vector2d &q)

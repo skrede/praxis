@@ -46,3 +46,7 @@ praxis_add_test(typed_problem_test.cpp LIBS praxis::optimization praxis_test_sup
 target_include_directories(typed_problem_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src)
 praxis_add_test(jet_test.cpp LIBS praxis::optimization)
 target_include_directories(jet_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src)
+praxis_add_test(manual_scenario_test.cpp HEADERS composed_curve.h typed_stage.h ../presets/scratch_directory.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config spdlog::spdlog praxis_test_support)
+target_include_directories(manual_scenario_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src ${PROJECT_SOURCE_DIR}/presets/optimization ${PROJECT_SOURCE_DIR}/tests/presets)
+praxis_add_test(manual_parameters_test.cpp HEADERS composed_curve.h typed_stage.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
+target_include_directories(manual_parameters_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src)

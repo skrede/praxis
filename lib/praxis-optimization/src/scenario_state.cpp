@@ -121,7 +121,7 @@ void scenario_state::linearize(const Eigen::VectorXd &point)
         return;
 
     auto moved           = std::make_shared<scenario_snapshot>(*m_shown);
-    moved->linearization = linearized_at(m_problems[moved->selected], point, m_checks);
+    moved->linearization = linearized_at(m_problems[moved->selected], point, checking(moved->selected));
     republish(std::move(moved));
 }
 
@@ -149,7 +149,7 @@ void scenario_state::set_range(std::span<const interval> ranges)
 
 void scenario_state::solve(std::uint32_t steps, std::uint32_t selecting)
 {
-    const std::optional<std::size_t> selected = selected_among(m_names, m_settings.selected);
+    const std::optional<std::size_t> selected = posed_selection();
     if(!selected)
         return;
 
@@ -164,7 +164,7 @@ void scenario_state::solve(std::uint32_t steps, std::uint32_t selecting)
     else
         shown->grid = sampled_grid(posed, m_settings.ranges);
     if(m_point)
-        shown->linearization = linearized_at(posed, *m_point, m_checks);
+        shown->linearization = linearized_at(posed, *m_point, checking(*selected));
     republish(std::move(shown));
 }
 

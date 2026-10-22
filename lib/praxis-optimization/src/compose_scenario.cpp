@@ -58,7 +58,7 @@ std::shared_ptr<scene::preset> refused(const char *kind, const std::string &why)
 
 std::optional<std::string> unopenable(const std::vector<std::string> &registered, const scenario_settings &opened, std::size_t dimension)
 {
-    if(std::find(registered.begin(), registered.end(), opened.selected) == registered.end())
+    if(opened.typed.source != function_source::manual && std::find(registered.begin(), registered.end(), opened.selected) == registered.end())
         return "it opens at '" + opened.selected + "', which is not registered (registered: " + listed(registered) + ")";
     if(opened.ranges.size() != dimension || static_cast<std::size_t>(opened.seed.size()) != dimension)
         return std::format("it opens over {} ranges from a seed of {} coordinates, and its functions take {}", opened.ranges.size(), opened.seed.size(), dimension);
@@ -74,11 +74,12 @@ std::optional<std::string> unopenable(const std::vector<std::string> &registered
 // handed to the preset's release callable: freeing it earlier would let a run the gate has already
 // posted reach storage that is gone.
 template<typename registered, typename drawing>
-std::shared_ptr<scene::preset> composed_over(const scene::preset_site &site, std::vector<registered> functions, const capabilities &solving, const scenario_settings &opened,
+std::shared_ptr<scene::preset> composed_over(const scene::preset_site &site, std::vector<registered> functions, const capabilities &solving, scenario_settings opened,
                                              const scenario_composition &composed, const char *kind, drawing drawn)
 {
     const std::size_t dimension                     = std::is_same_v<registered, registered_curve> ? 1u : 2u;
     const std::vector<std::string> registered_names = names_of(functions);
+    opened.typed                                    = lettered(std::move(opened.typed), dimension);
     if(const std::optional<std::string> why = unopenable(registered_names, opened, dimension))
         return refused(kind, *why);
 

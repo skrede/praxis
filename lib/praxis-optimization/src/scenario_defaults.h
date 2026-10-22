@@ -18,6 +18,12 @@ inline constexpr double curve_objective_tolerance = 1.0e-12;
 // The largest |df/dx|, |df/dy| a surface's minimization stops below, in the units of f per unit of x.
 inline constexpr double surface_objective_tolerance = 1.0e-12;
 
+// The value a letter new to a typed function takes, and the minimum and the maximum of the range it
+// is chosen from, in whatever units the function gives the letter.
+inline constexpr double parameter_value = 1.0;
+inline constexpr double parameter_lower = -5.0;
+inline constexpr double parameter_upper = 5.0;
+
 // The points a curve is sampled at over its range, ends included, a count.
 inline constexpr std::size_t curve_samples = 1601;
 

@@ -61,7 +61,9 @@ bool taken_at(const Eigen::VectorXd &x, std::size_t dimension, const char *as)
 
 bool admitted(const scenario_settings &edited, const std::vector<std::string> &names, std::size_t dimension)
 {
-    return selected_among(names, edited.selected) && drawn_over(edited.ranges, dimension) && taken_at(edited.seed, dimension, "solved from one finite seed");
+    const bool named = edited.typed.source == function_source::manual || selected_among(names, edited.selected).has_value();
+
+    return named && drawn_over(edited.ranges, dimension) && taken_at(edited.seed, dimension, "solved from one finite seed");
 }
 
 bool descends_by(double step_length)

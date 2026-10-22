@@ -39,6 +39,32 @@ struct objective_settings
     double step_length;
 };
 
+// Where the function drawn and solved comes from. The order is the document's spellings', which is
+// what reading a spelling back as an index and casting relies on.
+enum class function_source : std::uint8_t
+{
+    registered,
+    manual
+};
+
+// A letter of a typed function other than its variables, the value it stands for and the range it
+// is chosen from.
+struct typed_parameter
+{
+    char name;
+    double value;
+    interval range;
+};
+
+// The text of a typed function, read where the source is manual, and one parameter per letter it
+// uses, in letter order.
+struct typed_settings
+{
+    function_source source;
+    std::string expression;
+    std::vector<typed_parameter> parameters;
+};
+
 // One range and one seed coordinate per variable of the function; `step` is the step k selected,
 // from x_k to x_(k+1).
 struct scenario_settings
@@ -49,12 +75,14 @@ struct scenario_settings
     std::uint32_t limit;
     std::uint32_t step;
     objective_settings objective;
+    typed_settings typed;
 };
 
-// The registered functions and the bound solver are called here and only here, on the strand that
-// owns this state, so a function or a solve that is slow or never returns stalls no frame. A request
-// naming a seed, a point or a range the function cannot take is logged and changes nothing. The
-// central difference of a linearization is evaluated only where the state checks derivatives.
+// The registered functions, the typed one and the bound solver are called here and only here, on the
+// strand that owns this state, so a function or a solve that is slow or never returns stalls no frame.
+// A request naming a seed, a point or a range the function cannot take is logged and changes nothing.
+// The central difference of a linearization is evaluated only where the state checks derivatives and
+// the source is registered.
 class scenario_state
 {
 public:
@@ -97,6 +125,18 @@ public:
     // Solves again with the step length gradient descent takes, which must be finite and positive.
     void set_step_length(double step_length);
 
+    // Solves again from the seed, the typed function wherever the source is manual.
+    void select_source(function_source source);
+
+    // Solves again from the seed where the text reads as a function, a letter new to it taking the
+    // default value and range and a letter it no longer uses dropped.
+    void set_expression(std::string text);
+
+    // Each solves again from the seed; a value must be finite, a range finite with its minimum below
+    // its maximum, and the letter one the typed function uses.
+    void set_parameter(char name, double value);
+    void set_parameter_range(char name, interval range);
+
     // Evaluated at once and with every later run, which publishes it beside the solve.
     void linearize(const Eigen::VectorXd &point);
 
@@ -109,6 +149,7 @@ private:
     capabilities m_solving;
     scenario_settings m_settings;
     std::vector<std::string> m_names;
+    // Past the registered functions' problems, the typed function's, once its text has read.
     std::vector<problem> m_problems;
     std::vector<problem> m_objectives;
     std::optional<Eigen::VectorXd> m_point;
@@ -119,6 +160,8 @@ private:
                    std::shared_ptr<scenario_publisher> published, bool checks_derivative);
 
     void solve(std::uint32_t steps, std::uint32_t selecting);
+    std::optional<std::size_t> posed_selection();
+    bool checking(std::size_t selected) const;
     scenario_run posed_run(std::size_t selected, std::uint32_t steps) const;
     void republish(std::shared_ptr<scenario_snapshot> moved);
     bool admits(const scenario_settings &edited) const;

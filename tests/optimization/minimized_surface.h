@@ -50,7 +50,7 @@ inline registered_surface elliptic()
 inline scenario_settings shipped(problem_form form)
 {
     return scenario_settings{
-            "(x^2 + 10y^2)/2", {interval{-2.0, 2.0}, interval{-2.0, 2.0}}, Eigen::Vector2d(-2.0, -2.0), 500u, 0u, objective_settings{form, minimizer_slot::newton, 0.1}};
+            "(x^2 + 10y^2)/2", {interval{-2.0, 2.0}, interval{-2.0, 2.0}}, Eigen::Vector2d(-2.0, -2.0), 500u, 0u, objective_settings{form, minimizer_slot::newton, 0.1}, {}};
 }
 
 // The lowest of the field's drawn vertices, the floor's iterates in their order, and the direction the

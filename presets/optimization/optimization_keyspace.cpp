@@ -41,6 +41,23 @@ void declare_preset(config::declaration &shape)
     shape.field(optimization::function_name_key, config::field_kind::text, std::string());
 }
 
+std::string under_parameter(const char *leaf)
+{
+    return std::string(optimization::parameters_key) + "/" + leaf;
+}
+
+void declare_typed(config::declaration &shape)
+{
+    shape.choice(optimization::source_key, std::vector<std::string>(optimization::source_spellings.begin(), optimization::source_spellings.end()),
+                 optimization::source_spellings.front());
+    shape.field(optimization::expression_key, config::field_kind::text, std::string());
+    shape.group("parameters");
+    shape.collection(optimization::parameters_key, optimization::parameter_name_leaf);
+    shape.field(under_parameter(optimization::parameter_value_leaf), config::field_kind::real, "1");
+    shape.field(under_parameter(optimization::parameter_lower_leaf), config::field_kind::real, "-5");
+    shape.field(under_parameter(optimization::parameter_upper_leaf), config::field_kind::real, "5");
+}
+
 void declare_solve(config::declaration &shape)
 {
     shape.group("range");
@@ -89,6 +106,29 @@ optimization::objective_settings objective_at(const config::document &values)
                                             real_at(values, optimization::step_length_key)};
 }
 
+double parameter_at(const config::document &values, const std::string &name, const char *leaf)
+{
+    const expected<std::string, config::error> key = values.key(optimization::parameters_key, name, leaf);
+
+    return key ? real_at(values, key->c_str()) : std::numeric_limits<double>::quiet_NaN();
+}
+
+// An instance whose name is not one lowercase letter names no parameter, so it is not read.
+optimization::typed_settings typed_at(const config::document &values)
+{
+    optimization::typed_settings typed{static_cast<optimization::function_source>(spelled_at(values, optimization::source_key, optimization::source_spellings)),
+                                       values.text(optimization::expression_key).value_or(std::string()),
+                                       {}};
+    for(const std::string &name : values.identities(optimization::parameters_key))
+        if(name.size() == 1u && name.front() >= 'a' && name.front() <= 'z')
+            typed.parameters.push_back(optimization::typed_parameter{
+                    name.front(), parameter_at(values, name, optimization::parameter_value_leaf),
+                    optimization::interval{parameter_at(values, name, optimization::parameter_lower_leaf), parameter_at(values, name, optimization::parameter_upper_leaf)}});
+    std::ranges::sort(typed.parameters, {}, &optimization::typed_parameter::name);
+
+    return typed;
+}
+
 std::uint32_t count_at(const config::document &values, const char *key)
 {
     const expected<std::int64_t, config::error> read = values.integer(key);
@@ -102,6 +142,7 @@ config::declaration optimization_keyspace()
 {
     config::declaration shape("optimization");
     declare_preset(shape);
+    declare_typed(shape);
     declare_solve(shape);
 
     return shape;
@@ -119,7 +160,8 @@ optimization::scenario_settings keys::opened_settings(const config::document &va
                                            Eigen::VectorXd::Constant(static_cast<Eigen::Index>(dimension), std::numeric_limits<double>::quiet_NaN()),
                                            count_at(values, optimization::limit_key),
                                            count_at(values, optimization::step_key),
-                                           objective_at(values)};
+                                           objective_at(values),
+                                           typed_at(values)};
     for(std::size_t at = 0; at < dimension && at < optimization::seed_keys.size(); ++at)
     {
         opened.ranges.push_back(optimization::interval{real_at(values, optimization::range_lower_keys[at]), real_at(values, optimization::range_upper_keys[at])});
