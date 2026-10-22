@@ -34,12 +34,12 @@ inline constexpr std::uint32_t minimizer_row_descent_limit = 200;
 // The half-width of the box every coordinate of a seed is drawn from, in the problem's own
 // coordinate, one per problem the minimizer rows pose.
 inline constexpr double quartic_seed_half_width          = 4.0;
-inline constexpr double exponential_seed_half_width      = 4.0;
+inline constexpr double exponential_seed_half_width      = 2.0;
 inline constexpr double elongated_bowl_seed_half_width   = 4.0;
 inline constexpr double rosenbrock_seed_half_width       = 4.0;
 inline constexpr double shifted_parabola_seed_half_width = 4.0;
 inline constexpr double oval_bowl_seed_half_width        = 4.0;
-inline constexpr double double_well_seed_half_width      = 4.0;
+inline constexpr double double_well_seed_half_width      = 2.0;
 
 // The step length the descent row hands either side, one per problem it poses, in units of x per
 // unit of gradient.
