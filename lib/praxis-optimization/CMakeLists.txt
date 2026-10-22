@@ -77,6 +77,11 @@ praxis_add_module(optimization
     src/projected/step_constants.h
     src/projected/periodic_bounds.h
     src/projected/periodic_bounds.cpp
+    src/typed/echo.cpp
+    src/typed/parse.h
+    src/typed/parse.cpp
+    src/typed/lexeme.cpp
+    src/typed/expression.h
     PUBLIC_LIBS
     praxis::extension
     praxis::evaluation

@@ -38,3 +38,7 @@ praxis_add_test(curve_objective_view_test.cpp HEADERS composed_curve.h drawn_gra
 praxis_add_test(surface_objective_test.cpp HEADERS composed_curve.h drawn_surface.h minimized_surface.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
 target_include_directories(surface_objective_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src)
 praxis_add_test(surface_objective_view_test.cpp HEADERS composed_curve.h drawn_surface.h minimized_surface.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
+praxis_add_test(expression_echo_test.cpp LIBS praxis::optimization)
+target_include_directories(expression_echo_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src)
+praxis_add_test(expression_parse_test.cpp LIBS praxis::optimization)
+target_include_directories(expression_parse_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src)
