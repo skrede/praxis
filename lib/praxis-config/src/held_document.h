@@ -24,7 +24,7 @@ using identity_map = std::map<std::string, std::string, std::less<>>;
 using defaults_map = std::map<std::string, leaf_default, std::less<>>;
 using entry_map    = std::map<std::string, std::string, std::less<>>;
 
-// A collection a key passes without naming an instance, and how many instances stored keys name there.
+// A collection a key passes without naming an instance, and how many instances it holds there.
 struct crossed
 {
     std::string container;
@@ -46,9 +46,10 @@ public:
 
     std::optional<crossed> crossing(std::string_view key) const;
 
-    // One slot per instance element of the declared collection `collection_path` across every outer
-    // instance, in ordinal order, holding its identity value or nothing where it carries none; no
-    // slot at all for a path no collection is declared at.
+    // One slot per instance element of the collection `collection_path` addresses, under the outer
+    // instances its ordinals name (an unbracketed segment naming the first), in ordinal order,
+    // holding its identity value or nothing where it carries none; no slot at all for a path no
+    // collection is declared at.
     std::vector<std::optional<std::string>> identities_in(std::string_view collection_path) const;
 
     const std::filesystem::path &from() const noexcept;

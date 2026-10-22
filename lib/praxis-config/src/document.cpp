@@ -144,7 +144,8 @@ value_origin document::origin_of(std::string_view key) const
 
     for(const std::pair<const std::string, std::string> &collection : m_held->keyed())
         if(hangs_under(declared, collection.first) && !addressed_through(key, collection.first) &&
-           std::ranges::any_of(m_held->identities_in(collection.first), [](const std::optional<std::string> &slot) { return slot.has_value(); }))
+           std::ranges::any_of(m_held->identities_in(leading_segments(std::string(key), segments_in(collection.first))),
+                               [](const std::optional<std::string> &slot) { return slot.has_value(); }))
             return value_origin{origin_kind::instance_required, std::string()};
 
     return value_origin{origin_kind::fallback, std::string()};

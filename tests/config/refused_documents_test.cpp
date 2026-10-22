@@ -157,33 +157,33 @@ TEST_CASE("the nearest allowed value is the one fewest weighted edits away, ties
     CHECK(times_named(tie.error().message, "dial/grade", "'bx'") == 2);
 }
 
-TEST_CASE("a leaf written twice is malformed by name through load and save, and a group written twice is not", "[config]")
+TEST_CASE("a leaf or a group written twice is malformed by name through load and save", "[config]")
 {
-    constexpr std::array twice{std::string_view("<probe><window><title>one</title><title>two</title></window></probe>\n"),
-                               std::string_view("<probe><window title=\"attr\"><title>elem</title></window></probe>\n")};
-    for(const std::string_view body : twice)
+    struct twice
     {
-        INFO(body);
-        const std::filesystem::path where    = written("leaf-twice.xml", body);
+        std::string_view body;
+        std::string_view named;
+    };
+    constexpr std::array written_twice{twice{"<probe><window><title>one</title><title>two</title></window></probe>\n", "'window/title' is written twice"},
+                                       twice{"<probe><window title=\"attr\"><title>elem</title></window></probe>\n", "'window/title' is written twice"},
+                                       twice{"<probe><window title=\"a\"/><window width=\"3\"/></probe>\n", "'window' is written twice"},
+                                       twice{"<probe><window/><window title=\"b\"/></probe>\n", "'window' is written twice"},
+                                       twice{"<probe><window title=\"b\"/><window/></probe>\n", "'window' is written twice"}};
+    for(const twice &one : written_twice)
+    {
+        INFO(one.body);
+        const std::filesystem::path where    = written("written-twice.xml", one.body);
         const expected<document, error> read = load(described(), resolve(where, where.parent_path()));
         const expected<void, error> saved    = save(described(), resolve(where, where.parent_path()), std::vector<edit>{edit{"window/title", "new"}});
 
         REQUIRE_FALSE(read.has_value());
         CHECK(read.error().code == error_code::malformed_source);
-        CHECK(read.error().message.find("'window/title' is written twice") != std::string::npos);
+        CHECK(read.error().message.find(one.named) != std::string::npos);
         REQUIRE_FALSE(saved.has_value());
         CHECK(saved.error().code == error_code::malformed_source);
-        CHECK(saved.error().message.find("'window/title' is written twice") != std::string::npos);
-        CHECK(text_of(where) == body);
+        CHECK(saved.error().message.find(one.named) != std::string::npos);
+        CHECK(text_of(where) == one.body);
     }
-
-    const expected<document, error> group = loaded("group-twice.xml", "<probe><window title=\"a\"/><window width=\"3\"/></probe>\n");
-    const expected<document, error> empty = loaded("empty-then-full.xml", "<probe><window/><window title=\"b\"/></probe>\n");
-    REQUIRE(group.has_value());
-    CHECK(group.value().text("window/title").value() == "a");
-    CHECK(group.value().integer("window/width").value() == 3);
-    REQUIRE(empty.has_value());
-    CHECK(empty.value().text("window/title").value() == "b");
 }
 
 TEST_CASE("a declared leaf carrying a child element is malformed by name at load, no save writes into it, and an attribute on it is not", "[config]")

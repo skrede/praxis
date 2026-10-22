@@ -21,18 +21,20 @@ constexpr std::size_t deepest_element = 64;
 
 // `values` holds every path a value may stand at, which leaves out the collections themselves;
 // `leaves` those of them no group stands at: the declared leaves and every collection's identity.
+// `groups` holds each group element met so far by its key, ordinals included.
 struct walk
 {
     folding &out;
     std::set<std::string, std::less<>> collections;
     std::set<std::string, std::less<>> values;
     std::set<std::string, std::less<>> leaves;
+    std::set<std::string, std::less<>> groups;
     std::map<std::string, std::size_t, std::less<>> ordinals;
 };
 
 walk walking(const declaration &shape, folding &out)
 {
-    walk state{out, {}, {}, {}, {}};
+    walk state{out, {}, {}, {}, {}, {}};
     for(const node &declared : shape.nodes())
     {
         if(declared.shape == node_kind::collection)
@@ -80,17 +82,33 @@ std::string joined(const std::string &path, std::string_view name)
     return path.empty() ? std::string(name) : path + "/" + std::string(name);
 }
 
-// A leaf or identity written twice is a fault; a group written again takes the later copy.
+void written_twice(walk &state, const std::string &key)
+{
+    if(std::string finding = "'" + key + "' is written twice"; std::ranges::find(state.out.malformed, finding) == state.out.malformed.end())
+        state.out.malformed.push_back(std::move(finding));
+}
+
+bool first_group_copy(walk &state, const std::string &key)
+{
+    if(state.groups.insert(key).second)
+        return true;
+    written_twice(state, key);
+    return false;
+}
+
+// A leaf, an identity or a group written twice is a fault.
 void kept(walk &state, std::string key, std::string text)
 {
     const std::string declared = declared_path(key);
     if(!state.values.contains(declared))
         state.out.undeclared.push_back(std::move(key));
     else if(!state.leaves.contains(declared))
-        state.out.entries.insert_or_assign(std::move(key), std::move(text));
+    {
+        if(first_group_copy(state, key))
+            state.out.entries.insert_or_assign(std::move(key), std::move(text));
+    }
     else if(!state.out.entries.try_emplace(key, std::move(text)).second)
-        if(std::string finding = "'" + key + "' is written twice"; std::ranges::find(state.out.malformed, finding) == state.out.malformed.end())
-            state.out.malformed.push_back(std::move(finding));
+        written_twice(state, key);
 }
 
 std::optional<std::string> structural_fault(pugi::xml_node element, const std::string &where)
@@ -165,7 +183,7 @@ void walk_child(walk &state, pugi::xml_node child, const std::string &path, std:
         walk_undeclared(state, child, path, depth);
     else if(!child.first_attribute() && !carries_elements(child))
         kept(state, path, text_of(child));
-    else
+    else if(first_group_copy(state, path))
         walk_element(state, child, path, depth);
 }
 

@@ -2,7 +2,6 @@
 #include "key_path.h"
 #include "held_document.h"
 
-#include <set>
 #include <string>
 #include <vector>
 #include <cstddef>
@@ -78,33 +77,27 @@ std::optional<crossed> held_document::crossing(std::string_view key) const
 {
     const std::vector<std::string_view> asked = segments_of(key);
     std::optional<std::size_t> shallowest;
-    std::set<std::size_t> named;
     for(const std::pair<const std::string, std::string> &value : m_values)
-    {
-        const std::vector<std::string_view> held = segments_of(value.first);
-        const std::optional<std::size_t> at      = omitted_ordinal(held, asked);
-        if(!at || (shallowest && *at > *shallowest))
-            continue;
-        if(!shallowest || *at < *shallowest)
-            named.clear();
-        shallowest = at;
-        named.insert(parsed(held[*at]).ordinal);
-    }
+        if(const std::optional<std::size_t> at = omitted_ordinal(segments_of(value.first), asked); at && (!shallowest || *at < *shallowest))
+            shallowest = at;
 
     if(!shallowest)
         return std::nullopt;
-    return crossed{leading_segments(std::string(key), *shallowest + 1), named.size()};
+    std::string container   = leading_segments(std::string(key), *shallowest + 1);
+    const std::size_t count = identities_in(container).size();
+    return crossed{std::move(container), count};
 }
 
 std::vector<std::optional<std::string>> held_document::identities_in(std::string_view collection_path) const
 {
-    const std::optional<std::string> keyed_by = identity_of(collection_path);
-    if(!keyed_by)
+    const std::optional<std::string> keyed_by = identity_of(declared_path(collection_path));
+    if(!keyed_by || collection_path.ends_with(']'))
         return {};
 
+    const std::vector<step> holder = steps_of(collection_path);
     std::vector<const std::string *> instances;
     for(const std::string &instance : m_instances)
-        if(declared_path(instance) == collection_path)
+        if(steps_of(std::string_view(instance).substr(0, instance.rfind('['))) == holder)
             instances.push_back(&instance);
     std::ranges::stable_sort(instances, {}, [](const std::string *instance) { return ordinals_of(*instance); });
 

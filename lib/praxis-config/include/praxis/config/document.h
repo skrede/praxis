@@ -55,8 +55,9 @@ public:
 
     bool holds(std::string_view key) const;
 
-    // One identity value per instance element of `collection_path`, in document order, so an
-    // instance's position is its ordinal; an instance carrying no identity answers an empty string.
+    // One identity value per instance element of `collection_path` under the outer instances its
+    // ordinals name, an unbracketed segment naming the first, in document order, so an instance's
+    // position is its ordinal; an instance carrying no identity answers an empty string.
     std::vector<std::string> identities(std::string_view collection_path) const;
 
     // The canonical key of `leaf` under the instance whose identity value is `identity`; an empty

@@ -49,7 +49,7 @@ std::optional<std::string> carried_identity(const declaration &shape, const docu
         if(declared.shape != node_kind::collection || plain != declared.path + "/" + declared.identity)
             continue;
 
-        const std::vector<std::string> present  = reloaded.identities(declared.path);
+        const std::vector<std::string> present  = reloaded.identities(std::string_view(key).substr(0, key.rfind('[')));
         const std::optional<std::size_t> at_one = addressed_at(key);
         if(!at_one || *at_one >= present.size())
             return std::nullopt;
