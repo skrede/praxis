@@ -2094,6 +2094,10 @@ lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	activate
 lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	deactivate_loaded_object	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	clear_loaded_object	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/world_object_window.h	load_stl	prototype	()	typename:bool
+lib/praxis-optimization/include/praxis/optimization/baseline/minimizer.h	optimization	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/baseline/minimizer.h	praxis	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/baseline/minimizer.h	newton	prototype	(const problem & p,const Eigen::VectorXd & x0,std::uint32_t max_iterations,std::vector<Eigen::VectorXd> & iterates)	typename:expected<Eigen::VectorXd,refusal>
+lib/praxis-optimization/include/praxis/optimization/baseline/minimizer.h	gradient_descent	prototype	(const problem & p,const Eigen::VectorXd & x0,double step_length,std::uint32_t max_iterations,std::vector<Eigen::VectorXd> & iterates)	typename:expected<Eigen::VectorXd,refusal>
 lib/praxis-optimization/include/praxis/optimization/baseline/solver.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/baseline/solver.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/baseline/solver.h	solve	prototype	(const problem & p,const Eigen::VectorXd & x0,std::uint32_t max_iterations,std::vector<Eigen::VectorXd> & iterates)	typename:expected<Eigen::VectorXd,refusal>
@@ -2101,9 +2105,10 @@ lib/praxis-optimization/include/praxis/optimization/capabilities.h	optimization	
 lib/praxis-optimization/include/praxis/optimization/capabilities.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/capabilities.h	capabilities	struct	-	-
 lib/praxis-optimization/include/praxis/optimization/capabilities.h	solver	member	-	typename:solver_ops
+lib/praxis-optimization/include/praxis/optimization/capabilities.h	minimizer	member	-	typename:minimizer_ops
 lib/praxis-optimization/include/praxis/optimization/capabilities.h	baseline	prototype	()	typename:capabilities
-lib/praxis-optimization/include/praxis/optimization/capabilities.h	capability_views	prototype	(const capabilities & c)	typename:std::array<capability_view,1>
-lib/praxis-optimization/include/praxis/optimization/capabilities.h	capability_views	prototype	(capabilities &&)	typename:std::array<capability_view,1>
+lib/praxis-optimization/include/praxis/optimization/capabilities.h	capability_views	prototype	(const capabilities & c)	typename:std::array<capability_view,2>
+lib/praxis-optimization/include/praxis/optimization/capabilities.h	capability_views	prototype	(capabilities &&)	typename:std::array<capability_view,2>
 lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	scenario_window_inputs	struct	-	-
@@ -2161,6 +2166,16 @@ lib/praxis-optimization/include/praxis/optimization/linearization_window.h	m_see
 lib/praxis-optimization/include/praxis/optimization/linearization_window.h	m_scenario	member	-	typename:std::weak_ptr<owned_scenario>
 lib/praxis-optimization/include/praxis/optimization/linearization_window.h	edit_point	prototype	(const std::vector<interval> & ranges)	typename:bool
 lib/praxis-optimization/include/praxis/optimization/linearization_window.h	post	prototype	() const	typename:void
+lib/praxis-optimization/include/praxis/optimization/minimizer.h	inert	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/minimizer.h	optimization	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/minimizer.h	praxis	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/minimizer.h	newton	prototype	(const problem & p,const Eigen::VectorXd & x0,std::uint32_t max_iterations,std::vector<Eigen::VectorXd> & iterates)	typename:expected<Eigen::VectorXd,refusal>
+lib/praxis-optimization/include/praxis/optimization/minimizer.h	gradient_descent	prototype	(const problem & p,const Eigen::VectorXd & x0,double step_length,std::uint32_t max_iterations,std::vector<Eigen::VectorXd> & iterates)	typename:expected<Eigen::VectorXd,refusal>
+lib/praxis-optimization/include/praxis/optimization/minimizer.h	optimization	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/minimizer.h	praxis	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/minimizer.h	minimizer_ops	struct	-	-
+lib/praxis-optimization/include/praxis/optimization/minimizer.h	newton	member	-	typename:expected<Eigen::VectorXd,refusal> (*)(const problem & p,const Eigen::VectorXd & x0,std::uint32_t max_iterations,std::vector<Eigen::VectorXd> & iterates)
+lib/praxis-optimization/include/praxis/optimization/minimizer.h	gradient_descent	member	-	typename:expected<Eigen::VectorXd,refusal> (*)(const problem & p,const Eigen::VectorXd & x0,double step_length,std::uint32_t max_iterations,std::vector<Eigen::VectorXd> & iterates)
 lib/praxis-optimization/include/praxis/optimization/problem.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/problem.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/problem.h	box	struct	-	-
@@ -2172,6 +2187,10 @@ lib/praxis-optimization/include/praxis/optimization/problem.h	error	member	-	typ
 lib/praxis-optimization/include/praxis/optimization/problem.h	jacobian	member	-	typename:std::function<expected<Eigen::MatrixXd,refusal> (const Eigen::VectorXd & x)>
 lib/praxis-optimization/include/praxis/optimization/problem.h	converged	member	-	typename:std::function<bool (const Eigen::VectorXd & e)>
 lib/praxis-optimization/include/praxis/optimization/problem.h	bounds	member	-	typename:std::optional<box>
+lib/praxis-optimization/include/praxis/optimization/problem.h	objective	member	-	typename:std::function<expected<double,refusal> (const Eigen::VectorXd & x)>
+lib/praxis-optimization/include/praxis/optimization/problem.h	gradient	member	-	typename:std::function<expected<Eigen::VectorXd,refusal> (const Eigen::VectorXd & x)>
+lib/praxis-optimization/include/praxis/optimization/problem.h	hessian	member	-	typename:std::function<expected<Eigen::MatrixXd,refusal> (const Eigen::VectorXd & x)>
+lib/praxis-optimization/include/praxis/optimization/problem.h	stationary	member	-	typename:std::function<bool (const Eigen::VectorXd & gradient)>
 lib/praxis-optimization/include/praxis/optimization/projected/solver.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/projected/solver.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/projected/solver.h	projected	namespace	-	-
@@ -2282,11 +2301,20 @@ lib/praxis-optimization/include/praxis/optimization/slots.h	solver_slot	enum	-	t
 lib/praxis-optimization/include/praxis/optimization/slots.h	solve	enumerator	-	-
 lib/praxis-optimization/include/praxis/optimization/slots.h	count	enumerator	-	-
 lib/praxis-optimization/include/praxis/optimization/slots.h	solver_slot_set	typedef	-	typename:basic_slot_set<solver_slot>
+lib/praxis-optimization/include/praxis/optimization/slots.h	minimizer_slot	enum	-	typename:std::uint32_t
+lib/praxis-optimization/include/praxis/optimization/slots.h	newton	enumerator	-	-
+lib/praxis-optimization/include/praxis/optimization/slots.h	gradient_descent	enumerator	-	-
+lib/praxis-optimization/include/praxis/optimization/slots.h	count	enumerator	-	-
+lib/praxis-optimization/include/praxis/optimization/slots.h	minimizer_slot_set	typedef	-	typename:basic_slot_set<minimizer_slot>
 lib/praxis-optimization/include/praxis/optimization/slots.h	view_of	prototype	(const solver_ops & ops)	typename:capability_view
 lib/praxis-optimization/include/praxis/optimization/slots.h	view_of	prototype	(solver_ops &&)	typename:capability_view
+lib/praxis-optimization/include/praxis/optimization/slots.h	view_of	prototype	(const minimizer_ops & ops)	typename:capability_view
+lib/praxis-optimization/include/praxis/optimization/slots.h	view_of	prototype	(minimizer_ops &&)	typename:capability_view
 lib/praxis-optimization/include/praxis/optimization/slots.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/slots.h	capability_slots	struct	-	-
 lib/praxis-optimization/include/praxis/optimization/slots.h	type	typedef	-	typename:optimization::solver_slot
+lib/praxis-optimization/include/praxis/optimization/slots.h	capability_slots	struct	-	-
+lib/praxis-optimization/include/praxis/optimization/slots.h	type	typedef	-	typename:optimization::minimizer_slot
 lib/praxis-optimization/include/praxis/optimization/solve_window.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/solve_window.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/solve_window.h	iterate_row	struct	-	-

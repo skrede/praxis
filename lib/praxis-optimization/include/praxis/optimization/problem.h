@@ -22,12 +22,17 @@ struct box
 };
 
 // Lynch & Park, Modern Robotics, sec. 6.2: e(x) = x_d - f(x), J = df/dx, a step x += J^+ e.
+// The objective form minimizes f: R^n -> R; stationary is tested over grad f.
 struct problem
 {
     std::function<expected<Eigen::VectorXd, refusal>(const Eigen::VectorXd &x)> error    = {};
     std::function<expected<Eigen::MatrixXd, refusal>(const Eigen::VectorXd &x)> jacobian = {};
     std::function<bool(const Eigen::VectorXd &e)> converged                              = {};
     std::optional<box> bounds                                                            = std::nullopt;
+    std::function<expected<double, refusal>(const Eigen::VectorXd &x)> objective         = {};
+    std::function<expected<Eigen::VectorXd, refusal>(const Eigen::VectorXd &x)> gradient = {};
+    std::function<expected<Eigen::MatrixXd, refusal>(const Eigen::VectorXd &x)> hessian  = {};
+    std::function<bool(const Eigen::VectorXd &gradient)> stationary                      = {};
 };
 
 }

@@ -172,7 +172,7 @@ TEST_CASE("the inert solve refuses and the slot reports whether it holds its def
     const solver_ops unbound{};
     const solver_ops bound{.solve = &solve};
     const capabilities composed                   = baseline();
-    const std::array<capability_view, 1> reported = capability_views(composed);
+    const std::array<capability_view, 2> reported = capability_views(composed);
 
     REQUIRE_FALSE(refused);
     REQUIRE(refused.error() == refusal::not_implemented);

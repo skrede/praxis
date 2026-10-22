@@ -58,6 +58,7 @@ endif ()
 
 if (TARGET praxis_optimization)
     praxis_add_failing_compile(optimization_solver_view.cpp DIAGNOSTIC "deleted function" LIBS praxis::optimization)
+    praxis_add_failing_compile(optimization_minimizer_view.cpp DIAGNOSTIC "deleted function" LIBS praxis::optimization)
 endif ()
 
 if (TARGET praxis_rigid_motion)

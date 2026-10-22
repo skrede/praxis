@@ -248,7 +248,7 @@ for a real reason.
 - **One carve-out, and it covers exactly one thing: an aggregate whose purpose is
   designated-initializer composition keeps its in-declaration member initializers.** That is the
   injection aggregates — the per-capability `*_ops` a seam is built from, and the per-extension
-  `capabilities` that composes an extension's own — and the problem object a solver slot is handed,
+  `capabilities` that composes an extension's own — and the problem object a solver or a minimizer slot is handed,
   with the box the problem carries, and nothing else.
   Giving them a constructor would eliminate the property that made them worth choosing, because a
   type with a user-declared constructor is not an aggregate and cannot be written with designated

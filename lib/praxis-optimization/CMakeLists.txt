@@ -4,6 +4,7 @@ praxis_add_module(optimization
     include/praxis/optimization/slots.h
     include/praxis/optimization/solver.h
     include/praxis/optimization/problem.h
+    include/praxis/optimization/minimizer.h
     include/praxis/optimization/registered.h
     include/praxis/optimization/evaluation.h
     include/praxis/optimization/curve_graph.h
@@ -18,12 +19,14 @@ praxis_add_module(optimization
     include/praxis/optimization/scenario_snapshot.h
     include/praxis/optimization/linearization_window.h
     include/praxis/optimization/baseline/solver.h
+    include/praxis/optimization/baseline/minimizer.h
     include/praxis/optimization/projected/solver.h
     src/evaluation.cpp
     src/descriptors.cpp
     src/registered.cpp
     src/curve_graph.cpp
     src/inert_solver.cpp
+    src/inert_minimizer.cpp
     src/solve_window.cpp
     src/scenario_state.cpp
     src/level_curve.cpp
@@ -52,6 +55,7 @@ praxis_add_module(optimization
     src/evaluation_problems.cpp
     src/linearization_window.cpp
     src/baseline/solver.cpp
+    src/baseline/minimizer.cpp
     src/baseline/capabilities.cpp
     src/projected/solver.cpp
     src/projected/step_constants.h
