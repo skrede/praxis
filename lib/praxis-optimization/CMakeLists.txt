@@ -25,6 +25,7 @@ praxis_add_module(optimization
     src/evaluation.cpp
     src/descriptors.cpp
     src/registered.cpp
+    src/registered_objective.cpp
     src/curve_graph.cpp
     src/curve_overlays.cpp
     src/inert_solver.cpp
@@ -43,8 +44,13 @@ praxis_add_module(optimization
     src/compose_scenario.cpp
     src/scenario_answers.cpp
     src/scenario_admission.cpp
+    src/scenario_objective.cpp
+    src/objective_answers.cpp
+    src/solve_controls.cpp
     src/evaluation_tables.h
     src/scenario_answers.h
+    src/objective_answers.h
+    src/registered_values.h
     src/scenario_admission.h
     src/level_curve.h
     src/drawn_iterates.h

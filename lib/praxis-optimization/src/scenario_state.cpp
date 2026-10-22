@@ -32,24 +32,27 @@ std::uint32_t held_to(std::uint32_t step, const scenario_run &ran)
 
 scenario_state::scenario_state(std::vector<registered_curve> curves, capabilities solving, scenario_settings opened, std::shared_ptr<scenario_publisher> published,
                                bool checks_derivative)
-        : scenario_state(1u, names_of(curves), posed_all(curves, &curve_problem, curve_tolerance), solving, std::move(opened), std::move(published), checks_derivative)
+        : scenario_state(1u, names_of(curves), posed_all(curves, &curve_problem, curve_tolerance), posed_all(curves, &curve_objective, curve_objective_tolerance), solving,
+                         std::move(opened), std::move(published), checks_derivative)
 {
 }
 
 scenario_state::scenario_state(std::vector<registered_surface> surfaces, capabilities solving, scenario_settings opened, std::shared_ptr<scenario_publisher> published,
                                bool checks_derivative)
-        : scenario_state(2u, names_of(surfaces), posed_all(surfaces, &surface_problem, surface_tolerance), solving, std::move(opened), std::move(published), checks_derivative)
+        : scenario_state(2u, names_of(surfaces), posed_all(surfaces, &surface_problem, surface_tolerance), posed_all(surfaces, &surface_objective, surface_objective_tolerance), solving,
+                         std::move(opened), std::move(published), checks_derivative)
 {
 }
 
-scenario_state::scenario_state(std::size_t dimension, std::vector<std::string> names, std::vector<problem> problems, capabilities solving, scenario_settings opened,
-                               std::shared_ptr<scenario_publisher> published, bool checks_derivative)
+scenario_state::scenario_state(std::size_t dimension, std::vector<std::string> names, std::vector<problem> problems, std::vector<problem> objectives, capabilities solving,
+                               scenario_settings opened, std::shared_ptr<scenario_publisher> published, bool checks_derivative)
         : m_checks(checks_derivative)
         , m_dimension(dimension)
         , m_solving(solving)
         , m_settings(std::move(opened))
         , m_names(std::move(names))
         , m_problems(std::move(problems))
+        , m_objectives(std::move(objectives))
         , m_point()
         , m_published(std::move(published))
 {
@@ -151,7 +154,7 @@ void scenario_state::solve(std::uint32_t steps, std::uint32_t selecting)
         return;
 
     const problem &posed = m_problems[*selected];
-    scenario_run ran     = solved(posed, m_solving.solver, m_settings.seed, steps);
+    scenario_run ran     = posed_run(*selected, steps);
     m_settings.step      = held_to(selecting, ran);
 
     auto shown = std::make_shared<scenario_snapshot>(

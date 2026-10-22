@@ -59,7 +59,7 @@ struct viewed_surface
             : loop(scheduler::inline_workers)
             , built(loop)
             , graph()
-            , taken(open_surface_with(built.site, {boxed()}, baseline(), scenario_settings{"circle", {interval{-2.0, 2.0}, interval{-2.0, 2.0}}, Eigen::Vector2d(1.5, 0.5), 70u, 0u},
+            , taken(open_surface_with(built.site, {boxed()}, baseline(), scenario_settings{"circle", {interval{-2.0, 2.0}, interval{-2.0, 2.0}}, Eigen::Vector2d(1.5, 0.5), 70u, 0u, {}},
                                       composer(graphed)))
     {
         static_cast<void>(settled(loop, taken));

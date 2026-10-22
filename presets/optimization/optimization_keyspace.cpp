@@ -17,6 +17,7 @@
 #include <Eigen/Core>
 
 #include <span>
+#include <array>
 #include <limits>
 #include <string>
 #include <vector>
@@ -53,6 +54,10 @@ void declare_solve(config::declaration &shape)
     shape.group("solve");
     shape.field(optimization::limit_key, config::field_kind::integer, "200");
     shape.field(optimization::step_key, config::field_kind::integer, "0");
+    shape.choice(optimization::form_key, std::vector<std::string>(optimization::form_spellings.begin(), optimization::form_spellings.end()), optimization::form_spellings.front());
+    shape.choice(optimization::method_key, std::vector<std::string>(optimization::method_spellings.begin(), optimization::method_spellings.end()),
+                 optimization::method_spellings.front());
+    shape.field(optimization::step_length_key, config::field_kind::real, "0.05");
 }
 
 std::string selected_name(const config::document &values)
@@ -65,6 +70,23 @@ double real_at(const config::document &values, const char *key)
     const expected<double, config::error> read = values.real(key);
 
     return read ? read.value() : std::numeric_limits<double>::quiet_NaN();
+}
+
+// The index of the spelling the document carries at `key`, which the keyspace holds to the table.
+template<std::size_t count>
+std::size_t spelled_at(const config::document &values, const char *key, const std::array<const char *, count> &spellings)
+{
+    const std::string read = values.text(key).value_or(std::string());
+    const auto found       = std::ranges::find(spellings, read);
+
+    return found == spellings.end() ? 0u : static_cast<std::size_t>(found - spellings.begin());
+}
+
+optimization::objective_settings objective_at(const config::document &values)
+{
+    return optimization::objective_settings{static_cast<optimization::problem_form>(spelled_at(values, optimization::form_key, optimization::form_spellings)),
+                                            static_cast<optimization::minimizer_slot>(spelled_at(values, optimization::method_key, optimization::method_spellings)),
+                                            real_at(values, optimization::step_length_key)};
 }
 
 std::uint32_t count_at(const config::document &values, const char *key)
@@ -96,7 +118,8 @@ optimization::scenario_settings keys::opened_settings(const config::document &va
                                            {},
                                            Eigen::VectorXd::Constant(static_cast<Eigen::Index>(dimension), std::numeric_limits<double>::quiet_NaN()),
                                            count_at(values, optimization::limit_key),
-                                           count_at(values, optimization::step_key)};
+                                           count_at(values, optimization::step_key),
+                                           objective_at(values)};
     for(std::size_t at = 0; at < dimension && at < optimization::seed_keys.size(); ++at)
     {
         opened.ranges.push_back(optimization::interval{real_at(values, optimization::range_lower_keys[at]), real_at(values, optimization::range_upper_keys[at])});

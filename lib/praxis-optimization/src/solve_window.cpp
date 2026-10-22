@@ -1,12 +1,12 @@
 #include "scenario_answers.h"
 
 #include "praxis/optimization/solve_window.h"
-#include "praxis/optimization/settings_keys.h"
 
 #include "praxis/extension/refusal.h"
 
 #include <imgui.h>
 
+#include <span>
 #include <array>
 #include <format>
 #include <memory>
@@ -15,15 +15,13 @@
 #include <cstddef>
 #include <cstdint>
 #include <utility>
-#include <initializer_list>
 
 namespace praxis::optimization {
 
 namespace {
 
-constexpr std::array<const char *, 2> seed_labels{"Seed x", "Seed y"};
-
-constexpr std::initializer_list<const char *> columns{"k", "x_k", "e_k"};
+constexpr std::array<const char *, 3> residual_columns{"k", "x_k", "e_k"};
+constexpr std::array<const char *, 4> objective_columns{"k", "x_k", "f_k", "grad f_k"};
 
 std::string coordinates(const Eigen::VectorXd &x)
 {
@@ -34,7 +32,7 @@ std::string coordinates(const Eigen::VectorXd &x)
     return written;
 }
 
-std::string errors(const expected<Eigen::VectorXd, refusal> &e)
+std::string entries(const expected<Eigen::VectorXd, refusal> &e)
 {
     if(!e)
         return std::string(refusal_text(e.error()));
@@ -46,15 +44,31 @@ std::string errors(const expected<Eigen::VectorXd, refusal> &e)
     return written;
 }
 
+std::string value(const expected<double, refusal> &f)
+{
+    return f ? std::format("{:.12g}", *f) : std::string(refusal_text(f.error()));
+}
+
+std::vector<std::string> cells_at(const scenario_run &run, std::size_t k)
+{
+    if(!run.minimized_by)
+        return {coordinates(run.iterates[k]), k < run.errors.size() ? entries(run.errors[k]) : std::string()};
+    if(k >= run.objectives.size() || k >= run.gradients.size())
+        return {coordinates(run.iterates[k]), std::string(), std::string()};
+
+    return {coordinates(run.iterates[k]), value(run.objectives[k]), entries(run.gradients[k])};
+}
+
 void render_row(const iterate_row &shown)
 {
     ImGui::TableNextRow();
     ImGui::TableNextColumn();
     ImGui::Text("%zu", shown.k);
-    ImGui::TableNextColumn();
-    ImGui::TextUnformatted(shown.x.c_str());
-    ImGui::TableNextColumn();
-    ImGui::TextUnformatted(shown.e.c_str());
+    for(const std::string &cell : shown.cells)
+    {
+        ImGui::TableNextColumn();
+        ImGui::TextUnformatted(cell.c_str());
+    }
 }
 
 }
@@ -63,7 +77,7 @@ std::vector<iterate_row> iterate_rows(const scenario_run &run)
 {
     std::vector<iterate_row> rows;
     for(std::size_t k = 0; k < run.iterates.size(); ++k)
-        rows.push_back(iterate_row{k, coordinates(run.iterates[k]), k < run.errors.size() ? errors(run.errors[k]) : std::string()});
+        rows.push_back(iterate_row{k, cells_at(run, k)});
 
     return rows;
 }
@@ -83,23 +97,18 @@ std::string run_status(const scenario_snapshot &shown)
 
 solve_window::solve_window(std::string name, const scenario_window_inputs &inputs)
         : imgui_window(std::move(name))
+        , m_typed_step(inputs.opened.objective.step_length)
+        , m_form(inputs.opened.objective.form)
+        , m_step_length(inputs.opened.objective.step_length)
         , m_step(inputs.opened.step)
         , m_limit(inputs.opened.limit)
         , m_seed(inputs.opened.seed)
         , m_seen(inputs.seen)
+        , m_method(inputs.opened.objective.method)
         , m_rows()
         , m_scenario(inputs.scenario)
         , m_last()
 {
-}
-
-std::vector<config::edit> solve_window::settings_edits(const config::document &carried) const
-{
-    std::vector<config::edit> edits{config::edit{limit_key, std::to_string(m_limit)}, config::edit{step_key, std::to_string(m_step)}};
-    for(Eigen::Index at = 0; at < m_seed.size(); ++at)
-        edits.emplace_back(seed_keys.at(static_cast<std::size_t>(at)), config::exact_text(m_seed[at]));
-
-    return config::unsaved_edits(carried, edits);
 }
 
 void solve_window::render()
@@ -113,23 +122,6 @@ void solve_window::render()
     else
         render_run(shown);
     ImGui::End();
-}
-
-void solve_window::render_controls()
-{
-    for(Eigen::Index at = 0; at < m_seed.size(); ++at)
-        ImGui::InputDouble(seed_labels.at(static_cast<std::size_t>(at)), &m_seed[at], 0.0, 0.0, "%.10g");
-
-    if(ImGui::InputScalar("Iteration limit", ImGuiDataType_U32, &m_limit))
-        command(m_scenario, [limit = m_limit](scenario_state &state) { state.set_limit(limit); });
-    if(ImGui::Button("Run"))
-        command(m_scenario, [seed = m_seed, limit = m_limit](scenario_state &state) { state.run(seed, limit); });
-    ImGui::SameLine();
-    if(ImGui::Button("Step once"))
-        command(m_scenario, [seed = m_seed](scenario_state &state) { state.step_once(seed); });
-    ImGui::SameLine();
-    if(ImGui::Button("Reset"))
-        command(m_scenario, [seed = m_seed](scenario_state &state) { state.reset(seed); });
 }
 
 // A publication not seen before is what the slider and the table are brought to, so a selection
@@ -165,6 +157,7 @@ void solve_window::render_slider(const scenario_run &run)
 
 void solve_window::render_table() const
 {
+    const std::span<const char *const> columns = m_last->run.minimized_by ? std::span<const char *const>(objective_columns) : std::span<const char *const>(residual_columns);
     if(!ImGui::BeginTable("##iterates", static_cast<int>(columns.size()), ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit))
         return;
 

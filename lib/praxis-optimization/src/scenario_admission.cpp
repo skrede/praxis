@@ -64,4 +64,14 @@ bool admitted(const scenario_settings &edited, const std::vector<std::string> &n
     return selected_among(names, edited.selected) && drawn_over(edited.ranges, dimension) && taken_at(edited.seed, dimension, "solved from one finite seed");
 }
 
+bool descends_by(double step_length)
+{
+    if(std::isfinite(step_length) && step_length > 0.0)
+        return true;
+
+    spdlog::error("praxis: gradient descent takes a finite, positive step length, which {} is not; the last run stays shown", step_length);
+
+    return false;
+}
+
 }

@@ -1,40 +1,29 @@
 #include "scratch_directory.h"
+#include "composed_optimization.h"
 
-#include "imgui_frame.h"
 #include "panel_keys.h"
+#include "imgui_frame.h"
+#include "panel_labels.h"
 
 #include "praxis/presets/optimization.h"
 
 #include "praxis/optimization/registered.h"
-#include "praxis/optimization/capabilities.h"
-
-#include "praxis/scene/preset.h"
-#include "praxis/scene/preset_site.h"
-#include "praxis/scene/imgui_window.h"
-#include "praxis/scene/preset_registry.h"
 
 #include "praxis/config/error.h"
 #include "praxis/config/store.h"
 #include "praxis/config/writer.h"
-#include "praxis/config/binding.h"
 #include "praxis/config/document.h"
-#include "praxis/config/configurable.h"
-
-#include "praxis/scheduler/scheduler.h"
 
 #include <catch2/catch_test_macros.hpp>
 
 #include <imgui.h>
 
-#include <threepp/scenes/Scene.hpp>
-
 #include <cmath>
-#include <memory>
 #include <string>
 #include <vector>
 #include <cstdint>
 #include <fstream>
-#include <utility>
+#include <algorithm>
 #include <filesystem>
 
 using namespace praxis;
@@ -52,82 +41,25 @@ std::vector<optimization::registered_curve> two_curves()
             optimization::registered_curve("cos(x) - x", [](double x) { return std::cos(x) - x; }, [](double x) { return -std::sin(x) - 1.0; })};
 }
 
-config::location written(const std::string &file)
+constexpr const char *minimum_document = "<optimization><preset name=\"descent\" scenario=\"curve\"/><function name=\"x^4 - 3x^2 + x\"/>"
+                                         "<range x_lower=\"-2.5\" x_upper=\"2.5\"/><seed x=\"2\"/>"
+                                         "<solve limit=\"1000\" step=\"0\" form=\"minimum\" method=\"newton\" step_length=\"0.05\"/></optimization>";
+
+std::vector<optimization::registered_curve> quartic()
+{
+    return {optimization::registered_curve(
+            "x^4 - 3x^2 + x", [](double x) { return x * x * x * x - 3.0 * x * x + x; }, [](double x) { return 4.0 * x * x * x - 6.0 * x + 1.0; },
+            [](double x) { return 12.0 * x * x - 6.0; })};
+}
+
+config::location written(const std::string &file, const char *body = opening_document)
 {
     const std::filesystem::path directory = shared_scratch_directory() / "optimization_saved";
     std::filesystem::create_directories(directory);
-    std::ofstream(directory / file, std::ios::binary | std::ios::trunc) << opening_document << "\n";
+    std::ofstream(directory / file, std::ios::binary | std::ios::trunc) << body << "\n";
 
     return config::resolve(file, directory);
 }
-
-config::document read(const config::location &at)
-{
-    const config::outcome carried = config::load_or_defaults(config::binding{presets::optimization_keyspace(), at, config::expectation::partial});
-    REQUIRE_FALSE(carried.failure.has_value());
-
-    return carried.values;
-}
-
-// The scenario a document opens through the registration, with its windows drawn one at a time.
-struct composed_scenario
-{
-    scheduler::scheduler loop;
-    std::shared_ptr<threepp::Scene> scene;
-    scene::preset_site site;
-    std::shared_ptr<scene::preset> preset;
-
-    explicit composed_scenario(const config::location &at)
-            : loop(scheduler::inline_workers)
-            , scene(threepp::Scene::create())
-            , site{*scene,
-                   loop.main_strand(),
-                   *loop.make_strand(),
-                   [](std::string) {},
-                   [](const std::shared_ptr<scene::imgui_window> &) {},
-                   [](const std::shared_ptr<scene::imgui_window> &) {},
-                   {}}
-            , preset()
-    {
-        const auto registry = std::make_shared<scene::preset_registry>();
-        REQUIRE(presets::register_optimization(registry, std::vector<config::location>{at}, nullptr, nullptr, optimization::baseline(), two_curves(), {}, false).size() == 1u);
-
-        preset = registry->load_preset("saved")(site);
-        REQUIRE(preset != nullptr);
-        REQUIRE(preset->initialize().has_value());
-        REQUIRE(loop.drain().has_value());
-    }
-
-    composed_scenario(const composed_scenario &)            = delete;
-    composed_scenario &operator=(const composed_scenario &) = delete;
-
-    ~composed_scenario()
-    {
-        preset->tear_down();
-        static_cast<void>(loop.retire_strand(preset->work, std::move(preset->release_cb)));
-        static_cast<void>(loop.drain());
-    }
-
-    drawing draw(const std::string &named) const
-    {
-        for(const std::shared_ptr<scene::imgui_window> &window : preset->windows)
-            if(window->display_name() == named)
-                return [window] { window->render(); };
-        FAIL("no window is named " << named);
-
-        return {};
-    }
-
-    std::vector<config::edit> offered(const config::document &carried) const
-    {
-        std::vector<const config::configurable *> shown;
-        for(const std::shared_ptr<scene::imgui_window> &window : preset->windows)
-            if(const config::configurable *one = window->as_configurable(); one != nullptr)
-                shown.push_back(one);
-
-        return config::shown_edits(shown, carried);
-    }
-};
 
 void edit_function_and_range(tests::imgui_frame &frames, const drawing &function)
 {
@@ -144,6 +76,19 @@ void edit_and_run(tests::imgui_frame &frames, const drawing &solve)
     stand_below_top(frames, solve, 2u);
     tap(frames, solve, ImGuiKey_LeftArrow);
     tap(frames, solve, ImGuiKey_Space);
+}
+
+// Gradient descent selected, then a step length of 0.02 left in its field and -1 after it, which the
+// scenario refuses.
+void choose_descent(composed_optimization &opened)
+{
+    tests::imgui_frame frames;
+    take_entry_on(frames, opened.draw("Solve"), "Solve", "Method", 1u);
+    REQUIRE(opened.loop.drain().has_value());
+    type_into(frames, opened.draw("Solve"), 3u, "0.02");
+    REQUIRE(opened.loop.drain().has_value());
+    type_into(frames, opened.draw("Solve"), 3u, "-1");
+    REQUIRE(opened.loop.drain().has_value());
 }
 
 template<typename value>
@@ -168,7 +113,7 @@ TEST_CASE("the function, its range, the seed, the limit and the selected step ar
 {
     const config::location at = written("saved.xml");
     {
-        composed_scenario first(at);
+        composed_optimization first(at, two_curves(), "saved");
         tests::imgui_frame frames;
         edit_function_and_range(frames, first.draw("Function"));
         edit_and_run(frames, first.draw("Solve"));
@@ -176,20 +121,53 @@ TEST_CASE("the function, its range, the seed, the limit and the selected step ar
         tweak_from(frames, first.draw("Solve"), 3u, 2u);
         REQUIRE(first.loop.drain().has_value());
 
-        REQUIRE(config::save(presets::optimization_keyspace(), at, first.offered(read(at))).has_value());
+        REQUIRE(config::save(presets::optimization_keyspace(), at, first.offered(read_optimization(at))).has_value());
     }
 
-    const config::document reopened = read(at);
+    const config::document reopened = read_optimization(at);
     check_edited(reopened);
 
-    const composed_scenario second(at);
+    const composed_optimization second(at, two_curves(), "saved");
     CHECK(second.offered(reopened).empty());
 }
 
 TEST_CASE("a scenario opened and left as it opened offers nothing to save", "[presets][optimization][documents]")
 {
     const config::location at = written("untouched.xml");
-    const composed_scenario opened(at);
+    const composed_optimization opened(at, two_curves(), "saved");
 
-    CHECK(opened.offered(read(at)).empty());
+    CHECK(opened.offered(read_optimization(at)).empty());
+}
+
+TEST_CASE("the method and the step length the Solve window holds are saved and reopened, and the form is never written", "[presets][optimization][documents]")
+{
+    const config::location at = written("descent.xml", minimum_document);
+    {
+        composed_optimization first(at, quartic(), "descent");
+        choose_descent(first);
+
+        const std::vector<config::edit> edits = first.offered(read_optimization(at));
+        CHECK(std::ranges::none_of(edits, [](const config::edit &made) { return made.key == "solve/form"; }));
+        REQUIRE(config::save(presets::optimization_keyspace(), at, edits).has_value());
+    }
+
+    const config::document reopened = read_optimization(at);
+    CHECK(read_back<std::string>(reopened, "solve/method", &config::document::text) == "gradient_descent");
+    CHECK(read_back<double>(reopened, "solve/step_length", &config::document::real) == 0.02);
+    CHECK(read_back<std::string>(reopened, "solve/form", &config::document::text) == "minimum");
+
+    const composed_optimization second(at, quartic(), "descent");
+    CHECK(second.offered(reopened).empty());
+}
+
+TEST_CASE("in the root form the Solve window writes neither a method nor a step length", "[presets][optimization][documents]")
+{
+    const config::location at = written("rooted.xml");
+    const composed_optimization opened(at, two_curves(), "saved");
+    tests::imgui_frame frames;
+    type_into(frames, opened.draw("Solve"), 0u, "0.5");
+
+    const std::vector<config::edit> edits = opened.offered(read_optimization(at));
+    REQUIRE_FALSE(edits.empty());
+    CHECK(std::ranges::none_of(edits, [](const config::edit &made) { return made.key.starts_with("solve/method") || made.key.starts_with("solve/step_length"); }));
 }

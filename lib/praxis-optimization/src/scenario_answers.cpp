@@ -73,7 +73,7 @@ double evenly(const interval &range, std::size_t at, std::size_t count)
 
 scenario_run solved(const problem &posed, const solver_ops &solver, const Eigen::VectorXd &seed, std::uint32_t steps)
 {
-    scenario_run ran{seed, steps, {}, {}, {}, std::nullopt, std::nullopt};
+    scenario_run ran{seed, steps, {}, {}, {}, std::nullopt, std::nullopt, {}, {}, {}, std::nullopt};
 
     const expected<Eigen::VectorXd, refusal> answered = solver.solve(posed, ran.seed, ran.limit, ran.iterates);
     if(answered)

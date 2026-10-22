@@ -12,6 +12,12 @@ inline constexpr double curve_tolerance = 1.0e-12;
 // The |f(x, y)| a surface's solve stops below, in the units of f.
 inline constexpr double surface_tolerance = 1.0e-12;
 
+// The |f'(x)| a curve's minimization stops below, in the units of f per unit of x.
+inline constexpr double curve_objective_tolerance = 1.0e-12;
+
+// The largest |df/dx|, |df/dy| a surface's minimization stops below, in the units of f per unit of x.
+inline constexpr double surface_objective_tolerance = 1.0e-12;
+
 // The points a curve is sampled at over its range, ends included, a count.
 inline constexpr std::size_t curve_samples = 1601;
 

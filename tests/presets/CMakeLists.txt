@@ -35,7 +35,7 @@ praxis_add_test(seam_routing_test.cpp HEADERS substituted_rigid_motion.h LIBS pr
 praxis_add_test(body_frame_routing_test.cpp HEADERS substituted_rigid_motion.h LIBS praxis::manipulator praxis::rigid_motion praxis_test_support)
 praxis_add_test(optimization_scenarios_test.cpp HEADERS scratch_directory.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config)
 praxis_add_test(optimization_surface_test.cpp HEADERS scratch_directory.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config praxis_test_support)
-praxis_add_test(optimization_save_test.cpp HEADERS scratch_directory.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config praxis_test_support)
+praxis_add_test(optimization_save_test.cpp HEADERS scratch_directory.h composed_optimization.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config praxis_test_support)
 
 # The shipped documents are read from beside the demonstration's sources.
 target_compile_definitions(optimization_scenarios_test PRIVATE PRAXIS_SHIPPED_OPTIMIZATION_DIR="${PROJECT_SOURCE_DIR}/examples/optimization")

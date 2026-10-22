@@ -1,6 +1,7 @@
 #ifndef HPP_GUARD_PRAXIS_OPTIMIZATION_SCENARIO_STATE_H
 #define HPP_GUARD_PRAXIS_OPTIMIZATION_SCENARIO_STATE_H
 
+#include "praxis/optimization/slots.h"
 #include "praxis/optimization/problem.h"
 #include "praxis/optimization/registered.h"
 #include "praxis/optimization/capabilities.h"
@@ -22,6 +23,22 @@
 
 namespace praxis::optimization {
 
+// Whether a scenario's function is solved for a root or minimized. The order is the document's
+// spellings', which is what reading a spelling back as an index and casting relies on.
+enum class problem_form : std::uint8_t
+{
+    root,
+    minimum
+};
+
+// The minimizer a run in the minimum form is solved by, and the step length gradient descent takes.
+struct objective_settings
+{
+    problem_form form;
+    minimizer_slot method;
+    double step_length;
+};
+
 // One range and one seed coordinate per variable of the function; `step` is the step k selected,
 // from x_k to x_(k+1).
 struct scenario_settings
@@ -31,6 +48,7 @@ struct scenario_settings
     Eigen::VectorXd seed;
     std::uint32_t limit;
     std::uint32_t step;
+    objective_settings objective;
 };
 
 // The registered functions and the bound solver are called here and only here, on the strand that
@@ -73,6 +91,12 @@ public:
     // Taken by the next run; nothing is solved again.
     void set_limit(std::uint32_t limit);
 
+    // Solves again from the seed, by that minimizer wherever the form is the minimum.
+    void select_method(minimizer_slot method);
+
+    // Solves again with the step length gradient descent takes, which must be finite and positive.
+    void set_step_length(double step_length);
+
     // Evaluated at once and with every later run, which publishes it beside the solve.
     void linearize(const Eigen::VectorXd &point);
 
@@ -86,14 +110,16 @@ private:
     scenario_settings m_settings;
     std::vector<std::string> m_names;
     std::vector<problem> m_problems;
+    std::vector<problem> m_objectives;
     std::optional<Eigen::VectorXd> m_point;
     std::shared_ptr<scenario_publisher> m_published;
     std::shared_ptr<const scenario_snapshot> m_shown;
 
-    scenario_state(std::size_t dimension, std::vector<std::string> names, std::vector<problem> problems, capabilities solving, scenario_settings opened,
+    scenario_state(std::size_t dimension, std::vector<std::string> names, std::vector<problem> problems, std::vector<problem> objectives, capabilities solving, scenario_settings opened,
                    std::shared_ptr<scenario_publisher> published, bool checks_derivative);
 
     void solve(std::uint32_t steps, std::uint32_t selecting);
+    scenario_run posed_run(std::size_t selected, std::uint32_t steps) const;
     void republish(std::shared_ptr<scenario_snapshot> moved);
     bool admits(const scenario_settings &edited) const;
 };

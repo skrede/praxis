@@ -23,6 +23,7 @@ std::optional<std::size_t> selected_among(const std::vector<std::string> &names,
 bool drawn_over(std::span<const interval> ranges, std::size_t dimension);
 bool taken_at(const Eigen::VectorXd &x, std::size_t dimension, const char *as);
 bool admitted(const scenario_settings &edited, const std::vector<std::string> &names, std::size_t dimension);
+bool descends_by(double step_length);
 
 }
 

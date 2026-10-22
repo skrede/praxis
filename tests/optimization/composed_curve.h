@@ -48,7 +48,7 @@ inline registered_curve cubic()
 
 inline scenario_settings opening(std::string selected = "cubic")
 {
-    return scenario_settings{std::move(selected), {interval{-4.0, 4.0}}, Eigen::VectorXd::Constant(1, 3.0), 70u, 0u};
+    return scenario_settings{std::move(selected), {interval{-4.0, 4.0}}, Eigen::VectorXd::Constant(1, 3.0), 70u, 0u, {}};
 }
 
 // A scene is created headlessly and the scheduler services every strand inline, so a drain runs

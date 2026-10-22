@@ -1,6 +1,7 @@
 #ifndef HPP_GUARD_PRAXIS_OPTIMIZATION_SCENARIO_SNAPSHOT_H
 #define HPP_GUARD_PRAXIS_OPTIMIZATION_SCENARIO_SNAPSHOT_H
 
+#include "praxis/optimization/slots.h"
 #include "praxis/optimization/problem.h"
 
 #include "praxis/extension/refusal.h"
@@ -28,7 +29,10 @@ struct interval
 // One solve from one seed. The error and the Jacobian are the problem's own answers at each
 // iterate, index for index, so a reader draws a step without calling a registered function. `answer`
 // is what the solve answered, and `refused` its refusal, or no_solution where the problem's own
-// converged test does not hold at the answer.
+// converged test does not hold at the answer. A run in the minimum form names the minimizer it was
+// solved by and carries f, its gradient and, where the problem carries one, its Hessian at each
+// iterate as well, judging the answer by the problem's stationary test instead; the root form
+// leaves the four empty.
 struct scenario_run
 {
     Eigen::VectorXd seed;
@@ -38,6 +42,10 @@ struct scenario_run
     std::vector<expected<Eigen::MatrixXd, refusal>> jacobians;
     std::optional<refusal> refused;
     std::optional<Eigen::VectorXd> answer;
+    std::vector<expected<double, refusal>> objectives;
+    std::vector<expected<Eigen::VectorXd, refusal>> gradients;
+    std::vector<expected<Eigen::MatrixXd, refusal>> hessians;
+    std::optional<minimizer_slot> minimized_by;
 };
 
 // A Jacobian's central-difference estimate and the largest relative difference of their entries,

@@ -28,3 +28,8 @@ target_include_directories(surface_step_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/p
 praxis_add_test(surface_view_test.cpp HEADERS composed_curve.h drawn_surface.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
 praxis_add_test(display_window_test.cpp HEADERS composed_curve.h drawn_graph.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog implot praxis_test_support)
 praxis_add_test(surface_linearization_test.cpp HEADERS composed_curve.h drawn_surface.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
+praxis_add_test(registered_objective_test.cpp LIBS praxis::optimization praxis_test_support)
+praxis_add_test(objective_scenario_test.cpp HEADERS composed_curve.h minimized_stage.h ../presets/scratch_directory.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config spdlog::spdlog praxis_test_support)
+target_include_directories(objective_scenario_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src ${PROJECT_SOURCE_DIR}/presets/optimization ${PROJECT_SOURCE_DIR}/tests/presets)
+praxis_add_test(objective_controls_test.cpp HEADERS composed_curve.h minimized_stage.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
+target_include_directories(objective_controls_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src)

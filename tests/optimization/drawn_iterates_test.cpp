@@ -62,7 +62,7 @@ double paraboloid(double x, double y)
 
 std::shared_ptr<const scenario_snapshot> drawn_from(scheduler::scheduler &loop, const staged &built, opened &taken, const Eigen::Vector2d &seed, std::uint32_t limit)
 {
-    const scenario_settings settings{"paraboloid", {interval{-2.0, 2.0}, interval{-2.0, 2.0}}, seed, limit, 0u};
+    const scenario_settings settings{"paraboloid", {interval{-2.0, 2.0}, interval{-2.0, 2.0}}, seed, limit, 0u, {}};
     taken = open_surface_with(built.site, {registered_surface("paraboloid", &paraboloid, [](double x, double y) { return Eigen::Vector2d(2.0 * x, 2.0 * y); })}, baseline(), settings);
     const std::shared_ptr<const scenario_snapshot> ran = settled(loop, taken);
     taken.composed->stencil->render();

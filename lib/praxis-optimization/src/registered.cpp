@@ -1,3 +1,5 @@
+#include "registered_values.h"
+
 #include "praxis/optimization/registered.h"
 
 #include <Eigen/Core>
@@ -12,42 +14,6 @@ namespace praxis::optimization {
 
 namespace {
 
-expected<double, refusal> evaluated(const std::function<double(double)> &f, const Eigen::VectorXd &x)
-{
-    if(!f || x.size() != 1)
-        return unexpected(refusal::unsupported_input);
-
-    const double answered = f(x[0]);
-    if(!std::isfinite(answered))
-        return unexpected(refusal::degenerate);
-
-    return answered;
-}
-
-expected<Eigen::Vector2d, refusal> evaluated(const std::function<Eigen::Vector2d(double, double)> &f, const Eigen::VectorXd &x)
-{
-    if(!f || x.size() != 2)
-        return unexpected(refusal::unsupported_input);
-
-    const Eigen::Vector2d answered = f(x[0], x[1]);
-    if(!answered.allFinite())
-        return unexpected(refusal::degenerate);
-
-    return answered;
-}
-
-expected<double, refusal> evaluated(const std::function<double(double, double)> &f, const Eigen::VectorXd &x)
-{
-    if(!f || x.size() != 2)
-        return unexpected(refusal::unsupported_input);
-
-    const double answered = f(x[0], x[1]);
-    if(!std::isfinite(answered))
-        return unexpected(refusal::degenerate);
-
-    return answered;
-}
-
 bool inside(const Eigen::VectorXd &e, double tolerance)
 {
     return e.size() == 1 && std::abs(e[0]) < tolerance;
@@ -56,18 +22,30 @@ bool inside(const Eigen::VectorXd &e, double tolerance)
 }
 
 registered_curve::registered_curve(std::string called, std::function<double(double)> g, std::function<double(double)> slope)
-        : name(std::move(called))
-        , bounds(std::nullopt)
-        , value(std::move(g))
-        , derivative(std::move(slope))
+        : registered_curve(std::move(called), std::move(g), std::move(slope), std::function<double(double)>())
 {
 }
 
 registered_curve::registered_curve(std::string called, std::function<double(double)> g, std::function<double(double)> slope, box region)
+        : registered_curve(std::move(called), std::move(g), std::move(slope), std::function<double(double)>(), std::move(region))
+{
+}
+
+registered_curve::registered_curve(std::string called, std::function<double(double)> g, std::function<double(double)> slope, std::function<double(double)> second)
+        : name(std::move(called))
+        , bounds(std::nullopt)
+        , value(std::move(g))
+        , derivative(std::move(slope))
+        , second_derivative(std::move(second))
+{
+}
+
+registered_curve::registered_curve(std::string called, std::function<double(double)> g, std::function<double(double)> slope, std::function<double(double)> second, box region)
         : name(std::move(called))
         , bounds(std::move(region))
         , value(std::move(g))
         , derivative(std::move(slope))
+        , second_derivative(std::move(second))
 {
 }
 
@@ -96,18 +74,32 @@ problem curve_problem(const registered_curve &curve, double tolerance)
 }
 
 registered_surface::registered_surface(std::string called, std::function<double(double, double)> f, std::function<Eigen::Vector2d(double, double)> slope)
-        : name(std::move(called))
-        , bounds(std::nullopt)
-        , value(std::move(f))
-        , gradient(std::move(slope))
+        : registered_surface(std::move(called), std::move(f), std::move(slope), std::function<Eigen::Matrix2d(double, double)>())
 {
 }
 
 registered_surface::registered_surface(std::string called, std::function<double(double, double)> f, std::function<Eigen::Vector2d(double, double)> slope, box region)
+        : registered_surface(std::move(called), std::move(f), std::move(slope), std::function<Eigen::Matrix2d(double, double)>(), std::move(region))
+{
+}
+
+registered_surface::registered_surface(std::string called, std::function<double(double, double)> f, std::function<Eigen::Vector2d(double, double)> slope,
+                                       std::function<Eigen::Matrix2d(double, double)> curvature)
+        : name(std::move(called))
+        , bounds(std::nullopt)
+        , value(std::move(f))
+        , gradient(std::move(slope))
+        , hessian(std::move(curvature))
+{
+}
+
+registered_surface::registered_surface(std::string called, std::function<double(double, double)> f, std::function<Eigen::Vector2d(double, double)> slope,
+                                       std::function<Eigen::Matrix2d(double, double)> curvature, box region)
         : name(std::move(called))
         , bounds(std::move(region))
         , value(std::move(f))
         , gradient(std::move(slope))
+        , hessian(std::move(curvature))
 {
 }
 

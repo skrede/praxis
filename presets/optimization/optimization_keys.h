@@ -12,8 +12,9 @@ namespace praxis::presets::keys {
 inline constexpr const char *preset_name     = "preset/name";
 inline constexpr const char *preset_scenario = "preset/scenario";
 
-// The selected function, a range and a seed coordinate for each of its `dimension` variables, and the
-// limit as the document carries them, each one the document leaves out at the keyspace's fallback.
+// The selected function, a range and a seed coordinate for each of its `dimension` variables, the
+// limit, the form, the method and the step length as the document carries them, each one the document
+// leaves out at the keyspace's fallback.
 optimization::scenario_settings opened_settings(const config::document &values, std::size_t dimension);
 
 }
