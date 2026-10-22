@@ -82,6 +82,11 @@ praxis_add_module(optimization
     src/typed/parse.cpp
     src/typed/lexeme.cpp
     src/typed/expression.h
+    src/typed/jet.h
+    src/typed/jet.cpp
+    src/typed/evaluate.h
+    src/typed/typed_problem.h
+    src/typed/typed_problem.cpp
     PUBLIC_LIBS
     praxis::extension
     praxis::evaluation
