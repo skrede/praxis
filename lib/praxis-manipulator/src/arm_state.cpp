@@ -169,8 +169,13 @@ void arm_state::report_pose_refusal(const arm_snapshot &assembled)
         return;
     }
 
-    if(!std::exchange(m_refused, true))
-        m_controller->report_refusal("fk.forward_kinematics", assembled.flange_pose ? assembled.tool_pose.error() : assembled.flange_pose.error());
+    if(std::exchange(m_refused, true))
+        return;
+
+    if(assembled.flange_pose)
+        m_controller->report_refusal("robot.tool_pose_from_flange_pose", assembled.tool_pose.error());
+    else
+        m_controller->report_refusal("fk.forward_kinematics", assembled.flange_pose.error());
 }
 
 // A latch of its own, so a standing decomposition refusal and the pose refusal beside it never

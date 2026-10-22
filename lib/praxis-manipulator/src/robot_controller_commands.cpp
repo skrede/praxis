@@ -245,19 +245,17 @@ void robot_controller::task_space_screw(const Eigen::Vector3d &w, const Eigen::V
     if(w.isZero())
         return report_refusal("robot_controller.task_space_screw", refusal::degenerate);
 
-    const expected<transform, refusal> from = m_robot.tool_pose();
+    const expected<transform, refusal> flange = m_robot.flange_pose();
+    if(!flange)
+        return report_refusal("fk.forward_kinematics", flange.error());
+
+    const expected<transform, refusal> from = m_robot.tool_pose_from_flange_pose(*flange);
     if(!from)
-    {
-        report_refusal("fk.forward_kinematics", from.error());
-        return;
-    }
+        return report_refusal("robot.tool_pose_from_flange_pose", from.error());
 
     const expected<screw_axis, refusal> axis = m_screw.screw_axis_from_point_direction_pitch(q, w, pitch);
     if(!axis)
-    {
-        report_refusal("rigid_motion.screw_axis_from_point_direction_pitch", axis.error());
-        return;
-    }
+        return report_refusal("rigid_motion.screw_axis_from_point_direction_pitch", axis.error());
 
     run_along(m_screw.matrix_exponential_screw(*axis, theta_radians) * *from, m_path.screw);
 }
