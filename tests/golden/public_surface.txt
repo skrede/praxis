@@ -2118,7 +2118,7 @@ lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	checks_de
 lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	opened	member	-	typename:scenario_settings
 lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	registered	member	-	typename:std::vector<std::string>
 lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	scenario	member	-	typename:std::weak_ptr<owned_scenario>
-lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	drawn	member	-	typename:std::shared_ptr<surface_view>
+lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	drawn	member	-	typename:std::shared_ptr<scenario_view>
 lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	scenario_window_composer	typedef	-	-
 lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	scenario_composition	struct	-	-
 lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	windows	member	-	typename:scenario_window_composer
@@ -2127,8 +2127,15 @@ lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	compose_c
 lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	compose_surface_scenario	prototype	(const scene::preset_site & site,std::vector<registered_surface> surfaces,const capabilities & solving,const scenario_settings & opened,const scenario_composition & composed)	typename:std::shared_ptr<scene::preset>
 lib/praxis-optimization/include/praxis/optimization/curve_graph.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/curve_graph.h	praxis	namespace	-	-
-lib/praxis-optimization/include/praxis/optimization/curve_graph.h	curve_reading	prototype	(const scenario_reader & seen)	typename:scene::plot_reading
+lib/praxis-optimization/include/praxis/optimization/curve_graph.h	curve_reading	prototype	(const scenario_reader & seen,const scenario_view & drawn)	typename:scene::plot_reading
 lib/praxis-optimization/include/praxis/optimization/curve_graph.h	curve_graph	prototype	(const scenario_window_inputs & inputs,std::string name)	typename:std::shared_ptr<scene::plot_window>
+lib/praxis-optimization/include/praxis/optimization/display_window.h	optimization	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/display_window.h	praxis	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/display_window.h	display_window	class	-	-
+lib/praxis-optimization/include/praxis/optimization/display_window.h	display_window	prototype	(std::string name,const scenario_window_inputs & inputs)	-
+lib/praxis-optimization/include/praxis/optimization/display_window.h	render	prototype	()	typename:void
+lib/praxis-optimization/include/praxis/optimization/display_window.h	m_surface	member	-	typename:bool
+lib/praxis-optimization/include/praxis/optimization/display_window.h	m_drawn	member	-	typename:std::shared_ptr<scenario_view>
 lib/praxis-optimization/include/praxis/optimization/evaluation.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/evaluation.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/evaluation.h	evaluation_views	prototype	(const capabilities & first,const capabilities & second)	typename:std::array<evaluation::evaluation_view,2>
@@ -2163,7 +2170,9 @@ lib/praxis-optimization/include/praxis/optimization/linearization_window.h	rende
 lib/praxis-optimization/include/praxis/optimization/linearization_window.h	m_checks	member	-	typename:bool
 lib/praxis-optimization/include/praxis/optimization/linearization_window.h	m_point	member	-	typename:Eigen::VectorXd
 lib/praxis-optimization/include/praxis/optimization/linearization_window.h	m_seen	member	-	typename:scenario_reader
+lib/praxis-optimization/include/praxis/optimization/linearization_window.h	m_drawn	member	-	typename:std::shared_ptr<scenario_view>
 lib/praxis-optimization/include/praxis/optimization/linearization_window.h	m_scenario	member	-	typename:std::weak_ptr<owned_scenario>
+lib/praxis-optimization/include/praxis/optimization/linearization_window.h	controls	prototype	(const std::vector<interval> & ranges)	typename:void
 lib/praxis-optimization/include/praxis/optimization/linearization_window.h	edit_point	prototype	(const std::vector<interval> & ranges)	typename:bool
 lib/praxis-optimization/include/praxis/optimization/linearization_window.h	post	prototype	() const	typename:void
 lib/praxis-optimization/include/praxis/optimization/minimizer.h	inert	namespace	-	-
@@ -2287,6 +2296,16 @@ lib/praxis-optimization/include/praxis/optimization/scenario_state.h	admits	prot
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	owned_scenario	typedef	-	typename:scheduler::strand_owned<scenario_state>
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	command	function	(const std::weak_ptr<owned_scenario> & scenario,operation work)	typename:void
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	__anon02515bbe0102	function	(scenario_state &state) 	-
+lib/praxis-optimization/include/praxis/optimization/scenario_view.h	optimization	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/scenario_view.h	praxis	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/scenario_view.h	scenario_view	struct	-	-
+lib/praxis-optimization/include/praxis/optimization/scenario_view.h	scenario_view	function	()	-
+lib/praxis-optimization/include/praxis/optimization/scenario_view.h	field	member	-	typename:bool
+lib/praxis-optimization/include/praxis/optimization/scenario_view.h	iterates	member	-	typename:bool
+lib/praxis-optimization/include/praxis/optimization/scenario_view.h	zero_curve	member	-	typename:bool
+lib/praxis-optimization/include/praxis/optimization/scenario_view.h	step	member	-	typename:bool
+lib/praxis-optimization/include/praxis/optimization/scenario_view.h	bounds	member	-	typename:bool
+lib/praxis-optimization/include/praxis/optimization/scenario_view.h	linearization	member	-	typename:bool
 lib/praxis-optimization/include/praxis/optimization/settings_keys.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/settings_keys.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/settings_keys.h	function_name_key	variable	-	typename:const char *
@@ -2348,31 +2367,17 @@ lib/praxis-optimization/include/praxis/optimization/solver.h	optimization	namesp
 lib/praxis-optimization/include/praxis/optimization/solver.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/solver.h	solver_ops	struct	-	-
 lib/praxis-optimization/include/praxis/optimization/solver.h	solve	member	-	typename:expected<Eigen::VectorXd,refusal> (*)(const problem & p,const Eigen::VectorXd & x0,std::uint32_t max_iterations,std::vector<Eigen::VectorXd> & iterates)
-lib/praxis-optimization/include/praxis/optimization/surface_graph_window.h	optimization	namespace	-	-
-lib/praxis-optimization/include/praxis/optimization/surface_graph_window.h	praxis	namespace	-	-
-lib/praxis-optimization/include/praxis/optimization/surface_graph_window.h	surface_graph_window	class	-	-
-lib/praxis-optimization/include/praxis/optimization/surface_graph_window.h	surface_graph_window	prototype	(std::string name,const scenario_window_inputs & inputs)	-
-lib/praxis-optimization/include/praxis/optimization/surface_graph_window.h	render	prototype	()	typename:void
-lib/praxis-optimization/include/praxis/optimization/surface_graph_window.h	m_drawn	member	-	typename:std::shared_ptr<surface_view>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	praxis	namespace	-	-
-lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	surface_view	struct	-	-
-lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	surface_view	function	()	-
-lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	field	member	-	typename:bool
-lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	iterates	member	-	typename:bool
-lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	zero_curve	member	-	typename:bool
-lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	step	member	-	typename:bool
-lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	bounds	member	-	typename:bool
-lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	point	member	-	typename:bool
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	surface_stencil	class	-	-
-lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	surface_stencil	prototype	(threepp::Scene & parent,scenario_reader seen,std::shared_ptr<const surface_view> drawn)	-
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	surface_stencil	prototype	(threepp::Scene & parent,scenario_reader seen,std::shared_ptr<const scenario_view> drawn)	-
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	~surface_stencil	prototype	()	-
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	initialize	prototype	()	typename:expected<void,refusal>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	tear_down	prototype	()	typename:void
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	render	prototype	() const	typename:void
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_scene	member	-	typename:threepp::Scene &
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_seen	member	-	typename:scenario_reader
-lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_view	member	-	typename:std::shared_ptr<const surface_view>
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_view	member	-	typename:std::shared_ptr<const scenario_view>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_root	member	-	typename:std::shared_ptr<threepp::Group>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_field	member	-	typename:std::shared_ptr<threepp::Mesh>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_iterates	member	-	typename:std::shared_ptr<threepp::Group>

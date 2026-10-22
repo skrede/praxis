@@ -81,7 +81,7 @@ TEST_CASE("a solve refused at its limit still publishes every iterate and the re
     REQUIRE(ran->run.iterates.size() == 6u);
     CHECK(ran->run.errors.size() == 6u);
     CHECK(ran->run.jacobians.size() == 6u);
-    CHECK(marks_of(curve_reading(taken.inputs->seen)).abscissa.size() == 6u);
+    CHECK(marks_of(curve_reading(taken.inputs->seen, scenario_view())).abscissa.size() == 6u);
 
     taken.composed->tear_down();
 }
@@ -101,7 +101,7 @@ TEST_CASE("a solve whose error refuses as degenerate publishes the iterates it r
     REQUIRE_FALSE(ran->run.errors[2]);
     CHECK(ran->run.errors[2].error() == refusal::degenerate);
 
-    const scene::plot_reading shown = curve_reading(taken.inputs->seen);
+    const scene::plot_reading shown = curve_reading(taken.inputs->seen, scenario_view());
     const scene::plot_series &marks = marks_of(shown);
     REQUIRE(marks.ordinate.size() == 3u);
     CHECK(marks.ordinate[1] == cut_value(ran->run.iterates[1][0]));
@@ -125,7 +125,7 @@ TEST_CASE("an inert bound solver publishes its refusal and the seed alone, and t
     REQUIRE(ran->run.iterates.size() == 1u);
     CHECK(ran->run.iterates.front()[0] == 3.0);
 
-    const scene::plot_reading shown = curve_reading(taken.inputs->seen);
+    const scene::plot_reading shown = curve_reading(taken.inputs->seen, scenario_view());
     CHECK(marks_of(shown).abscissa == std::vector<double>{3.0});
     CHECK(marks_of(shown).ordinate == std::vector<double>{cubic_value(3.0)});
     CHECK(shown.frames.front().series[0].ordinate.size() == ran->abscissa.size());
@@ -165,7 +165,7 @@ TEST_CASE("the graph says nothing has been evaluated before the first run is pub
     const opened taken = open_with(built.site, {cubic()}, baseline(), opening());
 
     REQUIRE(taken.inputs.has_value());
-    const scene::plot_reading shown = curve_reading(taken.inputs->seen);
+    const scene::plot_reading shown = curve_reading(taken.inputs->seen, scenario_view());
 
     CHECK_FALSE(shown.message.empty());
     CHECK(shown.frames.empty());

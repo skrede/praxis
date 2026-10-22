@@ -75,7 +75,7 @@ std::vector<Eigen::Vector3d> on_zero_plane(const std::vector<level_segment> &seg
 
 // The scene's frame is y-up and the surface is written z-up, so everything hangs under one root
 // carrying that quarter turn.
-surface_stencil::surface_stencil(threepp::Scene &parent, scenario_reader seen, std::shared_ptr<const surface_view> drawn)
+surface_stencil::surface_stencil(threepp::Scene &parent, scenario_reader seen, std::shared_ptr<const scenario_view> drawn)
         : m_scene(parent)
         , m_seen(std::move(seen))
         , m_view(std::move(drawn))
@@ -120,10 +120,10 @@ void surface_stencil::tear_down()
 
 void surface_stencil::render() const
 {
-    const surface_view shown_parts = m_view != nullptr ? *m_view : surface_view{};
-    m_field->visible               = shown_parts.field;
-    m_iterates->visible            = shown_parts.iterates;
-    m_step->visible                = shown_parts.step;
+    const scenario_view shown_parts = m_view != nullptr ? *m_view : scenario_view{};
+    m_field->visible                = shown_parts.field;
+    m_iterates->visible             = shown_parts.iterates;
+    m_step->visible                 = shown_parts.step;
 
     const std::shared_ptr<const scenario_snapshot> shown = m_seen.read();
     if(shown == nullptr || shown->grid == nullptr || shown->ranges.size() != 2u)
@@ -138,8 +138,8 @@ void surface_stencil::render() const
     place_iterates(shown);
     draw_step(step_figures{*m_patch, *m_zero_line, *m_nearest, *m_recorded}, *shown, placed);
     draw_planes(point_figures{*m_plane, *m_central}, *shown, placed, m_heights);
-    m_plane->visible   = m_plane->visible && shown_parts.point;
-    m_central->visible = m_central->visible && shown_parts.point;
+    m_plane->visible   = m_plane->visible && shown_parts.linearization;
+    m_central->visible = m_central->visible && shown_parts.linearization;
 }
 
 // The field, its zero curve and the heights the planes are held to change only with the samples.

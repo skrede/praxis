@@ -136,7 +136,7 @@ TEST_CASE("a surface document opens the surface scenario over the registered sur
     std::vector<std::string> windows;
     for(const std::shared_ptr<scene::imgui_window> &window : opened.built->windows)
         windows.push_back(window->display_name());
-    CHECK(windows == std::vector<std::string>{"Function", "Graph", "Solve", "Linearization"});
+    CHECK(windows == std::vector<std::string>{"Function", "Display", "Solve", "Linearization"});
 
     REQUIRE_FALSE(opened.seen->sloped.empty());
     CHECK(opened.seen->sloped.front() == Eigen::Vector2d(-2.0, -1.5));
@@ -166,21 +166,21 @@ TEST_CASE("the function window over a surface takes both ranges and the solve wi
     CHECK(opened.seen->sloped.front() == Eigen::Vector2d(-2.0, 1.5));
 }
 
-TEST_CASE("the graph window's switches hide and show the surface and its iterates", "[presets][optimization][surface]")
+TEST_CASE("the Display window's switches hide and show the surface and its iterates", "[presets][optimization][surface]")
 {
     composed_surface opened;
     tests::imgui_frame frames;
 
-    press_on(frames, opened.draw("Graph"), "Graph", "Surface");
+    press_on(frames, opened.draw("Display"), "Display", "Surface");
     opened.built->stencil->render();
     CHECK_FALSE(opened.drawn("surface").visible);
     CHECK(opened.drawn("iterates").visible);
 
-    press_on(frames, opened.draw("Graph"), "Graph", "Iterates");
+    press_on(frames, opened.draw("Display"), "Display", "Iterates");
     opened.built->stencil->render();
     CHECK_FALSE(opened.drawn("iterates").visible);
 
-    press_on(frames, opened.draw("Graph"), "Graph", "Surface");
+    press_on(frames, opened.draw("Display"), "Display", "Surface");
     opened.built->stencil->render();
     CHECK(opened.drawn("surface").visible);
 }

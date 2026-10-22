@@ -100,6 +100,7 @@ linearization_window::linearization_window(std::string name, const scenario_wind
         , m_checks(inputs.checks_derivative)
         , m_point(Eigen::VectorXd::Zero(static_cast<Eigen::Index>(inputs.opened.ranges.size())))
         , m_seen(inputs.seen)
+        , m_drawn(inputs.drawn != nullptr ? inputs.drawn : std::make_shared<scenario_view>())
         , m_scenario(inputs.scenario)
 {
     for(std::size_t axis = 0; axis < inputs.opened.ranges.size(); ++axis)
@@ -119,13 +120,18 @@ void linearization_window::render()
         return;
     }
 
-    if(edit_point(shown->ranges))
-        post();
-
+    controls(shown->ranges);
     if(shown->linearization)
         for(const std::string &line : linearization_lines(*shown->linearization, m_checks))
             ImGui::TextWrapped("%s", line.c_str());
     ImGui::End();
+}
+
+void linearization_window::controls(const std::vector<interval> &ranges)
+{
+    if(edit_point(ranges))
+        post();
+    ImGui::Checkbox("Show", &m_drawn->linearization);
 }
 
 bool linearization_window::edit_point(const std::vector<interval> &ranges)

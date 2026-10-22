@@ -76,7 +76,7 @@ TEST_CASE("a composed curve scenario publishes the bound solver's run and its gr
     CHECK(ran->run.iterates.front()[0] == 3.0);
     CHECK_FALSE(ran->run.refused.has_value());
 
-    const scene::plot_reading shown = curve_reading(taken.inputs->seen);
+    const scene::plot_reading shown = curve_reading(taken.inputs->seen, scenario_view());
     REQUIRE(shown.frames.size() == 1u);
     check_held_line(shown.frames.front());
     check_marks(shown.frames.front().series[1], solved);

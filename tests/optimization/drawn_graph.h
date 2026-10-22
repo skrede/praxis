@@ -36,7 +36,7 @@ namespace praxis::fixture {
 
 inline scene::plot_frame drawn_now(const opened &taken)
 {
-    const scene::plot_reading shown = curve_reading(taken.inputs->seen);
+    const scene::plot_reading shown = curve_reading(taken.inputs->seen, *taken.inputs->drawn);
     REQUIRE(shown.frames.size() == 1u);
 
     return shown.frames.front();

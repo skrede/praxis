@@ -1,6 +1,7 @@
 #ifndef HPP_GUARD_PRAXIS_OPTIMIZATION_LINEARIZATION_WINDOW_H
 #define HPP_GUARD_PRAXIS_OPTIMIZATION_LINEARIZATION_WINDOW_H
 
+#include "praxis/optimization/scenario_view.h"
 #include "praxis/optimization/scenario_state.h"
 #include "praxis/optimization/compose_scenario.h"
 #include "praxis/optimization/scenario_snapshot.h"
@@ -22,7 +23,8 @@ std::vector<std::string> linearization_lines(const scenario_linearization &at, b
 
 // A point taken by a field and by a slider over the range of each variable, asked of the scenario
 // through its gate as a slider moves and once a field is left after an edit; the window asks for the
-// middle of the ranges it opened at when it is built.
+// middle of the ranges it opened at when it is built. Its Show switch is the view's linearization, which
+// is not saved.
 class linearization_window : public scene::imgui_window
 {
 public:
@@ -34,8 +36,10 @@ private:
     bool m_checks;
     Eigen::VectorXd m_point;
     scenario_reader m_seen;
+    std::shared_ptr<scenario_view> m_drawn;
     std::weak_ptr<owned_scenario> m_scenario;
 
+    void controls(const std::vector<interval> &ranges);
     bool edit_point(const std::vector<interval> &ranges);
     void post() const;
 };

@@ -1,6 +1,7 @@
 #ifndef HPP_GUARD_PRAXIS_OPTIMIZATION_SURFACE_STENCIL_H
 #define HPP_GUARD_PRAXIS_OPTIMIZATION_SURFACE_STENCIL_H
 
+#include "praxis/optimization/scenario_view.h"
 #include "praxis/optimization/scenario_snapshot.h"
 
 #include "praxis/scene/stencil.h"
@@ -25,28 +26,6 @@
 
 namespace praxis::optimization {
 
-// What a surface's graph draws, written by the window that switches it and read by the stencil, both
-// on the strand the frames are drawn on.
-struct surface_view
-{
-    surface_view()
-            : field(true)
-            , iterates(true)
-            , zero_curve(true)
-            , step(true)
-            , bounds(true)
-            , point(true)
-    {
-    }
-
-    bool field;
-    bool iterates;
-    bool zero_curve;
-    bool step;
-    bool bounds;
-    bool point;
-};
-
 // The surface a scenario publishes, drawn in the scene as a height field named "surface" with the
 // iterates the run recorded as one instanced sphere mesh on it, under a node named "iterates" in the
 // order recorded with the selected step's last, and its zero-level curve, "zero curve", on the zero
@@ -65,7 +44,7 @@ struct surface_view
 class surface_stencil : public scene::stencil
 {
 public:
-    surface_stencil(threepp::Scene &parent, scenario_reader seen, std::shared_ptr<const surface_view> drawn);
+    surface_stencil(threepp::Scene &parent, scenario_reader seen, std::shared_ptr<const scenario_view> drawn);
     ~surface_stencil() override = default;
 
     expected<void, refusal> initialize() override;
@@ -76,7 +55,7 @@ public:
 private:
     threepp::Scene &m_scene;
     scenario_reader m_seen;
-    std::shared_ptr<const surface_view> m_view;
+    std::shared_ptr<const scenario_view> m_view;
     std::shared_ptr<threepp::Group> m_root;
     std::shared_ptr<threepp::Mesh> m_field;
     std::shared_ptr<threepp::Group> m_iterates;

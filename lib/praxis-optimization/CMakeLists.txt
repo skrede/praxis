@@ -10,10 +10,11 @@ praxis_add_module(optimization
     include/praxis/optimization/curve_graph.h
     include/praxis/optimization/capabilities.h
     include/praxis/optimization/solve_window.h
+    include/praxis/optimization/scenario_view.h
     include/praxis/optimization/settings_keys.h
     include/praxis/optimization/scenario_state.h
     include/praxis/optimization/surface_stencil.h
-    include/praxis/optimization/surface_graph_window.h
+    include/praxis/optimization/display_window.h
     include/praxis/optimization/function_window.h
     include/praxis/optimization/compose_scenario.h
     include/praxis/optimization/scenario_snapshot.h
@@ -25,6 +26,7 @@ praxis_add_module(optimization
     src/descriptors.cpp
     src/registered.cpp
     src/curve_graph.cpp
+    src/curve_overlays.cpp
     src/inert_solver.cpp
     src/inert_minimizer.cpp
     src/solve_window.cpp
@@ -36,7 +38,7 @@ praxis_add_module(optimization
     src/surface_figures.cpp
     src/surface_overlay.cpp
     src/surface_stencil.cpp
-    src/surface_graph_window.cpp
+    src/display_window.cpp
     src/function_window.cpp
     src/compose_scenario.cpp
     src/scenario_answers.cpp
@@ -50,6 +52,7 @@ praxis_add_module(optimization
     src/surface_step.h
     src/surface_figures.h
     src/surface_overlay.h
+    src/curve_overlays.h
     src/registered_list.h
     src/scenario_defaults.h
     src/evaluation_problems.cpp

@@ -3,8 +3,8 @@
 
 #include "praxis/optimization/registered.h"
 #include "praxis/optimization/capabilities.h"
+#include "praxis/optimization/scenario_view.h"
 #include "praxis/optimization/scenario_state.h"
-#include "praxis/optimization/surface_stencil.h"
 #include "praxis/optimization/scenario_snapshot.h"
 
 #include "praxis/scene/preset.h"
@@ -22,8 +22,8 @@ namespace praxis::optimization {
 // What a window of one composed scenario is built from. It carries no function and no solver, so a
 // window has nothing it could evaluate or solve on the render strand: it reads the publication and
 // asks for a run through the gate. `opened` is what the composition opened at, which a window holding
-// settings of its own starts from, and `checks_derivative` is the composition's own. `drawn` is what a
-// surface's stencil draws, which a window may switch; a curve's is null.
+// settings of its own starts from, and `checks_derivative` is the composition's own. `drawn` is what
+// the scenario's drawing shows, which a window may switch.
 struct scenario_window_inputs
 {
     scenario_reader seen;
@@ -32,7 +32,7 @@ struct scenario_window_inputs
     scenario_settings opened;
     std::vector<std::string> registered;
     std::weak_ptr<owned_scenario> scenario;
-    std::shared_ptr<surface_view> drawn;
+    std::shared_ptr<scenario_view> drawn;
 };
 
 // Invoked once per composition, after the publisher and the gated state exist and before the preset

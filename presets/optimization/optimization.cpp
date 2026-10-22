@@ -7,10 +7,10 @@
 #include "praxis/optimization/curve_graph.h"
 #include "praxis/optimization/capabilities.h"
 #include "praxis/optimization/solve_window.h"
+#include "praxis/optimization/display_window.h"
 #include "praxis/optimization/function_window.h"
 #include "praxis/optimization/compose_scenario.h"
 #include "praxis/optimization/linearization_window.h"
-#include "praxis/optimization/surface_graph_window.h"
 
 #include "praxis/scene/preset.h"
 #include "praxis/scene/preset_site.h"
@@ -53,12 +53,13 @@ constexpr std::array<const char *, 2> scenario_spellings{"curve", "surface"};
 std::vector<std::shared_ptr<scene::imgui_window>> curve_windows(const optimization::scenario_window_inputs &inputs)
 {
     return {std::make_shared<optimization::function_window>("Function", inputs), optimization::curve_graph(inputs, "Graph"),
-            std::make_shared<optimization::solve_window>("Solve", inputs), std::make_shared<optimization::linearization_window>("Linearization", inputs)};
+            std::make_shared<optimization::display_window>("Display", inputs), std::make_shared<optimization::solve_window>("Solve", inputs),
+            std::make_shared<optimization::linearization_window>("Linearization", inputs)};
 }
 
 std::vector<std::shared_ptr<scene::imgui_window>> surface_windows(const optimization::scenario_window_inputs &inputs)
 {
-    return {std::make_shared<optimization::function_window>("Function", inputs), std::make_shared<optimization::surface_graph_window>("Graph", inputs),
+    return {std::make_shared<optimization::function_window>("Function", inputs), std::make_shared<optimization::display_window>("Display", inputs),
             std::make_shared<optimization::solve_window>("Solve", inputs), std::make_shared<optimization::linearization_window>("Linearization", inputs)};
 }
 

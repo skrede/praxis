@@ -15,6 +15,7 @@ praxis_add_test(solve_window_test.cpp HEADERS composed_curve.h LIBS praxis::opti
 praxis_add_test(function_window_test.cpp HEADERS composed_curve.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
 praxis_add_test(curve_graph_test.cpp HEADERS composed_curve.h drawn_graph.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog implot praxis_test_support)
 praxis_add_test(linearization_window_test.cpp HEADERS composed_curve.h drawn_graph.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog implot praxis_test_support)
+praxis_add_test(linearization_controls_test.cpp HEADERS composed_curve.h drawn_graph.h drawn_surface.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog implot praxis_test_support)
 praxis_add_test(surface_scenario_test.cpp HEADERS composed_curve.h drawn_surface.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
 target_include_directories(surface_scenario_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src)
 praxis_add_test(drawn_iterates_test.cpp HEADERS composed_curve.h drawn_surface.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
@@ -24,4 +25,5 @@ target_include_directories(level_curve_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/pr
 praxis_add_test(surface_step_test.cpp HEADERS composed_curve.h drawn_surface.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
 target_include_directories(surface_step_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src)
 praxis_add_test(surface_view_test.cpp HEADERS composed_curve.h drawn_surface.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
+praxis_add_test(display_window_test.cpp HEADERS composed_curve.h drawn_graph.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog implot praxis_test_support)
 praxis_add_test(surface_linearization_test.cpp HEADERS composed_curve.h drawn_surface.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)

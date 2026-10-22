@@ -75,7 +75,7 @@ std::optional<std::string> unopenable(const std::vector<std::string> &registered
 // posted reach storage that is gone.
 template<typename registered, typename drawing>
 std::shared_ptr<scene::preset> composed_over(const scene::preset_site &site, std::vector<registered> functions, const capabilities &solving, const scenario_settings &opened,
-                                             const scenario_composition &composed, const char *kind, std::shared_ptr<surface_view> view, drawing drawn)
+                                             const scenario_composition &composed, const char *kind, drawing drawn)
 {
     const std::size_t dimension                     = std::is_same_v<registered, registered_curve> ? 1u : 2u;
     const std::vector<std::string> registered_names = names_of(functions);
@@ -87,7 +87,7 @@ std::shared_ptr<scene::preset> composed_over(const scene::preset_site &site, std
     if(!owned->with([](scenario_state &state) { state.run(); }))
         return refused(kind, "its work strand admits no run");
 
-    const scenario_window_inputs built{published->reader(), dimension, composed.checks_derivative, opened, registered_names, owned, std::move(view)};
+    const scenario_window_inputs built{published->reader(), dimension, composed.checks_derivative, opened, registered_names, owned, std::make_shared<scenario_view>()};
     std::vector<std::shared_ptr<scene::imgui_window>> windows = composed.windows ? composed.windows(built) : std::vector<std::shared_ptr<scene::imgui_window>>{};
 
     auto preset        = std::make_shared<scene::preset>(drawn(built), std::move(windows), site.add_window, site.remove_window);
@@ -102,13 +102,13 @@ std::shared_ptr<scene::preset> composed_over(const scene::preset_site &site, std
 std::shared_ptr<scene::preset> compose_curve_scenario(const scene::preset_site &site, std::vector<registered_curve> curves, const capabilities &solving, const scenario_settings &opened,
                                                       const scenario_composition &composed)
 {
-    return composed_over(site, std::move(curves), solving, opened, composed, "curve", nullptr, [](const scenario_window_inputs &) { return std::make_shared<empty_stencil>(); });
+    return composed_over(site, std::move(curves), solving, opened, composed, "curve", [](const scenario_window_inputs &) { return std::make_shared<empty_stencil>(); });
 }
 
 std::shared_ptr<scene::preset> compose_surface_scenario(const scene::preset_site &site, std::vector<registered_surface> surfaces, const capabilities &solving,
                                                         const scenario_settings &opened, const scenario_composition &composed)
 {
-    return composed_over(site, std::move(surfaces), solving, opened, composed, "surface", std::make_shared<surface_view>(),
+    return composed_over(site, std::move(surfaces), solving, opened, composed, "surface",
                          [&site](const scenario_window_inputs &built) { return std::make_shared<surface_stencil>(site.scene, built.seen, built.drawn); });
 }
 

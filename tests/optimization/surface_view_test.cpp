@@ -8,9 +8,8 @@
 #include "praxis/optimization/problem.h"
 #include "praxis/optimization/registered.h"
 #include "praxis/optimization/capabilities.h"
-#include "praxis/optimization/scenario_state.h"
+#include "praxis/optimization/display_window.h"
 #include "praxis/optimization/scenario_snapshot.h"
-#include "praxis/optimization/surface_graph_window.h"
 
 #include "praxis/scene/imgui_window.h"
 
@@ -48,7 +47,7 @@ registered_surface boxed()
     return registered_surface("circle", &circle_value, &circle_gradient, box{Eigen::Vector2d(-unbounded, -1.5), Eigen::Vector2d(1.2, unbounded)});
 }
 
-// A surface in a box, run from a seed off the zero curve, with the graph window kept when composed.
+// A surface in a box, run from a seed off the zero curve, with the Display window kept when composed.
 struct viewed_surface
 {
     scheduler::scheduler loop;
@@ -77,7 +76,7 @@ struct viewed_surface
         return [this, graphed](const scenario_window_inputs &offered)
         {
             if(graphed)
-                graph = std::make_shared<surface_graph_window>("Graph", offered);
+                graph = std::make_shared<display_window>("Display", offered);
 
             return graphed ? std::vector<std::shared_ptr<scene::imgui_window>>{graph} : std::vector<std::shared_ptr<scene::imgui_window>>{};
         };
@@ -86,7 +85,7 @@ struct viewed_surface
     void press(const char *label)
     {
         tests::imgui_frame frames;
-        press_on(frames, [shown = graph] { shown->render(); }, "Graph", label);
+        press_on(frames, [shown = graph] { shown->render(); }, "Display", label);
         taken.composed->stencil->render();
     }
 };
@@ -113,7 +112,7 @@ TEST_CASE("a surface in a box draws the box on the zero plane, an infinite side 
         CHECK(std::abs(end.z()) <= 1.0e-6);
 }
 
-TEST_CASE("with no graph window the zero curve, the selected step's construction and the box are all drawn", "[optimization][surface][view]")
+TEST_CASE("with no Display window the zero curve, the selected step's construction and the box are all drawn", "[optimization][surface][view]")
 {
     viewed_surface viewed(false);
     threepp::Scene &scene = *viewed.built.scene;
@@ -128,7 +127,7 @@ TEST_CASE("with no graph window the zero curve, the selected step's construction
         CHECK(std::abs(standing.over(end).norm() - 1.0) <= 1.0e-3);
 }
 
-TEST_CASE("the graph window's switches hide and show the zero curve, the selected step's construction and the box", "[optimization][surface][view]")
+TEST_CASE("the Display window's switches hide and show the zero curve, the selected step's construction and the box", "[optimization][surface][view]")
 {
     viewed_surface viewed(true);
     threepp::Scene &scene = *viewed.built.scene;
@@ -150,21 +149,4 @@ TEST_CASE("the graph window's switches hide and show the zero curve, the selecte
         viewed.press(label);
     for(const char *name : {"zero curve", "tangent plane", "nearest point", "zero line", "box"})
         CHECK(drawn_visible(scene, name));
-}
-
-TEST_CASE("the graph window's linearization switch hides and shows the plane at the linearized point alone", "[optimization][surface][view]")
-{
-    viewed_surface viewed(true);
-    threepp::Scene &scene = *viewed.built.scene;
-    command(viewed.taken.inputs->scenario, [](scenario_state &state) { state.linearize(Eigen::Vector2d(0.5, 0.5)); });
-    REQUIRE(viewed.loop.drain().has_value());
-    viewed.taken.composed->stencil->render();
-    REQUIRE(drawn_visible(scene, "tangent plane at p"));
-
-    viewed.press("Linearization");
-    CHECK_FALSE(drawn_visible(scene, "tangent plane at p"));
-    CHECK(drawn_visible(scene, "tangent plane"));
-
-    viewed.press("Linearization");
-    CHECK(drawn_visible(scene, "tangent plane at p"));
 }
