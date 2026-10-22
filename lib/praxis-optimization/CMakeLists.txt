@@ -28,6 +28,7 @@ praxis_add_module(optimization
     src/registered_objective.cpp
     src/curve_graph.cpp
     src/curve_overlays.cpp
+    src/curve_objective.cpp
     src/inert_solver.cpp
     src/inert_minimizer.cpp
     src/solve_window.cpp
@@ -59,6 +60,7 @@ praxis_add_module(optimization
     src/surface_figures.h
     src/surface_overlay.h
     src/curve_overlays.h
+    src/curve_objective.h
     src/registered_list.h
     src/scenario_defaults.h
     src/evaluation_problems.cpp

@@ -11,31 +11,6 @@
 
 namespace praxis::optimization {
 
-namespace {
-
-// Held to the range and to the ordinates the plot is fitted to, so a steep line widens neither axis.
-std::optional<scene::plot_series> tangent(std::string name, const linearized &at, const interval &range, const interval &span)
-{
-    if(!std::isfinite(at.g) || !std::isfinite(at.slope) || (at.slope == 0.0 && (at.g < span.lower || at.g > span.upper)))
-        return std::nullopt;
-
-    double from = range.lower;
-    double to   = range.upper;
-    if(at.slope != 0.0)
-    {
-        const double below = at.x + (span.lower - at.g) / at.slope;
-        const double above = at.x + (span.upper - at.g) / at.slope;
-        from               = std::max(from, std::min(below, above));
-        to                 = std::min(to, std::max(below, above));
-    }
-    if(!(from < to))
-        return std::nullopt;
-
-    return scene::plot_series{std::move(name), {from, to}, {at.g + at.slope * (from - at.x), at.g + at.slope * (to - at.x)}, scene::plot_mark::line};
-}
-
-}
-
 double coordinate(const Eigen::VectorXd &x)
 {
     return x.size() == 1 ? x[0] : unanswered;
@@ -62,6 +37,26 @@ std::optional<interval> finite_span(const std::vector<scene::plot_series> &drawn
                 span = interval{std::min(span.lower, series.ordinate[at]), std::max(span.upper, series.ordinate[at])};
 
     return span.lower <= span.upper ? std::optional<interval>(span) : std::nullopt;
+}
+
+std::optional<scene::plot_series> tangent(std::string name, const linearized &at, const interval &range, const interval &span)
+{
+    if(!std::isfinite(at.g) || !std::isfinite(at.slope) || (at.slope == 0.0 && (at.g < span.lower || at.g > span.upper)))
+        return std::nullopt;
+
+    double from = range.lower;
+    double to   = range.upper;
+    if(at.slope != 0.0)
+    {
+        const double below = at.x + (span.lower - at.g) / at.slope;
+        const double above = at.x + (span.upper - at.g) / at.slope;
+        from               = std::max(from, std::min(below, above));
+        to                 = std::min(to, std::max(below, above));
+    }
+    if(!(from < to))
+        return std::nullopt;
+
+    return scene::plot_series{std::move(name), {from, to}, {at.g + at.slope * (from - at.x), at.g + at.slope * (to - at.x)}, scene::plot_mark::line};
 }
 
 void add_step(const scenario_snapshot &shown, const interval &span, std::vector<scene::plot_series> &drawn)

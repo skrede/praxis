@@ -1,6 +1,8 @@
 #include "curve_overlays.h"
+#include "curve_objective.h"
 #include "scenario_answers.h"
 
+#include "praxis/optimization/slots.h"
 #include "praxis/optimization/curve_graph.h"
 
 #include <Eigen/Core>
@@ -17,8 +19,9 @@ namespace praxis::optimization {
 
 namespace {
 
-constexpr const char *abscissa_axis = "x";
-constexpr const char *ordinate_axis = "g(x)";
+constexpr const char *abscissa_axis  = "x";
+constexpr const char *ordinate_axis  = "g(x)";
+constexpr const char *objective_axis = "f(x)";
 
 scene::plot_series iterate_marks(const scenario_run &run)
 {
@@ -32,17 +35,34 @@ scene::plot_series iterate_marks(const scenario_run &run)
     return marks;
 }
 
+const char *ordinate_of(const scenario_run &run)
+{
+    return run.minimized_by ? objective_axis : ordinate_axis;
+}
+
+void add_step_of(const scenario_snapshot &shown, const interval &span, std::vector<scene::plot_series> &drawn)
+{
+    if(!shown.run.minimized_by)
+        add_step(shown, span, drawn);
+    else if(*shown.run.minimized_by == minimizer_slot::newton)
+        add_newton_model(shown, span, drawn);
+    else
+        add_descent_tangent(shown, span, drawn);
+}
+
 std::vector<scene::plot_series> drawn_parts(const scenario_snapshot &shown, const scenario_view &view)
 {
-    std::vector<scene::plot_series> drawn{scene::plot_series{ordinate_axis, shown.abscissa, shown.ordinate, scene::plot_mark::line}};
+    std::vector<scene::plot_series> drawn{scene::plot_series{ordinate_of(shown.run), shown.abscissa, shown.ordinate, scene::plot_mark::line}};
     if(view.iterates)
         drawn.push_back(iterate_marks(shown.run));
 
     const std::optional<linearized> here = view.linearization ? linearized_point(shown.linearization, drawn) : std::nullopt;
+    if(view.step)
+        add_vertex(shown, drawn);
     if(const std::optional<interval> span = finite_span(drawn, shown.ranges.front()))
     {
         if(view.step)
-            add_step(shown, *span, drawn);
+            add_step_of(shown, *span, drawn);
         if(view.bounds)
             add_bounds(shown.bounds, *span, drawn);
         if(here)
@@ -60,7 +80,7 @@ scene::plot_reading curve_reading(const scenario_reader &seen, const scenario_vi
     if(shown == nullptr)
         return scene::plot_reading{.message = nothing_published, .abscissa_label = abscissa_axis, .frames = {}};
 
-    scene::plot_frame frame{.ordinate_label       = ordinate_axis,
+    scene::plot_frame frame{.ordinate_label       = ordinate_of(shown->run),
                             .logarithmic_ordinate = false,
                             .series               = drawn_parts(*shown, drawn),
                             .abscissa_limits      = scene::plot_limits{shown->ranges.front().lower, shown->ranges.front().upper}};

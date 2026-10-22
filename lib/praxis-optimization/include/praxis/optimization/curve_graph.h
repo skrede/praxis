@@ -14,7 +14,9 @@ namespace praxis::optimization {
 
 // The published curve as a line held to its range and every iterate x_k as a marker at (x_k, g(x_k)).
 // At the selected step k it adds the tangent at x_k, the point where that tangent is zero, and the
-// recorded x_(k+1) as a segment from the abscissa to the curve; where the problem has a box, its ends;
+// recorded x_(k+1) as a segment from the abscissa to the curve. A run that minimized f draws f(x) instead,
+// and at step k Newton's quadratic model at x_k and its vertex, or gradient descent's tangent at x_k,
+// with x_(k+1) as a segment from that model to the curve. Where the problem has a box, it adds its ends;
 // at a point p asked for, the point and its tangent, and the central difference's tangent where the
 // check disagrees. Each added line is held to the range and to the ordinates the points span. The view
 // says which of these is drawn beside the curve.
