@@ -70,16 +70,47 @@ Eigen::Vector2d hyperbolic_paraboloid_gradient(double x, double y)
     return Eigen::Vector2d(y, x);
 }
 
+double quartic(double x)
+{
+    return x * x * x * x - 3.0 * x * x + x;
+}
+
+double quartic_slope(double x)
+{
+    return 4.0 * x * x * x - 6.0 * x + 1.0;
+}
+
+double quartic_curvature(double x)
+{
+    return 12.0 * x * x - 6.0;
+}
+
+double elliptic_paraboloid(double x, double y)
+{
+    return 0.5 * (x * x + 10.0 * y * y);
+}
+
+Eigen::Vector2d elliptic_paraboloid_gradient(double x, double y)
+{
+    return Eigen::Vector2d(x, 10.0 * y);
+}
+
+Eigen::Matrix2d elliptic_paraboloid_hessian(double, double)
+{
+    return Eigen::Vector2d(1.0, 10.0).asDiagonal();
+}
+
 std::vector<optimization::registered_curve> example_curves()
 {
     return {optimization::registered_curve("x^3 - 2x - 5", &cubic, &cubic_slope), optimization::registered_curve("cos(x) - x", &cosine_less_x, &cosine_less_x_slope),
-            optimization::registered_curve("atan(x)", &arctangent, &arctangent_slope)};
+            optimization::registered_curve("atan(x)", &arctangent, &arctangent_slope), optimization::registered_curve("x^4 - 3x^2 + x", &quartic, &quartic_slope, &quartic_curvature)};
 }
 
 std::vector<optimization::registered_surface> example_surfaces()
 {
     return {optimization::registered_surface("x^2 + y^2 - 1", &paraboloid, &paraboloid_gradient),
-            optimization::registered_surface("x y - 1", &hyperbolic_paraboloid, &hyperbolic_paraboloid_gradient)};
+            optimization::registered_surface("x y - 1", &hyperbolic_paraboloid, &hyperbolic_paraboloid_gradient),
+            optimization::registered_surface("(x^2 + 10y^2)/2", &elliptic_paraboloid, &elliptic_paraboloid_gradient, &elliptic_paraboloid_hessian)};
 }
 
 }

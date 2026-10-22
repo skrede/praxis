@@ -57,7 +57,7 @@ void declare_solve(config::declaration &shape)
     shape.choice(optimization::form_key, std::vector<std::string>(optimization::form_spellings.begin(), optimization::form_spellings.end()), optimization::form_spellings.front());
     shape.choice(optimization::method_key, std::vector<std::string>(optimization::method_spellings.begin(), optimization::method_spellings.end()),
                  optimization::method_spellings.front());
-    shape.field(optimization::step_length_key, config::field_kind::real, "0.05");
+    shape.field(optimization::step_length_key, config::field_kind::real, "0.1");
 }
 
 std::string selected_name(const config::document &values)

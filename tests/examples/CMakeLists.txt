@@ -39,8 +39,14 @@ endif ()
 
 set_tests_properties(shipped_scenarios_test PROPERTIES TIMEOUT 60)
 
-praxis_add_test(shipped_optimization_test.cpp HEADERS scratch_documents.h LIBS praxis::scene praxis::optimization_presets praxis::optimization praxis::config praxis::scheduler spdlog::spdlog praxis_test_support)
+praxis_add_test(shipped_optimization_test.cpp HEADERS scratch_documents.h offered_optimization.h LIBS praxis::scene praxis::optimization_presets praxis::optimization praxis::config praxis::scheduler spdlog::spdlog praxis_test_support)
 target_sources(shipped_optimization_test PRIVATE ../../examples/demo_documents.cpp ../../examples/demo_write_back.cpp ../../examples/demo_configuration.cpp
     ../../examples/optimization/optimization_offered.cpp)
 target_include_directories(shipped_optimization_test PRIVATE ${PROJECT_SOURCE_DIR}/examples)
 target_compile_definitions(shipped_optimization_test PRIVATE PRAXIS_SHIPPED_OPTIMIZATION_DIR="${PROJECT_SOURCE_DIR}/examples/optimization")
+
+praxis_add_test(shipped_optimization_minimum_test.cpp HEADERS scratch_documents.h offered_optimization.h LIBS praxis::scene praxis::optimization_presets praxis::optimization praxis::config praxis::scheduler spdlog::spdlog praxis_test_support)
+target_sources(shipped_optimization_minimum_test PRIVATE ../../examples/demo_documents.cpp ../../examples/demo_write_back.cpp ../../examples/demo_configuration.cpp
+    ../../examples/optimization/optimization_offered.cpp)
+target_include_directories(shipped_optimization_minimum_test PRIVATE ${PROJECT_SOURCE_DIR}/examples)
+target_compile_definitions(shipped_optimization_minimum_test PRIVATE PRAXIS_SHIPPED_OPTIMIZATION_DIR="${PROJECT_SOURCE_DIR}/examples/optimization")
