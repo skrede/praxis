@@ -18,8 +18,9 @@ namespace praxis::optimization {
 
 // The value and the derivative, or for a function of two variables the gradient, at the point as the
 // window writes them; where the check is on and was evaluated, the central difference, and a line
-// stating a disagreement.
-std::vector<std::string> linearization_lines(const scenario_linearization &at, bool checks_derivative);
+// stating a disagreement. A function of one variable is named f in the minimum form and g in the
+// root form.
+std::vector<std::string> linearization_lines(const scenario_linearization &at, problem_form form, bool checks_derivative);
 
 // A point taken by a field and by a slider over the range of each variable, asked of the scenario
 // through its gate as a slider moves and once a field is left after an edit; the window asks for the

@@ -78,19 +78,19 @@ Eigen::VectorXd middle_of(const std::vector<interval> &ranges)
     return middle;
 }
 
-naming named_for(Eigen::Index dimension)
+naming named_for(Eigen::Index dimension, problem_form form)
 {
     if(dimension == 1)
-        return naming{"g(x)", "g'(x)", "The derivative", "x"};
+        return naming{curve_function_name(form), curve_derivative_name(form), "The derivative", "x"};
 
     return naming{"f(x, y)", "grad f(x, y)", "The gradient", "(x, y)"};
 }
 
 }
 
-std::vector<std::string> linearization_lines(const scenario_linearization &at, bool checks_derivative)
+std::vector<std::string> linearization_lines(const scenario_linearization &at, problem_form form, bool checks_derivative)
 {
-    const naming names = named_for(at.point.size());
+    const naming names = named_for(at.point.size(), form);
     std::vector<std::string> lines{written(names.value, value_of(at)), written(names.slope, slope_of(at))};
     if(!checks_derivative || !at.check || at.check->central.rows() != 1 || at.check->central.cols() != at.point.size())
         return lines;
@@ -129,7 +129,7 @@ void linearization_window::render()
 
     controls(shown->ranges);
     if(shown->linearization)
-        for(const std::string &line : linearization_lines(*shown->linearization, m_checks))
+        for(const std::string &line : linearization_lines(*shown->linearization, drawn_form(shown->run), m_checks))
             ImGui::TextWrapped("%s", line.c_str());
     ImGui::End();
 }

@@ -19,9 +19,7 @@ namespace praxis::optimization {
 
 namespace {
 
-constexpr const char *abscissa_axis  = "x";
-constexpr const char *ordinate_axis  = "g(x)";
-constexpr const char *objective_axis = "f(x)";
+constexpr const char *abscissa_axis = "x";
 
 scene::plot_series iterate_marks(const scenario_run &run)
 {
@@ -37,7 +35,7 @@ scene::plot_series iterate_marks(const scenario_run &run)
 
 const char *ordinate_of(const scenario_run &run)
 {
-    return run.minimized_by ? objective_axis : ordinate_axis;
+    return curve_function_name(drawn_form(run));
 }
 
 void add_step_of(const scenario_snapshot &shown, const interval &span, std::vector<scene::plot_series> &drawn)

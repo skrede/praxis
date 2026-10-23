@@ -3,6 +3,7 @@
 
 #include "praxis/optimization/solver.h"
 #include "praxis/optimization/problem.h"
+#include "praxis/optimization/scenario_state.h"
 #include "praxis/optimization/scenario_snapshot.h"
 
 #include <Eigen/Core>
@@ -19,6 +20,21 @@ namespace praxis::optimization {
 inline constexpr const char *nothing_published = "The function has not been evaluated yet.";
 
 std::uint32_t steps_taken(const scenario_run &ran);
+
+inline problem_form drawn_form(const scenario_run &run)
+{
+    return run.minimized_by ? problem_form::minimum : problem_form::root;
+}
+
+inline const char *curve_function_name(problem_form form)
+{
+    return form == problem_form::minimum ? "f(x)" : "g(x)";
+}
+
+inline const char *curve_derivative_name(problem_form form)
+{
+    return form == problem_form::minimum ? "f'(x)" : "g'(x)";
+}
 
 // The point `at` of `count` evenly spaced over the range, its ends exactly the range's.
 double evenly(const interval &range, std::size_t at, std::size_t count);

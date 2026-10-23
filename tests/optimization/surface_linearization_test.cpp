@@ -125,7 +125,7 @@ TEST_CASE("a point typed into both fields is evaluated, its value and gradient s
     const scenario_linearization at = staged_surface.at();
     CHECK(at.point == Eigen::Vector2d(1.5, 0.5));
 
-    const std::vector<std::string> lines = linearization_lines(at, false);
+    const std::vector<std::string> lines = linearization_lines(at, problem_form::root, false);
     REQUIRE(lines.size() == 2u);
     CHECK_THAT(lines[0], Catch::Matchers::ContainsSubstring("f(x, y) = 1.5"));
     CHECK_THAT(lines[1], Catch::Matchers::ContainsSubstring("(3, 1)"));
@@ -160,7 +160,7 @@ TEST_CASE("with the check opted in, a gradient with its components swapped is st
     CHECK(at.check->disagrees);
     CHECK((at.check->central.row(0).transpose() - Eigen::Vector2d(3.0, 1.0)).norm() <= 1.0e-6);
 
-    const std::vector<std::string> lines = linearization_lines(at, true);
+    const std::vector<std::string> lines = linearization_lines(at, problem_form::root, true);
     REQUIRE(lines.size() == 4u);
     CHECK_THAT(lines[3], Catch::Matchers::ContainsSubstring("The gradient handed in and the central difference differ at (x, y) = (1.5, 0.5)"));
 
@@ -177,7 +177,7 @@ TEST_CASE("with the check opted in, a correct gradient raises nothing and only t
     const scenario_linearization at = staged_surface.at();
     REQUIRE(at.check.has_value());
     CHECK_FALSE(at.check->disagrees);
-    CHECK(linearization_lines(at, true).size() == 3u);
+    CHECK(linearization_lines(at, problem_form::root, true).size() == 3u);
     CHECK(drawn_visible(*staged_surface.built.scene, "tangent plane at p"));
     CHECK_FALSE(drawn_visible(*staged_surface.built.scene, "central difference at p"));
 }
@@ -189,7 +189,7 @@ TEST_CASE("with the check not opted in, nothing of it is evaluated, written or d
     const scenario_linearization at = staged_surface.at();
 
     CHECK_FALSE(at.check.has_value());
-    CHECK(linearization_lines(at, false).size() == 2u);
-    CHECK(linearization_lines(at, true).size() == 2u);
+    CHECK(linearization_lines(at, problem_form::root, false).size() == 2u);
+    CHECK(linearization_lines(at, problem_form::root, true).size() == 2u);
     CHECK_FALSE(drawn_visible(*staged_surface.built.scene, "central difference at p"));
 }

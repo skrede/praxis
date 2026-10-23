@@ -72,7 +72,7 @@ struct linearizing_stage
 
     std::vector<std::string> lines(bool checks_derivative) const
     {
-        return linearization_lines(at(), checks_derivative);
+        return linearization_lines(at(), problem_form::root, checks_derivative);
     }
 };
 
