@@ -24,8 +24,8 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
-#include <threepp/math/Vector3.hpp>
 #include <threepp/math/Matrix4.hpp>
+#include <threepp/math/Vector3.hpp>
 
 #include <Eigen/Core>
 

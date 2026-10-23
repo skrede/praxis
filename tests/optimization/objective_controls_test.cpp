@@ -1,9 +1,10 @@
+#include "minimized_stage.h"
+#include "scenario_defaults.h"
+
 #include "panel_keys.h"
 #include "imgui_frame.h"
 #include "captured_log.h"
 #include "panel_labels.h"
-#include "minimized_stage.h"
-#include "scenario_defaults.h"
 
 #include "praxis/optimization/slots.h"
 #include "praxis/optimization/registered.h"

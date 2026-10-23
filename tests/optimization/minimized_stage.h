@@ -1,8 +1,9 @@
 #ifndef HPP_GUARD_PRAXIS_TESTS_OPTIMIZATION_MINIMIZED_STAGE_H
 #define HPP_GUARD_PRAXIS_TESTS_OPTIMIZATION_MINIMIZED_STAGE_H
 
-#include "panel_keys.h"
 #include "composed_curve.h"
+
+#include "panel_keys.h"
 
 #include "praxis/optimization/slots.h"
 #include "praxis/optimization/registered.h"
