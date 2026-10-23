@@ -7,6 +7,7 @@
 #include "praxis/optimization/scenario_view.h"
 #include "praxis/optimization/scenario_snapshot.h"
 
+#include <threepp/objects/Mesh.hpp>
 #include <threepp/objects/Group.hpp>
 #include <threepp/objects/InstancedMesh.hpp>
 
@@ -31,7 +32,8 @@ std::vector<double> map_levels(const scenario_grid &grid);
 // lowest drawn point: the level curves of f at `map_levels`, "level curves"; the drawn iterates
 // projected onto the floor, "iterates on the floor"; at the selected x_k an arrow along grad f(x_k),
 // "gradient at x_k", `gradient_arrow_fraction` of the extent long whatever |grad f|; and the step from
-// x_k to the recorded x_(k+1), "step on the floor". Nothing is drawn from an x_k outside the ranges or whose
+// x_k to the recorded x_(k+1), "step on the floor", a rod of `floor_step_radius` whose axis stands
+// `floor_step_lift` above the floor. Nothing is drawn from an x_k outside the ranges or whose
 // gradient was not answered, and no step to an x_(k+1) outside them. The curves are traced again only
 // when a publication carries other samples and the rest is placed only when a publication is new,
 // everything read from the publication.
@@ -47,10 +49,11 @@ public:
 
 private:
     bool m_pointed;
+    bool m_stepped;
     double m_floor;
     surface_arrow m_arrow;
     std::shared_ptr<threepp::Group> m_map;
-    std::shared_ptr<threepp::Object3D> m_step;
+    std::shared_ptr<threepp::Mesh> m_step;
     std::shared_ptr<threepp::Object3D> m_curves;
     std::shared_ptr<threepp::Group> m_projected;
     std::shared_ptr<threepp::Material> m_mark_tone;

@@ -28,6 +28,13 @@ surface_arrow arrow_object(std::string name, std::uint32_t tone);
 // at or below the head's own is drawn as the head alone, shrunk to it.
 void place_arrow(const surface_arrow &drawn, const Eigen::Vector3d &from, const Eigen::Vector3d &along, double length);
 
+// A lit cylinder of `radius` and unit length along +y, in one tone.
+std::shared_ptr<threepp::Mesh> rod_object(std::string name, std::uint32_t tone, double radius);
+
+// The rod turned from +y onto the segment from `from` to `to`, centered on it and stretched to its
+// length; hidden for a segment of no length.
+void place_rod(threepp::Mesh &rod, const Eigen::Vector3d &from, const Eigen::Vector3d &to);
+
 }
 
 #endif

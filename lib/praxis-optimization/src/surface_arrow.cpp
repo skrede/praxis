@@ -59,4 +59,31 @@ void place_arrow(const surface_arrow &drawn, const Eigen::Vector3d &from, const 
     drawn.head->position.y = static_cast<float>(shaft + shrunk * gradient_head_length / 2.0);
 }
 
+std::shared_ptr<threepp::Mesh> rod_object(std::string name, std::uint32_t tone, double radius)
+{
+    auto material   = threepp::MeshPhongMaterial::create();
+    material->color = threepp::Color(tone);
+
+    const auto across = static_cast<float>(radius);
+    auto rod          = threepp::Mesh::create(threepp::CylinderGeometry::create(across, across, 1.f, arrow_segments), material);
+    rod->name         = std::move(name);
+
+    return rod;
+}
+
+void place_rod(threepp::Mesh &rod, const Eigen::Vector3d &from, const Eigen::Vector3d &to)
+{
+    const Eigen::Vector3d along = to - from;
+    const double length         = along.norm();
+    rod.visible                 = length > 0.0;
+    if(!rod.visible)
+        return;
+
+    const Eigen::Vector3d unit   = along / length;
+    const Eigen::Vector3d middle = (from + to) / 2.0;
+    rod.quaternion.setFromUnitVectors(threepp::Vector3(0.f, 1.f, 0.f), threepp::Vector3(static_cast<float>(unit.x()), static_cast<float>(unit.y()), static_cast<float>(unit.z())));
+    rod.position.set(static_cast<float>(middle.x()), static_cast<float>(middle.y()), static_cast<float>(middle.z()));
+    rod.scale.y = static_cast<float>(length);
+}
+
 }

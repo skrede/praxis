@@ -82,10 +82,11 @@ std::vector<double> map_levels(const scenario_grid &grid)
 
 level_map::level_map(std::shared_ptr<threepp::BufferGeometry> sphere)
         : m_pointed(false)
+        , m_stepped(false)
         , m_floor(0.0)
         , m_arrow(arrow_object("gradient at x_k", gradient_tone))
         , m_map(threepp::Group::create())
-        , m_step(occluded_lines("step on the floor", floor_step_tone, 2u, true))
+        , m_step(rod_object("step on the floor", floor_step_tone, floor_step_radius))
         , m_curves(occluded_lines("level curves", level_curve_tone, level_count * level_curve_room(surface_samples), false))
         , m_projected(threepp::Group::create())
         , m_mark_tone(toned(0xffffff))
@@ -119,7 +120,7 @@ void level_map::show(const scenario_view &view)
     m_curves->visible       = view.level_curves && m_curves->geometry()->drawRange.count > 0;
     m_projected->visible    = view.iterates;
     m_arrow.object->visible = view.gradient && m_pointed;
-    m_step->visible         = view.step && m_step->geometry()->drawRange.count > 0;
+    m_step->visible         = view.step && m_stepped;
 }
 
 void level_map::resample(const scenario_snapshot &shown, const field_placement &placed)
@@ -151,18 +152,20 @@ void level_map::step_from(const scenario_snapshot &shown, const field_placement 
     const std::size_t k                    = shown.step;
     const std::optional<Eigen::Vector2d> g = answered_gradient(shown, k);
     m_pointed                              = g && g->norm() > 0.0;
-    write_points(*m_step, std::vector<Eigen::Vector3d>{}, floor);
+    m_stepped                              = false;
     if(!g)
         return;
 
     const Eigen::VectorXd &x = shown.run.iterates[k];
-    const Eigen::Vector3d from(x[0], x[1], m_floor);
     if(m_pointed)
         place_arrow(m_arrow, floor.at(x[0], x[1], m_floor), Eigen::Vector3d(g->x(), g->y(), 0.0), gradient_arrow_fraction * surface_extent);
     if(k + 1u < shown.run.iterates.size() && within_ranges(shown.ranges, shown.run.iterates[k + 1u]))
     {
         const Eigen::VectorXd &next = shown.run.iterates[k + 1u];
-        write_points(*m_step, std::array<Eigen::Vector3d, 2>{from, Eigen::Vector3d(next[0], next[1], m_floor)}, floor);
+        const Eigen::Vector3d from  = floor.at(x[0], x[1], m_floor + floor_step_lift);
+        const Eigen::Vector3d to    = floor.at(next[0], next[1], m_floor + floor_step_lift);
+        place_rod(*m_step, from, to);
+        m_stepped = from != to;
     }
 }
 
