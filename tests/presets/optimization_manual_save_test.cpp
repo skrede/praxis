@@ -70,6 +70,16 @@ void check_parameter(const typed_parameter &read, char name, double value, doubl
     CHECK(read.range.upper == upper);
 }
 
+void check_two_letters(const config::document &saved)
+{
+    CHECK(saved.text("function/source").value_or("") == "manual");
+    CHECK(saved.text("function/expression").value_or("") == "2x^3 + 5b + c");
+    const scenario_settings both = presets::keys::opened_settings(saved, 1u);
+    REQUIRE(both.typed.parameters.size() == 2u);
+    check_parameter(both.typed.parameters[0], 'b', 1.0, -5.0, 5.0);
+    check_parameter(both.typed.parameters[1], 'c', 1.0, -5.0, 5.0);
+}
+
 // The minimum and the maximum share the line below the slider, entered at its leftmost.
 void type_maximum(tests::imgui_frame &frames, const drawing &draw, const char *typed)
 {
@@ -102,13 +112,7 @@ TEST_CASE("the Function window saves the text it last asked for with an instance
         typed_and_left(composed, frames, "2x^3 + 5b + c");
         save(composed, at);
 
-        const config::document first = read_optimization(at);
-        CHECK(first.text("function/source").value_or("") == "manual");
-        CHECK(first.text("function/expression").value_or("") == "2x^3 + 5b + c");
-        const scenario_settings both = presets::keys::opened_settings(first, 1u);
-        REQUIRE(both.typed.parameters.size() == 2u);
-        check_parameter(both.typed.parameters[0], 'b', 1.0, -5.0, 5.0);
-        check_parameter(both.typed.parameters[1], 'c', 1.0, -5.0, 5.0);
+        check_two_letters(read_optimization(at));
 
         typed_and_left(composed, frames, "2x^3 + 5b");
         save(composed, at);

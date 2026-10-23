@@ -30,6 +30,43 @@ problem elongated_bowl()
     };
 }
 
+problem refusing_after_seed(refusal kind, std::size_t &calls)
+{
+    problem refusing  = elongated_bowl();
+    refusing.gradient = [&calls, kind](const Eigen::VectorXd &x) -> expected<Eigen::VectorXd, refusal>
+    {
+        if(calls++ > 0)
+            return praxis::unexpected(kind);
+        return Eigen::VectorXd(Eigen::Vector2d(x[0], 10.0 * x[1]));
+    };
+    return refusing;
+}
+
+void check_gradient_refusal(refusal kind)
+{
+    INFO("refused as " << static_cast<int>(kind));
+    std::size_t calls        = 0;
+    const problem refusing   = refusing_after_seed(kind, calls);
+    const Eigen::VectorXd x0 = Eigen::Vector2d(1.0, 1.0);
+    std::vector<Eigen::VectorXd> newton_iterates;
+    std::vector<Eigen::VectorXd> descent_iterates;
+
+    const expected<Eigen::VectorXd, refusal> by_newton  = references.newton(refusing, x0, 50u, newton_iterates);
+    calls                                               = 0;
+    const expected<Eigen::VectorXd, refusal> by_descent = references.gradient_descent(refusing, x0, 0.05, 50u, descent_iterates);
+
+    REQUIRE_FALSE(by_newton);
+    REQUIRE_FALSE(by_descent);
+    CHECK(by_newton.error() == kind);
+    CHECK(by_descent.error() == kind);
+    REQUIRE(newton_iterates.size() == 2u);
+    REQUIRE(descent_iterates.size() == 2u);
+    CHECK(newton_iterates.front() == x0);
+    CHECK(descent_iterates.front() == x0);
+    CHECK(newton_iterates.back() != x0);
+    CHECK(descent_iterates.back() != x0);
+}
+
 }
 
 TEST_CASE("a fixed-step descent above two over the largest curvature is refused no_solution at its limit with every iterate kept")
@@ -66,34 +103,7 @@ TEST_CASE("a stationary test that never holds is refused no_solution at the limi
 TEST_CASE("a gradient refusal is answered as it came by either minimizer with the iterates reached kept")
 {
     for(const refusal kind : {refusal::degenerate, refusal::unsupported_input})
-    {
-        std::size_t calls = 0;
-        problem refusing  = elongated_bowl();
-        refusing.gradient = [&calls, kind](const Eigen::VectorXd &x) -> expected<Eigen::VectorXd, refusal>
-        {
-            if(calls++ > 0)
-                return praxis::unexpected(kind);
-            return Eigen::VectorXd(Eigen::Vector2d(x[0], 10.0 * x[1]));
-        };
-        const Eigen::VectorXd x0 = Eigen::Vector2d(1.0, 1.0);
-        std::vector<Eigen::VectorXd> newton_iterates;
-        std::vector<Eigen::VectorXd> descent_iterates;
-
-        const expected<Eigen::VectorXd, refusal> by_newton  = references.newton(refusing, x0, 50u, newton_iterates);
-        calls                                               = 0;
-        const expected<Eigen::VectorXd, refusal> by_descent = references.gradient_descent(refusing, x0, 0.05, 50u, descent_iterates);
-
-        REQUIRE_FALSE(by_newton);
-        REQUIRE_FALSE(by_descent);
-        CHECK(by_newton.error() == kind);
-        CHECK(by_descent.error() == kind);
-        REQUIRE(newton_iterates.size() == 2u);
-        REQUIRE(descent_iterates.size() == 2u);
-        CHECK(newton_iterates.front() == x0);
-        CHECK(descent_iterates.front() == x0);
-        CHECK(newton_iterates.back() != x0);
-        CHECK(descent_iterates.back() != x0);
-    }
+        check_gradient_refusal(kind);
 }
 
 TEST_CASE("a hessian refusal is answered as it came by Newton with the seed kept")

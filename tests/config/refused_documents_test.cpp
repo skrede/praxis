@@ -35,6 +35,18 @@ declaration described()
     return shape;
 }
 
+struct twice
+{
+    std::string_view body;
+    std::string_view named;
+};
+
+constexpr std::array written_twice{twice{"<probe><window><title>one</title><title>two</title></window></probe>\n", "'window/title' is written twice"},
+                                   twice{"<probe><window title=\"attr\"><title>elem</title></window></probe>\n", "'window/title' is written twice"},
+                                   twice{"<probe><window title=\"a\"/><window width=\"3\"/></probe>\n", "'window' is written twice"},
+                                   twice{"<probe><window/><window title=\"b\"/></probe>\n", "'window' is written twice"},
+                                   twice{"<probe><window title=\"b\"/><window/></probe>\n", "'window' is written twice"}};
+
 std::filesystem::path written(const std::string &name, std::string_view body)
 {
     const std::filesystem::path directory = std::filesystem::weakly_canonical(std::filesystem::temp_directory_path()) / "praxis-config-refused";
@@ -159,16 +171,6 @@ TEST_CASE("the nearest allowed value is the one fewest weighted edits away, ties
 
 TEST_CASE("a leaf or a group written twice is malformed by name through load and save", "[config]")
 {
-    struct twice
-    {
-        std::string_view body;
-        std::string_view named;
-    };
-    constexpr std::array written_twice{twice{"<probe><window><title>one</title><title>two</title></window></probe>\n", "'window/title' is written twice"},
-                                       twice{"<probe><window title=\"attr\"><title>elem</title></window></probe>\n", "'window/title' is written twice"},
-                                       twice{"<probe><window title=\"a\"/><window width=\"3\"/></probe>\n", "'window' is written twice"},
-                                       twice{"<probe><window/><window title=\"b\"/></probe>\n", "'window' is written twice"},
-                                       twice{"<probe><window title=\"b\"/><window/></probe>\n", "'window' is written twice"}};
     for(const twice &one : written_twice)
     {
         INFO(one.body);
