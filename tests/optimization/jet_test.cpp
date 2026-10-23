@@ -28,7 +28,7 @@ struct row
     double value;
     Eigen::Vector2d gradient;
     Eigen::Matrix2d hessian;
-    typed::parameter_values parameters = {};
+    typed::parameter_values parameters;
 };
 
 typed::jet jet_of(std::string_view text, std::size_t dimension, const Eigen::Vector2d &point, const typed::parameter_values &parameters = {})
@@ -50,7 +50,7 @@ Eigen::Matrix2d symmetric(double xx, double xy, double yy)
 
 row curve(std::string text, double x, double value, double first, double second)
 {
-    return row{std::move(text), 1, Eigen::Vector2d(x, 0.0), value, Eigen::Vector2d(first, 0.0), symmetric(second, 0.0, 0.0)};
+    return row{std::move(text), 1, Eigen::Vector2d(x, 0.0), value, Eigen::Vector2d(first, 0.0), symmetric(second, 0.0, 0.0), {}};
 }
 
 std::vector<row> functions_at(double x)
@@ -72,15 +72,16 @@ std::vector<row> surfaces_at(double x, double y)
                 {x, y},
                 x * x * x * y + s,
                 {3.0 * x * x * y + y * c, x * x * x + x * c},
-                symmetric(6.0 * x * y - y * y * s, 3.0 * x * x + c - x * y * s, -x * x * s)},
-            row{"x/y", 2, {x, y}, x / y, {1.0 / y, -x / (y * y)}, symmetric(0.0, -1.0 / (y * y), 2.0 * x / (y * y * y))},
-            row{"-(x*y)", 2, {x, y}, -x * y, {-y, -x}, symmetric(0.0, -1.0, 0.0)}, row{"x^2 - 3y", 2, {x, y}, x * x - 3.0 * y, {2.0 * x, -3.0}, symmetric(2.0, 0.0, 0.0)}};
+                symmetric(6.0 * x * y - y * y * s, 3.0 * x * x + c - x * y * s, -x * x * s),
+                {}},
+            row{"x/y", 2, {x, y}, x / y, {1.0 / y, -x / (y * y)}, symmetric(0.0, -1.0 / (y * y), 2.0 * x / (y * y * y)), {}},
+            row{"-(x*y)", 2, {x, y}, -x * y, {-y, -x}, symmetric(0.0, -1.0, 0.0), {}}, row{"x^2 - 3y", 2, {x, y}, x * x - 3.0 * y, {2.0 * x, -3.0}, symmetric(2.0, 0.0, 0.0), {}}};
 }
 
 row variable_power(double x, double y)
 {
     const double f = std::pow(x, y), l = std::log(x), lowered = std::pow(x, y - 1.0);
-    return row{"x^y", 2, {x, y}, f, {y * lowered, f * l}, symmetric(y * (y - 1.0) * std::pow(x, y - 2.0), lowered * (1.0 + y * l), f * l * l)};
+    return row{"x^y", 2, {x, y}, f, {y * lowered, f * l}, symmetric(y * (y - 1.0) * std::pow(x, y - 2.0), lowered * (1.0 + y * l), f * l * l), {}};
 }
 
 std::vector<row> table()
@@ -92,7 +93,7 @@ std::vector<row> table()
 
     const double x = 1.5, power = std::pow(x, x), l = std::log(x) + 1.0;
     rows.push_back(curve("x^x", x, power, power * l, power * (l * l + 1.0 / x)));
-    rows.push_back(row{"pi x + e y", 2, {0.3, 0.4}, std::numbers::pi * 0.3 + std::numbers::e * 0.4, {std::numbers::pi, std::numbers::e}, Eigen::Matrix2d::Zero()});
+    rows.push_back(row{"pi x + e y", 2, {0.3, 0.4}, std::numbers::pi * 0.3 + std::numbers::e * 0.4, {std::numbers::pi, std::numbers::e}, Eigen::Matrix2d::Zero(), {}});
 
     row parameter                   = curve("b x^2", 0.9, 2.5 * 0.81, 2.5 * 1.8, 5.0);
     parameter.parameters['b' - 'a'] = 2.5;
@@ -114,8 +115,8 @@ std::vector<row> singular_inside()
             with_a(curve("a^0.5*x^2 + x", 0.7, 0.7, 1.0, 0.0), 0.0),
             with_a(curve("sqrt(a)*x^2 + x", 0.7, root * 0.49 + 0.7, root * 1.4 + 1.0, 2.0 * root), tiny),
             with_a(curve("a^1.5*x^2 + x", 0.7, 0.7, 1.0, 0.0), 0.0),
-            row{"sqrt(x^2 + y^2)^2", 2, {0.0, 0.0}, 0.0, {0.0, 0.0}, symmetric(2.0, 0.0, 2.0)},
-            row{"sqrt(x^2 + y^2)^2", 2, {0.3, 0.4}, 0.25, {0.6, 0.8}, symmetric(2.0, 0.0, 2.0)}};
+            row{"sqrt(x^2 + y^2)^2", 2, {0.0, 0.0}, 0.0, {0.0, 0.0}, symmetric(2.0, 0.0, 2.0), {}},
+            row{"sqrt(x^2 + y^2)^2", 2, {0.3, 0.4}, 0.25, {0.6, 0.8}, symmetric(2.0, 0.0, 2.0), {}}};
 }
 
 void check_within_bound(const std::vector<row> &rows)
