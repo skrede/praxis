@@ -115,7 +115,7 @@ problem objective_form(const posed_objective &posed, bool carries_hessian)
     problem p{
             .objective  = [at = posed.at](const Eigen::VectorXd &x) { return finite_or_degenerate(at(x).value); },
             .gradient   = [at = posed.at](const Eigen::VectorXd &x) { return finite_or_degenerate(at(x).gradient); },
-            .stationary = [](const Eigen::VectorXd &g) -> bool { return g.lpNorm<Eigen::Infinity>() <= minimizer_row_tolerance; },
+            .stationary = [](const Eigen::VectorXd &g) -> bool { return g.lpNorm<Eigen::Infinity>() < minimizer_row_tolerance; },
     };
     if(carries_hessian)
         p.hessian = [at = posed.at](const Eigen::VectorXd &x) { return finite_or_degenerate(at(x).hessian); };
