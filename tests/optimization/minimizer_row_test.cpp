@@ -158,6 +158,9 @@ TEST_CASE("a step against the book's sign fails its minimizer row")
         INFO(name << ": agreed " << row.outcomes.agreed << ", both refused " << row.outcomes.both_refused << ", one refused " << row.outcomes.one_refused << ", differed "
                   << row.outcomes.differed << ", refused differently " << row.outcomes.refused_differently);
         REQUIRE(row.cases == default_cases_per_slot);
-        CHECK(row.verdict != agreement::agreed);
+        CHECK(row.outcomes.agreed == 0u);
+        CHECK(row.outcomes.both_refused + row.outcomes.differed + row.outcomes.refused_differently + row.outcomes.unusable == 0u);
+        CHECK(row.outcomes.one_refused == row.cases);
+        CHECK(row.verdict == agreement::one_refused);
     }
 }
