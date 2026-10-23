@@ -47,7 +47,7 @@ inline registered_surface elliptic()
             [](double, double) { return Eigen::Matrix2d(Eigen::Vector2d(1.0, 10.0).asDiagonal()); });
 }
 
-inline scenario_settings shipped(problem_form form)
+inline scenario_settings elliptic_minimum(problem_form form)
 {
     return scenario_settings{
             "(x^2 + 10y^2)/2", {interval{-2.0, 2.0}, interval{-2.0, 2.0}}, Eigen::Vector2d(-2.0, -2.0), 500u, 0u, objective_settings{form, minimizer_slot::newton, 0.1}, {}};
@@ -111,7 +111,7 @@ struct minimized_surface
     }
 
     explicit minimized_surface(problem_form form)
-            : minimized_surface(elliptic(), shipped(form))
+            : minimized_surface(elliptic(), elliptic_minimum(form))
     {
     }
 
