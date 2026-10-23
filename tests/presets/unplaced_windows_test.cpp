@@ -2,7 +2,12 @@
 #include "composed_panels.h"
 
 #include "praxis/presets/arm.h"
+#include "praxis/presets/screw.h"
+#include "praxis/presets/two_pose.h"
+#include "praxis/presets/twist_axis.h"
+#include "praxis/presets/euler_rungs.h"
 #include "praxis/presets/rotation_axis.h"
+#include "praxis/presets/frame_workbench.h"
 
 #include "praxis/manipulator/capabilities.h"
 
@@ -13,6 +18,7 @@
 #include "praxis/optimization/capabilities.h"
 
 #include "praxis/scene/preset.h"
+#include "praxis/scene/preset_site.h"
 #include "praxis/scene/imgui_window.h"
 
 #include <catch2/catch_test_macros.hpp>
@@ -39,11 +45,19 @@ void check_none_placed(const std::shared_ptr<scene::preset> &composed)
 
 }
 
-TEST_CASE("a window the rigid-motion demonstration composes carries no opening placement", "[presets][windows]")
+TEST_CASE("a window any rigid-motion composition composes carries no opening placement", "[presets][windows]")
 {
     threepp::Scene target;
+    const scene::preset_site site            = unwired(target);
+    const rigid_motion::capabilities motions = rigid_motion::baseline();
 
-    check_none_placed(presets::rotation_axis_preset(unwired(target), rigid_motion::baseline()));
+    check_none_placed(presets::rotation_axis_preset(site, motions));
+    check_none_placed(presets::twist_axis_preset(site, motions));
+    check_none_placed(presets::screw_preset(site, motions));
+    check_none_placed(presets::two_pose_preset(site, motions));
+    check_none_placed(presets::frame_workbench_preset(site, motions));
+    check_none_placed(presets::euler_rung_preset(site, motions, presets::euler_rung::single_frame));
+    check_none_placed(presets::euler_rung_preset(site, motions, presets::euler_rung::paired_frames));
 }
 
 TEST_CASE("a window the manipulator demonstration composes carries no opening placement", "[presets][windows]")

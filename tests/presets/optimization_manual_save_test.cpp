@@ -136,7 +136,7 @@ TEST_CASE("moving a parameter's slider and its maximum moves the value and the u
     CHECK(saved.typed.parameters.front().range.upper == 8.0);
 }
 
-TEST_CASE("a composition registering no function composes, draws and saves a typed one", "[presets][optimization][documents][typed]")
+TEST_CASE("a composition registering no function composes a typed one and saves it", "[presets][optimization][documents][typed]")
 {
     const config::location at = written("unnamed.xml", unnamed_document);
     {
