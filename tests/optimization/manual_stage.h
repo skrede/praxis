@@ -60,6 +60,12 @@ struct manual_stage
         static_cast<void>(settled(loop, taken));
     }
 
+    ~manual_stage()
+    {
+        if(taken.composed != nullptr)
+            taken.composed->tear_down();
+    }
+
     drawing draw() const
     {
         return [shown = panel] { shown->render(); };

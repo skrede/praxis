@@ -63,8 +63,10 @@ scenario_settings composed_opening(const scenario_settings &settings)
     const opened taken =
             open_composing(built.site, {}, optimization::baseline(), settings, [](const scenario_window_inputs &) { return std::vector<std::shared_ptr<scene::imgui_window>>{}; });
     static_cast<void>(settled(loop, taken));
+    const scenario_settings opening = taken.inputs->opened;
+    taken.composed->tear_down();
 
-    return taken.inputs->opened;
+    return opening;
 }
 
 void check_carried(const scenario_settings &carried)

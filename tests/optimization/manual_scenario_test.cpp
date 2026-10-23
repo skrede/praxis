@@ -75,6 +75,27 @@ std::vector<std::shared_ptr<scene::imgui_window>> no_windows(const scenario_wind
     return {};
 }
 
+// A Manual document composed with no windows, torn down when the case ends.
+struct document_stage
+{
+    scheduler::scheduler loop;
+    staged built;
+    opened taken;
+
+    document_stage(const char *body, const std::string &file)
+            : loop(scheduler::inline_workers)
+            , built(loop)
+            , taken(open_composing(built.site, {}, baseline(), opened_from(body, file, 1u), &no_windows))
+    {
+    }
+
+    ~document_stage()
+    {
+        if(taken.composed != nullptr)
+            taken.composed->tear_down();
+    }
+};
+
 std::vector<Eigen::VectorXd> solved_at;
 std::vector<expected<Eigen::MatrixXd, refusal>> solved_slopes;
 
@@ -125,10 +146,8 @@ TEST_CASE("a Manual document composes and solves its typed function", "[optimiza
 
 TEST_CASE("a Manual document publishes the run and the samples of its typed function", "[optimization][typed]")
 {
-    scheduler::scheduler loop(scheduler::inline_workers);
-    staged built(loop);
-    const opened taken                                   = open_composing(built.site, {}, baseline(), opened_from(cubic_document, "published.xml", 1u), &no_windows);
-    const std::shared_ptr<const scenario_snapshot> shown = settled(loop, taken);
+    document_stage stage(cubic_document, "published.xml");
+    const std::shared_ptr<const scenario_snapshot> shown = settled(stage.loop, stage.taken);
     REQUIRE(shown != nullptr);
 
     CHECK_FALSE(shown->run.refused.has_value());
@@ -142,21 +161,17 @@ TEST_CASE("a Manual document publishes the run and the samples of its typed func
 
 TEST_CASE("a Manual document whose text does not read composes, publishes nothing and keeps its text", "[optimization][typed]")
 {
-    scheduler::scheduler loop(scheduler::inline_workers);
-    staged built(loop);
-    const opened taken = open_composing(built.site, {}, baseline(), opened_from(unread_document, "unread.xml", 1u), &no_windows);
+    document_stage stage(unread_document, "unread.xml");
 
-    CHECK(settled(loop, taken) == nullptr);
-    CHECK(taken.inputs->opened.typed.source == function_source::manual);
-    CHECK(taken.inputs->opened.typed.expression == "2x^3 +");
+    CHECK(settled(stage.loop, stage.taken) == nullptr);
+    CHECK(stage.taken.inputs->opened.typed.source == function_source::manual);
+    CHECK(stage.taken.inputs->opened.typed.expression == "2x^3 +");
 }
 
 TEST_CASE("a Manual document in the minimum form runs Newton with the typed function's Hessian", "[optimization][typed]")
 {
-    scheduler::scheduler loop(scheduler::inline_workers);
-    staged built(loop);
-    const opened taken                                   = open_composing(built.site, {}, baseline(), opened_from(minimum_document, "minimum.xml", 1u), &no_windows);
-    const std::shared_ptr<const scenario_snapshot> shown = settled(loop, taken);
+    document_stage stage(minimum_document, "minimum.xml");
+    const std::shared_ptr<const scenario_snapshot> shown = settled(stage.loop, stage.taken);
     REQUIRE(shown != nullptr);
 
     CHECK(shown->run.minimized_by == minimizer_slot::newton);

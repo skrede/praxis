@@ -68,6 +68,12 @@ struct typed_stage
         static_cast<void>(settled(loop, taken));
     }
 
+    ~typed_stage()
+    {
+        if(taken.composed != nullptr)
+            taken.composed->tear_down();
+    }
+
     std::shared_ptr<const scenario_snapshot> shown()
     {
         REQUIRE(loop.drain().has_value());

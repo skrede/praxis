@@ -82,6 +82,12 @@ struct solving_stage
         REQUIRE(settled(loop, taken) != nullptr);
     }
 
+    ~solving_stage()
+    {
+        if(taken.composed != nullptr)
+            taken.composed->tear_down();
+    }
+
     drawing draw() const
     {
         return [shown = panel] { shown->render(); };
