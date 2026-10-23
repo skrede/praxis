@@ -55,7 +55,7 @@ scalar leaf(const node &one, const Eigen::VectorXd &x, const parameter_values &v
 }
 
 template<typename scalar>
-scalar combined(const node &one, const std::vector<scalar> &slots, const Eigen::VectorXd &x, const parameter_values &values)
+scalar combined(const std::vector<node> &nodes, const node &one, const std::vector<scalar> &slots, const Eigen::VectorXd &x, const parameter_values &values)
 {
     switch(one.kind)
     {
@@ -72,7 +72,10 @@ scalar combined(const node &one, const std::vector<scalar> &slots, const Eigen::
         case node_kind::divide:
             return slots[one.left] / slots[one.right];
         case node_kind::power:
-            return raised(slots[one.left], slots[one.right]);
+            if constexpr(std::is_same_v<scalar, jet>)
+                return raised_root(nodes, slots, one);
+            else
+                return raised(slots[one.left], slots[one.right]);
         default:
             return leaf<scalar>(one, x, values);
     }
@@ -86,7 +89,7 @@ scalar evaluated(const expression &tree, const Eigen::VectorXd &x, const paramet
     std::vector<scalar> slots;
     slots.reserve(tree.nodes.size());
     for(const node &one : tree.nodes)
-        slots.push_back(combined(one, slots, x, values));
+        slots.push_back(combined(tree.nodes, one, slots, x, values));
     return slots.back();
 }
 

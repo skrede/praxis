@@ -1,6 +1,8 @@
 #include "jet.h"
 
 #include <cmath>
+#include <vector>
+#include <cstddef>
 
 namespace praxis::optimization::typed {
 namespace {
@@ -75,8 +77,16 @@ jet operator-(const jet &a)
     return jet{-a.value, -a.gradient, -a.hessian};
 }
 
+bool constant(const jet &u)
+{
+    return (u.gradient.array() == 0.0).all() && (u.hessian.array() == 0.0).all();
+}
+
 jet chained(const jet &u, double phi, double d1, double d2)
 {
+    if(constant(u))
+        return lifted(phi);
+
     return jet{phi, d1 * u.gradient, d1 * u.hessian + d2 * u.gradient * u.gradient.transpose()};
 }
 
@@ -103,11 +113,25 @@ jet applied(named_function function, const jet &u)
 
 jet raised(const jet &base, const jet &exponent)
 {
-    if((exponent.gradient.array() == 0.0).all() && (exponent.hessian.array() == 0.0).all())
+    if(constant(exponent))
         return constant_power(base, exponent.value);
 
     const double power = std::pow(base.value, exponent.value);
     return chained(exponent * applied(named_function::log, base), power, power, power);
+}
+
+jet raised_root(const std::vector<node> &nodes, const std::vector<jet> &slots, const node &power)
+{
+    const jet plain   = raised(slots[power.left], slots[power.right]);
+    std::size_t inner = power.left;
+    double halved     = slots[power.right].value;
+    for(; nodes[inner].kind == node_kind::function && nodes[inner].function == named_function::sqrt; inner = nodes[inner].left)
+        halved *= 0.5;
+    if(inner == power.left || !constant(slots[power.right]) || !(slots[inner].value >= 0.0))
+        return plain;
+
+    const jet peeled = constant_power(slots[inner], halved);
+    return jet{plain.value, peeled.gradient, peeled.hessian};
 }
 
 }

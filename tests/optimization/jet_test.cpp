@@ -100,14 +100,30 @@ std::vector<row> table()
     return rows;
 }
 
+row with_a(row one, double a)
+{
+    one.parameters[0] = a;
+    return one;
 }
 
-TEST_CASE("a typed function's value, gradient and Hessian equal the hand-derived ones within four machine epsilons", "[optimization][typed]")
+// Each is smooth where it is taken, though a rule inside it has an infinite derivative there.
+std::vector<row> singular_inside()
+{
+    const double tiny = 1.0e-300, root = std::sqrt(tiny);
+    return {with_a(curve("sqrt(a)*x^2 + x", 0.7, 0.7, 1.0, 0.0), 0.0),
+            with_a(curve("a^0.5*x^2 + x", 0.7, 0.7, 1.0, 0.0), 0.0),
+            with_a(curve("sqrt(a)*x^2 + x", 0.7, root * 0.49 + 0.7, root * 1.4 + 1.0, 2.0 * root), tiny),
+            with_a(curve("a^1.5*x^2 + x", 0.7, 0.7, 1.0, 0.0), 0.0),
+            row{"sqrt(x^2 + y^2)^2", 2, {0.0, 0.0}, 0.0, {0.0, 0.0}, symmetric(2.0, 0.0, 2.0)},
+            row{"sqrt(x^2 + y^2)^2", 2, {0.3, 0.4}, 0.25, {0.6, 0.8}, symmetric(2.0, 0.0, 2.0)}};
+}
+
+void check_within_bound(const std::vector<row> &rows)
 {
     const double bound = 4.0 * std::numeric_limits<double>::epsilon();
-    for(const row &one : table())
+    for(const row &one : rows)
     {
-        CAPTURE(one.text);
+        CAPTURE(one.text, one.point.x(), one.parameters[0]);
         const typed::jet answered = jet_of(one.text, one.dimension, one.point, one.parameters);
         CHECK(off_by(answered.value, one.value) <= bound);
         for(Eigen::Index i = 0; i < 2; ++i)
@@ -117,6 +133,18 @@ TEST_CASE("a typed function's value, gradient and Hessian equal the hand-derived
                 CHECK(off_by(answered.hessian(i, j), one.hessian(i, j)) <= bound);
         }
     }
+}
+
+}
+
+TEST_CASE("a typed function's value, gradient and Hessian equal the hand-derived ones within four machine epsilons", "[optimization][typed]")
+{
+    check_within_bound(table());
+}
+
+TEST_CASE("a rule whose derivative is infinite where its operand stands answers the derivatives of the smooth whole", "[optimization][typed]")
+{
+    check_within_bound(singular_inside());
 }
 
 TEST_CASE("a power with a constant exponent of zero, one or two at zero answers finite derivatives", "[optimization][typed]")

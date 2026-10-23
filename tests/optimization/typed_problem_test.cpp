@@ -135,3 +135,11 @@ TEST_CASE("a typed problem reads each parameter from the values handed in", "[op
     CHECK(answered(unscaled.hessian(at(0.9)))(0, 0) == 0.0);
     CHECK(unscaled.stationary(Eigen::VectorXd::Zero(1)));
 }
+
+TEST_CASE("a typed function smooth where a rule inside it is singular is solved and minimized from a seed beside it", "[optimization][typed]")
+{
+    const typed::parameter_values zero{};
+    std::vector<Eigen::VectorXd> iterates;
+    CHECK(std::abs(answered(solve(typed::typed_residual(tree_of("sqrt(a)*x^2 + x", 1), zero, 1.0e-12), at(0.5), 50, iterates))[0]) < 1.0e-12);
+    CHECK(std::abs(answered(newton(typed::typed_objective(tree_of("a^1.5*x^2 + x^2", 1), zero, 1.0e-12), at(0.5), 50, iterates))[0]) < 1.0e-12);
+}
