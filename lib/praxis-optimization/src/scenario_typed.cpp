@@ -70,7 +70,7 @@ bool valued(char name, double value)
 
 bool ranged(char name, const interval &range)
 {
-    if(std::isfinite(range.lower) && std::isfinite(range.upper) && range.lower < range.upper)
+    if(finite_and_ordered(range))
         return true;
 
     spdlog::error("praxis: parameter '{}' is chosen from a finite range whose minimum lies below its maximum, which [{}, {}] is not; the last run stays shown", name, range.lower,

@@ -1,3 +1,4 @@
+#include "scenario_admission.h"
 #include "typed_function_panel.h"
 
 #include "praxis/optimization/scenario_state.h"
@@ -13,15 +14,6 @@
 #include <algorithm>
 
 namespace praxis::optimization {
-
-namespace {
-
-bool askable(const interval &range)
-{
-    return std::isfinite(range.lower) && std::isfinite(range.upper) && range.lower < range.upper;
-}
-
-}
 
 parameter_rows::parameter_rows(scenario_reader seen, std::weak_ptr<owned_scenario> scenario)
         : m_seen(std::move(seen))
@@ -110,9 +102,9 @@ bool parameter_rows::render_range(parameter_row &row)
     const bool upper = ImGui::IsItemDeactivatedAfterEdit();
     typing           = typing || ImGui::IsItemActive();
 
-    if((lower || upper) && askable(row.typed))
+    if((lower || upper) && finite_and_ordered(row.typed))
         command(m_scenario, [name = row.shown.name, range = row.typed](scenario_state &state) { state.set_parameter_range(name, range); });
-    if(!askable(row.typed))
+    if(!finite_and_ordered(row.typed))
         ImGui::TextUnformatted(unaskable_range);
 
     return typing;

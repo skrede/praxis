@@ -1,3 +1,4 @@
+#include "scenario_admission.h"
 #include "typed_function_panel.h"
 
 #include "praxis/optimization/settings_keys.h"
@@ -9,7 +10,6 @@
 
 #include <span>
 #include <array>
-#include <cmath>
 #include <memory>
 #include <string>
 #include <vector>
@@ -35,7 +35,7 @@ std::size_t position_of(const std::vector<std::string> &names, const std::string
 
 bool askable(const std::vector<interval> &ranges)
 {
-    return std::ranges::all_of(ranges, [](const interval &range) { return std::isfinite(range.lower) && std::isfinite(range.upper) && range.lower < range.upper; });
+    return std::ranges::all_of(ranges, finite_and_ordered);
 }
 
 }

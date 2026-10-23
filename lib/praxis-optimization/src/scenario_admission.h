@@ -15,6 +15,9 @@
 
 namespace praxis::optimization {
 
+// A finite range whose minimum lies below its maximum.
+bool finite_and_ordered(const interval &range);
+
 // One finite range per variable, each with its minimum below its maximum.
 bool drawable(std::span<const interval> ranges, std::size_t dimension);
 

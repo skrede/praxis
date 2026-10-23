@@ -23,10 +23,14 @@ const char *variables(std::size_t dimension)
 
 }
 
+bool finite_and_ordered(const interval &range)
+{
+    return std::isfinite(range.lower) && std::isfinite(range.upper) && range.lower < range.upper;
+}
+
 bool drawable(std::span<const interval> ranges, std::size_t dimension)
 {
-    return ranges.size() == dimension &&
-            std::ranges::all_of(ranges, [](const interval &range) { return std::isfinite(range.lower) && std::isfinite(range.upper) && range.lower < range.upper; });
+    return ranges.size() == dimension && std::ranges::all_of(ranges, finite_and_ordered);
 }
 
 std::optional<std::size_t> selected_among(const std::vector<std::string> &names, const std::string &name)
