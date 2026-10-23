@@ -74,15 +74,15 @@ TEST_CASE("a number beside e where no exponent can be meant reads as a product w
     }
 }
 
-TEST_CASE("a number as long as the capacity is read where a double holds it and refused at its first digit where not")
+TEST_CASE("a number of three hundred digits is read, and one as long as the capacity, past what a double holds, is refused at its first digit")
 {
+    REQUIRE(typed::expression_capacity > static_cast<std::size_t>(std::numeric_limits<double>::max_exponent10) + 1u);
+    const auto held = typed::parsed(std::string(300, '9'), 1);
     const auto read = typed::parsed(std::string(typed::expression_capacity, '9'), 1);
 
-    if(typed::expression_capacity <= std::numeric_limits<double>::max_exponent10)
-    {
-        CHECK(read.has_value());
-        return;
-    }
+    REQUIRE(held.has_value());
+    REQUIRE(held->nodes.size() == 1u);
+    CHECK(held->nodes.front().value == 1.0e300);
     REQUIRE_FALSE(read.has_value());
     CHECK(read.error().offset == 0);
     CHECK(read.error().expected == "a number a double holds");
