@@ -103,9 +103,12 @@ TEST_CASE("a step length that is not finite and positive is logged and changes n
         CHECK(logged_by(stage, [&] { type_into(frames, stage.draw(), step_length_row, typed); }).find("the last run stays shown") != std::string::npos);
         CHECK(stage.drained() == ran);
     }
-    const auto undefined = [&] { command(stage.taken.inputs->scenario, [](scenario_state &state) { state.set_step_length(std::numeric_limits<double>::quiet_NaN()); }); };
-    CHECK(logged_by(stage, undefined).find("the last run stays shown") != std::string::npos);
-    CHECK(stage.drained() == ran);
+    for(const double commanded : {std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::infinity()})
+    {
+        const auto asked = [&] { command(stage.taken.inputs->scenario, [commanded](scenario_state &state) { state.set_step_length(commanded); }); };
+        CHECK(logged_by(stage, asked).find("the last run stays shown") != std::string::npos);
+        CHECK(stage.drained() == ran);
+    }
 }
 
 TEST_CASE("Newton over a curve registered without its second derivative refuses, and gradient descent over it answers", "[optimization][objective]")
