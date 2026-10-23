@@ -1,4 +1,5 @@
 #include "optimization_keys.h"
+#include "window_placements.h"
 
 #include "praxis/presets/routes.h"
 #include "praxis/presets/optimization.h"
@@ -50,17 +51,28 @@ struct offered_functions
 // relies on.
 constexpr std::array<const char *, 2> scenario_spellings{"curve", "surface"};
 
+std::vector<std::shared_ptr<scene::imgui_window>> placed(std::vector<std::shared_ptr<scene::imgui_window>> windows, std::size_t dimension)
+{
+    for(const std::shared_ptr<scene::imgui_window> &window : windows)
+        if(const std::optional<scene::opening_placement> at = scenario_window_placement(window->display_name(), dimension))
+            window->open_at(*at);
+
+    return windows;
+}
+
 std::vector<std::shared_ptr<scene::imgui_window>> curve_windows(const optimization::scenario_window_inputs &inputs)
 {
-    return {std::make_shared<optimization::function_window>("Function", inputs), optimization::curve_graph(inputs, "Graph"),
-            std::make_shared<optimization::display_window>("Display", inputs), std::make_shared<optimization::solve_window>("Solve", inputs),
-            std::make_shared<optimization::linearization_window>("Linearization", inputs)};
+    return placed({std::make_shared<optimization::function_window>("Function", inputs), optimization::curve_graph(inputs, "Graph"),
+                   std::make_shared<optimization::display_window>("Display", inputs), std::make_shared<optimization::solve_window>("Solve", inputs),
+                   std::make_shared<optimization::linearization_window>("Linearization", inputs)},
+                  1u);
 }
 
 std::vector<std::shared_ptr<scene::imgui_window>> surface_windows(const optimization::scenario_window_inputs &inputs)
 {
-    return {std::make_shared<optimization::function_window>("Function", inputs), std::make_shared<optimization::display_window>("Display", inputs),
-            std::make_shared<optimization::solve_window>("Solve", inputs), std::make_shared<optimization::linearization_window>("Linearization", inputs)};
+    return placed({std::make_shared<optimization::function_window>("Function", inputs), std::make_shared<optimization::display_window>("Display", inputs),
+                   std::make_shared<optimization::solve_window>("Solve", inputs), std::make_shared<optimization::linearization_window>("Linearization", inputs)},
+                  2u);
 }
 
 optimization_composer curve_composer(const optimization::capabilities &solving, offered_functions offered, bool checks_derivative)

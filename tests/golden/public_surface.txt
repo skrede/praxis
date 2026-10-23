@@ -3064,6 +3064,21 @@ lib/praxis-scene/include/praxis/scene/imgui_window.h	config	namespace	-	-
 lib/praxis-scene/include/praxis/scene/imgui_window.h	praxis	namespace	-	-
 lib/praxis-scene/include/praxis/scene/imgui_window.h	praxis	namespace	-	-
 lib/praxis-scene/include/praxis/scene/imgui_window.h	scene	namespace	-	-
+lib/praxis-scene/include/praxis/scene/imgui_window.h	window_corner	enum	-	typename:std::uint8_t
+lib/praxis-scene/include/praxis/scene/imgui_window.h	top_left	enumerator	-	-
+lib/praxis-scene/include/praxis/scene/imgui_window.h	top_right	enumerator	-	-
+lib/praxis-scene/include/praxis/scene/imgui_window.h	bottom_left	enumerator	-	-
+lib/praxis-scene/include/praxis/scene/imgui_window.h	bottom_right	enumerator	-	-
+lib/praxis-scene/include/praxis/scene/imgui_window.h	opening_placement	struct	-	-
+lib/praxis-scene/include/praxis/scene/imgui_window.h	corner	member	-	typename:window_corner
+lib/praxis-scene/include/praxis/scene/imgui_window.h	inset_x	member	-	typename:float
+lib/praxis-scene/include/praxis/scene/imgui_window.h	inset_y	member	-	typename:float
+lib/praxis-scene/include/praxis/scene/imgui_window.h	width	member	-	typename:float
+lib/praxis-scene/include/praxis/scene/imgui_window.h	height	member	-	typename:float
+lib/praxis-scene/include/praxis/scene/imgui_window.h	window_rectangle	struct	-	-
+lib/praxis-scene/include/praxis/scene/imgui_window.h	position	member	-	typename:ImVec2
+lib/praxis-scene/include/praxis/scene/imgui_window.h	size	member	-	typename:ImVec2
+lib/praxis-scene/include/praxis/scene/imgui_window.h	opening_rectangle	prototype	(const opening_placement & at,ImVec2 work_position,ImVec2 work_size,float font_size)	typename:window_rectangle
 lib/praxis-scene/include/praxis/scene/imgui_window.h	imgui_window	class	-	-
 lib/praxis-scene/include/praxis/scene/imgui_window.h	imgui_window	prototype	(std::string name)	-
 lib/praxis-scene/include/praxis/scene/imgui_window.h	imgui_window	prototype	(const imgui_window &)	-
@@ -3072,10 +3087,14 @@ lib/praxis-scene/include/praxis/scene/imgui_window.h	operator =	prototype	(const
 lib/praxis-scene/include/praxis/scene/imgui_window.h	operator =	prototype	(imgui_window &&)	typename:imgui_window &
 lib/praxis-scene/include/praxis/scene/imgui_window.h	~imgui_window	prototype	()	-
 lib/praxis-scene/include/praxis/scene/imgui_window.h	display_name	prototype	() const	typename:const std::string &
+lib/praxis-scene/include/praxis/scene/imgui_window.h	open_at	prototype	(opening_placement at)	typename:void
+lib/praxis-scene/include/praxis/scene/imgui_window.h	opening	prototype	() const	typename:const std::optional<opening_placement> &
 lib/praxis-scene/include/praxis/scene/imgui_window.h	render	prototype	()	typename:void
 lib/praxis-scene/include/praxis/scene/imgui_window.h	initialize	function	()	typename:void
 lib/praxis-scene/include/praxis/scene/imgui_window.h	as_configurable	function	() const	typename:const config::configurable *
 lib/praxis-scene/include/praxis/scene/imgui_window.h	m_display_name	member	-	typename:std::string
+lib/praxis-scene/include/praxis/scene/imgui_window.h	m_opening	member	-	typename:std::optional<opening_placement>
+lib/praxis-scene/include/praxis/scene/imgui_window.h	render_placed	prototype	(imgui_window & window)	typename:void
 lib/praxis-scene/include/praxis/scene/imgui_window.h	layout_file	prototype	(const std::filesystem::path & root)	typename:std::filesystem::path
 lib/praxis-scene/include/praxis/scene/imgui_window.h	placed_layout	class	-	-
 lib/praxis-scene/include/praxis/scene/imgui_window.h	placed_layout	prototype	(const std::filesystem::path & where)	-

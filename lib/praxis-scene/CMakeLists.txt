@@ -22,6 +22,7 @@ praxis_add_module(scene
     src/preset_registry.cpp
     src/coverage_report.cpp
     src/visualizer_scene.cpp
+    src/opening_placement.cpp
     src/labeled_value_window.cpp
     src/windows/log_window.h
     src/windows/log_window.cpp

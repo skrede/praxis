@@ -5,9 +5,13 @@
 
 #include <threepp/extras/imgui/ImguiContext.hpp>
 
+#include <imgui.h>
+
 #include <memory>
 #include <string>
 #include <vector>
+#include <cstdint>
+#include <optional>
 #include <filesystem>
 
 struct ImPlotContext;
@@ -17,6 +21,34 @@ class configurable;
 }
 
 namespace praxis::scene {
+
+enum class window_corner : std::uint8_t
+{
+    top_left,
+    top_right,
+    bottom_left,
+    bottom_right
+};
+
+// A corner of the main viewport's work area, the window's inset from it toward the work area's
+// middle, and the window's size, all in multiples of the font size.
+struct opening_placement
+{
+    window_corner corner;
+    float inset_x;
+    float inset_y;
+    float width;
+    float height;
+};
+
+struct window_rectangle
+{
+    ImVec2 position;
+    ImVec2 size;
+};
+
+// Where a placement opens a window inside the work area `work_position`, `work_size`, at `font_size`.
+window_rectangle opening_rectangle(const opening_placement &at, ImVec2 work_position, ImVec2 work_size, float font_size);
 
 // The GUI library identifies a panel by its title string, so the display name a window carries is
 // that panel's identity and two windows given one name draw into one panel.
@@ -31,6 +63,10 @@ public:
     virtual ~imgui_window()                       = default;
 
     const std::string &display_name() const;
+
+    // Applied on the window's first use only: an entry the layout file holds for its title wins.
+    void open_at(opening_placement at);
+    const std::optional<opening_placement> &opening() const;
 
     virtual void render() = 0;
 
@@ -47,7 +83,11 @@ public:
 
 private:
     std::string m_display_name;
+    std::optional<opening_placement> m_opening;
 };
+
+// Renders the window, its opening placement set first as the next window's size and place.
+void render_placed(imgui_window &window);
 
 // Where the GUI library's layout file goes under `root`: the root joined with the name that library
 // writes the layout under, so a layout already written is found again in the new place. An empty root

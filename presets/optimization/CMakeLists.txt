@@ -1,1 +1,1 @@
-target_sources(praxis_optimization_presets PRIVATE optimization.cpp optimization_keyspace.cpp optimization_keys.h)
+target_sources(praxis_optimization_presets PRIVATE optimization.cpp window_placements.h window_placements.cpp optimization_keyspace.cpp optimization_keys.h)

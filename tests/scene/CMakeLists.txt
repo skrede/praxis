@@ -1,6 +1,7 @@
 praxis_add_test(held_handle_test.cpp LIBS praxis::scene)
 praxis_add_test(imgui_window_test.cpp LIBS praxis::scene)
 praxis_add_test(imgui_ini_placement_test.cpp LIBS praxis::scene praxis_test_support)
+praxis_add_test(opening_placement_test.cpp LIBS praxis::scene praxis_test_support)
 praxis_add_test(log_buffer_test.cpp LIBS praxis::scene)
 praxis_add_test(preset_lifetime_test.cpp LIBS praxis::scene)
 praxis_add_test(unload_prompt_test.cpp HEADERS held_composition.h LIBS praxis::scene)
