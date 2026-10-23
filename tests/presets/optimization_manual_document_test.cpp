@@ -13,9 +13,11 @@
 #include "praxis/optimization/compose_scenario.h"
 
 #include "praxis/scene/imgui_window.h"
+#include "praxis/scene/preset_registry.h"
 
 #include "praxis/config/store.h"
 #include "praxis/config/writer.h"
+#include "praxis/config/binding.h"
 #include "praxis/config/document.h"
 
 #include "praxis/scheduler/scheduler.h"
@@ -39,6 +41,10 @@ constexpr const char *carried_document = "<optimization><preset name=\"typed\" s
 
 constexpr const char *bare_document = "<optimization><preset name=\"bare\" scenario=\"curve\"/><function source=\"manual\" expression=\"ax^2 + b\"/>"
                                       "<range x_lower=\"-3\" x_upper=\"3\"/><seed x=\"1\"/></optimization>";
+
+constexpr const char *twice_document = "<optimization><preset name=\"twice\" scenario=\"curve\"/><function source=\"manual\" expression=\"bx^2 - 1\"/>"
+                                       "<parameters><parameter name=\"b\" value=\"3\"/><parameter name=\"b\" value=\"-2\"/></parameters>"
+                                       "<range x_lower=\"-3\" x_upper=\"3\"/><seed x=\"1\"/></optimization>";
 
 config::location written(const std::string &file, const char *body)
 {
@@ -115,4 +121,17 @@ TEST_CASE("a Manual document's text and parameters are saved and reopened as the
 
     const composed_optimization second(at, {}, "typed");
     CHECK(second.offered(reopened).empty());
+}
+
+TEST_CASE("a Manual document naming one parameter letter twice is refused when it loads, and offers no preset", "[presets][optimization][documents][typed]")
+{
+    const config::location at = written("twice.xml", twice_document);
+
+    const config::outcome read = config::load_or_defaults(config::binding{presets::optimization_keyspace(), at, config::expectation::partial});
+    REQUIRE(read.failure.has_value());
+    CHECK(read.failure->message.find("is 'b', which another instance of 'parameters/parameter' already carries") != std::string::npos);
+    CHECK(presets::keys::opened_settings(read.values, 1u).typed.parameters.empty());
+
+    const auto registry = std::make_shared<scene::preset_registry>();
+    CHECK(presets::register_optimization(registry, std::vector<config::location>{at}, nullptr, nullptr, optimization::baseline(), {}, {}, false).empty());
 }
