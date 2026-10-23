@@ -70,6 +70,7 @@ inline std::vector<Eigen::Vector3d> projected_centers(threepp::Scene &scene)
     REQUIRE(projected != nullptr);
     REQUIRE(projected->children.size() == 1u);
     const auto *marks = projected->children.front()->as<threepp::InstancedMesh>();
+    REQUIRE(marks != nullptr);
     std::vector<Eigen::Vector3d> centers;
     threepp::Matrix4 placed;
     for(std::size_t k = 0; k < marks->count(); ++k)
@@ -83,8 +84,10 @@ inline std::vector<Eigen::Vector3d> projected_centers(threepp::Scene &scene)
 
 inline Eigen::Vector3d pointing(threepp::Scene &scene)
 {
+    const threepp::Object3D *arrow = scene.getObjectByName("gradient at x_k");
+    REQUIRE(arrow != nullptr);
     threepp::Vector3 along(0.f, 1.f, 0.f);
-    along.applyQuaternion(scene.getObjectByName("gradient at x_k")->quaternion);
+    along.applyQuaternion(arrow->quaternion);
 
     return Eigen::Vector3d(along.x, along.y, along.z);
 }

@@ -15,6 +15,7 @@
 
 #include <cmath>
 #include <limits>
+#include <memory>
 #include <string>
 #include <vector>
 #include <cstddef>
@@ -33,8 +34,22 @@ double drawn_length(threepp::Scene &scene)
     REQUIRE(arrow != nullptr);
     threepp::Object3D *shaft = arrow->getObjectByName("shaft");
     threepp::Object3D *head  = arrow->getObjectByName("head");
+    REQUIRE(shaft != nullptr);
+    REQUIRE(head != nullptr);
 
     return (shaft->visible ? shaft->scale.y : 0.0) + head->scale.y * gradient_head_length;
+}
+
+// The run the surface published, which the composition holds beyond this call.
+const scenario_snapshot &stepped(const minimized_surface &drawn)
+{
+    const std::shared_ptr<const scenario_snapshot> shown = drawn.shown();
+    REQUIRE(shown != nullptr);
+    REQUIRE(shown->run.iterates.size() >= 2u);
+    REQUIRE_FALSE(shown->run.gradients.empty());
+    REQUIRE(shown->run.gradients[0].has_value());
+
+    return *shown;
 }
 
 // Undefined beyond x = 1, so f and its gradient are refused there.
@@ -88,7 +103,7 @@ TEST_CASE("a minimized surface draws the gradient at x_k and the step to x_(k+1)
 {
     minimized_surface drawn(problem_form::minimum);
     threepp::Scene &scene          = drawn.scene();
-    const scenario_snapshot &shown = *drawn.shown();
+    const scenario_snapshot &shown = stepped(drawn);
     const placement standing       = placement_of(field_of(scene), shown);
     const Eigen::Vector3d floor(0.0, 0.0, drawn_points(scene, "level curves").front().z());
     const Eigen::VectorXd &x    = shown.run.iterates[0];

@@ -28,13 +28,18 @@ namespace {
 
 const typed_parameter b_at_one{'b', 1.0, interval{-5.0, 5.0}};
 
-double answered_x(const std::shared_ptr<const scenario_snapshot> &shown)
+Eigen::VectorXd answered(const std::shared_ptr<const scenario_snapshot> &shown)
 {
     REQUIRE(shown != nullptr);
     REQUIRE_FALSE(shown->run.refused.has_value());
     REQUIRE(shown->run.answer.has_value());
 
-    return (*shown->run.answer)[0];
+    return *shown->run.answer;
+}
+
+double answered_x(const std::shared_ptr<const scenario_snapshot> &shown)
+{
+    return answered(shown)[0];
 }
 
 }
@@ -118,12 +123,11 @@ TEST_CASE("a typed function's linearization carries no derivative check, and a r
 TEST_CASE("a surface's typed text takes x and y as its variables and every other letter as a parameter", "[optimization][typed]")
 {
     typed_stage stage(typed_over("x^2 + ay^2 - 1", {interval{-2.0, 2.0}, interval{-2.0, 2.0}}, Eigen::Vector2d(1.5, 0.5)));
-    const Eigen::VectorXd circled = *stage.shown()->run.answer;
+    const Eigen::VectorXd circled = answered(stage.shown());
     CHECK(std::abs(circled.squaredNorm() - 1.0) < 1.0e-12);
 
     const std::shared_ptr<const scenario_snapshot> squeezed = stage.asked([](scenario_state &state) { state.set_parameter('a', 4.0); });
-    REQUIRE(squeezed->run.answer.has_value());
-    const Eigen::VectorXd x = *squeezed->run.answer;
+    const Eigen::VectorXd x                                 = answered(squeezed);
     CHECK(std::abs(x[0] * x[0] + 4.0 * x[1] * x[1] - 1.0) < 1.0e-12);
     REQUIRE(squeezed->grid != nullptr);
     CHECK(within(squeezed->grid->heights.front(), 4.0 + 4.0 * 4.0 - 1.0));

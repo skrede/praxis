@@ -183,7 +183,9 @@ TEST_CASE("the Linearization window's Reset asks for the middle of the ranges th
         type_into(frames, [panel] { panel->render(); }, 0, "2.5");
     }
     REQUIRE(stage.loop.drain().has_value());
-    REQUIRE(stage.taken.inputs->seen.read()->linearization->point == Eigen::VectorXd::Constant(1, 2.5));
+    const std::shared_ptr<const scenario_snapshot> linearized = stage.taken.inputs->seen.read();
+    REQUIRE((linearized != nullptr && linearized->linearization.has_value()));
+    REQUIRE(linearized->linearization->point == Eigen::VectorXd::Constant(1, 2.5));
     CHECK(reset_point(panel, stage.loop, stage.taken) == Eigen::VectorXd::Constant(1, 0.0));
 
     command(stage.taken.inputs->scenario, [](scenario_state &state) { state.set_range(std::vector<interval>{interval{0.0, 6.0}}); });
