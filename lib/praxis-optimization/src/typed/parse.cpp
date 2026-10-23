@@ -1,5 +1,7 @@
 #include "parse.h"
 
+#include "praxis/compat/detail/decimal.h"
+
 #include <string>
 #include <vector>
 #include <cstddef>
@@ -96,7 +98,7 @@ bool read_number(cursor &c)
     if(c.after_number != std::string_view::npos && skipped(c.text, c.after_number) == start)
         return fail(c, start, "an operator between two numbers");
     const std::size_t length          = number_length(c.text.substr(start));
-    const std::optional<double> value = length == 0 ? std::nullopt : decimal(c.text.substr(start, length));
+    const std::optional<double> value = length == 0 ? std::nullopt : praxis::detail::decimal_value(c.text.substr(start, length));
     if(!value)
         return fail(c, start, length == 0 ? "a digit" : "a number a double holds");
     if(exponent_like(c.text.substr(start + length)))

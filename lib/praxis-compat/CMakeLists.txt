@@ -1,8 +1,10 @@
 praxis_add_module(compat
     SOURCES
     include/praxis/compat/expected.h
+    include/praxis/compat/detail/decimal.h
     include/praxis/compat/detail/expected.h
     include/praxis/compat/detail/callable.h
+    src/decimal.cpp
     src/callable.cpp
 )
 

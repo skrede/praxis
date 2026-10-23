@@ -2,23 +2,17 @@
 
 #include "praxis/config/writer.h"
 
+#include "praxis/compat/detail/decimal.h"
+
 #include <array>
 #include <cmath>
-#include <cerrno>
 #include <string>
 #include <cstddef>
-#include <cstdlib>
 #include <charconv>
 #include <optional>
 #include <algorithm>
 #include <functional>
 #include <string_view>
-
-#include <locale.h>
-// macOS declares newlocale and strtod_l here, for the headers included before it.
-#if __has_include(<xlocale.h>)
-    #include <xlocale.h>
-#endif
 
 namespace praxis::config {
 namespace {
@@ -59,32 +53,6 @@ std::string_view unsigned_plus(std::string_view text)
     return text;
 }
 
-#if defined(__cpp_lib_to_chars) && __cpp_lib_to_chars >= 201611L
-std::optional<double> parsed(std::string_view text)
-{
-    double value                      = 0.0;
-    const std::from_chars_result done = std::from_chars(text.data(), text.data() + text.size(), value);
-    if(done.ec != std::errc() || done.ptr != text.data() + text.size())
-        return std::nullopt;
-    return value;
-}
-#else
-std::optional<double> parsed(std::string_view text)
-{
-    static const locale_t classic = newlocale(LC_ALL_MASK, "C", locale_t{});
-    if(classic == locale_t{})
-        return std::nullopt;
-
-    const std::string held(text);
-    char *end          = nullptr;
-    errno              = 0;
-    const double value = strtod_l(held.c_str(), &end, classic);
-    if(end != held.c_str() + held.size() || (errno == ERANGE && (value == 0.0 || std::isinf(value))))
-        return std::nullopt;
-    return value;
-}
-#endif
-
 }
 
 std::optional<bool> as_flag(std::string_view text)
@@ -105,7 +73,7 @@ std::optional<double> as_real(std::string_view text)
     if(!numeral(value))
         return std::nullopt;
 
-    const std::optional<double> read = parsed(unsigned_plus(value));
+    const std::optional<double> read = praxis::detail::decimal_value(unsigned_plus(value));
     if(!read || !std::isfinite(*read))
         return std::nullopt;
     return read;

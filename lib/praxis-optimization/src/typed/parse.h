@@ -7,7 +7,6 @@
 
 #include <string>
 #include <cstddef>
-#include <optional>
 #include <string_view>
 
 namespace praxis::optimization::typed {
@@ -31,8 +30,6 @@ bool lowercase(char one);
 // The length of the decimal lexeme `rest` starts with: digits with at most one '.', no exponent part;
 // zero where it holds no digit.
 std::size_t number_length(std::string_view rest);
-
-std::optional<double> decimal(std::string_view lexeme);
 
 // The function, constant or single letter at the lowercase letter `at`, as a leaf spanning its spelling.
 node name_at(std::string_view text, std::size_t at, std::size_t dimension);
