@@ -50,7 +50,6 @@ std::vector<typed_parameter> parameter_rows::held() const
     return shown;
 }
 
-// A value stays in flight until a publication carries it, or no longer carries its letter.
 void parameter_rows::catch_up(const std::shared_ptr<const scenario_snapshot> &shown)
 {
     if(shown == m_last || shown == nullptr)
@@ -58,12 +57,7 @@ void parameter_rows::catch_up(const std::shared_ptr<const scenario_snapshot> &sh
 
     m_last                                        = shown;
     const std::vector<typed_parameter> &published = shown->parameters;
-    if(m_in_flight)
-    {
-        const auto found = std::ranges::find(published, m_in_flight->name, &typed_parameter::name);
-        if(found == published.end() || found->value == m_in_flight->value)
-            m_in_flight.reset();
-    }
+    answer_requests(published);
 
     std::vector<parameter_row> rows;
     for(const typed_parameter &parameter : published)
@@ -77,14 +71,25 @@ void parameter_rows::catch_up(const std::shared_ptr<const scenario_snapshot> &sh
     m_rows = std::move(rows);
 }
 
+// A value stays in flight until a publication carries it, or no longer carries its letter, and a value
+// waiting for a letter a publication no longer carries is dropped, since the state would refuse it.
+void parameter_rows::answer_requests(const std::vector<typed_parameter> &published)
+{
+    const auto carried = [&published](char name) { return std::ranges::find(published, name, &typed_parameter::name); };
+    if(m_in_flight && (carried(m_in_flight->name) == published.end() || carried(m_in_flight->name)->value == m_in_flight->value))
+        m_in_flight.reset();
+    std::erase_if(m_wanted, [&carried, &published](const asked_value &one) { return carried(one.name) == published.end(); });
+}
+
 void parameter_rows::render_row(parameter_row &row)
 {
     ImGui::PushID(static_cast<int>(row.shown.name));
     const char letter[2] = {row.shown.name, '\0'};
-    ImGui::SliderScalar(letter, ImGuiDataType_Double, &row.shown.value, &row.shown.range.lower, &row.shown.range.upper, "%.6g");
+    const double before  = row.shown.value;
+    ImGui::SliderScalar(letter, ImGuiDataType_Double, &row.shown.value, &row.shown.range.lower, &row.shown.range.upper, "%.6g", ImGuiSliderFlags_AlwaysClamp);
     const bool sliding = ImGui::IsItemActive();
     if(ImGui::IsItemEdited())
-        m_wanted = asked_value{row.shown.name, row.shown.value};
+        want(row, before);
 
     const bool typing = render_range(row);
     row.edited        = sliding || typing;
@@ -113,20 +118,37 @@ bool parameter_rows::render_range(parameter_row &row)
     return typing;
 }
 
-// At most one value is queued on the work strand; the latest one wanted follows once it is published.
+// A typed value is held to the slider's range, and one that is no number is put back rather than asked for.
+void parameter_rows::want(parameter_row &row, double before)
+{
+    if(!std::isfinite(row.shown.value))
+    {
+        row.shown.value = before;
+        return;
+    }
+
+    const auto queued = std::ranges::find(m_wanted, row.shown.name, &asked_value::name);
+    if(queued != m_wanted.end())
+        queued->value = row.shown.value;
+    else
+        m_wanted.push_back(asked_value{row.shown.name, row.shown.value});
+}
+
+// One value is on the work strand at a time; the latest wanted for each letter follows it, in the order
+// the letters were first wanted.
 void parameter_rows::post_wanted()
 {
-    if(!m_wanted || m_in_flight)
+    if(m_wanted.empty() || m_in_flight)
         return;
 
-    m_in_flight = m_wanted;
-    m_wanted.reset();
+    m_in_flight = m_wanted.front();
+    m_wanted.erase(m_wanted.begin());
     command(m_scenario, [asked = *m_in_flight](scenario_state &state) { state.set_parameter(asked.name, asked.value); });
 }
 
 bool parameter_rows::waiting(char name) const
 {
-    return (m_wanted && m_wanted->name == name) || (m_in_flight && m_in_flight->name == name);
+    return std::ranges::find(m_wanted, name, &asked_value::name) != m_wanted.end() || (m_in_flight && m_in_flight->name == name);
 }
 
 }

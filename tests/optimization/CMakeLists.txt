@@ -51,5 +51,7 @@ target_include_directories(manual_scenario_test PRIVATE ${PROJECT_SOURCE_DIR}/li
 praxis_add_test(manual_parameters_test.cpp HEADERS composed_curve.h typed_stage.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
 target_include_directories(manual_parameters_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src)
 praxis_add_test(manual_window_test.cpp HEADERS composed_curve.h typed_stage.h manual_stage.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
-praxis_add_test(parameter_rows_test.cpp HEADERS composed_curve.h typed_stage.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
+praxis_add_test(parameter_rows_test.cpp HEADERS composed_curve.h typed_stage.h rows_stage.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
 target_include_directories(parameter_rows_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src)
+praxis_add_test(parameter_queue_test.cpp HEADERS composed_curve.h typed_stage.h rows_stage.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
+target_include_directories(parameter_queue_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src)

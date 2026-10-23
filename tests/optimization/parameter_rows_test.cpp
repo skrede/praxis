@@ -1,6 +1,4 @@
-#include "typed_stage.h"
-#include "composed_curve.h"
-#include "typed_function_panel.h"
+#include "rows_stage.h"
 
 #include "panel_keys.h"
 #include "imgui_frame.h"
@@ -14,7 +12,6 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 #include <cstddef>
 
 using namespace praxis;
@@ -22,47 +19,8 @@ using namespace praxis::fixture;
 
 namespace {
 
-constexpr std::size_t letter_b = 'b';
-
-struct rows_stage
-{
-    typed_stage stage;
-    parameter_rows rows;
-
-    rows_stage()
-            : stage(typed_curve("2x^3 + 5b", 1.0))
-            , rows(stage.taken.inputs->seen, stage.taken.inputs->scenario)
-    {
-    }
-
-    drawing draw()
-    {
-        return [this]
-        {
-            ImGui::Begin("Rows");
-            rows.render();
-            ImGui::End();
-        };
-    }
-
-    double published_b()
-    {
-        const std::shared_ptr<const scenario_snapshot> shown = stage.shown();
-        REQUIRE(shown->parameters.size() == 1u);
-
-        return shown->parameters.front().value;
-    }
-};
-
-// Activating a slider from the keyboard lets the arrows step it, and activating it again lets it go.
-void slide(tests::imgui_frame &frames, const drawing &draw, std::size_t steps)
-{
-    stand_on(frames, draw, "Rows", letter_b, "b");
-    tap(frames, draw, ImGuiKey_Space);
-    for(std::size_t step = 0; step < steps; ++step)
-        tap(frames, draw, ImGuiKey_RightArrow);
-    tap(frames, draw, ImGuiKey_Space);
-}
+constexpr std::size_t letter_b   = 'b';
+constexpr const char *cubic_text = "2x^3 + 5b";
 
 // The minimum and the maximum share the line below the slider, which is entered at its leftmost.
 void type_range_end(tests::imgui_frame &frames, const drawing &draw, const char *end, const std::string &typed)
@@ -88,7 +46,7 @@ void type_range_end(tests::imgui_frame &frames, const drawing &draw, const char 
 
 TEST_CASE("a slider being moved asks for its value before it is let go, one value queued at a time", "[optimization][function][manual]")
 {
-    rows_stage staged;
+    rows_stage staged(cubic_text);
     tests::imgui_frame frames;
     frames.draw(staged.draw());
 
@@ -101,35 +59,35 @@ TEST_CASE("a slider being moved asks for its value before it is let go, one valu
     REQUIRE(first > 1.0);
     REQUIRE(staged.rows.held().front().value > first);
 
-    CHECK(staged.published_b() == first);
+    CHECK(staged.published('b').value == first);
     frames.draw_frame(staged.draw());
-    CHECK(staged.published_b() == staged.rows.held().front().value);
+    CHECK(staged.published('b').value == staged.rows.held().front().value);
 }
 
 TEST_CASE("a burst of slider moves queues one parameter edit and the value the slider rests at follows it", "[optimization][function][manual]")
 {
-    rows_stage staged;
+    rows_stage staged(cubic_text);
     tests::imgui_frame frames;
     frames.draw(staged.draw());
     REQUIRE(staged.rows.held().size() == 1u);
     REQUIRE(staged.rows.held().front().value == 1.0);
 
-    slide(frames, staged.draw(), 3u);
-    slide(frames, staged.draw(), 4u);
+    slide(frames, staged.draw(), 'b', 3u);
+    slide(frames, staged.draw(), 'b', 4u);
     const double resting = staged.rows.held().front().value;
     REQUIRE(resting > 1.0);
-    CHECK(staged.published_b() != resting);
+    CHECK(staged.published('b').value != resting);
 
     frames.draw_frame(staged.draw());
-    CHECK(staged.published_b() == resting);
+    CHECK(staged.published('b').value == resting);
     frames.draw(staged.draw());
-    CHECK(staged.published_b() == resting);
+    CHECK(staged.published('b').value == resting);
     CHECK(staged.rows.held().front().value == resting);
 }
 
 TEST_CASE("a parameter's maximum is asked for once its field is left, and a range whose minimum is not below it is not", "[optimization][function][manual]")
 {
-    rows_stage staged;
+    rows_stage staged(cubic_text);
     tests::imgui_frame frames;
     frames.draw(staged.draw());
 

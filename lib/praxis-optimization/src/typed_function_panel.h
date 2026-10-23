@@ -23,7 +23,8 @@ inline constexpr const char *unaskable_range = "The minimum and the maximum must
 
 // One row per parameter of the latest publication: a slider over the parameter's range, and the
 // range's minimum and maximum, asked for once a field is left after an edit. A row keeps the values
-// it shows while it is being edited or a value of it waits to be asked for.
+// it shows while it is being edited or a value of it waits to be asked for, and one value waits per
+// letter.
 class parameter_rows
 {
     struct parameter_row
@@ -49,14 +50,16 @@ public:
 private:
     scenario_reader m_seen;
     std::vector<parameter_row> m_rows;
-    std::optional<asked_value> m_wanted;
+    std::vector<asked_value> m_wanted;
     std::optional<asked_value> m_in_flight;
     std::weak_ptr<owned_scenario> m_scenario;
     std::shared_ptr<const scenario_snapshot> m_last;
 
     void catch_up(const std::shared_ptr<const scenario_snapshot> &shown);
+    void answer_requests(const std::vector<typed_parameter> &published);
     void render_row(parameter_row &row);
     bool render_range(parameter_row &row);
+    void want(parameter_row &row, double before);
     void post_wanted();
     bool waiting(char name) const;
 };
