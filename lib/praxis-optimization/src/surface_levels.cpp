@@ -96,6 +96,7 @@ level_map::level_map(std::shared_ptr<threepp::BufferGeometry> sphere)
         , m_placed()
 {
     m_map->name       = "level map";
+    m_map->visible    = false;
     m_projected->name = "iterates on the floor";
     for(const std::shared_ptr<threepp::Object3D> &part : std::array<std::shared_ptr<threepp::Object3D>, 4>{m_curves, m_projected, m_arrow.object, m_step})
         m_map->add(part);

@@ -36,7 +36,7 @@ std::vector<double> map_levels(const scenario_grid &grid);
 // `floor_step_lift` above the floor. Nothing is drawn from an x_k outside the ranges or whose
 // gradient was not answered, and no step to an x_(k+1) outside them. The curves are traced again only
 // when a publication carries other samples and the rest is placed only when a publication is new,
-// everything read from the publication.
+// everything read from the publication. The map is hidden until `draw_map` shows it.
 class level_map
 {
 public:

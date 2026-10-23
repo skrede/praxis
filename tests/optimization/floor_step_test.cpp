@@ -5,6 +5,8 @@
 #include "praxis/optimization/slots.h"
 #include "praxis/optimization/problem.h"
 #include "praxis/optimization/capabilities.h"
+#include "praxis/optimization/scenario_view.h"
+#include "praxis/optimization/surface_stencil.h"
 #include "praxis/optimization/scenario_snapshot.h"
 
 #include <catch2/catch_test_macros.hpp>
@@ -146,4 +148,18 @@ TEST_CASE("the rod is 0.01 m in radius and its axis stands 0.025 m above the flo
     CHECK(std::abs(rod.radius - 0.01) <= 1.0e-7);
     CHECK(std::abs(rod.from.z() - floor - 0.025) <= 1.0e-6);
     CHECK(std::abs(rod.to.z() - floor - 0.025) <= 1.0e-6);
+}
+
+TEST_CASE("a surface with nothing published draws no level map on its floor", "[optimization][surface][objective]")
+{
+    threepp::Scene scene;
+    const auto published = std::make_shared<scenario_publisher>();
+    surface_stencil drawn(scene, published->reader(), std::make_shared<scenario_view>());
+    REQUIRE(drawn.initialize().has_value());
+    drawn.render();
+
+    CHECK_FALSE(drawn_visible(scene, "level map"));
+    CHECK_FALSE(drawn_visible(scene, "gradient at x_k"));
+    CHECK_FALSE(drawn_visible(scene, "step on the floor"));
+    drawn.tear_down();
 }
