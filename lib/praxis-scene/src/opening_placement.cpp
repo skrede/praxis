@@ -44,4 +44,16 @@ const std::optional<opening_placement> &imgui_window::opening() const
     return m_opening;
 }
 
+void render_placed(imgui_window &window)
+{
+    if(window.opening())
+    {
+        const ImGuiViewport &viewport = *ImGui::GetMainViewport();
+        const window_rectangle opened = opening_rectangle(*window.opening(), viewport.WorkPos, viewport.WorkSize, ImGui::GetFontSize());
+        ImGui::SetNextWindowPos(opened.position, ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(opened.size, ImGuiCond_FirstUseEver);
+    }
+    window.render();
+}
+
 }

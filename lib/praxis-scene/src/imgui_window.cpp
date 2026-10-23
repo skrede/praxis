@@ -65,19 +65,6 @@ const std::string &imgui_window::display_name() const
     return m_display_name;
 }
 
-// The first-use condition yields to an entry the layout file holds for the window's title.
-void render_placed(imgui_window &window)
-{
-    if(window.opening())
-    {
-        const ImGuiViewport &viewport = *ImGui::GetMainViewport();
-        const window_rectangle opened = opening_rectangle(*window.opening(), viewport.WorkPos, viewport.WorkSize, ImGui::GetFontSize());
-        ImGui::SetNextWindowPos(opened.position, ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(opened.size, ImGuiCond_FirstUseEver);
-    }
-    window.render();
-}
-
 std::filesystem::path layout_file(const std::filesystem::path &root)
 {
     return root.empty() ? std::filesystem::path() : root / "imgui.ini";

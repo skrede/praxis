@@ -88,7 +88,8 @@ private:
     std::optional<opening_placement> m_opening;
 };
 
-// Renders the window, its opening placement set first as the next window's size and place.
+// Renders the window, its opening placement set first as the next panel's size and place, so the
+// window's render() must begin its own panel before any other or the placement lands on that one.
 void render_placed(imgui_window &window);
 
 // Where the GUI library's layout file goes under `root`: the root joined with the name that library
