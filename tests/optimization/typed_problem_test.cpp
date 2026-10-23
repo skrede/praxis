@@ -133,7 +133,16 @@ TEST_CASE("a typed problem reads each parameter from the values handed in", "[op
     CHECK(answered(unscaled.objective(at(0.9))) == 0.0);
     CHECK(answered(unscaled.gradient(at(0.9)))[0] == 0.0);
     CHECK(answered(unscaled.hessian(at(0.9)))(0, 0) == 0.0);
-    CHECK(unscaled.stationary(Eigen::VectorXd::Zero(1)));
+}
+
+TEST_CASE("a typed objective is stationary where every gradient component lies strictly below the tolerance it was made with", "[optimization][typed]")
+{
+    const problem objective = typed::typed_objective(tree_of("x^2", 1), typed::parameter_values{}, 1.0e-9);
+
+    CHECK(objective.stationary(at(0.9e-9)));
+    CHECK(objective.stationary(at(-0.9e-9)));
+    CHECK_FALSE(objective.stationary(at(1.0e-9)));
+    CHECK_FALSE(objective.stationary(at(-1.0e-9)));
 }
 
 TEST_CASE("a typed function smooth where a rule inside it is singular is solved and minimized from a seed beside it", "[optimization][typed]")
