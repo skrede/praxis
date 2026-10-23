@@ -39,6 +39,15 @@ std::array<char, typed::expression_capacity + 1> holding(const std::string &text
     return held;
 }
 
+// A text longer than the field stands cut in it, and is read whole until the cut is edited, so it
+// fails at the capacity rather than reading as the cut.
+std::string_view read_whole(std::string_view field, std::string_view asked)
+{
+    const bool cut = asked.size() > typed::expression_capacity && field.size() == typed::expression_capacity && asked.starts_with(field);
+
+    return cut ? asked : field;
+}
+
 void render_reading(std::string_view text, const expected<typed::expression, typed::parse_failure> &read)
 {
     if(read)
@@ -98,7 +107,7 @@ void typed_function_panel::render()
     const bool entered = ImGui::InputText("##expression", m_text.data(), m_text.size(), ImGuiInputTextFlags_EnterReturnsTrue);
     const bool left    = ImGui::IsItemDeactivatedAfterEdit();
 
-    const std::string_view text(m_text.data());
+    const std::string_view text                                  = read_whole(m_text.data(), m_asked);
     const expected<typed::expression, typed::parse_failure> read = typed::parsed(text, m_dimension);
     render_reading(text, read);
     if((entered || left) && read && text != m_asked)

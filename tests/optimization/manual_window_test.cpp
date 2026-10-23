@@ -106,6 +106,20 @@ TEST_CASE("a composition registering no function opens a typed one, offers both 
     check_typed_cubic_drawn(stage);
 }
 
+TEST_CASE("an opened text longer than the field stands refused at the field's end, and leaving it unedited asks for nothing", "[optimization][function][manual]")
+{
+    manual_stage stage(typed_curve("x" + std::string(600, ' ') + "+ 1", 1.0));
+    tests::imgui_frame frames;
+    static_cast<void>(stage.drained());
+
+    CHECK(stage.written(frames).find("expected the end within") != std::string::npos);
+    stand_on(frames, stage.draw(), "Function", "##expression");
+    tap(frames, stage.draw(), ImGuiKey_Space);
+    leave_field(frames, stage.draw());
+    static_cast<void>(stage.drained());
+    CHECK(nothing_drawn(stage));
+}
+
 TEST_CASE("an opened text that does not parse stands in the field with its error and nothing drawn until a text that parses is left", "[optimization][function][manual]")
 {
     manual_stage stage(typed_curve("2x^3 +", 1.0));
