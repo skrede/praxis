@@ -20,9 +20,10 @@ struct refusal
     std::string_view expected;
 };
 
-constexpr std::string_view operand = "an operand";
-constexpr std::string_view unread  = "a digit, a letter, an operator or a parenthesis";
-constexpr std::string_view numbers = "an operator between two numbers";
+constexpr std::string_view operand  = "an operand";
+constexpr std::string_view unread   = "a digit, a letter, an operator or a parenthesis";
+constexpr std::string_view numbers  = "an operator between two numbers";
+constexpr std::string_view exponent = "an operator between a number and e";
 
 const std::array refusals{
         refusal{"", 0, operand},
@@ -39,6 +40,9 @@ const std::array refusals{
         refusal{"2 3", 2, numbers},
         refusal{"1.5.2", 3, numbers},
         refusal{"x^2 3", 4, numbers},
+        refusal{"2e3", 1, exponent},
+        refusal{"1e-3", 1, exponent},
+        refusal{"2.5e+1", 3, exponent},
         refusal{".", 0, "a digit"},
         refusal{"X", 0, "a lowercase letter"},
         refusal{"2X", 1, "a lowercase letter"},
@@ -58,6 +62,15 @@ TEST_CASE("every refusal of the grammar names its offset and what was expected t
         REQUIRE_FALSE(read.has_value());
         CHECK(read.error().offset == row.offset);
         CHECK(read.error().expected == row.expected);
+    }
+}
+
+TEST_CASE("a number beside e where no exponent can be meant reads as a product with e")
+{
+    for(const std::string_view text : {"2e", "2ex", "2e x", "2e-x", "2 e3", "2exp(x)"})
+    {
+        CAPTURE(text);
+        CHECK(typed::parsed(text, 1).has_value());
     }
 }
 

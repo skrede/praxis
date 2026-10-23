@@ -19,7 +19,8 @@ struct parse_failure
 };
 
 // In one dimension x is the variable, in two x and y; `pi` and `e` are constants and every other
-// lowercase letter is a parameter.
+// lowercase letter is a parameter. A number has no exponent part, so one directly followed by `e` and a
+// digit, signed or not, is refused rather than read as a product with e.
 expected<expression, parse_failure> parsed(std::string_view text, std::size_t dimension);
 
 std::string echoed(const expression &read);

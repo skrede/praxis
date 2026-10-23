@@ -28,6 +28,12 @@ bool starts_primary(char one)
     return digit(one) || lowercase(one) || one == '.' || one == '(';
 }
 
+bool exponent_like(std::string_view rest)
+{
+    const std::size_t sign = rest.size() > 1 && (rest[1] == '+' || rest[1] == '-') ? 1 : 0;
+    return rest.size() > sign + 1 && rest.front() == 'e' && digit(rest[sign + 1]);
+}
+
 std::size_t skipped(std::string_view text, std::size_t from)
 {
     return std::min(text.find_first_not_of(' ', from), text.size());
@@ -93,6 +99,8 @@ bool read_number(cursor &c)
     const std::optional<double> value = length == 0 ? std::nullopt : decimal(c.text.substr(start, length));
     if(!value)
         return fail(c, start, length == 0 ? "a digit" : "a number a double holds");
+    if(exponent_like(c.text.substr(start + length)))
+        return fail(c, start + length, "an operator between a number and e");
     c.nodes.push_back(node{'\0', *value, node_kind::number, 0, 0, start, length, named_function::sin});
     c.at = c.after_number = start + length;
     return true;

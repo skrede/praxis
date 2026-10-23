@@ -53,7 +53,7 @@ const std::array readings{
         reading{"texp(x)", 1, "t*exp(x)", "t", [] { return p('t') * std::exp(x); }},
         reading{"pie", 1, "pi*e", "", [] { return pi * e; }},
         reading{"ex", 1, "e*x", "", [] { return e * x; }},
-        reading{"2e3", 1, "2*e*3", "", [] { return 2.0 * e * 3.0; }},
+        reading{"2e 3", 1, "2*e*3", "", [] { return 2.0 * e * 3.0; }},
         reading{"x/2/3", 1, "(x/2)/3", "", [] { return (x / 2.0) / 3.0; }},
         reading{"x/(2y)", 2, "x/(2*y)", "", [] { return x / (2.0 * y); }},
         reading{"a - (b - c)", 1, "a - (b - c)", "abc", [] { return p('a') - (p('b') - p('c')); }},
