@@ -105,7 +105,7 @@ TEST_CASE("a Manual document's text and parameters are saved and reopened as the
     {
         const composed_optimization first(at, {}, "typed");
         tests::imgui_frame frames;
-        type_into(frames, first.draw("Solve"), 0u, "0.5");
+        type_into(frames, first.draw("Solve##curve"), 0u, "0.5");
         REQUIRE(config::save(presets::optimization_keyspace(), at, first.offered(read_optimization(at))).has_value());
     }
 

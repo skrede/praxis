@@ -136,7 +136,7 @@ TEST_CASE("a surface document opens the surface scenario over the registered sur
     std::vector<std::string> windows;
     for(const std::shared_ptr<scene::imgui_window> &window : opened.built->windows)
         windows.push_back(window->display_name());
-    CHECK(windows == std::vector<std::string>{"Function", "Display", "Solve", "Linearization"});
+    CHECK(windows == std::vector<std::string>{"Function##surface", "Display##surface", "Solve##surface", "Linearization##surface"});
 
     REQUIRE_FALSE(opened.seen->sloped.empty());
     CHECK(opened.seen->sloped.front() == Eigen::Vector2d(-2.0, -1.5));
@@ -154,12 +154,12 @@ TEST_CASE("the function window over a surface takes both ranges and the solve wi
     composed_surface opened;
     tests::imgui_frame frames;
 
-    type_into(frames, opened.draw("Function"), 5, "3");
+    type_into(frames, opened.draw("Function##surface"), 5, "3");
     REQUIRE(opened.loop.drain().has_value());
     CHECK(std::ranges::find(opened.seen->valued, Eigen::Vector2d(2.0, 3.0)) != opened.seen->valued.end());
 
-    type_into(frames, opened.draw("Solve"), 1, "1.5");
-    press_on(frames, opened.draw("Solve"), "Solve", "Run");
+    type_into(frames, opened.draw("Solve##surface"), 1, "1.5");
+    press_on(frames, opened.draw("Solve##surface"), "Solve##surface", "Run");
     opened.seen->sloped.clear();
     REQUIRE(opened.loop.drain().has_value());
     REQUIRE_FALSE(opened.seen->sloped.empty());
@@ -171,16 +171,16 @@ TEST_CASE("the Display window's switches hide and show the surface and its itera
     composed_surface opened;
     tests::imgui_frame frames;
 
-    press_on(frames, opened.draw("Display"), "Display", "Surface");
+    press_on(frames, opened.draw("Display##surface"), "Display##surface", "Surface");
     opened.built->stencil->render();
     CHECK_FALSE(opened.drawn("surface").visible);
     CHECK(opened.drawn("iterates").visible);
 
-    press_on(frames, opened.draw("Display"), "Display", "Iterates");
+    press_on(frames, opened.draw("Display##surface"), "Display##surface", "Iterates");
     opened.built->stencil->render();
     CHECK_FALSE(opened.drawn("iterates").visible);
 
-    press_on(frames, opened.draw("Display"), "Display", "Surface");
+    press_on(frames, opened.draw("Display##surface"), "Display##surface", "Surface");
     opened.built->stencil->render();
     CHECK(opened.drawn("surface").visible);
 }

@@ -85,11 +85,11 @@ void edit_and_run(tests::imgui_frame &frames, const drawing &solve)
 void choose_descent(composed_optimization &opened)
 {
     tests::imgui_frame frames;
-    take_entry_on(frames, opened.draw("Solve"), "Solve", "Method", 1u);
+    take_entry_on(frames, opened.draw("Solve##curve"), "Solve##curve", "Method", 1u);
     REQUIRE(opened.loop.drain().has_value());
-    type_into(frames, opened.draw("Solve"), 3u, "0.02");
+    type_into(frames, opened.draw("Solve##curve"), 3u, "0.02");
     REQUIRE(opened.loop.drain().has_value());
-    type_into(frames, opened.draw("Solve"), 3u, "-1");
+    type_into(frames, opened.draw("Solve##curve"), 3u, "-1");
     REQUIRE(opened.loop.drain().has_value());
 }
 
@@ -117,10 +117,10 @@ TEST_CASE("the function, its range, the seed, the limit and the selected step ar
     {
         composed_optimization first(at, two_curves(), "saved");
         tests::imgui_frame frames;
-        edit_function_and_range(frames, first.draw("Function"));
-        edit_and_run(frames, first.draw("Solve"));
+        edit_function_and_range(frames, first.draw("Function##curve"));
+        edit_and_run(frames, first.draw("Solve##curve"));
         REQUIRE(first.loop.drain().has_value());
-        tweak_from(frames, first.draw("Solve"), 3u, 2u);
+        tweak_from(frames, first.draw("Solve##curve"), 3u, 2u);
         REQUIRE(first.loop.drain().has_value());
 
         REQUIRE(config::save(presets::optimization_keyspace(), at, first.offered(read_optimization(at))).has_value());
@@ -167,7 +167,7 @@ TEST_CASE("in the root form the Solve window writes neither a method nor a step 
     const config::location at = written("rooted.xml");
     const composed_optimization opened(at, two_curves(), "saved");
     tests::imgui_frame frames;
-    type_into(frames, opened.draw("Solve"), 0u, "0.5");
+    type_into(frames, opened.draw("Solve##curve"), 0u, "0.5");
 
     const std::vector<config::edit> edits = opened.offered(read_optimization(at));
     REQUIRE_FALSE(edits.empty());
@@ -179,17 +179,17 @@ TEST_CASE("a seed typed that is no finite number is shown refused and not offere
     const config::location at = written("refused_seed.xml");
     const composed_optimization opened(at, two_curves(), "saved");
     const auto seed_offered = [&opened, &at]
-    { return std::ranges::count_if(opened.edits_of("Solve", read_optimization(at)), [](const config::edit &made) { return made.key == "seed/x"; }); };
+    { return std::ranges::count_if(opened.edits_of("Solve##curve", read_optimization(at)), [](const config::edit &made) { return made.key == "seed/x"; }); };
     tests::imgui_frame frames;
     for(const char *typed : {"1e999", "inf", "nan"})
     {
         CAPTURE(typed);
-        type_into(frames, opened.draw("Solve"), 0u, typed);
+        type_into(frames, opened.draw("Solve##curve"), 0u, typed);
         CHECK(seed_offered() == 0);
-        CHECK(opened.written(frames, "Solve").find(refused_seed) != std::string::npos);
+        CHECK(opened.written(frames, "Solve##curve").find(refused_seed) != std::string::npos);
     }
 
-    type_into(frames, opened.draw("Solve"), 0u, "0.5");
+    type_into(frames, opened.draw("Solve##curve"), 0u, "0.5");
     CHECK(seed_offered() == 1);
-    CHECK(opened.written(frames, "Solve").find(refused_seed) == std::string::npos);
+    CHECK(opened.written(frames, "Solve##curve").find(refused_seed) == std::string::npos);
 }

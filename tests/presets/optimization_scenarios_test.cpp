@@ -157,7 +157,7 @@ TEST_CASE("a curve document opens the curve scenario and its run is published", 
 
     REQUIRE(taken.named == std::vector<std::string>{"Root finding: a cubic"});
     REQUIRE(taken.composed);
-    CHECK(taken.windows == std::vector<std::string>{"Function", "Graph", "Display", "Solve", "Linearization"});
+    CHECK(taken.windows == std::vector<std::string>{"Function##curve", "Graph##curve", "Display##curve", "Solve##curve", "Linearization##curve"});
 
     const std::vector<double> &sloped = taken.seen->sloped;
     REQUIRE(sloped.size() >= 4u);

@@ -1,11 +1,9 @@
 #include "imgui_frame.h"
-#include "scratch_directory.h"
 #include "window_placements.h"
+#include "scenario_placements.h"
 #include "composed_optimization.h"
 
 #include "praxis/scene/imgui_window.h"
-
-#include "praxis/config/store.h"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -16,60 +14,15 @@
 #include <string>
 #include <vector>
 #include <cstddef>
-#include <fstream>
 #include <utility>
 #include <optional>
-#include <filesystem>
-#include <string_view>
 
 using namespace praxis;
 using namespace praxis::fixture;
 
 namespace {
 
-using scene::window_corner;
 using scene::opening_placement;
-
-constexpr const char *curve_document = "<optimization><preset name=\"placed curve\" scenario=\"curve\"/><function source=\"manual\" expression=\"x^3 - 2x - 5\"/>"
-                                       "<range x_lower=\"-3\" x_upper=\"3\"/><seed x=\"1\"/></optimization>";
-
-constexpr const char *surface_document = "<optimization><preset name=\"placed surface\" scenario=\"surface\"/><function source=\"manual\" expression=\"x^2 + y^2 - 1\"/>"
-                                         "<range x_lower=\"-2\" x_upper=\"2\" y_lower=\"-2\" y_upper=\"2\"/><seed x=\"-2\" y=\"-2\"/></optimization>";
-
-struct pinned_placement
-{
-    std::string_view title;
-    opening_placement at;
-};
-
-constexpr std::array<pinned_placement, 5> curve_placements{{
-        {"Function", {window_corner::top_left, 1.f, 10.f, 35.f, 15.f}},
-        {"Graph", {window_corner::top_left, 37.f, 17.f, 20.f, 22.f}},
-        {"Display", {window_corner::top_left, 37.f, 1.f, 12.f, 10.f}},
-        {"Solve", {window_corner::bottom_right, 1.f, 20.f, 36.f, 19.f}},
-        {"Linearization", {window_corner::bottom_right, 1.f, 1.f, 39.f, 14.f}},
-}};
-
-constexpr std::array<pinned_placement, 4> surface_placements{{
-        {"Function", {window_corner::top_left, 1.f, 10.f, 35.f, 19.f}},
-        {"Display", {window_corner::top_left, 37.f, 1.f, 12.f, 15.f}},
-        {"Solve", {window_corner::bottom_right, 1.f, 20.f, 36.f, 19.f}},
-        {"Linearization", {window_corner::bottom_right, 1.f, 1.f, 39.f, 18.f}},
-}};
-
-config::location written(const std::string &file, const char *body)
-{
-    const std::filesystem::path directory = shared_scratch_directory() / "optimization_window_placement";
-    std::filesystem::create_directories(directory);
-    std::ofstream(directory / file, std::ios::binary | std::ios::trunc) << body << "\n";
-
-    return config::resolve(file, directory);
-}
-
-bool same(const opening_placement &one, const opening_placement &other)
-{
-    return one.corner == other.corner && one.inset_x == other.inset_x && one.inset_y == other.inset_y && one.width == other.width && one.height == other.height;
-}
 
 template<std::size_t count>
 void check_pinned(const composed_optimization &composed, const std::array<pinned_placement, count> &pinned, std::size_t dimension)
@@ -79,11 +32,11 @@ void check_pinned(const composed_optimization &composed, const std::array<pinned
     {
         const std::shared_ptr<scene::imgui_window> &window = composed.preset->windows[at];
         INFO(window->display_name());
-        REQUIRE(window->display_name() == pinned[at].title);
+        REQUIRE(window->display_name() == pinned[at].name);
         REQUIRE(window->opening().has_value());
         CHECK(same(*window->opening(), pinned[at].at));
 
-        const std::optional<opening_placement> answered = presets::scenario_window_placement(window->display_name(), dimension);
+        const std::optional<opening_placement> answered = presets::scenario_window_placement(pinned[at].title, dimension);
         REQUIRE(answered.has_value());
         CHECK(same(*window->opening(), *answered));
     }
@@ -167,14 +120,14 @@ void check_apart(const std::vector<named_rectangle> &opened, std::size_t scenari
 
 TEST_CASE("every window the curve composes opens at the placement answered for its title", "[presets]")
 {
-    const composed_optimization composed(written("curve.xml", curve_document), {}, "placed curve");
+    const composed_optimization composed(placed_document("curve.xml", placed_curve_document), {}, "placed curve");
 
     check_pinned(composed, curve_placements, 1u);
 }
 
 TEST_CASE("every window the surface composes opens at the placement answered for its title", "[presets]")
 {
-    const composed_optimization composed(written("surface.xml", surface_document), {}, "placed surface");
+    const composed_optimization composed(placed_document("surface.xml", placed_surface_document), {}, "placed surface");
 
     check_pinned(composed, surface_placements, 2u);
 }
@@ -187,14 +140,14 @@ TEST_CASE("a title the scenario composes no window under is answered no placemen
 
 TEST_CASE("the curve's windows open apart from each other and from the standing windows at 1280 x 720", "[presets]")
 {
-    const composed_optimization composed(written("curve.xml", curve_document), {}, "placed curve");
+    const composed_optimization composed(placed_document("curve.xml", placed_curve_document), {}, "placed curve");
 
     check_apart(opened_at_smallest_screen(composed), composed.preset->windows.size());
 }
 
 TEST_CASE("the surface's windows open apart from each other and from the standing windows at 1280 x 720", "[presets]")
 {
-    const composed_optimization composed(written("surface.xml", surface_document), {}, "placed surface");
+    const composed_optimization composed(placed_document("surface.xml", placed_surface_document), {}, "placed surface");
 
     check_apart(opened_at_smallest_screen(composed), composed.preset->windows.size());
 }

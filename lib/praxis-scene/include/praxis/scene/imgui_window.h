@@ -51,7 +51,8 @@ struct window_rectangle
 window_rectangle opening_rectangle(const opening_placement &at, ImVec2 work_position, ImVec2 work_size, float font_size);
 
 // The GUI library identifies a panel by its title string, so the display name a window carries is
-// that panel's identity and two windows given one name draw into one panel.
+// that panel's identity and two windows given one name draw into one panel. It shows only what
+// precedes a "##" in that name, so two panels can show one title under two names.
 class imgui_window
 {
 public:
@@ -64,7 +65,8 @@ public:
 
     const std::string &display_name() const;
 
-    // Applied on the window's first use only: an entry the layout file holds for its title wins.
+    // Applied on the window's first use only: an entry the layout file holds for its name, or a panel
+    // the context has already opened under that name, wins.
     void open_at(opening_placement at);
     const std::optional<opening_placement> &opening() const;
 

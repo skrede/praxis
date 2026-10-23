@@ -36,6 +36,7 @@
 #include <cstddef>
 #include <utility>
 #include <optional>
+#include <string_view>
 
 namespace praxis::presets {
 
@@ -51,10 +52,22 @@ struct offered_functions
 // relies on.
 constexpr std::array<const char *, 2> scenario_spellings{"curve", "surface"};
 
+// The GUI library keys a window by its whole name and shows only what precedes "##", so the two
+// scenarios' windows share their titles and each opens at its own scenario's placement.
+std::string scenario_name(std::string_view title, optimization_scenario scenario)
+{
+    return std::format("{}##{}", title, scenario_spellings.at(static_cast<std::size_t>(scenario)));
+}
+
+std::string_view shown_title(const std::string &name)
+{
+    return std::string_view(name).substr(0, name.find("##"));
+}
+
 std::vector<std::shared_ptr<scene::imgui_window>> placed(std::vector<std::shared_ptr<scene::imgui_window>> windows, std::size_t dimension)
 {
     for(const std::shared_ptr<scene::imgui_window> &window : windows)
-        if(const std::optional<scene::opening_placement> at = scenario_window_placement(window->display_name(), dimension))
+        if(const std::optional<scene::opening_placement> at = scenario_window_placement(shown_title(window->display_name()), dimension))
             window->open_at(*at);
 
     return windows;
@@ -62,16 +75,18 @@ std::vector<std::shared_ptr<scene::imgui_window>> placed(std::vector<std::shared
 
 std::vector<std::shared_ptr<scene::imgui_window>> curve_windows(const optimization::scenario_window_inputs &inputs)
 {
-    return placed({std::make_shared<optimization::function_window>("Function", inputs), optimization::curve_graph(inputs, "Graph"),
-                   std::make_shared<optimization::display_window>("Display", inputs), std::make_shared<optimization::solve_window>("Solve", inputs),
-                   std::make_shared<optimization::linearization_window>("Linearization", inputs)},
+    const auto named = [](std::string_view title) { return scenario_name(title, optimization_scenario::curve); };
+    return placed({std::make_shared<optimization::function_window>(named("Function"), inputs), optimization::curve_graph(inputs, named("Graph")),
+                   std::make_shared<optimization::display_window>(named("Display"), inputs), std::make_shared<optimization::solve_window>(named("Solve"), inputs),
+                   std::make_shared<optimization::linearization_window>(named("Linearization"), inputs)},
                   1u);
 }
 
 std::vector<std::shared_ptr<scene::imgui_window>> surface_windows(const optimization::scenario_window_inputs &inputs)
 {
-    return placed({std::make_shared<optimization::function_window>("Function", inputs), std::make_shared<optimization::display_window>("Display", inputs),
-                   std::make_shared<optimization::solve_window>("Solve", inputs), std::make_shared<optimization::linearization_window>("Linearization", inputs)},
+    const auto named = [](std::string_view title) { return scenario_name(title, optimization_scenario::surface); };
+    return placed({std::make_shared<optimization::function_window>(named("Function"), inputs), std::make_shared<optimization::display_window>(named("Display"), inputs),
+                   std::make_shared<optimization::solve_window>(named("Solve"), inputs), std::make_shared<optimization::linearization_window>(named("Linearization"), inputs)},
                   2u);
 }
 

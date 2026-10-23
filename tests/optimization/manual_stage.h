@@ -96,9 +96,9 @@ inline void select_manual(tests::imgui_frame &frames, const drawing &draw)
 
 // Activating the field selects what it holds, so the characters typed stand in for it unless the
 // cursor is first sent to its end; the field is left active.
-inline void type_expression(tests::imgui_frame &frames, const drawing &draw, const char *typed, bool appending = false)
+inline void type_expression(tests::imgui_frame &frames, const drawing &draw, const char *typed, bool appending = false, const char *window = "Function")
 {
-    stand_on(frames, draw, "Function", "##expression");
+    stand_on(frames, draw, window, "##expression");
     tap(frames, draw, ImGuiKey_Space);
     if(appending)
         tap(frames, draw, ImGuiKey_End);

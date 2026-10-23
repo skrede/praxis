@@ -103,8 +103,8 @@ inline std::string solve_text(praxis::scene::preset_registry &registry, const st
                  [&drawn](praxis::scene::preset &composed, praxis::scheduler::scheduler &loop, threepp::Scene &)
                  {
                      REQUIRE(loop.drain().has_value());
-                     const auto solve =
-                             std::ranges::find_if(composed.windows, [](const std::shared_ptr<praxis::scene::imgui_window> &window) { return window->display_name() == "Solve"; });
+                     const auto solve = std::ranges::find_if(composed.windows,
+                                                             [](const std::shared_ptr<praxis::scene::imgui_window> &window) { return window->display_name().starts_with("Solve##"); });
                      REQUIRE(solve != composed.windows.end());
                      praxis::tests::imgui_frame frames;
                      frames.draw(

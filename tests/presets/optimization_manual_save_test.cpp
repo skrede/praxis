@@ -56,10 +56,10 @@ void save(composed_optimization &composed, const config::location &at)
 
 void typed_and_left(composed_optimization &composed, tests::imgui_frame &frames, const char *typed)
 {
-    type_expression(frames, composed.draw("Function"), typed);
-    leave_field(frames, composed.draw("Function"));
+    type_expression(frames, composed.draw("Function##curve"), typed, false, "Function##curve");
+    leave_field(frames, composed.draw("Function##curve"));
     REQUIRE(composed.loop.drain().has_value());
-    frames.draw_frame(composed.draw("Function"));
+    frames.draw_frame(composed.draw("Function##curve"));
 }
 
 void check_parameter(const typed_parameter &read, char name, double value, double lower, double upper)
@@ -73,7 +73,7 @@ void check_parameter(const typed_parameter &read, char name, double value, doubl
 // The minimum and the maximum share the line below the slider, entered at its leftmost.
 void type_maximum(tests::imgui_frame &frames, const drawing &draw, const char *typed)
 {
-    stand_on(frames, draw, "Function", letter_b, "b");
+    stand_on(frames, draw, "Function##curve", letter_b, "b");
     tap(frames, draw, ImGuiKey_DownArrow);
     for(ImGuiID standing = 0; standing != standing_on();)
     {
@@ -81,7 +81,7 @@ void type_maximum(tests::imgui_frame &frames, const drawing &draw, const char *t
         tap(frames, draw, ImGuiKey_LeftArrow);
     }
     tap(frames, draw, ImGuiKey_RightArrow);
-    REQUIRE(standing_on() == control_id("Function", letter_b, "max"));
+    REQUIRE(standing_on() == control_id("Function##curve", letter_b, "max"));
 
     tap(frames, draw, ImGuiKey_Space);
     for(const char *at = typed; *at != 0; ++at)
@@ -125,13 +125,13 @@ TEST_CASE("moving a parameter's slider and its maximum moves the value and the u
 {
     const config::location at = written("moved.xml", typed_document);
     composed_optimization composed(at, {}, "typed");
-    const drawing function = composed.draw("Function");
+    const drawing function = composed.draw("Function##curve");
     tests::imgui_frame frames;
     frames.draw(function);
 
     type_maximum(frames, function, "8");
     REQUIRE(composed.loop.drain().has_value());
-    stand_on(frames, function, "Function", letter_b, "b");
+    stand_on(frames, function, "Function##curve", letter_b, "b");
     tap(frames, function, ImGuiKey_Space);
     tap(frames, function, ImGuiKey_RightArrow);
     tap(frames, function, ImGuiKey_Space);
@@ -152,7 +152,7 @@ TEST_CASE("a composition registering no function composes, draws and saves a typ
     {
         composed_optimization composed(at, {}, "unnamed");
         tests::imgui_frame frames;
-        take_entry_on(frames, composed.draw("Function"), "Function", "Source", 0u);
+        take_entry_on(frames, composed.draw("Function##curve"), "Function##curve", "Source", 0u);
         REQUIRE(composed.loop.drain().has_value());
         typed_and_left(composed, frames, "ax^2 - 1");
         save(composed, at);
