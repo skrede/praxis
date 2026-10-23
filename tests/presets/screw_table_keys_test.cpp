@@ -14,7 +14,6 @@
 #include <optional>
 #include <filesystem>
 #include <string_view>
-#include <system_error>
 
 using namespace praxis;
 
@@ -37,8 +36,9 @@ std::string addressed(const std::optional<std::string> &instance)
 
 TEST_CASE("an empty name addresses no row of a joint collection that holds one without an identity", "[presets][configuration]")
 {
-    const std::filesystem::path directory = fixture::scratch_directory();
-    const std::filesystem::path where     = directory / "unnamed-first.xml";
+    const std::filesystem::path directory = fixture::shared_scratch_directory() / "screw_table_keys";
+    std::filesystem::create_directories(directory);
+    const std::filesystem::path where = directory / "unnamed-first.xml";
     std::ofstream(where, std::ios::binary | std::ios::trunc) << "<probe><joints><joint/><joint index=\"1\"/></joints></probe>\n";
 
     const expected<config::document, config::error> read = config::load(listed(), config::resolve(where, directory));
@@ -47,7 +47,4 @@ TEST_CASE("an empty name addresses no row of a joint collection that holds one w
     CHECK(addressed(presets::keys::instance_at(read.value(), "joints/joint", "")) == "no instance");
     CHECK(addressed(presets::keys::instance_at(read.value(), "joints/joint", "1")) == "joints/joint[1]");
     CHECK(addressed(presets::keys::instance_at(read.value(), "joints/joint", "2")) == "no instance");
-
-    std::error_code ignored;
-    std::filesystem::remove_all(directory, ignored);
 }

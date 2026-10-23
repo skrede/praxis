@@ -1,3 +1,5 @@
+#include "../presets/scratch_directory.h"
+
 #include "praxis/config/error.h"
 #include "praxis/config/store.h"
 #include "praxis/config/writer.h"
@@ -50,7 +52,7 @@ declaration counted()
 
 std::filesystem::path written(const std::string &name, std::string_view body)
 {
-    const std::filesystem::path directory = std::filesystem::temp_directory_path() / "praxis-config-collection-addressing";
+    const std::filesystem::path directory = fixture::shared_scratch_directory() / "config_collection_addressing";
     std::filesystem::create_directories(directory);
     const std::filesystem::path where = directory / name;
     std::ofstream(where, std::ios::binary | std::ios::trunc) << body;

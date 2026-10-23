@@ -1,5 +1,7 @@
 #include "configuration_keys.h"
 
+#include "../presets/scratch_directory.h"
+
 #include "praxis/config/error.h"
 #include "praxis/config/store.h"
 #include "praxis/config/document.h"
@@ -26,7 +28,7 @@ config::declaration listed()
 
 std::filesystem::path written(const std::string &name, std::string_view body)
 {
-    const std::filesystem::path directory = std::filesystem::temp_directory_path() / "praxis-rigid-motion-configuration-keys";
+    const std::filesystem::path directory = fixture::shared_scratch_directory() / "rigid_motion_configuration_keys";
     std::filesystem::create_directories(directory);
     const std::filesystem::path where = directory / name;
     std::ofstream(where, std::ios::binary | std::ios::trunc) << body;
