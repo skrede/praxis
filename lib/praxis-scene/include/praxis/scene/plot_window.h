@@ -59,6 +59,14 @@ struct plot_reading
 
 using plot_source = std::function<plot_reading()>;
 
+// Inside the plot area at its upper left, or a key under the plot whose entries wrap at the window's
+// content width.
+enum class plot_legend : std::uint8_t
+{
+    inside_north_west,
+    wrapped_key
+};
+
 // Handed a left click made with Shift held over a plot, on its release; a drag stays the plot's own
 // pan, and its box selection keeps its binding.
 using plot_pick = std::function<void(std::size_t frame, double abscissa, double ordinate)>;
@@ -69,10 +77,13 @@ public:
     plot_window(std::string name, std::function<void()> controls, plot_source source);
     plot_window(std::string name, std::function<void()> controls, plot_source source, plot_pick pick);
 
+    void legend_at(plot_legend at);
+
     void render() override;
 
 private:
     plot_pick m_pick;
+    plot_legend m_legend;
     plot_source m_source;
     std::function<void()> m_controls;
 };

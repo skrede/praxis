@@ -3197,12 +3197,17 @@ lib/praxis-scene/include/praxis/scene/plot_window.h	message	member	-	typename:st
 lib/praxis-scene/include/praxis/scene/plot_window.h	abscissa_label	member	-	typename:std::string
 lib/praxis-scene/include/praxis/scene/plot_window.h	frames	member	-	typename:std::vector<plot_frame>
 lib/praxis-scene/include/praxis/scene/plot_window.h	plot_source	typedef	-	-
+lib/praxis-scene/include/praxis/scene/plot_window.h	plot_legend	enum	-	typename:std::uint8_t
+lib/praxis-scene/include/praxis/scene/plot_window.h	inside_north_west	enumerator	-	-
+lib/praxis-scene/include/praxis/scene/plot_window.h	wrapped_key	enumerator	-	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	plot_pick	typedef	-	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	plot_window	class	-	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	plot_window	prototype	(std::string name,std::function<void ()> controls,plot_source source)	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	plot_window	prototype	(std::string name,std::function<void ()> controls,plot_source source,plot_pick pick)	-
+lib/praxis-scene/include/praxis/scene/plot_window.h	legend_at	prototype	(plot_legend at)	typename:void
 lib/praxis-scene/include/praxis/scene/plot_window.h	render	prototype	()	typename:void
 lib/praxis-scene/include/praxis/scene/plot_window.h	m_pick	member	-	typename:plot_pick
+lib/praxis-scene/include/praxis/scene/plot_window.h	m_legend	member	-	typename:plot_legend
 lib/praxis-scene/include/praxis/scene/plot_window.h	m_source	member	-	typename:plot_source
 lib/praxis-scene/include/praxis/scene/plot_window.h	m_controls	member	-	typename:std::function<void ()>
 lib/praxis-scene/include/praxis/scene/preset.h	praxis	namespace	-	-

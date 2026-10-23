@@ -93,7 +93,10 @@ std::shared_ptr<scene::plot_window> curve_graph(const scenario_window_inputs &in
 
     scene::plot_source reading = [seen = inputs.seen, drawn = inputs.drawn != nullptr ? inputs.drawn : std::make_shared<scenario_view>()] { return curve_reading(seen, *drawn); };
 
-    return std::make_shared<scene::plot_window>(std::move(name), std::function<void()>(), std::move(reading), std::move(seeding));
+    auto graph = std::make_shared<scene::plot_window>(std::move(name), std::function<void()>(), std::move(reading), std::move(seeding));
+    graph->legend_at(scene::plot_legend::wrapped_key);
+
+    return graph;
 }
 
 }

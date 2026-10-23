@@ -31,7 +31,7 @@ struct pinned_placement
 
 inline constexpr std::array<pinned_placement, 5> curve_placements{{
         {"Function##curve", "Function", {scene::window_corner::top_left, 1.f, 10.f, 35.f, 15.f}},
-        {"Graph##curve", "Graph", {scene::window_corner::top_left, 37.f, 17.f, 20.f, 22.f}},
+        {"Graph##curve", "Graph", {scene::window_corner::top_left, 37.f, 16.f, 23.f, 23.f}},
         {"Display##curve", "Display", {scene::window_corner::top_left, 37.f, 1.f, 12.f, 10.f}},
         {"Solve##curve", "Solve", {scene::window_corner::bottom_right, 1.f, 20.f, 36.f, 19.f}},
         {"Linearization##curve", "Linearization", {scene::window_corner::bottom_right, 1.f, 1.f, 39.f, 14.f}},

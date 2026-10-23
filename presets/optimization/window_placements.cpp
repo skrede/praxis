@@ -23,7 +23,7 @@ struct titled_placement
 constexpr std::array<titled_placement, 9> placements{{
         {"Function", 1u, {window_corner::top_left, 1.f, 10.f, 35.f, 15.f}},
         {"Function", 2u, {window_corner::top_left, 1.f, 10.f, 35.f, 19.f}},
-        {"Graph", 1u, {window_corner::top_left, 37.f, 17.f, 20.f, 22.f}},
+        {"Graph", 1u, {window_corner::top_left, 37.f, 16.f, 23.f, 23.f}},
         {"Display", 1u, {window_corner::top_left, 37.f, 1.f, 12.f, 10.f}},
         {"Display", 2u, {window_corner::top_left, 37.f, 1.f, 12.f, 15.f}},
         {"Solve", 1u, {window_corner::bottom_right, 1.f, 20.f, 36.f, 19.f}},
