@@ -3212,6 +3212,9 @@ lib/praxis-scene/include/praxis/scene/plot_window.h	m_source	member	-	typename:p
 lib/praxis-scene/include/praxis/scene/plot_window.h	m_controls	member	-	typename:std::function<void ()>
 lib/praxis-scene/include/praxis/scene/preset.h	praxis	namespace	-	-
 lib/praxis-scene/include/praxis/scene/preset.h	scene	namespace	-	-
+lib/praxis-scene/include/praxis/scene/preset.h	camera_view	struct	-	-
+lib/praxis-scene/include/praxis/scene/preset.h	position	member	-	typename:threepp::Vector3
+lib/praxis-scene/include/praxis/scene/preset.h	target	member	-	typename:threepp::Vector3
 lib/praxis-scene/include/praxis/scene/preset.h	preset	class	-	-
 lib/praxis-scene/include/praxis/scene/preset.h	preset	prototype	(std::shared_ptr<scene::stencil> s,std::vector<std::shared_ptr<imgui_window>> w,window_route add,window_route remove)	-
 lib/praxis-scene/include/praxis/scene/preset.h	work	member	-	typename:scheduler::strand
@@ -3221,6 +3224,7 @@ lib/praxis-scene/include/praxis/scene/preset.h	windows	member	-	typename:std::ve
 lib/praxis-scene/include/praxis/scene/preset.h	release_cb	member	-	typename:detail::move_only_function<void ()>
 lib/praxis-scene/include/praxis/scene/preset.h	release_fallback_cb	member	-	typename:detail::move_only_function<void (bool)>
 lib/praxis-scene/include/praxis/scene/preset.h	admit_cb	member	-	typename:detail::move_only_function<expected<std::vector<scheduler::task_handle>,refusal> ()>
+lib/praxis-scene/include/praxis/scene/preset.h	opening_view	member	-	typename:std::optional<camera_view>
 lib/praxis-scene/include/praxis/scene/preset.h	initialize	prototype	()	typename:expected<void,refusal>
 lib/praxis-scene/include/praxis/scene/preset.h	tear_down	prototype	()	typename:void
 lib/praxis-scene/include/praxis/scene/preset.h	m_add_window	member	-	typename:window_route
@@ -3294,6 +3298,7 @@ lib/praxis-scene/include/praxis/scene/visualizer.h	visualizer	prototype	(std::sh
 lib/praxis-scene/include/praxis/scene/visualizer.h	~visualizer	prototype	()	-
 lib/praxis-scene/include/praxis/scene/visualizer.h	show_grid	prototype	(bool show)	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	set_background_color	prototype	(threepp::Color color)	typename:void
+lib/praxis-scene/include/praxis/scene/visualizer.h	current_view	prototype	() const	typename:camera_view
 lib/praxis-scene/include/praxis/scene/visualizer.h	render_once	prototype	()	typename:bool
 lib/praxis-scene/include/praxis/scene/visualizer.h	executor	prototype	() const	typename:scheduler::strand
 lib/praxis-scene/include/praxis/scene/visualizer.h	preset_names	prototype	() const	typename:std::vector<std::string>
@@ -3335,6 +3340,7 @@ lib/praxis-scene/include/praxis/scene/visualizer.h	capture_input	prototype	()	ty
 lib/praxis-scene/include/praxis/scene/visualizer.h	resize	prototype	(threepp::WindowSize size)	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	setup_scene	prototype	(const windows & stood)	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	add_camera	prototype	()	typename:void
+lib/praxis-scene/include/praxis/scene/visualizer.h	aim_camera	prototype	(const camera_view & view)	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	add_scene_grid	prototype	()	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	add_scene_lights	prototype	()	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	add_imgui_windows	prototype	(const windows & stood)	typename:void

@@ -1,4 +1,5 @@
 #include "registered_list.h"
+#include "scenario_defaults.h"
 #include "scenario_admission.h"
 
 #include "praxis/optimization/surface_stencil.h"
@@ -6,8 +7,11 @@
 
 #include "praxis/scene/stencil.h"
 
+#include <threepp/math/Vector3.hpp>
+
 #include <spdlog/spdlog.h>
 
+#include <cmath>
 #include <format>
 #include <memory>
 #include <string>
@@ -70,6 +74,15 @@ std::optional<std::string> unopenable(const std::vector<std::string> &registered
     return std::nullopt;
 }
 
+scene::camera_view surface_opening_view()
+{
+    const double level = opening_distance * std::cos(opening_elevation_radians);
+    const threepp::Vector3 position(static_cast<float>(level * std::sin(opening_azimuth_radians)), static_cast<float>(opening_distance * std::sin(opening_elevation_radians)),
+                                    static_cast<float>(level * std::cos(opening_azimuth_radians)));
+
+    return scene::camera_view{position, threepp::Vector3(0.f, 0.f, 0.f)};
+}
+
 // The gate is neither copyable nor movable, so it is built where it stands, and its last share is
 // handed to the preset's release callable: freeing it earlier would let a run the gate has already
 // posted reach storage that is gone.
@@ -109,8 +122,12 @@ std::shared_ptr<scene::preset> compose_curve_scenario(const scene::preset_site &
 std::shared_ptr<scene::preset> compose_surface_scenario(const scene::preset_site &site, std::vector<registered_surface> surfaces, const capabilities &solving,
                                                         const scenario_settings &opened, const scenario_composition &composed)
 {
-    return composed_over(site, std::move(surfaces), solving, opened, composed, "surface",
-                         [&site](const scenario_window_inputs &built) { return std::make_shared<surface_stencil>(site.scene, built.seen, built.drawn); });
+    const auto drawing                    = [&site](const scenario_window_inputs &built) { return std::make_shared<surface_stencil>(site.scene, built.seen, built.drawn); };
+    std::shared_ptr<scene::preset> preset = composed_over(site, std::move(surfaces), solving, opened, composed, "surface", drawing);
+    if(preset != nullptr)
+        preset->opening_view = surface_opening_view();
+
+    return preset;
 }
 
 }

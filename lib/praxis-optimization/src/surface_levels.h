@@ -64,9 +64,18 @@ private:
     void step_from(const scenario_snapshot &shown, const field_placement &floor);
 };
 
-// The map over a run in the minimum form, with the field above it drawn at `minimum_field_opacity`;
-// no map and an opaque field over a run in the root form.
-void draw_map(level_map &map, threepp::Material &field, const std::shared_ptr<const scenario_snapshot> &shown, const field_placement &placed, const scenario_view &view);
+// The materials whose opacity follows the run's form: the field's and the two linearization planes'.
+struct form_materials
+{
+    threepp::Material &field;
+    threepp::Material &plane;
+    threepp::Material &central;
+};
+
+// The map over a run in the minimum form, with the field above it drawn at `minimum_field_opacity` and
+// the planes at `minimum_plane_opacity`; no map, and the field and the planes opaque, over a run in the
+// root form.
+void draw_map(level_map &map, const form_materials &drawn, const std::shared_ptr<const scenario_snapshot> &shown, const field_placement &placed, const scenario_view &view);
 
 }
 

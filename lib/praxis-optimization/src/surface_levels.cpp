@@ -38,6 +38,12 @@ field_placement on_floor(const field_placement &placed)
     return field_placement{placed.middle, placed.across, 1.0};
 }
 
+void drawn_at(threepp::Material &material, double opacity)
+{
+    material.transparent = opacity < 1.0;
+    material.opacity     = static_cast<float>(opacity);
+}
+
 // grad f at x_k where x_k lies within the ranges and the gradient was answered finitely.
 std::optional<Eigen::Vector2d> answered_gradient(const scenario_snapshot &shown, std::size_t k)
 {
@@ -160,11 +166,12 @@ void level_map::step_from(const scenario_snapshot &shown, const field_placement 
     }
 }
 
-void draw_map(level_map &map, threepp::Material &field, const std::shared_ptr<const scenario_snapshot> &shown, const field_placement &placed, const scenario_view &view)
+void draw_map(level_map &map, const form_materials &drawn, const std::shared_ptr<const scenario_snapshot> &shown, const field_placement &placed, const scenario_view &view)
 {
-    const bool minimized  = shown->run.minimized_by.has_value();
-    field.transparent     = minimized && minimum_field_opacity < 1.0;
-    field.opacity         = minimized ? static_cast<float>(minimum_field_opacity) : 1.f;
+    const bool minimized = shown->run.minimized_by.has_value();
+    drawn_at(drawn.field, minimized ? minimum_field_opacity : 1.0);
+    drawn_at(drawn.plane, minimized ? minimum_plane_opacity : 1.0);
+    drawn_at(drawn.central, minimized ? minimum_plane_opacity : 1.0);
     map.object()->visible = minimized;
     if(!minimized)
         return;

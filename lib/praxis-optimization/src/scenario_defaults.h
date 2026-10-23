@@ -62,8 +62,17 @@ inline constexpr double gradient_shaft_radius = iterate_radius / 4.0;
 inline constexpr double gradient_head_radius  = iterate_radius;
 inline constexpr double gradient_head_length  = 2.0 * iterate_radius;
 
-// The opacity the field is drawn at over a minimized surface's map, from 0 (unseen) to 1 (opaque).
+// The opacity the field and the linearization planes are drawn at over a minimized surface's map, from
+// 0 (unseen) to 1 (opaque).
 inline constexpr double minimum_field_opacity = 0.8;
+inline constexpr double minimum_plane_opacity = 0.6;
+
+// Where the camera stands when a surface opens, turning about the origin of the scene's y-up frame:
+// its elevation above the floor's plane and its azimuth about the vertical from +z toward +x, in
+// radians, and its distance from the origin, in meters.
+inline constexpr double opening_elevation_radians = 0.7853981633974483;
+inline constexpr double opening_azimuth_radians   = 0.5235987755982988;
+inline constexpr double opening_distance          = 1.6;
 
 // The tones a surface and what is drawn on it wear, as 0xRRGGBB.
 inline constexpr std::uint32_t surface_tone          = 0x4682b4;

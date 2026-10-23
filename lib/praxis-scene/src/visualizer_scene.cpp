@@ -49,6 +49,18 @@ void visualizer::add_camera()
     m_controls = std::make_unique<threepp::OrbitControls>(*m_camera, *m_canvas);
 }
 
+void visualizer::aim_camera(const camera_view &view)
+{
+    m_camera->position.copy(view.position);
+    m_controls->target.copy(view.target);
+    m_controls->update();
+}
+
+camera_view visualizer::current_view() const
+{
+    return camera_view{m_camera->position, m_controls->target};
+}
+
 void visualizer::add_scene_lights()
 {
     m_scene->add(threepp::HemisphereLight::create(threepp::Color::aliceblue, threepp::Color::gray));

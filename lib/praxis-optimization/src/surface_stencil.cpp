@@ -115,7 +115,7 @@ void surface_stencil::render() const
         resample(*shown);
     m_zero_curve->visible = shown_parts.zero_curve && !minimized && m_zero_curve->geometry()->drawRange.count > 0;
     m_step->visible       = shown_parts.step && !minimized;
-    draw_map(*m_levels, *m_field->material(), shown, placed, shown_parts);
+    draw_map(*m_levels, form_materials{*m_field->material(), *m_plane->material(), *m_central->material()}, shown, placed, shown_parts);
     write_points(*m_box, box_outline(shown->bounds, shown->ranges), placed);
     m_box->visible = m_box->visible && shown_parts.bounds;
     place_iterates(shown);

@@ -102,6 +102,7 @@ public:
 
     void show_grid(bool show);
     void set_background_color(threepp::Color color);
+    camera_view current_view() const;
 
     // Draws one frame and reports whether the application should keep going. The loop that calls it
     // belongs to the scheduler, and this is the strand every frame is drawn on.
@@ -189,6 +190,7 @@ private:
 
     void setup_scene(const windows &stood);
     void add_camera();
+    void aim_camera(const camera_view &view);
     void add_scene_grid();
     void add_scene_lights();
     void add_imgui_windows(const windows &stood);

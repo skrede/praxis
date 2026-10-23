@@ -13,10 +13,20 @@
 #include "praxis/scheduler/task.h"
 #include "praxis/scheduler/strand.h"
 
+#include <threepp/math/Vector3.hpp>
+
 #include <memory>
 #include <vector>
+#include <optional>
 
 namespace praxis::scene {
+
+// Where a camera stands and the point it turns about, in the scene's y-up frame, in meters.
+struct camera_view
+{
+    threepp::Vector3 position;
+    threepp::Vector3 target;
+};
 
 // One loaded preset's lifetime. initialize() puts the body in the scene, then registers the windows,
 // then admits the steppables; tear_down() withdraws the three in exactly the reverse order and frees
@@ -44,6 +54,9 @@ public:
     // The composer's own step of initialize(), absent unless it registers steppables. It answers with
     // the handles it admitted, which the preset then holds for as long as it lives.
     detail::move_only_function<expected<std::vector<scheduler::task_handle>, refusal>()> admit_cb;
+
+    // The view the camera is moved to when this loads; absent leaves the camera where it stands.
+    std::optional<camera_view> opening_view;
 
     expected<void, refusal> initialize();
     void tear_down();

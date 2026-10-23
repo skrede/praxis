@@ -17,6 +17,7 @@ preset::preset(std::shared_ptr<scene::stencil> s, std::vector<std::shared_ptr<im
         , release_cb()
         , release_fallback_cb()
         , admit_cb()
+        , opening_view(std::nullopt)
         , m_add_window(std::move(add))
         , m_remove_window(std::move(remove))
 {

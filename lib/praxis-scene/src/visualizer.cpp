@@ -219,6 +219,8 @@ void visualizer::load(const preset_registry::factory &builder, const std::string
     // taking a factory carries no name and announces nothing.
     if(m_composition.loaded() && !name.empty())
         spdlog::info("Showing preset '{}'", name);
+    if(m_composition.loaded() && m_composition.composed()->opening_view)
+        aim_camera(*m_composition.composed()->opening_view);
 }
 
 // The cause is written before the release is asked for, because the question the release may stand
