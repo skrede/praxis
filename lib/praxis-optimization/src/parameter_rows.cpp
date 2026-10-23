@@ -16,8 +16,6 @@ namespace praxis::optimization {
 
 namespace {
 
-constexpr bool posts_while_dragged = true;
-
 bool askable(const interval &range)
 {
     return std::isfinite(range.lower) && std::isfinite(range.upper) && range.lower < range.upper;
@@ -85,7 +83,7 @@ void parameter_rows::render_row(parameter_row &row)
     const char letter[2] = {row.shown.name, '\0'};
     ImGui::SliderScalar(letter, ImGuiDataType_Double, &row.shown.value, &row.shown.range.lower, &row.shown.range.upper, "%.6g");
     const bool sliding = ImGui::IsItemActive();
-    if(posts_while_dragged ? ImGui::IsItemEdited() : ImGui::IsItemDeactivatedAfterEdit())
+    if(ImGui::IsItemEdited())
         m_wanted = asked_value{row.shown.name, row.shown.value};
 
     const bool typing = render_range(row);
