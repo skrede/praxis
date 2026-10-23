@@ -43,7 +43,7 @@ std::span<const char *const> minimizer_labels();
 
 // The seed, the iteration limit and the selected step are held here and asked of the scenario
 // through its gate: the seed goes with Run, Step once and Reset, the limit and the step as they are
-// edited. In the minimum form the method and the step length are held and asked for as well, a step
+// edited. A seed that is not finite is shown refused and is not saved. In the minimum form the method and the step length are held and asked for as well, a step
 // length once its field is left after an edit; the last step length the scenario can take is the one
 // held. Their keys sit at the root of the scenario's document, and the form's is never written here.
 class solve_window : public scene::imgui_window, public config::configurable

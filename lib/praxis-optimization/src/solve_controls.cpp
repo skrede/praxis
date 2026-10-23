@@ -20,6 +20,8 @@ constexpr std::array<const char *, 2> seed_labels{"Seed x", "Seed y"};
 
 constexpr std::array<const char *, 2> method_labels{"Newton", "Gradient descent"};
 
+constexpr const char *refused_seed = "The seed must be finite, so this one is neither run nor saved.";
+
 }
 
 std::span<const char *const> minimizer_labels()
@@ -30,8 +32,9 @@ std::span<const char *const> minimizer_labels()
 std::vector<config::edit> solve_window::settings_edits(const config::document &carried) const
 {
     std::vector<config::edit> edits{config::edit{limit_key, std::to_string(m_limit)}, config::edit{step_key, std::to_string(m_step)}};
-    for(Eigen::Index at = 0; at < m_seed.size(); ++at)
-        edits.emplace_back(seed_keys.at(static_cast<std::size_t>(at)), config::exact_text(m_seed[at]));
+    if(m_seed.allFinite())
+        for(Eigen::Index at = 0; at < m_seed.size(); ++at)
+            edits.emplace_back(seed_keys.at(static_cast<std::size_t>(at)), config::exact_text(m_seed[at]));
     if(m_form == problem_form::minimum)
     {
         edits.emplace_back(method_key, method_spellings.at(static_cast<std::size_t>(m_method)));
@@ -45,6 +48,8 @@ void solve_window::render_controls()
 {
     for(Eigen::Index at = 0; at < m_seed.size(); ++at)
         ImGui::InputDouble(seed_labels.at(static_cast<std::size_t>(at)), &m_seed[at], 0.0, 0.0, "%.10g");
+    if(!m_seed.allFinite())
+        ImGui::TextUnformatted(refused_seed);
 
     if(ImGui::InputScalar("Iteration limit", ImGuiDataType_U32, &m_limit))
         command(m_scenario, [limit = m_limit](scenario_state &state) { state.set_limit(limit); });

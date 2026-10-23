@@ -2,6 +2,7 @@
 #define HPP_GUARD_PRAXIS_TESTS_PRESETS_COMPOSED_OPTIMIZATION_H
 
 #include "panel_keys.h"
+#include "imgui_frame.h"
 
 #include "praxis/presets/optimization.h"
 
@@ -24,6 +25,9 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <threepp/scenes/Scene.hpp>
+
+#include <imgui.h>
+#include <imgui_internal.h>
 
 #include <memory>
 #include <string>
@@ -86,6 +90,34 @@ struct composed_optimization
             if(window->display_name() == named)
                 return [window] { window->render(); };
         FAIL("no window is named " << named);
+
+        return {};
+    }
+
+    // What the window writes as text when drawn once more.
+    std::string written(tests::imgui_frame &frames, const std::string &named) const
+    {
+        std::string drawn;
+        const drawing shown = draw(named);
+        frames.draw_frame(
+                [&shown, &drawn]
+                {
+                    ImGui::LogToBuffer();
+                    shown();
+                    drawn = GImGui->LogBuffer.c_str();
+                    ImGui::LogFinish();
+                });
+
+        return drawn;
+    }
+
+    // The edits the window itself offers, before the store drops any it cannot carry.
+    std::vector<config::edit> edits_of(const std::string &named, const config::document &carried) const
+    {
+        for(const std::shared_ptr<scene::imgui_window> &window : preset->windows)
+            if(window->display_name() == named && window->as_configurable() != nullptr)
+                return window->as_configurable()->settings_edits(carried);
+        FAIL("no window offering edits is named " << named);
 
         return {};
     }

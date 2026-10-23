@@ -34,6 +34,8 @@ namespace {
 constexpr const char *opening_document = "<optimization><preset name=\"saved\" scenario=\"curve\"/><function name=\"x^3 - 2x - 5\"/><range x_lower=\"-4\" x_upper=\"4\"/>"
                                          "<seed x=\"3\"/><solve limit=\"70\" step=\"0\"/></optimization>";
 
+constexpr const char *refused_seed = "The seed must be finite";
+
 std::vector<optimization::registered_curve> two_curves()
 {
     return {optimization::registered_curve(
@@ -170,4 +172,24 @@ TEST_CASE("in the root form the Solve window writes neither a method nor a step 
     const std::vector<config::edit> edits = opened.offered(read_optimization(at));
     REQUIRE_FALSE(edits.empty());
     CHECK(std::ranges::none_of(edits, [](const config::edit &made) { return made.key.starts_with("solve/method") || made.key.starts_with("solve/step_length"); }));
+}
+
+TEST_CASE("a seed typed that is no finite number is shown refused and not offered, and a finite one typed after it is", "[presets][optimization][documents]")
+{
+    const config::location at = written("refused_seed.xml");
+    const composed_optimization opened(at, two_curves(), "saved");
+    const auto seed_offered = [&opened, &at]
+    { return std::ranges::count_if(opened.edits_of("Solve", read_optimization(at)), [](const config::edit &made) { return made.key == "seed/x"; }); };
+    tests::imgui_frame frames;
+    for(const char *typed : {"1e999", "inf", "nan"})
+    {
+        CAPTURE(typed);
+        type_into(frames, opened.draw("Solve"), 0u, typed);
+        CHECK(seed_offered() == 0);
+        CHECK(opened.written(frames, "Solve").find(refused_seed) != std::string::npos);
+    }
+
+    type_into(frames, opened.draw("Solve"), 0u, "0.5");
+    CHECK(seed_offered() == 1);
+    CHECK(opened.written(frames, "Solve").find(refused_seed) == std::string::npos);
 }
