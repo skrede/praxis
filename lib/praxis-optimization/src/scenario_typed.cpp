@@ -31,8 +31,8 @@ std::optional<typed::expression> read_typed(const std::string &text, std::size_t
     if(read)
         return std::move(*read);
 
-    spdlog::error("praxis: '{}' does not read as a function of {}, since {} was expected at byte {}; {}", text, dimension == 1u ? "x" : "x and y", read.error().expected,
-                  read.error().offset, otherwise);
+    spdlog::error("praxis: '{}' does not read as a function of {}, since {} was expected at character {}; {}", text, dimension == 1u ? "x" : "x and y", read.error().expected,
+                  read.error().offset + 1u, otherwise);
 
     return std::nullopt;
 }

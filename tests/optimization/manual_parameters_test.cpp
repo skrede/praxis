@@ -3,6 +3,8 @@
 #include "scenario_defaults.h"
 #include "scenario_admission.h"
 
+#include "captured_log.h"
+
 #include "praxis/optimization/scenario_state.h"
 #include "praxis/optimization/scenario_snapshot.h"
 
@@ -15,6 +17,7 @@
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <string>
 #include <vector>
 #include <cstddef>
 
@@ -52,12 +55,13 @@ TEST_CASE("a letter new to the typed text takes the default value and range, and
     CHECK(stage.asked([](scenario_state &state) { state.set_parameter('c', 2.0); }) == cubed);
 }
 
-TEST_CASE("a typed text that does not read is logged and changes nothing", "[optimization][typed]")
+TEST_CASE("a typed text that does not read is logged at the character the field marks and changes nothing", "[optimization][typed]")
 {
     typed_stage stage(typed_curve("2x^3 + 5b", 1.0, {b_at_one}));
     const std::shared_ptr<const scenario_snapshot> before = stage.shown();
 
-    CHECK(stage.asked([](scenario_state &state) { state.set_expression("2x^3 +"); }) == before);
+    const std::string said = tests::reported_by([&stage, &before] { CHECK(stage.asked([](scenario_state &state) { state.set_expression("2x^3 +"); }) == before); });
+    CHECK(said.find("an operand was expected at character 7") != std::string::npos);
     CHECK(std::abs(answered_x(stage.asked([](scenario_state &state) { state.set_parameter('b', -2.0); })) - std::cbrt(5.0)) < 1.0e-12);
 }
 
