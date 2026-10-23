@@ -71,4 +71,10 @@ std::size_t number_length(std::string_view rest)
     return digits == 0 ? 0 : length;
 }
 
+bool exponent_like(std::string_view rest)
+{
+    const std::size_t sign = rest.size() > 1 && (rest[1] == '+' || rest[1] == '-') ? 1 : 0;
+    return rest.size() > sign + 1 && rest.front() == 'e' && digit(rest[sign + 1]);
+}
+
 }

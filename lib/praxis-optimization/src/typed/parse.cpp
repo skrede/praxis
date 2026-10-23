@@ -30,12 +30,6 @@ bool starts_primary(char one)
     return digit(one) || lowercase(one) || one == '.' || one == '(';
 }
 
-bool exponent_like(std::string_view rest)
-{
-    const std::size_t sign = rest.size() > 1 && (rest[1] == '+' || rest[1] == '-') ? 1 : 0;
-    return rest.size() > sign + 1 && rest.front() == 'e' && digit(rest[sign + 1]);
-}
-
 std::size_t skipped(std::string_view text, std::size_t from)
 {
     return std::min(text.find_first_not_of(' ', from), text.size());

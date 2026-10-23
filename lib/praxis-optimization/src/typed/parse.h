@@ -31,6 +31,9 @@ bool lowercase(char one);
 // zero where it holds no digit.
 std::size_t number_length(std::string_view rest);
 
+// Whether `rest`, from just past a number, starts with e and a digit, signed or not.
+bool exponent_like(std::string_view rest);
+
 // The function, constant or single letter at the lowercase letter `at`, as a leaf spanning its spelling.
 node name_at(std::string_view text, std::size_t at, std::size_t dimension);
 
