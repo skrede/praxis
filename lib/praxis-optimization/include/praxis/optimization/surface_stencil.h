@@ -25,6 +25,8 @@
 
 namespace praxis::optimization {
 
+class level_map;
+
 // The surface a scenario publishes, drawn in the scene as a height field named "surface" with the
 // iterates the run recorded as one instanced sphere mesh on it, under a node named "iterates" in the
 // order recorded with the selected step's last, and its zero-level curve, "zero curve", on the zero
@@ -42,8 +44,6 @@ namespace praxis::optimization {
 // as a map on a floor beneath the field instead, "level map". Everything is read from the publication,
 // so nothing here evaluates the function, and nothing here picks: the seed is typed. The view says
 // which of these is drawn.
-class level_map;
-
 class surface_stencil : public scene::stencil
 {
 public:

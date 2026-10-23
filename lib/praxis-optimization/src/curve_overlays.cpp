@@ -16,7 +16,6 @@ double coordinate(const Eigen::VectorXd &x)
     return x.size() == 1 ? x[0] : unanswered;
 }
 
-// g = -e and g' = J; an answer the problem refused stands at NaN and is not drawn.
 double value_of(const expected<Eigen::VectorXd, refusal> &e)
 {
     return e && e->size() == 1 ? -(*e)[0] : unanswered;
@@ -27,7 +26,6 @@ double slope_of(const expected<Eigen::MatrixXd, refusal> &jacobian)
     return jacobian && jacobian->size() == 1 ? (*jacobian)(0, 0) : unanswered;
 }
 
-// The ordinates the plot is fitted to: those of finite points lying within the held range.
 std::optional<interval> finite_span(const std::vector<scene::plot_series> &drawn, const interval &range)
 {
     interval span{std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity()};
@@ -81,7 +79,6 @@ void add_step(const scenario_snapshot &shown, const interval &span, std::vector<
     }
 }
 
-// The point is drawn before the span is taken, so its tangents are held to an ordinate range holding it.
 std::optional<linearized> linearized_point(const std::optional<scenario_linearization> &at, std::vector<scene::plot_series> &drawn)
 {
     if(!at || at->point.size() != 1)
