@@ -1,6 +1,7 @@
-#include "praxis/optimization/capabilities.h"
 #include "praxis/optimization/baseline/solver.h"
 #include "praxis/optimization/baseline/minimizer.h"
+
+#include "praxis/optimization/capabilities.h"
 
 #include <array>
 

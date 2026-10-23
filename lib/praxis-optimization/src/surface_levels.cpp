@@ -1,7 +1,7 @@
 #include "level_curve.h"
 #include "surface_step.h"
-#include "surface_levels.h"
 #include "drawn_iterates.h"
+#include "surface_levels.h"
 #include "surface_figures.h"
 #include "surface_overlay.h"
 #include "scenario_defaults.h"
@@ -16,8 +16,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <utility>
-#include <optional>
 #include <iterator>
+#include <optional>
 #include <algorithm>
 
 namespace praxis::optimization {
