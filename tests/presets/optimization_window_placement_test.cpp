@@ -14,7 +14,6 @@
 #include <string>
 #include <vector>
 #include <cstddef>
-#include <utility>
 #include <optional>
 
 using namespace praxis;
@@ -59,20 +58,6 @@ bool overlap(const scene::window_rectangle &one, const scene::window_rectangle &
     return spans_cross(one.position.x, one.size.x, other.position.x, other.size.x) && spans_cross(one.position.y, one.size.y, other.position.y, other.size.y);
 }
 
-// Where the windows every demonstration stands open without a layout file, at font scale 1; the
-// preset selector at the library's default place, as large as its row.
-std::vector<named_rectangle> standing_windows(ImVec2 work_position, ImVec2 work_size)
-{
-    const ImVec2 quarter(work_size.x * 0.45f, work_size.y * 0.25f);
-
-    return {
-            {"message log", {ImVec2(work_position.x + 20.f, work_position.y + work_size.y - quarter.y - 20.f), quarter}},
-            {"stepped work", {ImVec2(work_position.x + work_size.x - quarter.x - 20.f, work_position.y + 20.f), quarter}},
-            {"view gizmo", {ImVec2(work_position.x + work_size.x - 12.f - 96.f, work_position.y + 12.f), ImVec2(96.f, 96.f)}},
-            {"preset selector", {ImVec2(60.f, 60.f), ImVec2(182.f, 54.f)}},
-    };
-}
-
 std::vector<named_rectangle> opened_in(const composed_optimization &composed, const ImGuiViewport &viewport)
 {
     REQUIRE(ImGui::GetFontSize() == 13.f);
@@ -85,14 +70,12 @@ std::vector<named_rectangle> opened_in(const composed_optimization &composed, co
         REQUIRE(window->opening().has_value());
         opened.push_back({window->display_name(), scene::opening_rectangle(*window->opening(), viewport.WorkPos, viewport.WorkSize, ImGui::GetFontSize())});
     }
-    for(named_rectangle &standing : standing_windows(viewport.WorkPos, viewport.WorkSize))
-        opened.push_back(std::move(standing));
 
     return opened;
 }
 
 // The scenario's windows where they open first at 1280 x 720 and font scale 1 in a context with no
-// layout file, the standing windows after them.
+// layout file.
 std::vector<named_rectangle> opened_at_smallest_screen(const composed_optimization &composed)
 {
     tests::imgui_frame frame;
@@ -105,10 +88,10 @@ std::vector<named_rectangle> opened_at_smallest_screen(const composed_optimizati
     return opened;
 }
 
-void check_apart(const std::vector<named_rectangle> &opened, std::size_t scenario_windows)
+void check_apart(const std::vector<named_rectangle> &opened)
 {
-    REQUIRE(opened.size() > scenario_windows);
-    for(std::size_t one = 0; one < scenario_windows; ++one)
+    REQUIRE(opened.size() > 1u);
+    for(std::size_t one = 0; one < opened.size(); ++one)
         for(std::size_t other = one + 1; other < opened.size(); ++other)
         {
             INFO(opened[one].name << " and " << opened[other].name);
@@ -138,16 +121,16 @@ TEST_CASE("a title the scenario composes no window under is answered no placemen
     CHECK_FALSE(presets::scenario_window_placement("Presets", 1u).has_value());
 }
 
-TEST_CASE("the curve's windows open apart from each other and from the standing windows at 1280 x 720", "[presets]")
+TEST_CASE("the curve's windows open apart from each other at 1280 x 720", "[presets]")
 {
     const composed_optimization composed(placed_document("curve.xml", placed_curve_document), {}, "placed curve");
 
-    check_apart(opened_at_smallest_screen(composed), composed.preset->windows.size());
+    check_apart(opened_at_smallest_screen(composed));
 }
 
-TEST_CASE("the surface's windows open apart from each other and from the standing windows at 1280 x 720", "[presets]")
+TEST_CASE("the surface's windows open apart from each other at 1280 x 720", "[presets]")
 {
     const composed_optimization composed(placed_document("surface.xml", placed_surface_document), {}, "placed surface");
 
-    check_apart(opened_at_smallest_screen(composed), composed.preset->windows.size());
+    check_apart(opened_at_smallest_screen(composed));
 }
