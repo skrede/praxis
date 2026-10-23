@@ -24,12 +24,17 @@
 
 #include <threepp/scenes/Scene.hpp>
 
+#include <array>
 #include <tuple>
 #include <memory>
 #include <string>
 #include <vector>
+#include <cstddef>
+#include <numeric>
+#include <utility>
 #include <algorithm>
 #include <filesystem>
+#include <string_view>
 
 using namespace praxis;
 using namespace scratch_documents;
@@ -37,31 +42,43 @@ using namespace offered_optimization;
 
 namespace {
 
-// What one composition draws before and after its work strand has run, and the windows it opened.
+const std::vector<std::string> curve_windows{"Function##curve", "Graph##curve", "Display##curve", "Solve##curve", "Linearization##curve"};
+const std::vector<std::string> surface_windows{"Function##surface", "Display##surface", "Solve##surface", "Linearization##surface"};
+
+// Each shipped preset by the name it registers under, and whether its scenario is a surface.
+constexpr std::array<std::pair<std::string_view, bool>, 6> shipped_scenarios{{{"Root finding: a cubic", false},
+                                                                              {"Root finding: a paraboloid", true},
+                                                                              {"Minimization: x^4 - 3x^2 + x", false},
+                                                                              {"Minimization: (x^2 + 10y^2)/2", true},
+                                                                              {"Typed: 2x^3 + 5b", false},
+                                                                              {"Typed: x^2 + ay^2 - 1", true}}};
+
+// What each window of one composition draws before and after its work strand has run, the windows
+// it opened, and the vertices of the surface field it drew.
 struct drawn
 {
     std::vector<std::string> windows;
-    int before;
-    int after;
+    std::vector<int> before;
+    std::vector<int> after;
     int field;
 };
 
-int vertices_of(const std::vector<std::shared_ptr<scene::imgui_window>> &windows)
+std::vector<int> vertices_of(const std::vector<std::shared_ptr<scene::imgui_window>> &windows)
 {
-    tests::imgui_frame frames;
-    frames.draw(
-            [&windows]
-            {
-                for(const std::shared_ptr<scene::imgui_window> &window : windows)
-                    window->render();
-            });
+    std::vector<int> counted;
+    for(const std::shared_ptr<scene::imgui_window> &window : windows)
+    {
+        tests::imgui_frame frames;
+        frames.draw([&window] { window->render(); });
+        counted.push_back(frames.vertices());
+    }
 
-    return frames.vertices();
+    return counted;
 }
 
 drawn composed_and_drawn(scene::preset_registry &registry, const std::string &named)
 {
-    drawn seen{{}, 0, 0, 0};
+    drawn seen{{}, {}, {}, 0};
     on_own_scene(registry, named,
                  [&seen](scene::preset &composed, scheduler::scheduler &loop, threepp::Scene &target)
                  {
@@ -77,6 +94,22 @@ drawn composed_and_drawn(scene::preset_registry &registry, const std::string &na
                  });
 
     return seen;
+}
+
+// A curve's run is drawn in its graph and a surface's in its field; either changes what its windows draw.
+void check_drawn(const drawn &seen, bool surface)
+{
+    REQUIRE(seen.windows == (surface ? surface_windows : curve_windows));
+    REQUIRE(seen.after.size() == seen.windows.size());
+    CHECK(std::accumulate(seen.after.begin(), seen.after.end(), 0) > std::accumulate(seen.before.begin(), seen.before.end(), 0));
+    if(surface)
+    {
+        CHECK(seen.field > 0);
+        return;
+    }
+    const auto graph = static_cast<std::size_t>(std::ranges::find(curve_windows, "Graph##curve") - curve_windows.begin());
+    CHECK(seen.field == 0);
+    CHECK(seen.after[graph] > seen.before[graph]);
 }
 
 }
@@ -114,17 +147,13 @@ TEST_CASE("every shipped optimization preset composes over the demonstration's f
     const scratch where("shipped-optimization-runs");
     const offered shipped(where);
 
-    REQUIRE(shipped.names.size() == 6u);
-
-    const drawn curve = composed_and_drawn(*shipped.registry, shipped.names[0]);
-    CHECK(curve.windows == std::vector<std::string>{"Function##curve", "Graph##curve", "Display##curve", "Solve##curve", "Linearization##curve"});
-    CHECK(curve.after > curve.before);
-    CHECK(curve.field == 0);
-
-    const drawn surface = composed_and_drawn(*shipped.registry, shipped.names[1]);
-    CHECK(surface.windows == std::vector<std::string>{"Function##surface", "Display##surface", "Solve##surface", "Linearization##surface"});
-    CHECK(surface.after > surface.before);
-    CHECK(surface.field > 0);
+    REQUIRE(shipped.names.size() == shipped_scenarios.size());
+    for(const auto &[named, surface] : shipped_scenarios)
+    {
+        INFO(named);
+        REQUIRE(std::ranges::find(shipped.names, named) != shipped.names.end());
+        check_drawn(composed_and_drawn(*shipped.registry, std::string(named)), surface);
+    }
 }
 
 TEST_CASE("the shipped typed documents state their expression and one parameter per letter it names", "[examples][optimization]")
