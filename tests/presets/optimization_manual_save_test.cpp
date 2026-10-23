@@ -62,14 +62,6 @@ void typed_and_left(composed_optimization &composed, tests::imgui_frame &frames,
     frames.draw_frame(composed.draw("Function##curve"));
 }
 
-void check_parameter(const typed_parameter &read, char name, double value, double lower, double upper)
-{
-    CHECK(read.name == name);
-    CHECK(read.value == value);
-    CHECK(read.range.lower == lower);
-    CHECK(read.range.upper == upper);
-}
-
 void check_two_letters(const config::document &saved)
 {
     CHECK(saved.text("function/source").value_or("") == "manual");
@@ -80,18 +72,12 @@ void check_two_letters(const config::document &saved)
     check_parameter(both.typed.parameters[1], 'c', 1.0, -5.0, 5.0);
 }
 
-// The minimum and the maximum share the line below the slider, entered at its leftmost.
+// The minimum and the maximum share the line below the slider.
 void type_maximum(tests::imgui_frame &frames, const drawing &draw, const char *typed)
 {
     stand_on(frames, draw, "Function##curve", letter_b, "b");
     tap(frames, draw, ImGuiKey_DownArrow);
-    for(ImGuiID standing = 0; standing != standing_on();)
-    {
-        standing = standing_on();
-        tap(frames, draw, ImGuiKey_LeftArrow);
-    }
-    tap(frames, draw, ImGuiKey_RightArrow);
-    REQUIRE(standing_on() == control_id("Function##curve", letter_b, "max"));
+    stand_along(frames, draw, control_id("Function##curve", letter_b, "max"), "the maximum of 'b'");
 
     tap(frames, draw, ImGuiKey_Space);
     for(const char *at = typed; *at != 0; ++at)

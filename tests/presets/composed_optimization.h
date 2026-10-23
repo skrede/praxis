@@ -8,6 +8,7 @@
 
 #include "praxis/optimization/registered.h"
 #include "praxis/optimization/capabilities.h"
+#include "praxis/optimization/scenario_snapshot.h"
 
 #include "praxis/scene/preset.h"
 #include "praxis/scene/preset_site.h"
@@ -35,6 +36,14 @@
 #include <utility>
 
 namespace praxis::fixture {
+
+inline void check_parameter(const optimization::typed_parameter &read, char name, double value, double lower, double upper)
+{
+    CHECK(read.name == name);
+    CHECK(read.value == value);
+    CHECK(read.range.lower == lower);
+    CHECK(read.range.upper == upper);
+}
 
 inline config::document read_optimization(const config::location &at)
 {

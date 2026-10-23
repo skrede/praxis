@@ -22,18 +22,11 @@ namespace {
 constexpr std::size_t letter_b   = 'b';
 constexpr const char *cubic_text = "2x^3 + 5b";
 
-// The minimum and the maximum share the line below the slider, which is entered at its leftmost.
+// The minimum and the maximum share the line below the slider.
 void type_range_end(tests::imgui_frame &frames, const drawing &draw, const char *end, const std::string &typed)
 {
     stand_below_top(frames, draw, 1u);
-    for(ImGuiID standing = 0; standing != standing_on();)
-    {
-        standing = standing_on();
-        tap(frames, draw, ImGuiKey_LeftArrow);
-    }
-    if(std::string(end) == "max")
-        tap(frames, draw, ImGuiKey_RightArrow);
-    REQUIRE(standing_on() == control_id("Rows", letter_b, end));
+    stand_along(frames, draw, control_id("Rows", letter_b, end), "the " + std::string(end) + " of 'b'");
 
     tap(frames, draw, ImGuiKey_Space);
     for(const char one : typed)

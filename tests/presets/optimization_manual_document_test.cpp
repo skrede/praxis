@@ -67,14 +67,6 @@ scenario_settings composed_opening(const scenario_settings &settings)
     return taken.inputs->opened;
 }
 
-void check_parameter(const typed_parameter &read, char name, double value, double lower, double upper)
-{
-    CHECK(read.name == name);
-    CHECK(read.value == value);
-    CHECK(read.range.lower == lower);
-    CHECK(read.range.upper == upper);
-}
-
 void check_carried(const scenario_settings &carried)
 {
     CHECK(carried.typed.source == function_source::manual);

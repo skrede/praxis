@@ -77,24 +77,29 @@ inline void press_on(tests::imgui_frame &frames, const drawing &draw, const char
 }
 
 // A control sharing a line with others is not reached by a walk down the panel, which lands on one
-// of them: the line is stepped along from its leftmost until the cursor stands on the one asked for.
-inline void press_along(tests::imgui_frame &frames, const drawing &draw, std::size_t below_top, const char *window, const char *label)
+// of them: the line the cursor stands on is stepped along from its leftmost until the cursor stands
+// on the one asked for.
+inline void stand_along(tests::imgui_frame &frames, const drawing &draw, ImGuiID wanted, const std::string &named)
 {
-    stand_below_top(frames, draw, below_top);
     for(ImGuiID standing = 0; standing != standing_on();)
     {
         standing = standing_on();
         tap(frames, draw, ImGuiKey_LeftArrow);
     }
 
-    const ImGuiID wanted = control_id(window, label);
     for(ImGuiID standing = 0; standing_on() != wanted;)
     {
         if(standing == standing_on())
-            FAIL("the line the keyboard walk reaches holds no '" + std::string(label) + "' in '" + std::string(window) + "'");
+            FAIL("the line the keyboard walk reaches holds no " + named);
         standing = standing_on();
         tap(frames, draw, ImGuiKey_RightArrow);
     }
+}
+
+inline void press_along(tests::imgui_frame &frames, const drawing &draw, std::size_t below_top, const char *window, const char *label)
+{
+    stand_below_top(frames, draw, below_top);
+    stand_along(frames, draw, control_id(window, label), "'" + std::string(label) + "' in '" + std::string(window) + "'");
     tap(frames, draw, ImGuiKey_Space);
 }
 
