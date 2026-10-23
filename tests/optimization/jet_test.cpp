@@ -55,10 +55,10 @@ row curve(std::string text, double x, double value, double first, double second)
 
 std::vector<row> functions_at(double x)
 {
-    const double s = std::sin(x), c = std::cos(x), r = std::sqrt(x);
+    const double s = std::sin(x), c = std::cos(x), t = std::tan(x), r = std::sqrt(x);
     return {curve("sin(x)", x, s, c, -s),
             curve("cos(x)", x, c, -s, -c),
-            curve("tan(x)", x, s / c, 1.0 / (c * c), 2.0 * s / (c * c * c)),
+            curve("tan(x)", x, t, 1.0 + t * t, 2.0 * t * (1.0 + t * t)),
             curve("exp(x)", x, std::exp(x), std::exp(x), std::exp(x)),
             curve("log(x)", x, std::log(x), 1.0 / x, -1.0 / (x * x)),
             curve("sqrt(x)", x, r, 1.0 / (2.0 * r), -1.0 / (4.0 * x * r))};

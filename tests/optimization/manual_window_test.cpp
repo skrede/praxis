@@ -17,6 +17,7 @@
 
 #include <imgui.h>
 
+#include <cmath>
 #include <memory>
 #include <string>
 #include <vector>
@@ -28,9 +29,10 @@ using namespace praxis::fixture;
 
 namespace {
 
+// In the order the typed tree evaluates it, so no rounding of a different order is held to the bound.
 double typed_cubic(double x)
 {
-    return 2.0 * x * x * x + 5.0;
+    return 2.0 * std::pow(x, 3.0) + 5.0;
 }
 
 void check_typed_cubic_drawn(manual_stage &stage)
