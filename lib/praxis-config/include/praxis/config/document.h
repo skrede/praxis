@@ -60,8 +60,11 @@ public:
     // position is its ordinal; an instance carrying no identity answers an empty string.
     std::vector<std::string> identities(std::string_view collection_path) const;
 
-    // The canonical key of `leaf` under the instance whose identity value is `identity`; an empty
-    // identity names no instance.
+    // The canonical key of the instance of `collection_path` whose identity value is `identity`, and
+    // nothing where no instance carries it; an empty identity names no instance.
+    std::optional<std::string> instance(std::string_view collection_path, std::string_view identity) const;
+
+    // The canonical key of `leaf` under the instance `instance` names.
     expected<std::string, error> key(std::string_view collection_path, std::string_view identity, std::string_view leaf) const;
 
     // The kind the declaration named this key's leaf, and nothing where it named none. A key

@@ -73,7 +73,7 @@ expected<std::vector<frame_window::placement>, config::error> read_objects(const
         if(which < opening.objects.size())
             placed[which] = opening.objects[which];
 
-        const std::optional<std::string> instance = keys::instance_at(values, collection, objects[which]);
+        const std::optional<std::string> instance = values.instance(collection, objects[which]);
         if(!instance)
             continue;
 
@@ -142,7 +142,7 @@ std::vector<config::edit> write_arrangement(const config::document &values, cons
     std::size_t appended = values.identities(collection).size();
     for(std::size_t which = 0u; which < objects.size() && which < state.objects.size(); ++which)
     {
-        const std::optional<std::string> instance = keys::instance_at(values, collection, objects[which]);
+        const std::optional<std::string> instance = values.instance(collection, objects[which]);
         const std::string where                   = instance ? *instance : collection + "[" + std::to_string(appended) + "]";
         const std::vector<config::edit> moved     = keys::moved_leaves(where, keys::placed_at(open, which), state.objects[which], objects);
         if(moved.empty())

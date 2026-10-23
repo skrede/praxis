@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <fstream>
 #include <iterator>
+#include <optional>
 #include <filesystem>
 #include <string_view>
 
@@ -75,6 +76,23 @@ std::string text_of(const std::filesystem::path &where)
     return std::string(std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>());
 }
 
+// What a lookup addresses, spelled so a failed check shows the instance it answered.
+std::string addressed(const std::optional<std::string> &instance)
+{
+    return instance.value_or("no instance");
+}
+
+}
+
+TEST_CASE("an empty identity addresses no instance of a collection that holds one without an identity", "[config]")
+{
+    const std::filesystem::path where    = written("unnamed-first.xml", "<probe><g><c/><c name=\"a\"/></g></probe>\n");
+    const expected<document, error> read = load(paneled(), at(where));
+    REQUIRE(read.has_value());
+
+    CHECK(addressed(read.value().instance("g/c", "")) == "no instance");
+    CHECK(addressed(read.value().instance("g/c", "a")) == "g/c[1]");
+    CHECK(addressed(read.value().instance("g/c", "b")) == "no instance");
 }
 
 TEST_CASE("the identities of a nested collection are those under the outer instance its path addresses", "[config]")

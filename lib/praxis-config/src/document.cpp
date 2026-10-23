@@ -115,14 +115,23 @@ std::vector<std::string> document::identities(std::string_view collection_path) 
     return identities;
 }
 
-expected<std::string, error> document::key(std::string_view collection_path, std::string_view identity, std::string_view leaf) const
+std::optional<std::string> document::instance(std::string_view collection_path, std::string_view identity) const
 {
     const std::vector<std::optional<std::string>> slots = identity.empty() ? std::vector<std::optional<std::string>>() : m_held->identities_in(collection_path);
     for(std::size_t ordinal = 0; ordinal < slots.size(); ++ordinal)
         if(slots[ordinal] == identity)
-            return std::string(collection_path) + "[" + std::to_string(ordinal) + "]/" + std::string(leaf);
+            return std::string(collection_path) + "[" + std::to_string(ordinal) + "]";
 
-    return unexpected(error{error_code::unlocatable_key, "the collection '" + std::string(collection_path) + "' carries no instance identified as '" + std::string(identity) + "'"});
+    return std::nullopt;
+}
+
+expected<std::string, error> document::key(std::string_view collection_path, std::string_view identity, std::string_view leaf) const
+{
+    const std::optional<std::string> named = instance(collection_path, identity);
+    if(!named)
+        return unexpected(error{error_code::unlocatable_key, "the collection '" + std::string(collection_path) + "' carries no instance identified as '" + std::string(identity) + "'"});
+
+    return *named + "/" + std::string(leaf);
 }
 
 std::optional<field_kind> document::kind_of(std::string_view key) const

@@ -25,5 +25,3 @@ praxis_add_test(frame_selector_window_test.cpp HEADERS frame_selection.h LIBS pr
 praxis_add_test(twist_axis_window_test.cpp LIBS praxis::rigid_motion praxis::scene praxis_test_support)
 praxis_add_test(rotation_axis_window_test.cpp LIBS praxis::rigid_motion praxis::scene spdlog::spdlog praxis_test_support)
 praxis_add_test(two_pose_window_test.cpp HEADERS two_pose_stage.h LIBS praxis::rigid_motion praxis::scene praxis_test_support)
-praxis_add_test(configuration_keys_test.cpp HEADERS ../presets/scratch_directory.h LIBS praxis::rigid_motion praxis::config)
-target_include_directories(configuration_keys_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-rigid_motion/src)

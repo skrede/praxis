@@ -51,10 +51,6 @@ std::string order_text(axis_order value);
 
 std::string name_of(std::optional<std::size_t> which, std::span<const std::string> objects);
 
-// The instance of `collection` whose identity is `named`, addressed by the ordinal the document
-// carries it at, or nothing where the document carries no such instance.
-std::optional<std::string> instance_at(const config::document &values, const std::string &collection, const std::string &named);
-
 // The leaves of `now` a save would carry differently from `was`, in the order a placement is
 // written, and nothing at all where the two would be written the same, so an empty answer is what an
 // unmoved placement is.

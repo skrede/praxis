@@ -45,10 +45,6 @@ expected<std::size_t, config::error> reach_of(const std::vector<std::string> &pr
 
 void declare_triple(config::declaration &shape, const std::string &at);
 
-// The instance of `collection` whose identity is `named`, addressed by the ordinal the document
-// carries it at, or nothing where the document carries no such instance.
-std::optional<std::string> instance_at(const config::document &values, const std::string &collection, const std::string &named);
-
 // Component by component against `fallback`, so a document carrying part of a triple leaves the
 // rest of it where the caller opened it.
 Eigen::Vector3d read_triple(const config::document &values, const std::string &at, const Eigen::Vector3d &fallback);

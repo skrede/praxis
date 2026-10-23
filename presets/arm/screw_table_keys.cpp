@@ -100,19 +100,6 @@ void declare_triple(config::declaration &shape, const std::string &at)
         shape.field(under(at, component), config::field_kind::real, "0");
 }
 
-std::optional<std::string> instance_at(const config::document &values, const std::string &collection, const std::string &named)
-{
-    if(named.empty())
-        return std::nullopt;
-
-    const std::vector<std::string> present = values.identities(collection);
-    for(std::size_t which = 0u; which < present.size(); ++which)
-        if(present[which] == named)
-            return collection + "[" + std::to_string(which) + "]";
-
-    return std::nullopt;
-}
-
 Eigen::Vector3d read_triple(const config::document &values, const std::string &at, const Eigen::Vector3d &fallback)
 {
     Eigen::Vector3d read = fallback;

@@ -81,6 +81,7 @@ lib/praxis-config/include/praxis/config/document.h	text	prototype	(std::string_v
 lib/praxis-config/include/praxis/config/document.h	integer	prototype	(std::string_view key) const	typename:expected<std::int64_t,error>
 lib/praxis-config/include/praxis/config/document.h	holds	prototype	(std::string_view key) const	typename:bool
 lib/praxis-config/include/praxis/config/document.h	identities	prototype	(std::string_view collection_path) const	typename:std::vector<std::string>
+lib/praxis-config/include/praxis/config/document.h	instance	prototype	(std::string_view collection_path,std::string_view identity) const	typename:std::optional<std::string>
 lib/praxis-config/include/praxis/config/document.h	key	prototype	(std::string_view collection_path,std::string_view identity,std::string_view leaf) const	typename:expected<std::string,error>
 lib/praxis-config/include/praxis/config/document.h	kind_of	prototype	(std::string_view key) const	typename:std::optional<field_kind>
 lib/praxis-config/include/praxis/config/document.h	origin_of	prototype	(std::string_view key) const	typename:value_origin

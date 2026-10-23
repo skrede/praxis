@@ -43,7 +43,7 @@ transform read_home(const config::document &values, const std::string &at, const
 // what moved leaves out. A row with no instance at all is a joint nobody supplied.
 manipulator::supplied_screw read_row(const config::document &values, const std::string &collection, std::size_t joint)
 {
-    const std::optional<std::string> instance = keys::instance_at(values, collection, std::to_string(joint + 1u));
+    const std::optional<std::string> instance = values.instance(collection, std::to_string(joint + 1u));
     if(!instance)
         return manipulator::supplied_screw();
 
@@ -82,7 +82,7 @@ std::vector<config::edit> row_edits(const std::string &where, const screw_axis &
 std::vector<config::edit> joint_edits(const config::document &values, const std::string &rows, const manipulator::supplied_screw &entry, std::size_t joint, std::size_t &appending)
 {
     const std::string identity                = std::to_string(joint + 1u);
-    const std::optional<std::string> instance = keys::instance_at(values, rows, identity);
+    const std::optional<std::string> instance = values.instance(rows, identity);
     if(!entry && !instance)
         return {};
     if(!entry)
