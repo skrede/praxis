@@ -34,6 +34,9 @@ std::vector<typed_parameter> parameters_for(std::string_view letters, const std:
 // `dimension` variables, and as they are where it does not.
 typed_settings lettered(typed_settings typed, std::size_t dimension);
 
+// The parameters a run is posed with: the typed function's where the source is manual, none otherwise.
+std::vector<typed_parameter> posed_parameters(const typed_settings &typed);
+
 }
 
 #endif

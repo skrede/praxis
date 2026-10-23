@@ -44,6 +44,8 @@ praxis_add_module(optimization
     src/surface_stencil.cpp
     src/display_window.cpp
     src/function_window.cpp
+    src/parameter_rows.cpp
+    src/typed_function_panel.cpp
     src/compose_scenario.cpp
     src/scenario_answers.cpp
     src/scenario_admission.cpp
@@ -56,6 +58,7 @@ praxis_add_module(optimization
     src/objective_answers.h
     src/registered_values.h
     src/scenario_admission.h
+    src/typed_function_panel.h
     src/level_curve.h
     src/drawn_iterates.h
     src/surface_mesh.h

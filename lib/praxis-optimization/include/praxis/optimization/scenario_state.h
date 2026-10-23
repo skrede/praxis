@@ -47,15 +47,6 @@ enum class function_source : std::uint8_t
     manual
 };
 
-// A letter of a typed function other than its variables, the value it stands for and the range it
-// is chosen from.
-struct typed_parameter
-{
-    char name;
-    double value;
-    interval range;
-};
-
 // The text of a typed function, read where the source is manual, and one parameter per letter it
 // uses, in letter order.
 struct typed_settings

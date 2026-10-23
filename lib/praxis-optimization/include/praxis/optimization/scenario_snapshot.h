@@ -26,6 +26,15 @@ struct interval
     double upper;
 };
 
+// A letter of a typed function other than its variables, the value it stands for and the range it
+// is chosen from.
+struct typed_parameter
+{
+    char name;
+    double value;
+    interval range;
+};
+
 // One solve from one seed. The error and the Jacobian are the problem's own answers at each
 // iterate, index for index, so a reader draws a step without calling a registered function. `answer`
 // is what the solve answered, and `refused` its refusal, or no_solution where the problem's own
@@ -81,8 +90,9 @@ struct scenario_grid
 // share; a sample the function did not answer finitely is NaN, which breaks the drawing there.
 // `step` is the step k selected, from x_k to x_(k+1), and `stepped` says the run was stopped by
 // stepping once short of the iteration limit, so a no_solution it carries without an answer says
-// only that its steps ran out. `bounds` is the box the run was solved in, and `linearization` is
-// present once a point has been asked for.
+// only that its steps ran out. `bounds` is the box the run was solved in, `linearization` is present
+// once a point has been asked for, and `parameters` are those a typed function was solved with, none
+// for a registered one.
 struct scenario_snapshot
 {
     bool stepped;
@@ -95,6 +105,7 @@ struct scenario_snapshot
     scenario_run run;
     std::optional<box> bounds;
     std::optional<scenario_linearization> linearization;
+    std::vector<typed_parameter> parameters;
 };
 
 using scenario_publisher = scheduler::snapshot_publisher<std::shared_ptr<const scenario_snapshot>>;

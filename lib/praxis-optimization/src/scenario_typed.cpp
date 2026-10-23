@@ -102,6 +102,11 @@ typed_settings lettered(typed_settings typed, std::size_t dimension)
     return typed;
 }
 
+std::vector<typed_parameter> posed_parameters(const typed_settings &typed)
+{
+    return typed.source == function_source::manual ? typed.parameters : std::vector<typed_parameter>();
+}
+
 void scenario_state::select_source(function_source source)
 {
     mutate([source](scenario_settings &edited) { edited.typed.source = source; });

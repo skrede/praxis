@@ -23,14 +23,18 @@ namespace praxis::optimization {
 // The labels of the sources the window offers, in function_source's order.
 std::span<const char *const> function_source_labels();
 
-// Which registered function is drawn and solved, and the range it is drawn over, held here and asked
-// of the scenario through its gate as they are edited. A range that is not finite, or whose minimum
-// does not lie below its maximum, stays in the fields and is not asked for. Their keys sit at the
-// root of the scenario's document.
+class typed_function_panel;
+
+// Where the function drawn and solved comes from, which registered function or the text typed with a
+// slider per parameter, and the range it is drawn over, held here and asked of the scenario through
+// its gate as they are edited. A range that is not finite, or whose minimum does not lie below its
+// maximum, stays in the fields and is not asked for. Their keys sit at the root of the scenario's
+// document.
 class function_window : public scene::imgui_window, public config::configurable
 {
 public:
     function_window(std::string name, const scenario_window_inputs &inputs);
+    ~function_window() override;
 
     void render() override;
 
@@ -53,9 +57,11 @@ private:
     std::vector<interval> m_posted;
     std::vector<std::string> m_registered;
     std::weak_ptr<owned_scenario> m_scenario;
+    std::unique_ptr<typed_function_panel> m_manual;
 
     bool render_range(std::size_t coordinate);
     void post_range();
+    void post_source();
 };
 
 }

@@ -157,8 +157,8 @@ void scenario_state::solve(std::uint32_t steps, std::uint32_t selecting)
     scenario_run ran     = posed_run(*selected, steps);
     m_settings.step      = held_to(selecting, ran);
 
-    auto shown = std::make_shared<scenario_snapshot>(
-            scenario_snapshot{steps < m_settings.limit, m_settings.step, *selected, m_settings.ranges, {}, {}, nullptr, std::move(ran), posed.bounds, std::nullopt});
+    auto shown = std::make_shared<scenario_snapshot>(scenario_snapshot{
+            steps < m_settings.limit, m_settings.step, *selected, m_settings.ranges, {}, {}, nullptr, std::move(ran), posed.bounds, std::nullopt, posed_parameters(m_settings.typed)});
     if(m_dimension == 1u)
         sample(posed, m_settings.ranges.front(), shown->abscissa, shown->ordinate);
     else

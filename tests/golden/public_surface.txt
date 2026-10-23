@@ -2158,8 +2158,10 @@ lib/praxis-optimization/include/praxis/optimization/function_window.h	m_typed	me
 lib/praxis-optimization/include/praxis/optimization/function_window.h	m_posted	member	-	typename:std::vector<interval>
 lib/praxis-optimization/include/praxis/optimization/function_window.h	m_registered	member	-	typename:std::vector<std::string>
 lib/praxis-optimization/include/praxis/optimization/function_window.h	m_scenario	member	-	typename:std::weak_ptr<owned_scenario>
+lib/praxis-optimization/include/praxis/optimization/function_window.h	m_manual	member	-	typename:std::unique_ptr<typed_function_panel>
 lib/praxis-optimization/include/praxis/optimization/function_window.h	render_range	prototype	(std::size_t coordinate)	typename:bool
 lib/praxis-optimization/include/praxis/optimization/function_window.h	post_range	prototype	()	typename:void
+lib/praxis-optimization/include/praxis/optimization/function_window.h	post_source	prototype	()	typename:void
 lib/praxis-optimization/include/praxis/optimization/linearization_window.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/linearization_window.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/linearization_window.h	linearization_lines	prototype	(const scenario_linearization & at,bool checks_derivative)	typename:std::vector<std::string>
@@ -2234,6 +2236,10 @@ lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	praxis	n
 lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	interval	struct	-	-
 lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	lower	member	-	typename:double
 lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	upper	member	-	typename:double
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	typed_parameter	struct	-	-
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	name	member	-	typename:char
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	value	member	-	typename:double
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	range	member	-	typename:interval
 lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	scenario_run	struct	-	-
 lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	seed	member	-	typename:Eigen::VectorXd
 lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	limit	member	-	typename:std::uint32_t
@@ -2269,6 +2275,7 @@ lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	grid	mem
 lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	run	member	-	typename:scenario_run
 lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	bounds	member	-	typename:std::optional<box>
 lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	linearization	member	-	typename:std::optional<scenario_linearization>
+lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	parameters	member	-	typename:std::vector<typed_parameter>
 lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	scenario_publisher	typedef	-	typename:scheduler::snapshot_publisher<std::shared_ptr<const scenario_snapshot>>
 lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	scenario_reader	typedef	-	typename:scheduler::snapshot_reader<std::shared_ptr<const scenario_snapshot>>
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	optimization	namespace	-	-
@@ -2283,10 +2290,6 @@ lib/praxis-optimization/include/praxis/optimization/scenario_state.h	step_length
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	function_source	enum	-	typename:std::uint8_t
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	registered	enumerator	-	-
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	manual	enumerator	-	-
-lib/praxis-optimization/include/praxis/optimization/scenario_state.h	typed_parameter	struct	-	-
-lib/praxis-optimization/include/praxis/optimization/scenario_state.h	name	member	-	typename:char
-lib/praxis-optimization/include/praxis/optimization/scenario_state.h	value	member	-	typename:double
-lib/praxis-optimization/include/praxis/optimization/scenario_state.h	range	member	-	typename:interval
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	typed_settings	struct	-	-
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	source	member	-	typename:function_source
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	expression	member	-	typename:std::string
