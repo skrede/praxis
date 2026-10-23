@@ -1,3 +1,4 @@
+#include "judged_row.h"
 #include "book_minimizers.h"
 
 #include "praxis/optimization/problem.h"
@@ -12,17 +13,15 @@
 #include <Eigen/QR>
 #include <Eigen/Core>
 
-#include <span>
-#include <array>
 #include <vector>
 #include <cstdint>
-#include <algorithm>
 #include <string_view>
 
 using namespace praxis;
 using namespace praxis::optimization;
 using namespace praxis::evaluation;
 using namespace praxis::tests::book;
+using praxis::tests::judged;
 
 namespace {
 
@@ -76,21 +75,6 @@ capabilities bound_to(newton_slot newton, descent_slot gradient_descent)
     bound.minimizer.newton           = newton;
     bound.minimizer.gradient_descent = gradient_descent;
     return bound;
-}
-
-// Only the view holding the named row is evaluated, and its report is found by that name.
-slot_report judged(const capabilities &first, const capabilities &second, std::string_view name, std::uint64_t seed)
-{
-    const std::array<evaluation_view, 2> views = evaluation_views(first, second);
-    const auto holding                         = [name](const evaluation_view &view)
-    { return std::any_of(view.slots().begin(), view.slots().end(), [name](const slot_evaluation &row) { return row.name == name; }); };
-    const auto view = std::find_if(views.begin(), views.end(), holding);
-    REQUIRE(view != views.end());
-
-    const evaluation_report reported = evaluate(std::span(view, 1), seed, default_cases_per_slot);
-    const auto row                   = std::find_if(reported.slots.begin(), reported.slots.end(), [name](const slot_report &r) { return r.slot == name; });
-    REQUIRE(row != reported.slots.end());
-    return *row;
 }
 
 std::vector<std::uint64_t> judged_seeds()

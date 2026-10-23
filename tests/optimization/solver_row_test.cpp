@@ -1,3 +1,4 @@
+#include "judged_row.h"
 #include "book_solvers.h"
 
 #include "praxis/optimization/problem.h"
@@ -12,7 +13,6 @@
 #include <Eigen/QR>
 #include <Eigen/Core>
 
-#include <array>
 #include <vector>
 #include <cstddef>
 #include <cstdint>
@@ -55,9 +55,7 @@ capabilities bound_to(solve_slot solve)
 
 slot_report judged(const capabilities &first, const capabilities &second, std::uint64_t seed)
 {
-    const std::array<evaluation_view, 2> views = evaluation_views(first, second);
-
-    return evaluate(views, seed, default_cases_per_slot).slots.at(0);
+    return tests::judged(first, second, "solver.solve", seed);
 }
 
 }
