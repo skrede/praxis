@@ -204,22 +204,22 @@ const threepp::Robot &loadable_robot_stencil::robot() const
 
 // The only place in the tree that writes the node's joint values, and the assertion above the write
 // is what makes that checkable rather than promised.
-void loadable_robot_stencil::apply_published() const
+void loadable_robot_stencil::apply_published(const arm_snapshot &seen) const
 {
     scheduler::require_strand(m_render, "the rendered robot");
 
-    const std::shared_ptr<const arm_snapshot> seen = m_seen.read();
-    if(seen == nullptr)
-        return;
-
-    m_robot->setJointValues(to_renderer(seen->joints));
+    m_robot->setJointValues(to_renderer(seen.joints));
 }
 
+// One read serves the pose, the chain's verdict and the markers, so the three never describe two
+// different publications.
 void loadable_robot_stencil::render() const
 {
-    apply_published();
-    const bool chain_withheld = place_joint_decoration();
-    place_flange_attachments(chain_withheld);
+    const std::shared_ptr<const arm_snapshot> seen = m_seen.read();
+    if(seen != nullptr)
+        apply_published(*seen);
+    const bool chain_withheld = place_joint_decoration(seen);
+    place_flange_attachments(seen, chain_withheld);
     place_tool_drawing();
     place_ellipsoids();
     place_jacobian_columns();

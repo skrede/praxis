@@ -161,12 +161,11 @@ void loadable_robot_stencil::detach_flange_attachments()
 // Each attachment stands at the flange composed with its offset, the tool frame's marker at the tool
 // offset the arm published. The two frame markers stand where a supplied chain ends and are not drawn
 // while it is withheld.
-void loadable_robot_stencil::place_flange_attachments(bool chain_withheld) const
+void loadable_robot_stencil::place_flange_attachments(const std::shared_ptr<const arm_snapshot> &seen, bool chain_withheld) const
 {
-    const std::shared_ptr<const arm_snapshot> seen = m_seen.read();
-    const threepp::Matrix4 flange                  = m_robot->getEndEffectorTransform();
-    const std::optional<chain_end> supplied        = supplied_marker_poses(seen);
-    const threepp::Matrix4 root                    = root_frame();
+    const threepp::Matrix4 flange           = m_robot->getEndEffectorTransform();
+    const std::optional<chain_end> supplied = supplied_marker_poses(seen);
+    const threepp::Matrix4 root             = root_frame();
     for(std::size_t slot = 0; slot < flange_attachment_count; ++slot)
     {
         const carried &held           = m_attached[slot];

@@ -155,11 +155,10 @@ void loadable_robot_stencil::apply_selection() const
     wear_jacobian_columns();
 }
 
-bool loadable_robot_stencil::place_joint_decoration() const
+bool loadable_robot_stencil::place_joint_decoration(const std::shared_ptr<const arm_snapshot> &seen) const
 {
-    const std::shared_ptr<const arm_snapshot> seen = m_seen.read();
     if(seen == nullptr)
-        return false;
+        return true;
 
     if(decline_unbound_fold(m_drawn, m_chain.get(), m_screw, m_inert, m_reported_unbound))
         return true;

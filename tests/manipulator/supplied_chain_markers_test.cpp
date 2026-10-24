@@ -531,6 +531,19 @@ TEST_CASE("a supplied chain naming more screws than the arm has joints withholds
     CHECK(why.reason == "The supplied chain is not folded: it holds 3 screws and the arm has 2 joints.");
 }
 
+TEST_CASE("a supplied chain with no publication to fold over withholds both markers", "[manipulator][supplied]")
+{
+    stage drawn(bent());
+    REQUIRE(drawn.shown.supply_joint_screws(displaced_home(), two_axes()).has_value());
+    drawn.settle();
+    REQUIRE(drawn.either_marker_drawn());
+
+    drawn.published->publish(std::shared_ptr<const arm_snapshot>{});
+    drawn.draw();
+
+    CHECK_FALSE(drawn.either_marker_drawn());
+}
+
 TEST_CASE("a supplied chain folded through an unbound screw exponential withholds both markers and names the slot", "[manipulator][supplied]")
 {
     praxis::rigid_motion::screw_slot_set exponential;

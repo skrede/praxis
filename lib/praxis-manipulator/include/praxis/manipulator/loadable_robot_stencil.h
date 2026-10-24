@@ -468,9 +468,9 @@ private:
     std::array<std::shared_ptr<threepp::Material>, jacobian_block_count> m_column_tone;
     std::array<std::shared_ptr<threepp::Material>, jacobian_block_count> m_column_highlighted;
 
-    void apply_published() const;
+    void apply_published(const arm_snapshot &seen) const;
     void detach_flange_attachments();
-    void place_flange_attachments(bool chain_withheld) const;
+    void place_flange_attachments(const std::shared_ptr<const arm_snapshot> &seen, bool chain_withheld) const;
     void show_flange_markers(bool chain_withheld) const;
     threepp::Matrix4 root_frame() const;
     void place_tool_drawing() const;
@@ -478,7 +478,7 @@ private:
     void rebuild_chain();
     void clear_chain();
     void apply_selection() const;
-    bool place_joint_decoration() const;
+    bool place_joint_decoration(const std::shared_ptr<const arm_snapshot> &seen) const;
     void place_ellipsoids() const;
     void place_jacobian_columns() const;
     void raise_twist();
