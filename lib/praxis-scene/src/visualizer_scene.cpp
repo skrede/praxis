@@ -52,6 +52,8 @@ void visualizer::add_camera()
 void visualizer::aim_camera(const camera_view &view)
 {
     m_camera->position.copy(view.position);
+    m_camera->zoom = 1.f;
+    m_camera->updateProjectionMatrix();
     m_controls->target.copy(view.target);
     m_controls->update();
 }
