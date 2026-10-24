@@ -28,8 +28,13 @@ struct list_row_traits;
 template<>
 struct list_row_traits<joint_vector>
 {
-    // Degrees, which is the unit the row's own controls are read and typed in.
-    using shown_row = Eigen::VectorXf;
+    // Degrees, which is the unit the row's own controls are read and typed in, beside the radians
+    // they were shown from, so a row nobody typed into is taken back as it was handed.
+    struct shown_row
+    {
+        Eigen::VectorXd degrees;
+        joint_vector radians;
+    };
 
     static shown_row shown(const joint_vector &row, const rigid_motion::frame_ops &frames);
     static joint_vector taken(const shown_row &row, const rigid_motion::frame_ops &frames);

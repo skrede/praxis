@@ -425,6 +425,19 @@ TEST_CASE("a configuration list answers its rows in the unit every other surface
     CHECK(std::abs(held.rows.front()[1] + std::numbers::pi) < float_step);
 }
 
+TEST_CASE("a configuration row is answered at the radians it was handed until typed into, and at the degrees typed after", "[manipulator][waypoints]")
+{
+    using traits = list_row_traits<joint_vector>;
+    joint_vector handed(2);
+    handed << 0.1234567890123, -2.718281828459045;
+
+    traits::shown_row shown = traits::shown(handed, frames_of);
+    CHECK(traits::taken(shown, frames_of) == handed);
+
+    shown.degrees[1] = 12.3456789012;
+    CHECK(traits::taken(shown, frames_of)[1] == 12.3456789012 * radians_per_degree);
+}
+
 TEST_CASE("a configuration row whose width is not the joint count is declined by name and the rows beside it stand", "[manipulator][waypoints]")
 {
     const std::shared_ptr<arm_publisher> published = publishing(two_joint_arm_at_rest());

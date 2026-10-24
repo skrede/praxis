@@ -546,7 +546,9 @@ lib/praxis-manipulator/include/praxis/manipulator/csv.h	std_vector_to_csv_file	f
 lib/praxis-manipulator/include/praxis/manipulator/edited_list_rows.h	manipulator	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/edited_list_rows.h	praxis	namespace	-	-
 lib/praxis-manipulator/include/praxis/manipulator/edited_list_rows.h	list_row_traits	struct	-	-
-lib/praxis-manipulator/include/praxis/manipulator/edited_list_rows.h	shown_row	typedef	-	typename:Eigen::VectorXf
+lib/praxis-manipulator/include/praxis/manipulator/edited_list_rows.h	shown_row	struct	-	-
+lib/praxis-manipulator/include/praxis/manipulator/edited_list_rows.h	degrees	member	-	typename:Eigen::VectorXd
+lib/praxis-manipulator/include/praxis/manipulator/edited_list_rows.h	radians	member	-	typename:joint_vector
 lib/praxis-manipulator/include/praxis/manipulator/edited_list_rows.h	shown	prototype	(const joint_vector & row,const rigid_motion::frame_ops & frames)	typename:shown_row
 lib/praxis-manipulator/include/praxis/manipulator/edited_list_rows.h	taken	prototype	(const shown_row & row,const rigid_motion::frame_ops & frames)	typename:joint_vector
 lib/praxis-manipulator/include/praxis/manipulator/edited_list_rows.h	fault_of	prototype	(const joint_vector & row,std::size_t joints)	typename:std::optional<std::string>

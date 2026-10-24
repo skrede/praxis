@@ -78,12 +78,15 @@ void render_row_columns(std::span<const std::string> named, float from)
 
 list_row_traits<joint_vector>::shown_row list_row_traits<joint_vector>::shown(const joint_vector &row, const rigid_motion::frame_ops &)
 {
-    return (row * degrees_per_radian).cast<float>();
+    return shown_row{row * degrees_per_radian, row};
 }
 
 joint_vector list_row_traits<joint_vector>::taken(const shown_row &row, const rigid_motion::frame_ops &)
 {
-    return row.cast<double>() * radians_per_degree;
+    if(row.radians.size() == row.degrees.size() && row.degrees == row.radians * degrees_per_radian)
+        return row.radians;
+
+    return row.degrees * radians_per_degree;
 }
 
 std::optional<std::string> list_row_traits<joint_vector>::fault_of(const joint_vector &row, std::size_t joints)
@@ -111,9 +114,9 @@ std::vector<std::string> list_row_traits<joint_vector>::column_labels(std::size_
 
 bool list_row_traits<joint_vector>::render(shown_row &row)
 {
-    ImGui::SetNextItemWidth(row_values_width(static_cast<std::size_t>(row.size())));
+    ImGui::SetNextItemWidth(row_values_width(static_cast<std::size_t>(row.degrees.size())));
 
-    return ImGui::InputScalarN("##joints", ImGuiDataType_Float, row.data(), static_cast<int>(row.size()), nullptr, nullptr, "%.1f");
+    return ImGui::InputScalarN("##joints", ImGuiDataType_Double, row.degrees.data(), static_cast<int>(row.degrees.size()), nullptr, nullptr, "%.1f");
 }
 
 list_row_traits<edited_pose>::shown_row list_row_traits<edited_pose>::shown(const edited_pose &row, const rigid_motion::frame_ops &)
