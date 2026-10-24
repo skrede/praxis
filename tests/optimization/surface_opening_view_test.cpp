@@ -64,18 +64,18 @@ TEST_CASE("a curve composition names no opening view", "[optimization][curve][vi
     taken.composed->tear_down();
 }
 
-TEST_CASE("a surface opens 45 degrees above the floor, turned 30 degrees from +z toward +x, 1.6 m from the origin", "[optimization][surface][view]")
+TEST_CASE("a surface opens 55 degrees above the floor, unturned from +z, 1.6 m from the origin", "[optimization][surface][view]")
 {
     const double degree = std::acos(-1.0) / 180.0;
-    CHECK(std::abs(opening_elevation_radians - 45.0 * degree) <= 1.0e-9);
-    CHECK(std::abs(opening_azimuth_radians - 30.0 * degree) <= 1.0e-9);
+    CHECK(std::abs(opening_elevation_radians - 55.0 * degree) <= 1.0e-9);
+    CHECK(std::abs(opening_azimuth_radians - 0.0 * degree) <= 1.0e-9);
     CHECK(std::abs(opening_distance - 1.6) <= 1.0e-9);
 
     const minimized_surface staged(problem_form::minimum);
     const std::optional<scene::camera_view> opening = staged.taken.composed->opening_view;
     REQUIRE(opening.has_value());
-    const double level = 1.6 * std::cos(45.0 * degree);
-    check_at(opening->position, level * std::sin(30.0 * degree), 1.6 * std::sin(45.0 * degree), level * std::cos(30.0 * degree));
+    const double level = 1.6 * std::cos(55.0 * degree);
+    check_at(opening->position, level * std::sin(0.0 * degree), 1.6 * std::sin(55.0 * degree), level * std::cos(0.0 * degree));
 }
 
 TEST_CASE("over a minimized surface the linearization planes are drawn at 0.6 opacity, over a root-form one opaque", "[optimization][surface][view]")

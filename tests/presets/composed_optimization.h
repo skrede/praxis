@@ -62,7 +62,8 @@ struct composed_optimization
     scene::preset_site site;
     std::shared_ptr<scene::preset> preset;
 
-    composed_optimization(const config::location &at, std::vector<optimization::registered_curve> curves, const std::string &named)
+    composed_optimization(const config::location &at, std::vector<optimization::registered_curve> curves, const std::string &named,
+                          std::vector<optimization::registered_surface> surfaces = {})
             : loop(scheduler::inline_workers)
             , scene(threepp::Scene::create())
             , site{*scene,
@@ -75,7 +76,7 @@ struct composed_optimization
             , preset()
     {
         const auto registry = std::make_shared<scene::preset_registry>();
-        REQUIRE(presets::register_optimization(registry, std::vector<config::location>{at}, nullptr, nullptr, optimization::baseline(), curves, {}, false).size() == 1u);
+        REQUIRE(presets::register_optimization(registry, std::vector<config::location>{at}, nullptr, nullptr, optimization::baseline(), curves, surfaces, false).size() == 1u);
 
         preset = registry->load_preset(named)(site);
         REQUIRE(preset != nullptr);

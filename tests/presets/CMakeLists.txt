@@ -41,12 +41,15 @@ target_include_directories(optimization_manual_save_test PRIVATE ${PROJECT_SOURC
 praxis_add_test(optimization_window_placement_test.cpp HEADERS scratch_directory.h scenario_placements.h composed_optimization.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config praxis_test_support)
 target_include_directories(optimization_window_placement_test PRIVATE ${PROJECT_SOURCE_DIR}/presets/optimization)
 praxis_add_test(curve_graph_legend_test.cpp HEADERS composed_optimization.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config implot praxis_test_support)
+praxis_add_test(surface_seed_clear_test.cpp HEADERS composed_optimization.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config praxis_test_support)
+target_include_directories(surface_seed_clear_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src)
 praxis_add_test(optimization_placement_switch_test.cpp HEADERS scratch_directory.h scenario_placements.h composed_optimization.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config praxis_test_support)
 praxis_add_test(unplaced_windows_test.cpp HEADERS described_arm.h composed_panels.h scratch_directory.h LIBS praxis::rigid_presets praxis::manipulator_presets praxis::rigid_motion praxis::trajectory praxis::manipulator praxis::scene praxis_test_support)
 
 # The shipped documents are read from beside the demonstration's sources.
 target_compile_definitions(optimization_scenarios_test PRIVATE PRAXIS_SHIPPED_OPTIMIZATION_DIR="${PROJECT_SOURCE_DIR}/examples/optimization")
 target_compile_definitions(curve_graph_legend_test PRIVATE PRAXIS_SHIPPED_OPTIMIZATION_DIR="${PROJECT_SOURCE_DIR}/examples/optimization")
+target_compile_definitions(surface_seed_clear_test PRIVATE PRAXIS_SHIPPED_OPTIMIZATION_DIR="${PROJECT_SOURCE_DIR}/examples/optimization")
 
 # The descriptions are deployed beside the demonstration executable, which a configure without the
 # demonstration never creates; the case reading them skips when the directory it is pointed at is

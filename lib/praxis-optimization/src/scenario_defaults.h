@@ -75,8 +75,8 @@ inline constexpr double minimum_plane_opacity = 0.6;
 // Where the camera stands when a surface opens, turning about the origin of the scene's y-up frame:
 // its elevation above the floor's plane and its azimuth about the vertical from +z toward +x, in
 // radians, and its distance from the origin, in meters.
-inline constexpr double opening_elevation_radians = 0.7853981633974483;
-inline constexpr double opening_azimuth_radians   = 0.5235987755982988;
+inline constexpr double opening_elevation_radians = 0.9599310885968813;
+inline constexpr double opening_azimuth_radians   = 0.0;
 inline constexpr double opening_distance          = 1.6;
 
 // The tones a surface, a curve and what is drawn on them wear, as 0xRRGGBB. The tangent at x_k (a
