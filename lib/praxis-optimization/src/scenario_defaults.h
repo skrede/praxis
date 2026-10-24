@@ -62,8 +62,8 @@ inline constexpr double gradient_shaft_radius = iterate_radius / 4.0;
 inline constexpr double gradient_head_radius  = iterate_radius;
 inline constexpr double gradient_head_length  = 2.0 * iterate_radius;
 
-// The radius of the rod the step on a minimized surface's floor is drawn as, and the height its axis
-// stands above the floor, in meters.
+// The radius of the rod the step taken on a minimized surface is drawn as, and the height its axis
+// stands above the floor with the floor projection on, in meters.
 inline constexpr double floor_step_radius = 2.0 * iterate_radius / 3.0;
 inline constexpr double floor_step_lift   = iterate_radius + floor_step_radius;
 

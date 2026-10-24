@@ -31,6 +31,8 @@ void display_window::render()
         ImGui::Checkbox("Zero curve", &m_drawn->zero_curve);
     ImGui::Checkbox("Step", &m_drawn->step);
     ImGui::Checkbox("Box", &m_drawn->bounds);
+    if(m_surface && m_minimum)
+        ImGui::Checkbox("Floor projection", &m_drawn->floor_projection);
     ImGui::End();
 }
 

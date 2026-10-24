@@ -35,6 +35,11 @@ std::shared_ptr<threepp::Object3D> occluded_lines(std::string name, std::uint32_
 // `wired` draws its triangles' edges rather than filling them.
 std::shared_ptr<threepp::Mesh> plane_patch(std::string name, std::uint32_t tone, std::size_t corners, bool wired);
 
+// Every part of an opaque object drawn over the field, in the pass after translucent surfaces so
+// after the field however translucent, neither tested against depths nor writing any; or depth-tested
+// as the field is.
+void lay_over_field(threepp::Object3D &drawn, bool over);
+
 // Each point (x, y, f) is placed as the field is and written into the buffers the object was made
 // with, beyond whose room nothing is written; an object written nothing is hidden.
 void write_points(threepp::Object3D &drawn, std::span<const Eigen::Vector3d> points, const field_placement &placed);

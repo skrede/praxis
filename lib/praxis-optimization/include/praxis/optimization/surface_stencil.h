@@ -40,10 +40,10 @@ class level_map;
 // plane. A point asked for by the Linearization window draws the tangent plane there, "tangent plane
 // at p", over the ranges and held to the field's heights, and where the check disagrees the central
 // difference's plane, "central difference at p", in wire. A run in the minimum form draws no zero curve
-// and no step construction: its level curves, its iterates, its gradient at x_k and its step are drawn
-// as a map on a floor beneath the field instead, "level map". Everything is read from the publication,
-// so nothing here evaluates the function, and nothing here picks: the seed is typed. The view says
-// which of these is drawn.
+// and no step construction: its level curves, its gradient at x_k and its step are drawn as a map on
+// the field instead, "level map", or with the floor projection on a floor beneath the field with its
+// iterates projected there. Everything is read from the publication, so nothing here evaluates the
+// function, and nothing here picks: the seed is typed. The view says which of these is drawn.
 class surface_stencil : public scene::stencil
 {
 public:

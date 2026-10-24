@@ -12,17 +12,14 @@
 using namespace praxis;
 using namespace praxis::fixture;
 
-TEST_CASE("over a minimized surface the Display window switches the level curves, the gradient and the step", "[optimization][surface][objective][view]")
+namespace {
+
+const std::vector<std::pair<const char *, const char *>> switched{{"Level curves", "level curves"}, {"Gradient", "gradient at x_k"}, {"Step", "step taken"}};
+
+// Each switch hides its own figure and no other, and shows it again.
+void check_switches(minimized_surface &drawn)
 {
-    minimized_surface drawn(problem_form::minimum);
     threepp::Scene &scene = drawn.scene();
-
-    const std::string offered = drawn.offered();
-    for(const char *label : {"Level curves", "Gradient", "Step"})
-        CHECK(offered.find(label) != std::string::npos);
-    CHECK(offered.find("Zero curve") == std::string::npos);
-
-    const std::vector<std::pair<const char *, const char *>> switched{{"Level curves", "level curves"}, {"Gradient", "gradient at x_k"}, {"Step", "step on the floor"}};
     for(const auto &[label, name] : switched)
     {
         REQUIRE(drawn_visible(scene, name));
@@ -36,6 +33,22 @@ TEST_CASE("over a minimized surface the Display window switches the level curves
     }
 }
 
+}
+
+TEST_CASE("over a minimized surface the Display window switches the level curves, the gradient and the step", "[optimization][surface][objective][view]")
+{
+    minimized_surface drawn(problem_form::minimum);
+
+    const std::string offered = drawn.offered();
+    for(const char *label : {"Level curves", "Gradient", "Step", "Floor projection"})
+        CHECK(offered.find(label) != std::string::npos);
+    CHECK(offered.find("Zero curve") == std::string::npos);
+
+    check_switches(drawn);
+    drawn.press("Floor projection");
+    check_switches(drawn);
+}
+
 TEST_CASE("over a root-form surface the Display window switches the zero curve and offers no level curves or gradient", "[optimization][surface][objective][view]")
 {
     minimized_surface drawn(problem_form::root);
@@ -44,4 +57,5 @@ TEST_CASE("over a root-form surface the Display window switches the zero curve a
     CHECK(offered.find("Zero curve") != std::string::npos);
     CHECK(offered.find("Level curves") == std::string::npos);
     CHECK(offered.find("Gradient") == std::string::npos);
+    CHECK(offered.find("Floor projection") == std::string::npos);
 }

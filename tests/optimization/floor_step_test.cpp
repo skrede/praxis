@@ -43,7 +43,7 @@ struct drawn_rod
 // The rod's ends are its axis's ends: its center less and plus half its stretched height along its turned +y.
 drawn_rod rod_of(threepp::Scene &scene)
 {
-    auto *rod = scene.getObjectByName<threepp::Mesh>("step on the floor");
+    auto *rod = scene.getObjectByName<threepp::Mesh>("step taken");
     REQUIRE(rod != nullptr);
     const auto *shape = dynamic_cast<const threepp::CylinderGeometry *>(rod->geometry().get());
     const auto *worn  = dynamic_cast<const threepp::MaterialWithColor *>(rod->material().get());
@@ -95,11 +95,12 @@ scenario_settings descended(const Eigen::Vector2d &seed)
 
 }
 
-TEST_CASE("over a minimized surface the step on the floor is a rod from x_k's floor projection to x_(k+1)'s", "[optimization][surface][objective]")
+TEST_CASE("with Floor projection on, the step taken over a minimized surface is a rod from x_k's floor projection to x_(k+1)'s", "[optimization][surface][objective]")
 {
     minimized_surface drawn(problem_form::minimum);
+    drawn.press("Floor projection");
     REQUIRE(drawn.shown()->step == 0u);
-    REQUIRE(drawn_visible(drawn.scene(), "step on the floor"));
+    REQUIRE(drawn_visible(drawn.scene(), "step taken"));
 
     const drawn_rod rod = rod_of(drawn.scene());
     CHECK(std::abs(rod.radius - floor_step_radius) <= 1.0e-7);
@@ -107,16 +108,17 @@ TEST_CASE("over a minimized surface the step on the floor is a rod from x_k's fl
     check_ends(drawn.scene(), *drawn.shown());
 }
 
-TEST_CASE("the rod follows the selected step of a run", "[optimization][surface][objective]")
+TEST_CASE("the rod on the floor follows the selected step of a run", "[optimization][surface][objective]")
 {
     minimized_surface drawn(elliptic(), descended(Eigen::Vector2d(-2.0, -2.0)));
+    drawn.press("Floor projection");
     REQUIRE(drawn.shown()->run.iterates.size() > 7u);
 
     for(const std::uint32_t k : {5u, 1u})
     {
         drawn.select(k);
         REQUIRE(drawn.shown()->step == k);
-        CHECK(drawn_visible(drawn.scene(), "step on the floor"));
+        CHECK(drawn_visible(drawn.scene(), "step taken"));
         check_ends(drawn.scene(), *drawn.shown());
     }
 }
@@ -126,15 +128,16 @@ TEST_CASE("a step to an x_(k+1) outside the ranges draws no rod", "[optimization
     capabilities solving               = baseline();
     solving.minimizer.gradient_descent = &leaving;
     minimized_surface drawn(elliptic(), descended(Eigen::Vector2d(0.5, 0.5)), solving);
+    drawn.press("Floor projection");
     REQUIRE(drawn.shown()->step == 0u);
     REQUIRE(drawn.shown()->run.gradients[0].has_value());
 
     CHECK(drawn_visible(drawn.scene(), "gradient at x_k"));
-    CHECK_FALSE(drawn_visible(drawn.scene(), "step on the floor"));
+    CHECK_FALSE(drawn_visible(drawn.scene(), "step taken"));
 
     drawn.select(1u);
     REQUIRE(drawn.shown()->step == 1u);
-    CHECK_FALSE(drawn_visible(drawn.scene(), "step on the floor"));
+    CHECK_FALSE(drawn_visible(drawn.scene(), "step taken"));
 }
 
 TEST_CASE("the rod is 0.01 m in radius and its axis stands 0.025 m above the floor", "[optimization][surface][objective]")
@@ -143,6 +146,7 @@ TEST_CASE("the rod is 0.01 m in radius and its axis stands 0.025 m above the flo
     CHECK(std::abs(floor_step_lift - 0.025) <= 1.0e-12);
 
     minimized_surface drawn(problem_form::minimum);
+    drawn.press("Floor projection");
     const drawn_rod rod = rod_of(drawn.scene());
     const double floor  = drawn_points(drawn.scene(), "level curves").front().z();
     CHECK(std::abs(rod.radius - 0.01) <= 1.0e-7);
@@ -160,6 +164,6 @@ TEST_CASE("a surface with nothing published draws no level map on its floor", "[
 
     CHECK_FALSE(drawn_visible(scene, "level map"));
     CHECK_FALSE(drawn_visible(scene, "gradient at x_k"));
-    CHECK_FALSE(drawn_visible(scene, "step on the floor"));
+    CHECK_FALSE(drawn_visible(scene, "step taken"));
     drawn.tear_down();
 }

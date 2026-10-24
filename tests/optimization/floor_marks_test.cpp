@@ -81,6 +81,7 @@ void check_field_tones(threepp::Scene &scene)
 TEST_CASE("the floor marker of the selected step's iterate wears the highlight and the others the floor tone", "[optimization][surface][objective]")
 {
     minimized_surface drawn(elliptic(), descended());
+    drawn.press("Floor projection");
     REQUIRE(drawn.shown()->step == 0u);
     REQUIRE(drawn.shown()->run.iterates.size() > 7u);
 
@@ -93,6 +94,7 @@ TEST_CASE("the floor marker of the selected step's iterate wears the highlight a
 TEST_CASE("the floor's highlight follows the selected step", "[optimization][surface][objective]")
 {
     minimized_surface drawn(elliptic(), descended());
+    drawn.press("Floor projection");
     drawn.select(5u);
     REQUIRE(drawn.shown()->step == 5u);
 
@@ -107,6 +109,7 @@ TEST_CASE("the floor's highlight follows the selected step", "[optimization][sur
 TEST_CASE("the Display window's Iterates switch hides the floor markers", "[optimization][surface][objective][view]")
 {
     minimized_surface drawn(elliptic(), descended());
+    drawn.press("Floor projection");
     drawn.select(5u);
     REQUIRE(drawn_visible(drawn.scene(), "iterates on the floor"));
 

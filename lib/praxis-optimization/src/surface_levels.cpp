@@ -1,5 +1,5 @@
 #include "level_curve.h"
-#include "surface_step.h"
+#include "map_placement.h"
 #include "drawn_iterates.h"
 #include "surface_levels.h"
 #include "surface_figures.h"
@@ -32,30 +32,10 @@ std::shared_ptr<threepp::Material> toned(std::uint32_t tone)
     return material;
 }
 
-// The floor is written in meters, so a point (x, y, z) stands over (x, y) at the height z.
-field_placement on_floor(const field_placement &placed)
-{
-    return field_placement{placed.middle, placed.across, 1.0};
-}
-
 void drawn_at(threepp::Material &material, double opacity)
 {
     material.transparent = opacity < 1.0;
     material.opacity     = static_cast<float>(opacity);
-}
-
-// grad f at x_k where x_k lies within the ranges and the gradient was answered finitely.
-std::optional<Eigen::Vector2d> answered_gradient(const scenario_snapshot &shown, std::size_t k)
-{
-    const scenario_run &run = shown.run;
-    if(k >= run.iterates.size() || k >= run.gradients.size() || !within_ranges(shown.ranges, run.iterates[k]))
-        return std::nullopt;
-
-    const expected<Eigen::VectorXd, refusal> &g = run.gradients[k];
-    if(!g || g->size() != 2 || !g->allFinite())
-        return std::nullopt;
-
-    return Eigen::Vector2d((*g)[0], (*g)[1]);
 }
 
 }
@@ -83,10 +63,11 @@ std::vector<double> map_levels(const scenario_grid &grid)
 level_map::level_map(std::shared_ptr<threepp::BufferGeometry> sphere)
         : m_pointed(false)
         , m_stepped(false)
+        , m_floored(false)
         , m_floor(0.0)
         , m_arrow(arrow_object("gradient at x_k", gradient_tone))
         , m_map(threepp::Group::create())
-        , m_step(rod_object("step on the floor", floor_step_tone, floor_step_radius))
+        , m_step(rod_object("step taken", floor_step_tone, floor_step_radius))
         , m_curves(occluded_lines("level curves", level_curve_tone, level_count * level_curve_room(surface_samples), false))
         , m_projected(threepp::Group::create())
         , m_mark_tone(toned(0xffffff))
@@ -107,11 +88,13 @@ const std::shared_ptr<threepp::Group> &level_map::object() const
     return m_map;
 }
 
-void level_map::draw(const std::shared_ptr<const scenario_snapshot> &shown, const field_placement &placed)
+void level_map::draw(const std::shared_ptr<const scenario_snapshot> &shown, const field_placement &placed, const scenario_view &view)
 {
-    if(shown->grid != m_sampled)
+    const bool moved = view.floor_projection != m_floored;
+    m_floored        = view.floor_projection;
+    if(shown->grid != m_sampled || moved)
         resample(*shown, placed);
-    if(shown != m_placed)
+    if(shown != m_placed || moved)
         place(*shown, placed);
     m_placed = shown;
 }
@@ -119,21 +102,22 @@ void level_map::draw(const std::shared_ptr<const scenario_snapshot> &shown, cons
 void level_map::show(const scenario_view &view)
 {
     m_curves->visible       = view.level_curves && m_curves->geometry()->drawRange.count > 0;
-    m_projected->visible    = view.iterates;
+    m_projected->visible    = view.iterates && view.floor_projection;
     m_arrow.object->visible = view.gradient && m_pointed;
     m_step->visible         = view.step && m_stepped;
 }
 
 void level_map::resample(const scenario_snapshot &shown, const field_placement &placed)
 {
-    m_floor = placed.vertical * height_span(*shown.grid).lower - floor_gap * surface_extent;
+    m_floor                = floor_beneath(*shown.grid, placed);
+    const map_placement at = standing(placed);
     std::vector<Eigen::Vector3d> ends;
     for(const double level : map_levels(*shown.grid))
     {
-        const std::vector<Eigen::Vector3d> traced = ends_at(level_curve(*shown.grid, shown.ranges, level), m_floor);
+        const std::vector<Eigen::Vector3d> traced = ends_at(level_curve(*shown.grid, shown.ranges, level), level_height(at, level));
         ends.insert(ends.end(), traced.begin(), traced.end());
     }
-    write_points(*m_curves, ends, on_floor(placed));
+    write_points(*m_curves, ends, in_meters(placed));
     m_sampled = shown.grid;
 }
 
@@ -149,29 +133,33 @@ void level_map::place(const scenario_snapshot &shown, const field_placement &pla
     hold_marks(*m_projected, m_marks, centers.size(), marks_look{"iterate on the floor", floor_iterate_tone, m_sphere, m_mark_tone});
     if(m_marks != nullptr)
         write_marks(*m_marks, centers, tones);
-    step_from(shown, on_floor(placed));
+    step_from(shown, standing(placed));
 }
 
-void level_map::step_from(const scenario_snapshot &shown, const field_placement &floor)
+void level_map::step_from(const scenario_snapshot &shown, const map_placement &at)
 {
-    const std::size_t k                    = shown.step;
-    const std::optional<Eigen::Vector2d> g = answered_gradient(shown, k);
-    m_pointed                              = g && g->norm() > 0.0;
-    m_stepped                              = false;
-    if(!g)
+    const std::size_t k                       = shown.step;
+    const std::optional<Eigen::Vector2d> g    = answered_gradient(shown, k);
+    const std::optional<Eigen::Vector3d> from = standing_at(shown, k, at);
+    m_pointed                                 = g && from && g->norm() > 0.0;
+    m_stepped                                 = false;
+    lay_over_field(*m_arrow.object, !at.floor);
+    lay_over_field(*m_step, !at.floor);
+    if(!g || !from)
         return;
 
-    const Eigen::VectorXd &x = shown.run.iterates[k];
     if(m_pointed)
-        place_arrow(m_arrow, floor.at(x[0], x[1], m_floor), Eigen::Vector3d(g->x(), g->y(), 0.0), gradient_arrow_fraction * surface_extent);
-    if(k + 1u < shown.run.iterates.size() && within_ranges(shown.ranges, shown.run.iterates[k + 1u]))
+        place_arrow(m_arrow, *from, Eigen::Vector3d(g->x(), g->y(), 0.0), gradient_arrow_fraction * surface_extent);
+    if(const std::optional<std::array<Eigen::Vector3d, 2>> ends = step_ends(shown, k, at))
     {
-        const Eigen::VectorXd &next = shown.run.iterates[k + 1u];
-        const Eigen::Vector3d from  = floor.at(x[0], x[1], m_floor + floor_step_lift);
-        const Eigen::Vector3d to    = floor.at(next[0], next[1], m_floor + floor_step_lift);
-        place_rod(*m_step, from, to);
-        m_stepped = from != to;
+        place_rod(*m_step, (*ends)[0], (*ends)[1]);
+        m_stepped = (*ends)[0] != (*ends)[1];
     }
+}
+
+map_placement level_map::standing(const field_placement &placed) const
+{
+    return map_placement{placed, m_floored ? std::optional<double>(m_floor) : std::nullopt};
 }
 
 void draw_map(level_map &map, const form_materials &drawn, const std::shared_ptr<const scenario_snapshot> &shown, const field_placement &placed, const scenario_view &view)
@@ -184,7 +172,7 @@ void draw_map(level_map &map, const form_materials &drawn, const std::shared_ptr
     if(!minimized)
         return;
 
-    map.draw(shown, placed);
+    map.draw(shown, placed, view);
     map.show(view);
 }
 

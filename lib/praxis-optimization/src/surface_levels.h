@@ -2,6 +2,7 @@
 #define HPP_GUARD_PRAXIS_OPTIMIZATION_SURFACE_LEVELS_H
 
 #include "surface_mesh.h"
+#include "map_placement.h"
 #include "surface_arrow.h"
 
 #include "praxis/optimization/scenario_view.h"
@@ -28,15 +29,18 @@ namespace praxis::optimization {
 // falls between; none where no two finite samples differ.
 std::vector<double> map_levels(const scenario_grid &grid);
 
-// A minimized surface drawn as a flat map on a floor `floor_gap` of the extent below the field's
-// lowest drawn point: the level curves of f at `map_levels`, "level curves"; the drawn iterates
-// projected onto the floor, "iterates on the floor"; at the selected x_k an arrow along grad f(x_k),
-// "gradient at x_k", `gradient_arrow_fraction` of the extent long whatever |grad f|; and the step from
-// x_k to the recorded x_(k+1), "step on the floor", a rod of `floor_step_radius` whose axis stands
-// `floor_step_lift` above the floor. Nothing is drawn from an x_k outside the ranges or whose
-// gradient was not answered, and no step to an x_(k+1) outside them. The curves are traced again only
-// when a publication carries other samples and the rest is placed only when a publication is new,
-// everything read from the publication. The map is hidden until `draw_map` shows it.
+// A minimized surface's level map: the level curves of f at `map_levels`, "level curves"; at the
+// selected x_k an arrow along grad f(x_k), "gradient at x_k", horizontal and `gradient_arrow_fraction`
+// of the extent long whatever |grad f|; and the step from x_k to the recorded x_(k+1), "step taken", a
+// rod of `floor_step_radius`. On the field each curve stands at its own level, and the arrow and the
+// rod, drawn over the field, at the centers of the field's markers. With the view's floor projection
+// all three stand instead on a floor `floor_gap` of the extent below the field's lowest drawn point,
+// beside the drawn iterates projected onto it, "iterates on the floor", the rod's axis
+// `floor_step_lift` above it. Nothing is drawn from an x_k outside the ranges or whose gradient was not
+// answered, and no step to an x_(k+1) that stands nowhere. The curves are traced again only when a
+// publication carries other samples or the placement changes, and the rest is placed only when a
+// publication is new or the placement changes, everything read from the publication. The map is hidden
+// until `draw_map` shows it.
 class level_map
 {
 public:
@@ -44,12 +48,13 @@ public:
 
     const std::shared_ptr<threepp::Group> &object() const;
 
-    void draw(const std::shared_ptr<const scenario_snapshot> &shown, const field_placement &placed);
+    void draw(const std::shared_ptr<const scenario_snapshot> &shown, const field_placement &placed, const scenario_view &view);
     void show(const scenario_view &view);
 
 private:
     bool m_pointed;
     bool m_stepped;
+    bool m_floored;
     double m_floor;
     surface_arrow m_arrow;
     std::shared_ptr<threepp::Group> m_map;
@@ -64,7 +69,8 @@ private:
 
     void resample(const scenario_snapshot &shown, const field_placement &placed);
     void place(const scenario_snapshot &shown, const field_placement &placed);
-    void step_from(const scenario_snapshot &shown, const field_placement &floor);
+    void step_from(const scenario_snapshot &shown, const map_placement &at);
+    map_placement standing(const field_placement &placed) const;
 };
 
 // The materials whose opacity follows the run's form: the field's and the two linearization planes'.

@@ -2360,6 +2360,7 @@ lib/praxis-optimization/include/praxis/optimization/scenario_view.h	gradient	mem
 lib/praxis-optimization/include/praxis/optimization/scenario_view.h	step	member	-	typename:bool
 lib/praxis-optimization/include/praxis/optimization/scenario_view.h	bounds	member	-	typename:bool
 lib/praxis-optimization/include/praxis/optimization/scenario_view.h	linearization	member	-	typename:bool
+lib/praxis-optimization/include/praxis/optimization/scenario_view.h	floor_projection	member	-	typename:bool
 lib/praxis-optimization/include/praxis/optimization/settings_keys.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/settings_keys.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/settings_keys.h	function_name_key	variable	-	typename:const char *

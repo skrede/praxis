@@ -115,6 +115,21 @@ std::shared_ptr<threepp::Mesh> plane_patch(std::string name, std::uint32_t tone,
     return drawn;
 }
 
+void lay_over_field(threepp::Object3D &drawn, bool over)
+{
+    drawn.traverse(
+            [over](threepp::Object3D &part)
+            {
+                part.renderOrder = over ? over_the_field : 0;
+                if(const std::shared_ptr<threepp::Material> tone = part.material())
+                {
+                    tone->transparent = over;
+                    tone->depthTest   = !over;
+                    tone->depthWrite  = !over;
+                }
+            });
+}
+
 void write_points(threepp::Object3D &drawn, std::span<const Eigen::Vector3d> points, const field_placement &placed)
 {
     threepp::BufferGeometry &shaped = *drawn.geometry();

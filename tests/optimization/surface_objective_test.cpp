@@ -77,9 +77,10 @@ scenario_settings descended(std::string name, const Eigen::Vector2d &seed)
 
 }
 
-TEST_CASE("a minimized surface draws its level curves and its iterates on a floor plane under the field", "[optimization][surface][objective]")
+TEST_CASE("with Floor projection on, a minimized surface draws its level curves and its iterates on a floor plane under the field", "[optimization][surface][objective]")
 {
     minimized_surface drawn(problem_form::minimum);
+    drawn.press("Floor projection");
     threepp::Scene &scene                    = drawn.scene();
     const std::vector<Eigen::Vector3d> curve = drawn_points(scene, "level curves");
     REQUIRE(drawn_visible(scene, "level curves"));
@@ -99,9 +100,10 @@ TEST_CASE("a minimized surface draws its level curves and its iterates on a floo
     CHECK_FALSE(drawn_visible(scene, "tangent plane"));
 }
 
-TEST_CASE("a minimized surface draws the gradient at x_k and the step to x_(k+1) on that floor", "[optimization][surface][objective]")
+TEST_CASE("with Floor projection on, a minimized surface draws the gradient at x_k and the step to x_(k+1) on that floor", "[optimization][surface][objective]")
 {
     minimized_surface drawn(problem_form::minimum);
+    drawn.press("Floor projection");
     threepp::Scene &scene          = drawn.scene();
     const scenario_snapshot &shown = stepped(drawn);
     const placement standing       = placement_of(field_of(scene), shown);
@@ -113,7 +115,7 @@ TEST_CASE("a minimized surface draws the gradient at x_k and the step to x_(k+1)
     REQUIRE(drawn_visible(scene, "gradient at x_k"));
     CHECK((drawn_position(scene, "gradient at x_k") - at).norm() <= 1.0e-5);
     CHECK((pointing(scene) - (standing.at(x[0] + g[0], x[1] + g[1], 0.0) - standing.at(x[0], x[1], 0.0)).normalized()).norm() <= 1.0e-5);
-    CHECK(drawn_visible(scene, "step on the floor"));
+    CHECK(drawn_visible(scene, "step taken"));
 }
 
 TEST_CASE("a root-form run of the same surface draws no level map", "[optimization][surface][objective]")
@@ -123,25 +125,26 @@ TEST_CASE("a root-form run of the same surface draws no level map", "[optimizati
 
     CHECK_FALSE(drawn_visible(scene, "level curves"));
     CHECK_FALSE(drawn_visible(scene, "gradient at x_k"));
-    CHECK_FALSE(drawn_visible(scene, "step on the floor"));
+    CHECK_FALSE(drawn_visible(scene, "step taken"));
     CHECK(drawn_visible(scene, "surface"));
 }
 
-TEST_CASE("a step whose gradient was refused draws no arrow and no step on the floor", "[optimization][surface][objective]")
+TEST_CASE("with Floor projection on, a step whose gradient was refused draws no arrow and no step taken on the floor", "[optimization][surface][objective]")
 {
     capabilities solving               = baseline();
     solving.minimizer.gradient_descent = &leaping;
     minimized_surface drawn(cut_off(), descended("cut off", Eigen::Vector2d(0.5, 0.5)), solving);
+    drawn.press("Floor projection");
     REQUIRE(drawn.shown()->run.gradients.size() == 3u);
     REQUIRE_FALSE(drawn.shown()->run.gradients[1].has_value());
 
     CHECK(drawn_visible(drawn.scene(), "gradient at x_k"));
-    CHECK(drawn_visible(drawn.scene(), "step on the floor"));
+    CHECK(drawn_visible(drawn.scene(), "step taken"));
 
     drawn.select(1u);
     REQUIRE(drawn.shown()->step == 1u);
     CHECK_FALSE(drawn_visible(drawn.scene(), "gradient at x_k"));
-    CHECK_FALSE(drawn_visible(drawn.scene(), "step on the floor"));
+    CHECK_FALSE(drawn_visible(drawn.scene(), "step taken"));
     CHECK(drawn_visible(drawn.scene(), "level curves"));
 }
 
