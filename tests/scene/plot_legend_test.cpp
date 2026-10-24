@@ -118,3 +118,34 @@ TEST_CASE("a plot window given a wrapped key writes every entry under the plot, 
     CHECK(drawn.reach.y <= drawn.inner.Max.y);
     CHECK(drawn.reach.x <= drawn.content_right);
 }
+
+TEST_CASE("a plot outside the scrolled view keeps its key's height in the panel's content", "[scene]")
+{
+    scene::plot_reading shown{"", "s", {}};
+    for(const char *frame : {"first", "second", "third"})
+        shown.frames.push_back(scene::plot_frame{frame, false, {scene::plot_series{std::string(frame) + " series", {0.0, 1.0}, {0.0, 1.0}, scene::plot_mark::line}}, std::nullopt});
+    for(const char *name : {"second series of the first", "third series of the first", "fourth series of the first"})
+        shown.frames.front().series.push_back(scene::plot_series{name, {0.0, 1.0}, {1.0, 0.0}, scene::plot_mark::line});
+    scene::plot_window panel("Plot", nullptr, [shown] { return shown; });
+    panel.legend_at(scene::plot_legend::wrapped_key);
+
+    float scroll       = 0.f;
+    const auto draw_at = [&panel, &scroll]
+    {
+        ImGui::SetNextWindowPos(ImVec2(0.f, 0.f));
+        ImGui::SetNextWindowSize(ImVec2(300.f, 200.f));
+        ImGui::SetNextWindowScroll(ImVec2(0.f, scroll));
+        panel.render();
+    };
+
+    tests::imgui_frame frames;
+    frames.draw(draw_at, 3);
+    const ImGuiWindow &window = *ImGui::FindWindowByName("Plot");
+    const float at_top        = window.ContentSize.y;
+    REQUIRE(at_top > window.InnerClipRect.GetHeight());
+
+    scroll = 10000.f;
+    frames.draw(draw_at, 3);
+
+    CHECK(window.ContentSize.y == at_top);
+}

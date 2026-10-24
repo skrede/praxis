@@ -82,19 +82,26 @@ void report_pick(const plot_pick &pick, std::size_t index)
 // stands in the identifier, because plots sharing one identifier are one plot to the library.
 void render_frame(const plot_frame &shown, const std::string &abscissa_label, std::size_t index, float height, const plot_pick &pick, std::optional<plot_key> &key)
 {
-    if(!ImPlot::BeginPlot(("##plot" + std::to_string(index)).c_str(), ImVec2(-1.f, height), key ? ImPlotFlags_NoLegend : ImPlotFlags_None))
-        return;
-
-    setup_axes(shown, abscissa_label);
-    for(const plot_series &curve : shown.series)
+    if(ImPlot::BeginPlot(("##plot" + std::to_string(index)).c_str(), ImVec2(-1.f, height), key ? ImPlotFlags_NoLegend : ImPlotFlags_None))
     {
-        render_curve(curve);
-        if(key)
-            key->take_color(curve.name, ImPlot::GetLastItemColor());
-    }
-    report_pick(pick, index);
+        setup_axes(shown, abscissa_label);
+        for(const plot_series &curve : shown.series)
+        {
+            render_curve(curve);
+            if(key)
+                key->take_color(curve.name, ImPlot::GetLastItemColor());
+        }
+        report_pick(pick, index);
 
-    ImPlot::EndPlot();
+        ImPlot::EndPlot();
+    }
+    else if(key)
+    {
+        // A plot clipped out of view draws no items, so its key takes the colormap's colors in series order.
+        for(std::size_t at = 0; at < shown.series.size(); ++at)
+            key->take_color(shown.series[at].name, ImPlot::GetColormapColor(static_cast<int>(at)));
+    }
+
     if(key)
         key->draw();
 }
