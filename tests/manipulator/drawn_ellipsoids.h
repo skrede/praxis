@@ -87,6 +87,17 @@ inline manipulability_ellipsoid decomposed_about(const Eigen::Vector3d &values, 
     return manipulability_ellipsoid{values, axes, values.prod(), condition};
 }
 
+// A three-column Jacobian whose two blocks are both diag(values), so each decomposes to those
+// singular values about the identity.
+inline jacobian diagonal_blocks(const Eigen::Vector3d &values)
+{
+    jacobian built(6, 3);
+    built.topRows<3>()    = values.asDiagonal();
+    built.bottomRows<3>() = values.asDiagonal();
+
+    return built;
+}
+
 inline jacobian_manipulability refused()
 {
     return jacobian_manipulability{unexpected(refusal::unsupported_input), unexpected(refusal::unsupported_input)};

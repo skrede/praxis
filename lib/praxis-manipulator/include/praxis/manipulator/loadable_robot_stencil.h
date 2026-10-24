@@ -282,8 +282,8 @@ public:
     void clear_solution_figures();
 
     // Which Jacobian everything the stencil draws from a Jacobian is drawn from. One field chooses
-    // the space or the body variant for all of those drawings at once, and the arrows read the body
-    // variant re-expressed at the tool. Lynch & Park, Modern Robotics, section 5.1.
+    // the space or the body variant for all of those drawings at once, and every one of them reads the
+    // body variant re-expressed at the tool. Lynch & Park, Modern Robotics, section 5.1.
     void set_jacobian_frame(jacobian_frame taken);
     jacobian_frame jacobian_frame_shown() const;
 

@@ -152,7 +152,9 @@ TEST_CASE("the Jacobian the stencil is told to show is the one both bodies are t
 
     const Eigen::Vector3d in_space(1.0, 0.6, 0.2);
     const Eigen::Vector3d in_body(2.0, 1.2, 0.4);
-    headless.put(published(decomposed_both(in_space), decomposed_both(in_body), Eigen::Vector3d(Eigen::Vector3d::Zero())));
+    arm_snapshot seen  = published(decomposed_both(in_space), refused(), Eigen::Vector3d(Eigen::Vector3d::Zero()));
+    seen.body_jacobian = diagonal_blocks(in_body);
+    headless.put(seen);
     headless.draw();
 
     CHECK(headless.shown.jacobian_frame_shown() == jacobian_frame::space);

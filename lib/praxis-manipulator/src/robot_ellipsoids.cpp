@@ -1,3 +1,5 @@
+#include "robot/column_arrow.h"
+#include "robot/manipulability.h"
 #include "robot/ellipsoid_figure.h"
 #include "robot/ellipsoid_placement.h"
 
@@ -185,7 +187,7 @@ void loadable_robot_stencil::place_ellipsoids() const
     if(seen == nullptr)
         return;
 
-    const jacobian_manipulability &taken         = m_frame == jacobian_frame::space ? seen->space_manipulability : seen->body_manipulability;
+    const jacobian_manipulability taken          = m_frame == jacobian_frame::space ? seen->space_manipulability : manipulability_of(shown_jacobian(*seen, m_frame));
     const expected<rotation, refusal> into_space = carried_into_space(*seen);
     for(std::size_t block = 0; block < jacobian_block_count; ++block)
     {

@@ -181,8 +181,9 @@ TEST_CASE("the angular ellipsoid stands at the same principal axes whichever Jac
 
     // A_s = R A_b R^T at one configuration, so the two decompositions carry the same singular values
     // and principal axes a rotation apart. Lynch & Park, Modern Robotics, section 5.4.
-    arm_snapshot seen     = published(jacobian_manipulability{decomposed_about(values, turned), decomposed_about(values, turned)}, decomposed_both(values), at);
+    arm_snapshot seen     = published(jacobian_manipulability{decomposed_about(values, turned), decomposed_about(values, turned)}, refused(), at);
     seen.tool_orientation = praxis::rotation(turned);
+    seen.body_jacobian    = diagonal_blocks(values);
 
     ellipsoid_stage headless;
     headless.shown.set_manipulability_ellipsoids(ellipsoid_view::velocity);
