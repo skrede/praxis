@@ -16,7 +16,9 @@ enum class plot_mark : std::uint8_t
 {
     line,
     markers,
-    segments
+    segments,
+    // An unfilled circle around each point, wider than a marker.
+    ring
 };
 
 // A curve whose two spans differ in length is drawn to the shorter of them.
@@ -27,6 +29,9 @@ struct plot_series
     std::vector<double> ordinate;
     // Segments join the first point to the second, the third to the fourth, and no pair to the next.
     plot_mark mark;
+    // The color the series is drawn and keyed in, as 0xRRGGBB; absent, the series takes the plotting
+    // library's next colormap color.
+    std::optional<std::uint32_t> tone = std::nullopt;
 };
 
 struct plot_limits

@@ -79,18 +79,30 @@ inline constexpr double opening_elevation_radians = 0.7853981633974483;
 inline constexpr double opening_azimuth_radians   = 0.5235987755982988;
 inline constexpr double opening_distance          = 1.6;
 
-// The tones a surface and what is drawn on it wear, as 0xRRGGBB.
+// The tones a surface, a curve and what is drawn on them wear, as 0xRRGGBB. The tangent at x_k (a
+// plane on a surface, a line on a curve, and a curve's quadratic model at x_k) wears tangent_tone, and
+// its zero (the zero line and the nearest point, a curve's zero of the tangent, and the model's vertex)
+// wears tangent_zero_tone.
 inline constexpr std::uint32_t surface_tone          = 0x4682b4;
+inline constexpr std::uint32_t curve_tone            = 0x6495ed;
 inline constexpr std::uint32_t iterate_tone          = 0xff4500;
 inline constexpr std::uint32_t selected_iterate_tone = 0xff00ff;
+inline constexpr std::uint32_t answer_tone           = 0x00ffff;
 inline constexpr std::uint32_t zero_curve_tone       = 0x0000cd;
-inline constexpr std::uint32_t tangent_plane_tone    = 0xf0e68c;
-inline constexpr std::uint32_t zero_line_tone        = 0x000080;
-inline constexpr std::uint32_t box_tone              = 0xa0522d;
+inline constexpr std::uint32_t tangent_tone          = 0xf0e68c;
+inline constexpr std::uint32_t tangent_zero_tone     = 0x008080;
+inline constexpr std::uint32_t box_tone              = 0x4b0082;
 inline constexpr std::uint32_t level_curve_tone      = 0x0000cd;
 inline constexpr std::uint32_t floor_iterate_tone    = 0x000000;
 inline constexpr std::uint32_t gradient_tone         = 0xffd700;
 inline constexpr std::uint32_t floor_step_tone       = 0x8b0000;
+
+// The tone of the linearization at p, as 0xRRGGBB: a curve's point and its tangent, and a surface's
+// plane at p.
+inline constexpr std::uint32_t linearization_point_tone = 0xffffff;
+
+// The tone the central difference at p wears, as 0xRRGGBB: a line on a curve, a wire plane on a surface.
+inline constexpr std::uint32_t central_difference_tone = 0x00ffff;
 
 // |d - d_cd| / max(1, |d|, |d_cd|) above which a registered derivative d and the central difference
 // d_cd of the value disagree, a dimensionless relative difference.

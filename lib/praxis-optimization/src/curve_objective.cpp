@@ -66,7 +66,7 @@ void add_next(const scenario_run &run, std::size_t k, const Model &model, std::v
 {
     const double next   = coordinate(run.iterates[k + 1]);
     const double landed = k + 1 < run.objectives.size() ? answered(run.objectives[k + 1]) : unanswered;
-    drawn.push_back(scene::plot_series{"x_(k+1)", {next, next}, {model(next), landed}, scene::plot_mark::segments});
+    drawn.push_back(scene::plot_series{"x_(k+1)", {next, next}, {model(next), landed}, scene::plot_mark::segments, iterate_tone});
 }
 
 }
@@ -79,7 +79,7 @@ void add_vertex(const scenario_snapshot &shown, std::vector<scene::plot_series> 
 
     const double vertex = q->x - q->slope / q->curvature;
     if(std::isfinite(vertex) && std::isfinite((*q)(vertex)))
-        drawn.push_back(scene::plot_series{"vertex", {vertex}, {(*q)(vertex)}, scene::plot_mark::markers});
+        drawn.push_back(scene::plot_series{"vertex", {vertex}, {(*q)(vertex)}, scene::plot_mark::markers, tangent_zero_tone});
 }
 
 void add_newton_model(const scenario_snapshot &shown, const interval &span, std::vector<scene::plot_series> &drawn)
@@ -88,7 +88,7 @@ void add_newton_model(const scenario_snapshot &shown, const interval &span, std:
     if(!q)
         return;
 
-    scene::plot_series model{"quadratic model at x_k", {}, {}, scene::plot_mark::line};
+    scene::plot_series model{"quadratic model at x_k", {}, {}, scene::plot_mark::line, tangent_tone};
     for(std::size_t at = 0; at < curve_samples; ++at)
     {
         const double x = evenly(shown.ranges.front(), at, curve_samples);
@@ -111,7 +111,7 @@ void add_descent_tangent(const scenario_snapshot &shown, const interval &span, s
     if(!std::isfinite(at.x) || !std::isfinite(at.g) || !std::isfinite(at.slope))
         return;
 
-    if(std::optional<scene::plot_series> line = tangent("tangent at x_k", at, shown.ranges.front(), span))
+    if(std::optional<scene::plot_series> line = tangent("tangent at x_k", tangent_tone, at, shown.ranges.front(), span))
         drawn.push_back(std::move(*line));
     add_next(run, k, [&at](double x) { return at.g + at.slope * (x - at.x); }, drawn);
 }

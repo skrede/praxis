@@ -15,6 +15,7 @@
 #include <limits>
 #include <string>
 #include <vector>
+#include <cstdint>
 #include <optional>
 
 namespace praxis::optimization {
@@ -39,7 +40,7 @@ double slope_of(const expected<Eigen::MatrixXd, refusal> &jacobian);
 std::optional<interval> finite_span(const std::vector<scene::plot_series> &drawn, const interval &range);
 
 // Held to the range and to the ordinates the plot is fitted to, so a steep line widens neither axis.
-std::optional<scene::plot_series> tangent(std::string name, const linearized &at, const interval &range, const interval &span);
+std::optional<scene::plot_series> tangent(std::string name, std::uint32_t tone, const linearized &at, const interval &range, const interval &span);
 
 void add_step(const scenario_snapshot &shown, const interval &span, std::vector<scene::plot_series> &drawn);
 

@@ -31,6 +31,12 @@ inline const char *curve_function_name(problem_form form)
     return form == problem_form::minimum ? "f(x)" : "g(x)";
 }
 
+// The key a converged run's answer is drawn under on a curve.
+inline const char *answer_name(problem_form form)
+{
+    return form == problem_form::minimum ? "stationary point" : "root";
+}
+
 inline const char *curve_derivative_name(problem_form form)
 {
     return form == problem_form::minimum ? "f'(x)" : "g'(x)";

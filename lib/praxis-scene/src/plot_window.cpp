@@ -1,4 +1,5 @@
 #include "plot_key.h"
+#include "plot_ring.h"
 
 #include "praxis/scene/plot_window.h"
 
@@ -8,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <cstddef>
+#include <cstdint>
 #include <utility>
 #include <optional>
 #include <algorithm>
@@ -47,19 +49,43 @@ void setup_axes(const plot_frame &shown, const std::string &abscissa_label)
     ImPlot::SetupLegend(ImPlotLocation_NorthWest);
 }
 
+ImVec4 color_of(std::uint32_t tone)
+{
+    const auto channel = [tone](unsigned shift) { return static_cast<float>((tone >> shift) & 0xffu) / 255.f; };
+
+    return ImVec4(channel(16u), channel(8u), channel(0u), 1.f);
+}
+
 void render_curve(const plot_series &curve)
 {
     ImPlotSpec spec;
-    if(curve.mark == plot_mark::markers)
+    if(curve.tone)
+        spec.LineColor = color_of(*curve.tone);
+    if(curve.mark == plot_mark::line || curve.mark == plot_mark::segments)
     {
-        spec.Marker = ImPlotMarker_Circle;
-        ImPlot::PlotScatter(curve.name.c_str(), curve.abscissa.data(), curve.ordinate.data(), drawn_length(curve), spec);
+        if(curve.mark == plot_mark::segments)
+            spec.Flags = ImPlotLineFlags_Segments;
+        ImPlot::PlotLine(curve.name.c_str(), curve.abscissa.data(), curve.ordinate.data(), drawn_length(curve), spec);
         return;
     }
 
-    if(curve.mark == plot_mark::segments)
-        spec.Flags = ImPlotLineFlags_Segments;
-    ImPlot::PlotLine(curve.name.c_str(), curve.abscissa.data(), curve.ordinate.data(), drawn_length(curve), spec);
+    spec.Marker = ImPlotMarker_Circle;
+    if(curve.mark == plot_mark::ring)
+    {
+        spec.MarkerFillColor = ImVec4(0.f, 0.f, 0.f, 0.f);
+        spec.MarkerSize *= ring_radius_ratio;
+        spec.LineWeight = ring_weight;
+    }
+    ImPlot::PlotScatter(curve.name.c_str(), curve.abscissa.data(), curve.ordinate.data(), drawn_length(curve), spec);
+}
+
+// A plot clipped out of view draws no items, so its key takes each series' tone, and the colormap's
+// colors in order for the series carrying none.
+void key_clipped(const plot_frame &shown, plot_key &key)
+{
+    int untoned = 0;
+    for(const plot_series &curve : shown.series)
+        key.take_color(curve.name, curve.tone ? color_of(*curve.tone) : ImPlot::GetColormapColor(untoned++));
 }
 
 // The press also starts the plot's pan, so the pick waits for the release and a press that strayed
@@ -89,18 +115,14 @@ void render_frame(const plot_frame &shown, const std::string &abscissa_label, st
         {
             render_curve(curve);
             if(key)
-                key->take_color(curve.name, ImPlot::GetLastItemColor());
+                key->take_color(curve.name, curve.tone ? color_of(*curve.tone) : ImPlot::GetLastItemColor());
         }
         report_pick(pick, index);
 
         ImPlot::EndPlot();
     }
     else if(key)
-    {
-        // A plot clipped out of view draws no items, so its key takes the colormap's colors in series order.
-        for(std::size_t at = 0; at < shown.series.size(); ++at)
-            key->take_color(shown.series[at].name, ImPlot::GetColormapColor(static_cast<int>(at)));
-    }
+        key_clipped(shown, *key);
 
     if(key)
         key->draw();

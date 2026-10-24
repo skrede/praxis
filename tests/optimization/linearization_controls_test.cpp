@@ -35,7 +35,7 @@ using namespace praxis::fixture;
 
 namespace {
 
-constexpr const char *named_at_p[] = {"p", "tangent at p", "central difference at p"};
+constexpr const char *named_at_p[] = {"linearization point p", "tangent at p", "central difference at p"};
 
 registered_curve wrong_by_sign()
 {

@@ -1,10 +1,12 @@
 #include "curve_overlays.h"
+#include "scenario_defaults.h"
 
 #include <cmath>
 #include <limits>
 #include <string>
 #include <vector>
 #include <cstddef>
+#include <cstdint>
 #include <utility>
 #include <optional>
 #include <algorithm>
@@ -37,7 +39,7 @@ std::optional<interval> finite_span(const std::vector<scene::plot_series> &drawn
     return span.lower <= span.upper ? std::optional<interval>(span) : std::nullopt;
 }
 
-std::optional<scene::plot_series> tangent(std::string name, const linearized &at, const interval &range, const interval &span)
+std::optional<scene::plot_series> tangent(std::string name, std::uint32_t tone, const linearized &at, const interval &range, const interval &span)
 {
     if(!std::isfinite(at.g) || !std::isfinite(at.slope) || (at.slope == 0.0 && (at.g < span.lower || at.g > span.upper)))
         return std::nullopt;
@@ -54,7 +56,7 @@ std::optional<scene::plot_series> tangent(std::string name, const linearized &at
     if(!(from < to))
         return std::nullopt;
 
-    return scene::plot_series{std::move(name), {from, to}, {at.g + at.slope * (from - at.x), at.g + at.slope * (to - at.x)}, scene::plot_mark::line};
+    return scene::plot_series{std::move(name), {from, to}, {at.g + at.slope * (from - at.x), at.g + at.slope * (to - at.x)}, scene::plot_mark::line, tone};
 }
 
 void add_step(const scenario_snapshot &shown, const interval &span, std::vector<scene::plot_series> &drawn)
@@ -65,17 +67,17 @@ void add_step(const scenario_snapshot &shown, const interval &span, std::vector<
         return;
 
     const linearized at{coordinate(run.iterates[k]), value_of(run.errors[k]), slope_of(run.jacobians[k])};
-    if(std::optional<scene::plot_series> line = tangent("tangent at x_k", at, shown.ranges.front(), span))
+    if(std::optional<scene::plot_series> line = tangent("tangent at x_k", tangent_tone, at, shown.ranges.front(), span))
         drawn.push_back(std::move(*line));
 
     const double zero = at.slope != 0.0 ? at.x - at.g / at.slope : unanswered;
     if(std::isfinite(zero))
-        drawn.push_back(scene::plot_series{"zero of the tangent", {zero}, {0.0}, scene::plot_mark::markers});
+        drawn.push_back(scene::plot_series{"zero of the tangent", {zero}, {0.0}, scene::plot_mark::markers, tangent_zero_tone});
 
     if(k + 1 < run.errors.size())
     {
         const double next = coordinate(run.iterates[k + 1]);
-        drawn.push_back(scene::plot_series{"x_(k+1)", {next, next}, {0.0, value_of(run.errors[k + 1])}, scene::plot_mark::segments});
+        drawn.push_back(scene::plot_series{"x_(k+1)", {next, next}, {0.0, value_of(run.errors[k + 1])}, scene::plot_mark::segments, iterate_tone});
     }
 }
 
@@ -85,20 +87,20 @@ std::optional<linearized> linearized_point(const std::optional<scenario_lineariz
         return std::nullopt;
 
     const linearized here{at->point[0], value_of(at->error), slope_of(at->jacobian)};
-    drawn.push_back(scene::plot_series{"p", {here.x}, {here.g}, scene::plot_mark::markers});
+    drawn.push_back(scene::plot_series{"linearization point p", {here.x}, {here.g}, scene::plot_mark::markers, linearization_point_tone});
 
     return here;
 }
 
 void add_linearization(const std::optional<scenario_linearization> &at, const linearized &here, const interval &range, const interval &span, std::vector<scene::plot_series> &drawn)
 {
-    if(std::optional<scene::plot_series> line = tangent("tangent at p", here, range, span))
+    if(std::optional<scene::plot_series> line = tangent("tangent at p", linearization_point_tone, here, range, span))
         drawn.push_back(std::move(*line));
 
     if(!at->check || !at->check->disagrees || at->check->central.size() != 1)
         return;
 
-    if(std::optional<scene::plot_series> line = tangent("central difference at p", linearized{here.x, here.g, at->check->central(0, 0)}, range, span))
+    if(std::optional<scene::plot_series> line = tangent("central difference at p", central_difference_tone, linearized{here.x, here.g, at->check->central(0, 0)}, range, span))
         drawn.push_back(std::move(*line));
 }
 
@@ -107,7 +109,7 @@ void add_bounds(const std::optional<box> &bounds, const interval &span, std::vec
     if(!bounds || bounds->lower.size() != 1 || bounds->upper.size() != 1)
         return;
 
-    scene::plot_series ends{"bounds", {}, {}, scene::plot_mark::segments};
+    scene::plot_series ends{"bounds", {}, {}, scene::plot_mark::segments, box_tone};
     for(const double end : {bounds->lower[0], bounds->upper[0]})
         if(std::isfinite(end))
         {

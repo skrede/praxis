@@ -3185,11 +3185,13 @@ lib/praxis-scene/include/praxis/scene/plot_window.h	plot_mark	enum	-	typename:st
 lib/praxis-scene/include/praxis/scene/plot_window.h	line	enumerator	-	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	markers	enumerator	-	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	segments	enumerator	-	-
+lib/praxis-scene/include/praxis/scene/plot_window.h	ring	enumerator	-	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	plot_series	struct	-	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	name	member	-	typename:std::string
 lib/praxis-scene/include/praxis/scene/plot_window.h	abscissa	member	-	typename:std::vector<double>
 lib/praxis-scene/include/praxis/scene/plot_window.h	ordinate	member	-	typename:std::vector<double>
 lib/praxis-scene/include/praxis/scene/plot_window.h	mark	member	-	typename:plot_mark
+lib/praxis-scene/include/praxis/scene/plot_window.h	tone	member	-	typename:std::optional<std::uint32_t>
 lib/praxis-scene/include/praxis/scene/plot_window.h	plot_limits	struct	-	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	lower	member	-	typename:double
 lib/praxis-scene/include/praxis/scene/plot_window.h	upper	member	-	typename:double

@@ -1,6 +1,7 @@
 #include "curve_overlays.h"
 #include "curve_objective.h"
 #include "scenario_answers.h"
+#include "scenario_defaults.h"
 
 #include "praxis/optimization/slots.h"
 #include "praxis/optimization/curve_graph.h"
@@ -23,7 +24,7 @@ constexpr const char *abscissa_axis = "x";
 
 scene::plot_series iterate_marks(const scenario_run &run)
 {
-    scene::plot_series marks{"Iterates", {}, {}, scene::plot_mark::markers};
+    scene::plot_series marks{"Iterates", {}, {}, scene::plot_mark::markers, iterate_tone};
     for(std::size_t k = 0; k < run.iterates.size(); ++k)
     {
         marks.abscissa.push_back(coordinate(run.iterates[k]));
@@ -31,6 +32,19 @@ scene::plot_series iterate_marks(const scenario_run &run)
     }
 
     return marks;
+}
+
+// Every iterate, the selected one over them, and a converged run's answer ringed where the last
+// iterate stands.
+void add_iterates(const scenario_snapshot &shown, std::vector<scene::plot_series> &drawn)
+{
+    const scenario_run &run        = shown.run;
+    const scene::plot_series marks = iterate_marks(run);
+    drawn.push_back(marks);
+    if(shown.step < marks.abscissa.size())
+        drawn.push_back(scene::plot_series{"x_k", {marks.abscissa[shown.step]}, {marks.ordinate[shown.step]}, scene::plot_mark::markers, selected_iterate_tone});
+    if(run.answer && !run.refused && !marks.ordinate.empty())
+        drawn.push_back(scene::plot_series{answer_name(drawn_form(run)), {coordinate(*run.answer)}, {marks.ordinate.back()}, scene::plot_mark::ring, answer_tone});
 }
 
 const char *ordinate_of(const scenario_run &run)
@@ -50,9 +64,9 @@ void add_step_of(const scenario_snapshot &shown, const interval &span, std::vect
 
 std::vector<scene::plot_series> drawn_parts(const scenario_snapshot &shown, const scenario_view &view)
 {
-    std::vector<scene::plot_series> drawn{scene::plot_series{ordinate_of(shown.run), shown.abscissa, shown.ordinate, scene::plot_mark::line}};
+    std::vector<scene::plot_series> drawn{scene::plot_series{ordinate_of(shown.run), shown.abscissa, shown.ordinate, scene::plot_mark::line, curve_tone}};
     if(view.iterates)
-        drawn.push_back(iterate_marks(shown.run));
+        add_iterates(shown, drawn);
 
     const std::optional<linearized> here = view.linearization ? linearized_point(shown.linearization, drawn) : std::nullopt;
     if(view.step)

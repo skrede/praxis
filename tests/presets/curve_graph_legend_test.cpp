@@ -137,14 +137,14 @@ TEST_CASE("the root cubic's Graph at its opening rectangle writes its legend in 
 {
     const drawn_graph drawn = drawn_at_opening("curve.xml", "Root finding: a cubic");
 
-    check_labels_in_full(drawn, {"g(x)", "Iterates", "tangent at x_k", "zero of the tangent", "x_(k+1)", "tangent at p"});
-    check_clear_of_the_key(drawn, 218.f, 157.f);
+    check_labels_in_full(drawn, {"g(x)", "Iterates", "x_k", "root", "tangent at x_k", "zero of the tangent", "x_(k+1)", "linearization point p", "tangent at p"});
+    check_clear_of_the_key(drawn, 218.f, 140.f);
 }
 
 TEST_CASE("the minimized quartic's Graph at its opening rectangle writes its legend in full and keeps its plot clear", "[presets][optimization]")
 {
     const drawn_graph drawn = drawn_at_opening("curve-minimum.xml", "Minimization: x^4 - 3x^2 + x");
 
-    check_labels_in_full(drawn, {"f(x)", "Iterates", "vertex", "quadratic model at x_k", "x_(k+1)", "tangent at p"});
-    check_clear_of_the_key(drawn, 225.f, 157.f);
+    check_labels_in_full(drawn, {"f(x)", "Iterates", "x_k", "stationary point", "vertex", "quadratic model at x_k", "x_(k+1)", "linearization point p", "tangent at p"});
+    check_clear_of_the_key(drawn, 225.f, 123.f);
 }

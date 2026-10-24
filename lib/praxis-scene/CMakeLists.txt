@@ -15,6 +15,7 @@ praxis_add_module(scene
     include/praxis/scene/labeled_value_window.h
     src/plot_key.h
     src/preset.cpp
+    src/plot_ring.h
     src/plot_key.cpp
     src/log_buffer.cpp
     src/visualizer.cpp
