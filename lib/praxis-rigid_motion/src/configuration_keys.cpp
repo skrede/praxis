@@ -82,11 +82,11 @@ std::optional<std::string> carried_text(const config::document &values, const st
     if(!carried(values, key))
         return std::nullopt;
 
-    const expected<std::string, config::error> read = values.text(key);
+    expected<std::string, config::error> read = values.text(key);
     if(!read)
         return std::nullopt;
 
-    return read.value();
+    return std::move(read).value();
 }
 
 void declare_vector(config::declaration &shape, const std::string &at, const Eigen::Vector3f &fallback)
