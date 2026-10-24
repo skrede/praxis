@@ -55,7 +55,8 @@ public:
     // the handles it admitted, which the preset then holds for as long as it lives.
     detail::move_only_function<expected<std::vector<scheduler::task_handle>, refusal>()> admit_cb;
 
-    // The view the camera is moved to when this loads; absent leaves the camera where it stands.
+    // The view the camera is moved to when this loads; absent moves it to the view the visualizer
+    // opens at.
     std::optional<camera_view> opening_view;
 
     expected<void, refusal> initialize();

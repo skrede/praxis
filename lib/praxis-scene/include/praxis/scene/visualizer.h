@@ -190,7 +190,7 @@ private:
 
     void setup_scene(const windows &stood);
     void add_camera();
-    void aim_camera(const camera_view &view);
+    void aim_camera(const std::optional<camera_view> &named);
     void add_scene_grid();
     void add_scene_lights();
     void add_imgui_windows(const windows &stood);

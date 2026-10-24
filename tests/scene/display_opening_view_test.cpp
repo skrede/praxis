@@ -99,11 +99,22 @@ TEST_CASE("a preset naming an opening view moves the camera and the point it tur
     check_at(seen.target, named.target);
 }
 
-TEST_CASE("a preset naming no opening view leaves the camera where the previous one put it", "[scene][visualizer][display]")
+TEST_CASE("a preset naming no opening view puts the camera back over the origin whatever was loaded before it", "[scene][visualizer][display]")
 {
     stage staged;
     staged.load(opening_at(named));
     staged.load(opening_at(std::nullopt));
+    const camera_view seen = staged.view.current_view();
+    check_at(seen.position, threepp::Vector3(0.f, 1.25f, 1.f));
+    check_at(seen.target, threepp::Vector3(0.f, 0.f, 0.f));
+}
+
+TEST_CASE("a preset naming an opening view moves the camera there again after one naming none", "[scene][visualizer][display]")
+{
+    stage staged;
+    staged.load(opening_at(named));
+    staged.load(opening_at(std::nullopt));
+    staged.load(opening_at(named));
     const camera_view seen = staged.view.current_view();
     check_at(seen.position, named.position);
     check_at(seen.target, named.target);

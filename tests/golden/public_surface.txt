@@ -3346,7 +3346,7 @@ lib/praxis-scene/include/praxis/scene/visualizer.h	capture_input	prototype	()	ty
 lib/praxis-scene/include/praxis/scene/visualizer.h	resize	prototype	(threepp::WindowSize size)	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	setup_scene	prototype	(const windows & stood)	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	add_camera	prototype	()	typename:void
-lib/praxis-scene/include/praxis/scene/visualizer.h	aim_camera	prototype	(const camera_view & view)	typename:void
+lib/praxis-scene/include/praxis/scene/visualizer.h	aim_camera	prototype	(const std::optional<camera_view> & named)	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	add_scene_grid	prototype	()	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	add_scene_lights	prototype	()	typename:void
 lib/praxis-scene/include/praxis/scene/visualizer.h	add_imgui_windows	prototype	(const windows & stood)	typename:void

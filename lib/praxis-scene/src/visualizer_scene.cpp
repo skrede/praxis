@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <utility>
+#include <optional>
 
 namespace praxis::scene {
 
@@ -14,6 +15,11 @@ namespace {
 
 constexpr float frustum_size       = 5.f;
 constexpr unsigned int grid_extent = 10u;
+
+camera_view built_view()
+{
+    return camera_view{threepp::Vector3(0.f, 1.25f, 1.f), threepp::Vector3(0.f, 0.f, 0.f)};
+}
 
 }
 
@@ -45,12 +51,13 @@ void visualizer::add_camera()
     else
         m_camera = threepp::OrthographicCamera::create(-(frustum_size * m_canvas->aspect()) / 2.f, (frustum_size * m_canvas->aspect()) / 2.f, frustum_size / 2.f, -frustum_size / 2.f,
                                                        0.001f, 100.f);
-    m_camera->position.set(0.f, 1.25f, 1.f);
+    m_camera->position.copy(built_view().position);
     m_controls = std::make_unique<threepp::OrbitControls>(*m_camera, *m_canvas);
 }
 
-void visualizer::aim_camera(const camera_view &view)
+void visualizer::aim_camera(const std::optional<camera_view> &named)
 {
+    const camera_view view = named.value_or(built_view());
     m_camera->position.copy(view.position);
     m_camera->zoom = 1.f;
     m_camera->updateProjectionMatrix();

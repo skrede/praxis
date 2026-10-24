@@ -25,6 +25,7 @@ private:
     // release asks is asked before the change rather than after it.
     std::optional<std::string> m_requested;
 
+    void fit_on_first_use() const;
     void render_body();
     void render_question();
 

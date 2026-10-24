@@ -2,12 +2,35 @@
 
 #include "praxis/scene/widgets.h"
 
+#include <ranges>
 #include <string>
-#include <string_view>
 #include <vector>
 #include <utility>
+#include <algorithm>
+#include <string_view>
 
 namespace praxis::scene {
+
+namespace {
+
+constexpr const char *load_label   = "Load";
+constexpr const char *unload_label = "Unload";
+constexpr const char *save_label   = "Save";
+
+float framed_width(const char *label)
+{
+    const float padding = ImGui::GetStyle().FramePadding.x;
+    return padding + ImGui::CalcTextSize(label).x + padding;
+}
+
+// The widest name, framed, beside the arrow square the combo draws at frame height. `names` is not
+// empty.
+float dropdown_width(const std::vector<std::string> &names)
+{
+    return std::ranges::max(names | std::views::transform([](const std::string &name) { return framed_width(name.c_str()); })) + ImGui::GetFrameHeight();
+}
+
+}
 
 preset_window::preset_window(std::string name, visualizer &v)
         : imgui_window(std::move(name))
@@ -20,12 +43,27 @@ preset_window::preset_window(std::string name, visualizer &v)
 
 void preset_window::render()
 {
+    fit_on_first_use();
     ImGui::Begin(display_name().c_str());
     if(m_visualizer.awaiting_answer())
         render_question();
     else
         render_body();
     ImGui::End();
+}
+
+// Wide enough for the whole row where no saved layout places the window; the height fits the content.
+void preset_window::fit_on_first_use() const
+{
+    const std::vector<std::string> presets = m_visualizer.preset_names();
+    if(presets.empty())
+        return;
+
+    const ImGuiStyle &style = ImGui::GetStyle();
+    float row               = dropdown_width(presets) + style.ItemSpacing.x + framed_width(load_label) + style.ItemSpacing.x + framed_width(unload_label);
+    if(m_visualizer.save_offered())
+        row += style.ItemSpacing.x + framed_width(save_label);
+    ImGui::SetNextWindowSize(ImVec2(style.WindowPadding.x + row + style.WindowPadding.x, 0.f), ImGuiCond_FirstUseEver);
 }
 
 void preset_window::render_body()
@@ -38,13 +76,13 @@ void preset_window::render_body()
 
     if(offered)
         ImGui::SameLine();
-    if(ImGui::Button("Unload"))
+    if(ImGui::Button(unload_label))
         m_visualizer.clear_preset();
     if(!m_visualizer.save_offered())
         return;
 
     ImGui::SameLine();
-    if(ImGui::Button("Save"))
+    if(ImGui::Button(save_label))
         m_visualizer.save_values();
 }
 
@@ -103,10 +141,11 @@ bool preset_window::render_preset_selection()
     if(m_selected >= presets.size())
         m_selected = 0;
 
+    ImGui::SetNextItemWidth(dropdown_width(presets));
     if(render_dropdown_selection("##item", m_selected, presets))
         m_requested.reset();
     ImGui::SameLine();
-    if(ImGui::Button("Load"))
+    if(ImGui::Button(load_label))
         request(presets[m_selected]);
 
     return true;
