@@ -140,11 +140,15 @@ void level_map::resample(const scenario_snapshot &shown, const field_placement &
 void level_map::place(const scenario_snapshot &shown, const field_placement &placed)
 {
     std::vector<Eigen::Vector3d> centers;
+    std::vector<std::uint32_t> tones;
     for(const drawn_iterate &mark : drawn_iterates(shown, placed, iterate_spacing))
+    {
         centers.emplace_back(mark.at.x(), mark.at.y(), m_floor);
+        tones.push_back(mark.iterate == shown.step ? floor_selected_iterate_tone : floor_iterate_tone);
+    }
     hold_marks(*m_projected, m_marks, centers.size(), marks_look{"iterate on the floor", floor_iterate_tone, m_sphere, m_mark_tone});
     if(m_marks != nullptr)
-        write_marks(*m_marks, centers, std::vector<std::uint32_t>(centers.size(), floor_iterate_tone));
+        write_marks(*m_marks, centers, tones);
     step_from(shown, on_floor(placed));
 }
 

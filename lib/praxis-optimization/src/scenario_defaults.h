@@ -97,6 +97,9 @@ inline constexpr std::uint32_t floor_iterate_tone    = 0x000000;
 inline constexpr std::uint32_t gradient_tone         = 0xffd700;
 inline constexpr std::uint32_t floor_step_tone       = 0x8b0000;
 
+// The tone the floor marker of the selected step's iterate wears, as 0xRRGGBB.
+inline constexpr std::uint32_t floor_selected_iterate_tone = 0x00ffff;
+
 // The tone of the linearization at p, as 0xRRGGBB: a curve's point and its tangent, and a surface's
 // plane at p.
 inline constexpr std::uint32_t linearization_point_tone = 0xffffff;
