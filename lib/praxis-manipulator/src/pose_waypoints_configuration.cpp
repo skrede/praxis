@@ -11,6 +11,7 @@
 #include <vector>
 #include <cstddef>
 #include <utility>
+#include <algorithm>
 #include <string_view>
 
 namespace praxis::manipulator {
@@ -41,9 +42,15 @@ std::string spelled(const edited_pose &row, std::string_view carried)
     for(Eigen::Index axis = 0; axis < 3; ++axis)
         numbers.push_back(keys::text_of(row.euler_degrees[axis]));
 
-    if(written.size() == pose_numbers)
-        for(std::size_t number = 0; number < pose_numbers; ++number)
-            numbers[number] = keys::held_text(numbers[number], written[number].value, written[number].text);
+    if(written.size() != pose_numbers)
+        return waypoint_rows::joined(numbers);
+
+    for(std::size_t number = 0; number < pose_numbers; ++number)
+        numbers[number] = keys::held_text(numbers[number], written[number].value, written[number].text);
+
+    // A row whose every number kept its text keeps its separators too.
+    if(std::ranges::equal(numbers, written, {}, {}, &waypoint_rows::carried_number::text))
+        return std::string(carried);
 
     return waypoint_rows::joined(numbers);
 }

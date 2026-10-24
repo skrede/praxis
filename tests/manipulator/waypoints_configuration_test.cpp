@@ -403,6 +403,18 @@ TEST_CASE("a pose list saved over a document carrying a row with no index writes
         stands_at(read.rows[row], written.rows[row]);
 }
 
+TEST_CASE("a pose row written with irregular spacing opens with nothing unsaved and keeps its text", "[manipulator][waypoints]")
+{
+    const std::shared_ptr<arm_publisher> published = published_arm();
+    for(const std::string row : {"0.123456789  0.25 -0.5 30 90 -180", " 0.5 0.25 -0.5 30 90 -180 "})
+    {
+        const config::document carried = carrying("pose-spaced.xml", "<pose_waypoints><waypoint index=\"1\" pose=\"" + row + "\"/></pose_waypoints>");
+        const pose_waypoint_list panel("Poses", published->reader(), frames_of, read_pose_waypoints(carried, poses_at), std::string(poses_at));
+
+        CHECK(panel.settings_edits(carried).empty());
+    }
+}
+
 TEST_CASE("a pose row carrying a number its float cannot hold opens with nothing unsaved and keeps that number's text when another number of the row is edited",
           "[manipulator][waypoints]")
 {
