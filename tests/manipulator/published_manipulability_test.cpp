@@ -16,6 +16,7 @@
 
 #include <Eigen/SVD>
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include <span>
 #include <cmath>
@@ -58,6 +59,13 @@ praxis::expected<jacobian, praxis::refusal> deranged_space_jacobian(const praxis
     return columns;
 }
 
+praxis::expected<jacobian, praxis::refusal> answering_body_jacobian(const praxis::rigid_motion::screw_ops &screw, const praxis::rigid_motion::frame_ops &,
+                                                                    const forward_kinematics_ops &, const praxis::transform &, std::span<const praxis::screw_axis> screws,
+                                                                    const joint_vector &theta)
+{
+    return answering_space_jacobian(screw, screws, theta);
+}
+
 differential_kinematics_ops answering_jacobian()
 {
     return differential_kinematics_ops{.space_jacobian = &answering_space_jacobian};
@@ -77,7 +85,8 @@ struct arm_pipe
 
 // A chain of the named width standing on the module's own inert robot bindings: nothing here needs a
 // graphics context, and the width is what decides whether an ellipsoid can be taken at all.
-arm_pipe pipe(scheduler &loop, const screw_chain &chain, std::uint32_t joints, const differential_kinematics_ops &differential)
+arm_pipe pipe(scheduler &loop, const screw_chain &chain, std::uint32_t joints, const differential_kinematics_ops &differential,
+              const praxis::transform &tool_offset = praxis::transform::Identity())
 {
     const strand work = *loop.make_strand();
     auto robot        = std::make_shared<scene_robot>(
@@ -86,6 +95,7 @@ arm_pipe pipe(scheduler &loop, const screw_chain &chain, std::uint32_t joints, c
                                          .value(),
                                  praxis::manipulator::baseline().robot, praxis::rigid_motion::baseline().frame, joints)
                     .value());
+    robot->set_tool_offset(tool_offset);
 
     auto controller = std::make_shared<robot_controller>(*robot, motion_ops{}, composing_path(), task_trajectory_ops{}, composing_time_scaling(), praxis::trajectory::trajectory_ops{},
                                                          praxis::rigid_motion::screw_ops{}, praxis::rigid_motion::frame_ops{});
@@ -192,4 +202,34 @@ TEST_CASE("a Jacobian no ellipsoid can be built from is named once and not once 
     CHECK(seen->space_manipulability.angular.error() == praxis::refusal::degenerate);
     CHECK(reported.find("dk.manipulability") != std::string::npos);
     CHECK(reported.find("dk.manipulability") == reported.rfind("dk.manipulability"));
+}
+
+// The offset turns about no coordinate axis and moves off the flange along all three, so the linear
+// block's decomposition changes with it and not only its axes. The expectation is the flange's body
+// Jacobian carried by the adjoint of the offset's inverse, Lynch & Park, Modern Robotics, Def. 3.20.
+TEST_CASE("under a rotating tool offset the body ellipsoids are taken over the body Jacobian re-expressed at the tool", "[manipulator][manipulability]")
+{
+    praxis::transform offset   = praxis::transform::Identity();
+    offset.block<3, 3>(0, 0)   = Eigen::AngleAxisd(0.7, Eigen::Vector3d(1.0, 2.0, 3.0).normalized()).toRotationMatrix();
+    offset.block<3, 1>(0, 3)   = Eigen::Vector3d(0.05, 0.1, -0.02);
+    const Eigen::Matrix3d back = offset.block<3, 3>(0, 0).transpose();
+    Eigen::Matrix3d crossed;
+    crossed << 0.0, 0.02, 0.1, -0.02, 0.0, -0.05, -0.1, 0.05, 0.0;
+
+    scheduler loop(inline_workers, clock_source{&reading});
+    const arm_pipe arm = pipe(loop, three_link_arm(), 3u, differential_kinematics_ops{.space_jacobian = &answering_space_jacobian, .body_jacobian = &answering_body_jacobian}, offset);
+    const std::shared_ptr<const arm_snapshot> seen = arm.seen.read();
+    REQUIRE(seen != nullptr);
+    REQUIRE(seen->body_jacobian.has_value());
+    REQUIRE(seen->body_manipulability.linear.has_value());
+
+    Eigen::Matrix<double, 6, 6> carried = Eigen::Matrix<double, 6, 6>::Zero();
+    carried.topLeftCorner<3, 3>()       = back;
+    carried.bottomRightCorner<3, 3>()   = back;
+    carried.bottomLeftCorner<3, 3>()    = -back * crossed;
+    const jacobian at_the_tool          = carried * *seen->body_jacobian;
+
+    REQUIRE((values_of(at_the_tool.bottomRows(3)) - values_of(seen->body_jacobian->bottomRows(3))).norm() > 1.0e-3);
+    CHECK((seen->body_manipulability.linear->singular_values - values_of(at_the_tool.bottomRows(3))).cwiseAbs().maxCoeff() < exact);
+    CHECK((seen->body_manipulability.angular->singular_values - values_of(at_the_tool.topRows(3))).cwiseAbs().maxCoeff() < exact);
 }

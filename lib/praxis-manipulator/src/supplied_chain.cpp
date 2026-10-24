@@ -58,12 +58,17 @@ expected<void, refusal> loadable_robot_stencil::set_joint_screws(const transform
         return unexpected(refusal::unsupported_input);
     }
 
-    m_home = home;
-    m_screws.assign(space_screws.begin(), space_screws.end());
-    m_supplied = false;
-    rebuild_decoration();
+    assign_joint_screws(home, space_screws, false);
 
     return {};
+}
+
+void loadable_robot_stencil::assign_joint_screws(const transform &home, std::span<const screw_axis> space_screws, bool supplied)
+{
+    m_home = home;
+    m_screws.assign(space_screws.begin(), space_screws.end());
+    m_supplied = supplied;
+    rebuild_decoration();
 }
 
 void loadable_robot_stencil::clear_joint_screws()
@@ -86,10 +91,9 @@ expected<void, refusal> loadable_robot_stencil::supply_joint_screws(const transf
         return unexpected(refusal::unsupported_input);
     }
 
-    const expected<void, refusal> told = set_joint_screws(home, space_screws);
-    m_supplied                         = true;
+    assign_joint_screws(home, space_screws, true);
 
-    return told;
+    return {};
 }
 
 void loadable_robot_stencil::supply_unbuilt_chain(rigid_motion::screw_slot unbound)

@@ -1007,6 +1007,9 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	attac
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	world_object	prototype	() const	typename:std::shared_ptr<threepp::Object3D>
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	robot	prototype	()	typename:threepp::Robot &
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	robot	prototype	() const	typename:const threepp::Robot &
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	chain_drawing	enum	-	typename:std::uint8_t
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	placed	enumerator	-	-
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	withheld	enumerator	-	-
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_seen	member	-	typename:arm_reader
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_scene	member	-	typename:threepp::Scene &
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_render	member	-	typename:scheduler::strand
@@ -1072,14 +1075,15 @@ lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	m_col
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	apply_published	prototype	(const arm_snapshot & seen) const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	detach_flange_attachments	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	place_flange_attachments	prototype	(const std::shared_ptr<const arm_snapshot> & seen,bool chain_withheld) const	typename:void
-lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	show_flange_markers	prototype	(bool chain_withheld) const	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	show_flange_markers	prototype	(bool markers_withheld) const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	root_frame	prototype	() const	typename:threepp::Matrix4
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	place_tool_drawing	prototype	() const	typename:void
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	assign_joint_screws	prototype	(const transform & home,std::span<const screw_axis> space_screws,bool supplied)	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	rebuild_decoration	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	rebuild_chain	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	clear_chain	prototype	()	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	apply_selection	prototype	() const	typename:void
-lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	place_joint_decoration	prototype	(const std::shared_ptr<const arm_snapshot> & seen) const	typename:bool
+lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	place_joint_decoration	prototype	(const std::shared_ptr<const arm_snapshot> & seen) const	typename:chain_drawing
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	place_ellipsoids	prototype	() const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	place_jacobian_columns	prototype	() const	typename:void
 lib/praxis-manipulator/include/praxis/manipulator/loadable_robot_stencil.h	raise_twist	prototype	()	typename:void
@@ -3559,7 +3563,7 @@ lib/praxis-trajectory/include/praxis/trajectory/capabilities.h	capability_views	
 lib/praxis-trajectory/include/praxis/trajectory/capabilities.h	capability_views	prototype	(capabilities &&)	typename:std::array<capability_view,4>
 lib/praxis-trajectory/include/praxis/trajectory/evaluation.h	praxis	namespace	-	-
 lib/praxis-trajectory/include/praxis/trajectory/evaluation.h	trajectory	namespace	-	-
-lib/praxis-trajectory/include/praxis/trajectory/evaluation.h	driven	prototype	(const trajectory_generator & held,const trajectory_generator & against,evaluation::residual_kind kind,const evaluation::tolerance_pair & allowed)	typename:evaluation::case_result
+lib/praxis-trajectory/include/praxis/trajectory/evaluation.h	driven	prototype	(const trajectory_generator & held,const trajectory_generator & against,evaluation::residual_kind kind,const evaluation::tolerance_pair & allowed,std::span<const double> knots={})	typename:evaluation::case_result
 lib/praxis-trajectory/include/praxis/trajectory/evaluation.h	driven	prototype	(const pose_trajectory_generator & held,const pose_trajectory_generator & against,evaluation::residual_kind kind,const evaluation::tolerance_pair & allowed)	typename:evaluation::case_result
 lib/praxis-trajectory/include/praxis/trajectory/evaluation.h	evaluation_views	prototype	(const capabilities & first,const capabilities & second)	typename:std::array<evaluation::evaluation_view,4>
 lib/praxis-trajectory/include/praxis/trajectory/evaluation.h	evaluation_views	prototype	(capabilities &&,const capabilities &)	typename:std::array<evaluation::evaluation_view,4>

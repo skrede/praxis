@@ -1,4 +1,5 @@
 #include "robot/column_arrow.h"
+#include "robot/manipulability.h"
 #include "robot/joint_decoration.h"
 
 #include "praxis/manipulator/loadable_robot_stencil.h"
@@ -38,20 +39,6 @@ Eigen::Vector3d part_of(const jacobian &taken, std::size_t column, std::size_t p
     return Eigen::Vector3d(taken.block<3, 1>(part == block_of(jacobian_block::angular) ? 0 : 3, static_cast<Eigen::Index>(column)));
 }
 
-// A twist of the flange re-expressed in the tool frame, the offset being the tool frame's pose in the
-// flange frame. Lynch & Park, Modern Robotics, Def. 3.20.
-jacobian at_the_tool(const jacobian &flange, const transform &offset)
-{
-    const Eigen::Matrix3d turned_back = offset.block<3, 3>(0, 0).transpose();
-    const Eigen::Vector3d moved       = offset.block<3, 1>(0, 3);
-
-    jacobian tool(6, flange.cols());
-    tool.topRows<3>()    = turned_back * flange.topRows<3>();
-    tool.bottomRows<3>() = turned_back * (flange.bottomRows<3>() + flange.topRows<3>().colwise().cross(moved));
-
-    return tool;
-}
-
 refusal no_column_to_draw()
 {
     spdlog::error("praxis: the columns of a Jacobian were told to stand at a width of none, so no arrow is raised and the ones standing are left as they were");
@@ -78,10 +65,8 @@ expected<jacobian, refusal> shown_jacobian(const arm_snapshot &seen, jacobian_fr
 {
     if(taken == jacobian_frame::space)
         return seen.space_jacobian;
-    if(!seen.body_jacobian)
-        return unexpected(seen.body_jacobian.error());
 
-    return at_the_tool(*seen.body_jacobian, seen.tool_offset);
+    return body_jacobian_at_the_tool(seen.body_jacobian, seen.tool_offset);
 }
 
 std::string loadable_robot_stencil::jacobian_column_name(std::size_t column, jacobian_block part)

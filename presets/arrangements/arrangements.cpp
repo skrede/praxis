@@ -76,8 +76,8 @@ std::nullopt_t not_offered(const config::location &at, const std::string &why)
 }
 
 // A document offers a preset by stating a name no document read before it has taken. The registry
-// assigns into a map, so a second registration under one name would replace the first and leave one
-// entry where two were meant.
+// replaces the factory already registered under a name, so a second registration under one name
+// would leave one entry where two were meant.
 std::optional<std::string> offered_name(scene::preset_registry &registry, const config::location &at, const config::outcome &read)
 {
     if(read.failure)

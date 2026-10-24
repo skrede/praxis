@@ -186,12 +186,12 @@ void loadable_robot_stencil::place_flange_attachments(const std::shared_ptr<cons
     show_flange_markers(m_supplied && chain_withheld);
 }
 
-void loadable_robot_stencil::show_flange_markers(bool chain_withheld) const
+void loadable_robot_stencil::show_flange_markers(bool markers_withheld) const
 {
     const bool occupied = m_attached[slot_of(flange_attachment::tool)].object != nullptr;
     const bool yielded  = m_marker_policy == flange_marker_policy::yields && occupied;
-    shown_if(m_attached[slot_of(flange_attachment::frame_marker)].object, m_marker_shown && !yielded && !chain_withheld);
-    shown_if(m_attached[slot_of(flange_attachment::tool_frame_marker)].object, m_tool_marker_shown && !chain_withheld);
+    shown_if(m_attached[slot_of(flange_attachment::frame_marker)].object, m_marker_shown && !yielded && !markers_withheld);
+    shown_if(m_attached[slot_of(flange_attachment::tool_frame_marker)].object, m_tool_marker_shown && !markers_withheld);
     shown_if(m_attached[slot_of(flange_attachment::described_frame_marker)].object, m_described_marker_shown && m_supplied);
 }
 

@@ -132,8 +132,8 @@ TEST_CASE("the twist of told rates stands at the tool, its angular arrow J's ang
     REQUIRE(drawn(linear));
     CHECK((arrow_at(angular) - elsewhere).norm() < placed_back);
     CHECK((arrow_at(linear) - elsewhere).norm() < placed_back);
-    CHECK((drawn_vector(angular) - omega * angular_column_scale).norm() < 1e-5);
-    CHECK((drawn_vector(linear) - moving * linear_column_scale).norm() < 1e-5);
+    CHECK((drawn_vector(angular) - omega * angular_column_scale).norm() < vector_read_back);
+    CHECK((drawn_vector(linear) - moving * linear_column_scale).norm() < vector_read_back);
 }
 
 TEST_CASE("with the body Jacobian shown the twist stands at the tool, both parts carried into space by the tool's orientation", "[manipulator][drawing]")
@@ -145,8 +145,8 @@ TEST_CASE("with the body Jacobian shown the twist stands at the tool, both parts
     for(const jacobian_block part : both_parts)
         REQUIRE(drawn(twist_arrow(headless, part)));
     CHECK((arrow_at(twist_arrow(headless, jacobian_block::linear)) - elsewhere).norm() < placed_back);
-    CHECK((drawn_vector(twist_arrow(headless, jacobian_block::angular)) - turned_tool() * twist.head<3>() * angular_column_scale).norm() < 1e-5);
-    CHECK((drawn_vector(twist_arrow(headless, jacobian_block::linear)) - turned_tool() * twist.tail<3>() * linear_column_scale).norm() < 1e-5);
+    CHECK((drawn_vector(twist_arrow(headless, jacobian_block::angular)) - turned_tool() * twist.head<3>() * angular_column_scale).norm() < vector_read_back);
+    CHECK((drawn_vector(twist_arrow(headless, jacobian_block::linear)) - turned_tool() * twist.tail<3>() * linear_column_scale).norm() < vector_read_back);
 }
 
 // The space Jacobian published is the adjoint of the body one at the flange pose, the frame the body
@@ -169,7 +169,7 @@ TEST_CASE("the twist stands as the same two vectors whichever Jacobian of one co
     for(const jacobian_block part : both_parts)
     {
         CHECK((arrow_at(twist_arrow(headless, part)) - elsewhere).norm() < placed_back);
-        CHECK((drawn_vector(twist_arrow(headless, part)) - in_space[static_cast<std::size_t>(part)]).norm() < 1e-5);
+        CHECK((drawn_vector(twist_arrow(headless, part)) - in_space[static_cast<std::size_t>(part)]).norm() < vector_read_back);
     }
 }
 
@@ -183,7 +183,7 @@ TEST_CASE("in the body frame the twist is the sum of the weighted columns standi
     for(const jacobian_block part : both_parts)
     {
         const Eigen::Vector3d summed = drawn_vector(headless.arrow(0u, part)) + drawn_vector(headless.arrow(1u, part));
-        CHECK((drawn_vector(twist_arrow(headless, part)) - summed).norm() < 1e-5);
+        CHECK((drawn_vector(twist_arrow(headless, part)) - summed).norm() < vector_read_back);
     }
 }
 
@@ -205,12 +205,13 @@ TEST_CASE("the twist opens off, stands for nothing while no rates are told, and 
     drawn_as(headless, true, true);
 }
 
-TEST_CASE("the twist is hidden where the shown Jacobian's width or the tool pose cannot place it", "[manipulator][drawing]")
+TEST_CASE("the twist is hidden where the shown Jacobian is refused or its width or the tool pose cannot place it", "[manipulator][drawing]")
 {
     const Eigen::Matrix<double, 6, 1> third = twist_of(Eigen::Vector3d(0.0, 1.0, 0.0), Eigen::Vector3d(1.0, 0.0, 0.0));
     const jacobian wider                    = of_columns({two_columns(1.0).col(0), two_columns(1.0).col(1), third});
     hidden_once(published_columns(wider, wider, elsewhere), jacobian_frame::space);
     hidden_once(published_columns(two_columns(1.0), two_columns(1.0), unexpected(refusal::unsupported_input)), jacobian_frame::space);
+    hidden_once(published_columns(two_columns(1.0), unexpected(refusal::not_implemented), elsewhere), jacobian_frame::body);
 
     arm_snapshot unturned     = published_columns(two_columns(1.0), two_columns(1.0), elsewhere);
     unturned.tool_orientation = unexpected(refusal::unsupported_input);

@@ -389,6 +389,13 @@ public:
     const threepp::Robot &robot() const;
 
 private:
+    // Whether the joint decoration was drawn on this frame or withheld from it.
+    enum class chain_drawing : std::uint8_t
+    {
+        placed,
+        withheld
+    };
+
     arm_reader m_seen;
     threepp::Scene &m_scene;
     scheduler::strand m_render;
@@ -471,14 +478,15 @@ private:
     void apply_published(const arm_snapshot &seen) const;
     void detach_flange_attachments();
     void place_flange_attachments(const std::shared_ptr<const arm_snapshot> &seen, bool chain_withheld) const;
-    void show_flange_markers(bool chain_withheld) const;
+    void show_flange_markers(bool markers_withheld) const;
     threepp::Matrix4 root_frame() const;
     void place_tool_drawing() const;
+    void assign_joint_screws(const transform &home, std::span<const screw_axis> space_screws, bool supplied);
     void rebuild_decoration();
     void rebuild_chain();
     void clear_chain();
     void apply_selection() const;
-    bool place_joint_decoration(const std::shared_ptr<const arm_snapshot> &seen) const;
+    chain_drawing place_joint_decoration(const std::shared_ptr<const arm_snapshot> &seen) const;
     void place_ellipsoids() const;
     void place_jacobian_columns() const;
     void raise_twist();

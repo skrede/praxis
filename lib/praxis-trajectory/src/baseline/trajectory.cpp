@@ -4,6 +4,7 @@
 
 #include <spdlog/spdlog.h>
 
+#include <span>
 #include <cmath>
 #include <vector>
 #include <cstddef>
@@ -67,7 +68,7 @@ bool rows_advance(const std::vector<double> &times)
     for(std::size_t k = 1u; k < times.size(); ++k)
         if(!(times[k] > times[k - 1u]))
         {
-            spdlog::error("praxis: row {} repeats the configuration the run already stands at, so it traverses in no time, and the run stands as it was given", k);
+            spdlog::error("praxis: row {} moves no joint whose velocity bound is positive from the row before it, so it traverses in no time, and the run stands as it was given", k);
             return false;
         }
 

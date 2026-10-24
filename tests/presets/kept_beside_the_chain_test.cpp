@@ -403,5 +403,7 @@ TEST_CASE("the screw axes switch beside a supplied chain hides the axes and leav
     CHECK_FALSE(written_flag(reread(arm), screw_axes_key));
 
     fixture::opened_arm again;
-    CHECK_FALSE(view_of(arm.composed(again))->state().decoration);
+    const std::shared_ptr<scene::preset> reopened = arm.composed(again);
+    CHECK_FALSE(view_of(reopened)->state().decoration);
+    CHECK_FALSE(anything_unsaved(arm, *reopened));
 }

@@ -21,6 +21,11 @@ expected<manipulability_ellipsoid, refusal> ellipsoid_of(const Eigen::Ref<const 
 // refusal where it is a refusal.
 jacobian_manipulability manipulability_of(const expected<jacobian, refusal> &taken);
 
+// The flange's body Jacobian re-expressed in the tool frame, the offset being the tool frame's pose
+// in the flange frame, and the flange's own refusal where it is one. Lynch & Park, Modern Robotics,
+// Def. 3.20.
+expected<jacobian, refusal> body_jacobian_at_the_tool(const expected<jacobian, refusal> &flange, const transform &offset);
+
 }
 
 #endif

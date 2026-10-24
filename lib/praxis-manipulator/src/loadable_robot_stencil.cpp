@@ -218,8 +218,8 @@ void loadable_robot_stencil::render() const
     const std::shared_ptr<const arm_snapshot> seen = m_seen.read();
     if(seen != nullptr)
         apply_published(*seen);
-    const bool chain_withheld = place_joint_decoration(seen);
-    place_flange_attachments(seen, chain_withheld);
+    const chain_drawing drawn = place_joint_decoration(seen);
+    place_flange_attachments(seen, drawn == chain_drawing::withheld);
     place_tool_drawing();
     place_ellipsoids();
     place_jacobian_columns();

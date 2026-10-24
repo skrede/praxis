@@ -1,3 +1,5 @@
+#include "answered.h"
+
 #include "praxis/rigid_motion/frame.h"
 #include "praxis/rigid_motion/types.h"
 #include "praxis/rigid_motion/frame_tree.h"
@@ -197,5 +199,5 @@ TEST_CASE("a tree emptied one frame at a time reads as an index past the end doe
     REQUIRE(arranged.pose(0).isApprox(transform::Identity()));
     REQUIRE(arranged.world_pose(0).isApprox(transform::Identity()));
     REQUIRE(arranged.parent_of(0) == std::nullopt);
-    REQUIRE(arranged.remove(0).error() == refusal::unsupported_input);
+    REQUIRE(tests::refused(arranged.remove(0)) == refusal::unsupported_input);
 }

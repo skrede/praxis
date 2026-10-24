@@ -70,10 +70,12 @@ namespace praxis::trajectory {
 // duration inclusive. At each, position and velocity are judged by their difference, and a degree of
 // freedom's acceleration by its difference over the larger of one and the two sides' magnitudes; at
 // the first and last sample that acceleration is accepted where the two sides agree or where either
-// reports rest. A sample carrying a value that is not finite, on either side, agrees with nothing. A
-// run handed for judgment holds at least two via points, starts at time 0, its times strictly
-// increase, every position and velocity has one width and every value is finite; nothing outside
-// that is judged, and a reference refuses it as unsupported_input.
+// reports rest, and at a sample landing exactly on an interior via point's time, where the
+// acceleration steps and either side's is the run's, it is not judged. A sample carrying a value
+// that is not finite, on either side, agrees with nothing. A run handed for judgment holds at least
+// two via points, starts at time 0, its times strictly increase, every position and velocity has one
+// width and every value is finite; nothing outside that is judged, and a reference refuses it as
+// unsupported_input.
 //
 // via_point_schedule chooses those via points from configurations. One configuration is joined to it
 // from j0 and two are joined to each other. Three or more are at rest at both ends, with each interior
@@ -86,9 +88,10 @@ namespace praxis::trajectory {
 // therefore at rest at both via points, over the slowest joint's traversal stretched until the
 // cubic's peak speed, 1.5 times its average, reaches the bound (sec. 9.2.2.1). A run of one or two
 // that does not move, an empty run, rows of differing width, a coordinate that is not finite, and in
-// a run of three or more a row repeating the one before it are refused as unsupported_input. A
-// schedule is judged by its length and element by element, each time against the larger of one and
-// its magnitude and each position and velocity by its difference.
+// a run of three or more a row the apportionment gives no time, one moving no joint whose velocity
+// bound is positive from the row before it, are refused as unsupported_input. A schedule is judged
+// by its length and element by element, each time against the larger of one and its magnitude and
+// each position and velocity by its difference.
 struct trajectory_ops
 {
     expected<std::unique_ptr<trajectory_generator>, refusal> (*joint_space_via_points)(std::span<const via_point> via_points) = &inert::joint_space_via_points;

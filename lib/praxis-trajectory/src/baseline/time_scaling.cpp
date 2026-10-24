@@ -1,3 +1,5 @@
+#include "trapezoid.h"
+
 #include "praxis/trajectory/baseline/time_scaling.h"
 
 #include <cmath>
@@ -17,31 +19,15 @@ expected<scaling_sample, refusal> refused()
     return unexpected(refusal::unsupported_input);
 }
 
-// Lynch & Park, Modern Robotics, sec. 9.2.2.2: T = (a + v^2)/(va), or a triangle peaking at sqrt(a)
-// where v^2/a > 1.
-double natural_duration(double rate, double rate_change)
-{
-    const double peak = std::sqrt(rate_change);
-    if(peak < rate)
-        return peak / rate_change + peak / rate_change;
-
-    const double ramp    = rate / rate_change;
-    const double covered = 0.5 * rate_change * ramp * ramp;
-    const double coast   = ((1.0 - covered) - covered) / rate;
-
-    return ramp + (coast < 0.0 ? 0.0 : coast) + ramp;
-}
-
 // Lynch & Park, Modern Robotics, sec. 9.2.2.2: v itself at the natural duration (the triangle's peak
-// where v is never reached), and past it a held and v = (aT - sqrt(a) sqrt(aT^2 - 4))/2, evaluated
-// as 2a/(aT + sqrt(a) sqrt(aT^2 - 4)).
+// where v is never reached), and past it a held at the rate that choosing a and T gives.
 double cruise_rate(double duration, double natural, double rate, double rate_change)
 {
     const double peak = std::sqrt(rate_change);
     if(duration == natural)
         return peak < rate ? peak : rate;
 
-    return 2.0 * rate_change / (rate_change * duration + peak * std::sqrt(std::max(0.0, rate_change * duration * duration - 4.0)));
+    return trapezoid_cruise_rate(duration, rate_change);
 }
 
 // Lynch & Park, Modern Robotics, sec. 9.2.2.2, eq. (9.16)-(9.24), with t_a = v/a.
@@ -125,7 +111,7 @@ expected<scaling_sample, refusal> trapezoidal_from_acceleration_duration(double 
     if(!finite_and_positive(duration) || !finite_and_positive(acceleration) || !(acceleration * duration * duration >= 4.0))
         return refused();
 
-    const double velocity = 2.0 * acceleration / (acceleration * duration + std::sqrt(acceleration) * std::sqrt(acceleration * duration * duration - 4.0));
+    const double velocity = trapezoid_cruise_rate(duration, acceleration);
 
     return trapezoid_at(std::clamp(t, 0.0, duration), duration, velocity, acceleration);
 }
@@ -137,7 +123,7 @@ expected<scaling_sample, refusal> trapezoidal_within_bounds(double t, double dur
     if(!finite_and_positive(duration) || !finite_and_positive(max_velocity) || !finite_and_positive(max_acceleration))
         return refused();
 
-    const double natural = natural_duration(max_velocity, max_acceleration);
+    const double natural = natural_trapezoid_duration(max_velocity, max_acceleration);
     if(duration < natural)
         return refused();
 

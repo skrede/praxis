@@ -4,8 +4,10 @@
 
 #include "praxis/rigid_motion/types.h"
 
+#include <span>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <algorithm>
 
 namespace praxis::trajectory {
@@ -47,6 +49,14 @@ double worst_element(const configuration &held, const configuration &against)
     return evaluation::element_wise_residual(held, against).magnitude;
 }
 
+// Where a sample falls: an end, a time the acceleration steps at, or anywhere else.
+enum class sampled_at : std::uint8_t
+{
+    an_end,
+    a_knot,
+    elsewhere
+};
+
 // Each acceleration is divided by the larger of one and either side's magnitude. At an end a
 // degree of freedom agrees where the two sides agree or either reports rest.
 double worst_acceleration(const configuration &held, const configuration &against, bool at_an_end)
@@ -63,33 +73,24 @@ double worst_acceleration(const configuration &held, const configuration &agains
 }
 
 // Position in radians, velocity in radians per second and acceleration as a fraction of its own size,
-// folded to whichever of the three is loosest.
-evaluation::residual folded_configurations(const trajectory_sample &held, const trajectory_sample &against, bool at_an_end)
+// folded to whichever of the three is loosest. At a knot the acceleration steps and either side's is
+// the motion's, so it is not judged there.
+evaluation::residual folded(const trajectory_sample &held, const trajectory_sample &against, sampled_at where)
 {
     if(!comparable(held, against))
         return differing(evaluation::residual_kind::element_wise).difference;
 
-    const double worst = std::max(
-            {worst_element(held.position, against.position), worst_element(held.velocity, against.velocity), worst_acceleration(held.acceleration, against.acceleration, at_an_end)});
+    const double accelerating = where == sampled_at::a_knot ? 0.0 : worst_acceleration(held.acceleration, against.acceleration, where == sampled_at::an_end);
+    const double worst        = std::max({worst_element(held.position, against.position), worst_element(held.velocity, against.velocity), accelerating});
 
     return evaluation::residual{evaluation::residual_kind::element_wise, worst, 0.0};
-}
-
-evaluation::residual folded(const trajectory_sample &held, const trajectory_sample &against)
-{
-    return folded_configurations(held, against, false);
-}
-
-evaluation::residual folded_at_an_end(const trajectory_sample &held, const trajectory_sample &against)
-{
-    return folded_configurations(held, against, true);
 }
 
 // The two units stay apart. Every angle among them -- the transform's geodesic distance and the two
 // twists' angular parts -- goes in the magnitude half in radians, and every length -- the transform's
 // origin distance and the two twists' linear parts -- goes in the linear half in meters. Neither half
 // is ever added to the other.
-evaluation::residual folded(const pose_sample &held, const pose_sample &against)
+evaluation::residual folded(const pose_sample &held, const pose_sample &against, sampled_at)
 {
     if(!finite(held) || !finite(against))
         return differing(evaluation::residual_kind::pose).difference;
@@ -100,11 +101,6 @@ evaluation::residual folded(const pose_sample &held, const pose_sample &against)
 
     return evaluation::residual{evaluation::residual_kind::pose, std::max({placed.magnitude, moving.head<3>().norm(), speeding.head<3>().norm()}),
                                 std::max({placed.linear_error_metres, moving.tail<3>().norm(), speeding.tail<3>().norm()})};
-}
-
-evaluation::residual folded_at_an_end(const pose_sample &held, const pose_sample &against)
-{
-    return folded(held, against);
 }
 
 bool durations_agree(double held, double against)
@@ -146,7 +142,8 @@ evaluation::case_result verdict_over(const run_tally &run, const evaluation::tol
 // The refusal channel of a sample is carried by the facility's own policy, so a time the shorter
 // span has run past is an outcome and not a number.
 template<typename Generator, typename Sample>
-evaluation::case_result over_the_shared_span(const Generator &held, const Generator &against, evaluation::residual_kind kind, const evaluation::tolerance_pair &allowed)
+evaluation::case_result over_the_shared_span(const Generator &held, const Generator &against, evaluation::residual_kind kind, const evaluation::tolerance_pair &allowed,
+                                             std::span<const double> knots)
 {
     const double span = held.duration();
     if(!durations_agree(span, against.duration()))
@@ -156,9 +153,11 @@ evaluation::case_result over_the_shared_span(const Generator &held, const Genera
 
     for(std::size_t index = 0; index < samples_per_case; ++index)
     {
-        const bool at_an_end = index == 0u || index + 1u == samples_per_case;
-        const double at      = std::min(span, span * static_cast<double>(index) / static_cast<double>(samples_per_case - 1u));
-        const auto compared  = [at_an_end](const Sample &first, const Sample &second) { return at_an_end ? folded_at_an_end(first, second) : folded(first, second); };
+        const double at        = std::min(span, span * static_cast<double>(index) / static_cast<double>(samples_per_case - 1u));
+        const sampled_at where = index == 0u || index + 1u == samples_per_case ? sampled_at::an_end
+                : std::ranges::find(knots, at) != knots.end()                  ? sampled_at::a_knot
+                                                                               : sampled_at::elsewhere;
+        const auto compared    = [where](const Sample &first, const Sample &second) { return folded(first, second, where); };
 
         record(run, evaluation::agreed_or_refused(held.sample(at), against.sample(at), compared, allowed));
     }
@@ -168,15 +167,16 @@ evaluation::case_result over_the_shared_span(const Generator &held, const Genera
 
 }
 
-evaluation::case_result driven(const trajectory_generator &held, const trajectory_generator &against, evaluation::residual_kind kind, const evaluation::tolerance_pair &allowed)
+evaluation::case_result driven(const trajectory_generator &held, const trajectory_generator &against, evaluation::residual_kind kind, const evaluation::tolerance_pair &allowed,
+                               std::span<const double> knots)
 {
-    return over_the_shared_span<trajectory_generator, trajectory_sample>(held, against, kind, allowed);
+    return over_the_shared_span<trajectory_generator, trajectory_sample>(held, against, kind, allowed, knots);
 }
 
 evaluation::case_result driven(const pose_trajectory_generator &held, const pose_trajectory_generator &against, evaluation::residual_kind kind,
                                const evaluation::tolerance_pair &allowed)
 {
-    return over_the_shared_span<pose_trajectory_generator, pose_sample>(held, against, kind, allowed);
+    return over_the_shared_span<pose_trajectory_generator, pose_sample>(held, against, kind, allowed, {});
 }
 
 }

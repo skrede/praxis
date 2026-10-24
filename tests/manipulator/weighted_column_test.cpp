@@ -89,6 +89,24 @@ std::string declined(column_stage &stage, const std::vector<double> &rates)
     return wrote;
 }
 
+// The unweighted placement written out from the published space Jacobian: each part at the space
+// origin, along its own three rows, at their norm times that part's scale.
+void stands_as_unweighted(column_stage &stage)
+{
+    const jacobian published = two_columns(1.0);
+    for(std::size_t column = 0; column < 2u; ++column)
+        for(const jacobian_block part : both_parts)
+        {
+            const Eigen::Vector3d rows     = published.block<3, 1>(part == jacobian_block::angular ? 0 : 3, static_cast<Eigen::Index>(column));
+            const double scale             = part == jacobian_block::angular ? angular_column_scale : linear_column_scale;
+            threepp::Object3D *const arrow = stage.arrow(column, part);
+            REQUIRE(drawn(arrow));
+            CHECK(arrow_at(arrow).norm() < placed_back);
+            CHECK((arrow_along(arrow) - rows.normalized()).norm() < placed_back);
+            CHECK(drawn_length(arrow) == Catch::Approx(rows.norm() * scale).margin(1e-6));
+        }
+}
+
 // Compared exactly: the placement written is the reference's to the bit.
 void same_standing(column_stage &told, column_stage &reference)
 {
@@ -121,6 +139,7 @@ TEST_CASE("a stencil told no rates, told rates unweighted or weighted with no ra
     column_stage reference;
     REQUIRE(reference.shown.set_jacobian_columns(2u).has_value());
     reference.draw();
+    stands_as_unweighted(reference);
 
     column_stage untold, unweighted, bare, ones;
     tell(untold, false, {});

@@ -60,4 +60,19 @@ jacobian_manipulability manipulability_of(const expected<jacobian, refusal> &tak
     return jacobian_manipulability{ellipsoid_of(taken->topRows(3)), ellipsoid_of(taken->bottomRows(3))};
 }
 
+expected<jacobian, refusal> body_jacobian_at_the_tool(const expected<jacobian, refusal> &flange, const transform &offset)
+{
+    if(!flange)
+        return flange;
+
+    const Eigen::Matrix3d turned_back = offset.block<3, 3>(0, 0).transpose();
+    const Eigen::Vector3d moved       = offset.block<3, 1>(0, 3);
+
+    jacobian tool(6, flange->cols());
+    tool.topRows<3>()    = turned_back * flange->topRows<3>();
+    tool.bottomRows<3>() = turned_back * (flange->bottomRows<3>() + flange->topRows<3>().colwise().cross(moved));
+
+    return tool;
+}
+
 }

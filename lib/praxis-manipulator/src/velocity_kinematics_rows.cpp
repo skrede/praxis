@@ -37,16 +37,6 @@ const char *block_word(jacobian_block which)
     return which == jacobian_block::angular ? "Angular" : "Linear";
 }
 
-const expected<jacobian, refusal> &matrix_of(const arm_snapshot &seen, jacobian_frame frame)
-{
-    return frame == jacobian_frame::space ? seen.space_jacobian : seen.body_jacobian;
-}
-
-const jacobian_manipulability &decomposition_of(const arm_snapshot &seen, jacobian_frame frame)
-{
-    return frame == jacobian_frame::space ? seen.space_manipulability : seen.body_manipulability;
-}
-
 const expected<manipulability_ellipsoid, refusal> &block_of(const jacobian_manipulability &both, jacobian_block which)
 {
     return which == jacobian_block::angular ? both.angular : both.linear;
@@ -162,11 +152,11 @@ scene::readout velocity_kinematics_reading(const arm_snapshot *seen, jacobian_fr
     if(seen == nullptr)
         return scene::readout{unpublished, {}};
 
-    const expected<jacobian, refusal> &taken = matrix_of(*seen, frame);
+    const expected<jacobian, refusal> taken = shown_jacobian(*seen, frame);
     if(!taken)
         return scene::readout{std::string("The ") + frame_word(frame) + " Jacobian was refused.", {}};
 
-    const jacobian_manipulability &both = decomposition_of(*seen, frame);
+    const jacobian_manipulability &both = frame == jacobian_frame::space ? seen->space_manipulability : seen->body_manipulability;
     if(!both.angular && !both.linear)
         return scene::readout{std::string("Neither block of the ") + frame_word(frame) + " Jacobian was decomposed.", {}};
 

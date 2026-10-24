@@ -34,6 +34,16 @@ const pose_trajectory_ops &pose_trajectories_of(const void *value)
 constexpr evaluation::residual_kind configuration_kind = evaluation::residual_kind::element_wise;
 constexpr evaluation::residual_kind pose_kind          = evaluation::residual_kind::pose;
 
+// The times a run's acceleration steps at: every via point but the first and the last.
+std::vector<double> interior_times(std::span<const via_point> via_points)
+{
+    std::vector<double> times;
+    for(std::size_t k = 1u; k + 1u < via_points.size(); ++k)
+        times.push_back(via_points[k].time);
+
+    return times;
+}
+
 evaluation::case_result compare_joint_space_via_points(const void *first, const void *second, evaluation::case_source &drawn, const evaluation::tolerance_pair &allowed)
 {
     const via_point_case example = drawn_via_point_case(drawn);
@@ -45,7 +55,7 @@ evaluation::case_result compare_joint_space_via_points(const void *first, const 
     if(!both_named_a_motion(*held, *other))
         return differing(configuration_kind);
 
-    return driven(**held, **other, configuration_kind, allowed);
+    return driven(**held, **other, configuration_kind, allowed, interior_times(example.via_points));
 }
 
 // Each time over the larger of one and the second side's magnitude, each position and velocity by

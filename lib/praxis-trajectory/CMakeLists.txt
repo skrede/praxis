@@ -35,6 +35,7 @@ praxis_add_module(trajectory
     src/baseline/trajectory.cpp
     src/baseline/via_points.cpp
     src/baseline/capabilities.cpp
+    src/baseline/trapezoid.h
     src/baseline/time_scaling.cpp
     src/baseline/swept_pose.h
     src/baseline/swept_pose.cpp

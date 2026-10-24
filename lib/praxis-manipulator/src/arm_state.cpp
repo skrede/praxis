@@ -151,7 +151,7 @@ arm_snapshot arm_state::assemble() const
                         space,
                         body,
                         manipulability_of(space),
-                        manipulability_of(body),
+                        manipulability_of(body_jacobian_at_the_tool(body, m_robot->tool_offset())),
                         solutions_of(*m_controller),
                         reached_of(*m_controller),
                         m_controller->preview(),

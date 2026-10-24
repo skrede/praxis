@@ -4,7 +4,9 @@
 
 #include <spdlog/spdlog.h>
 
+#include <span>
 #include <cmath>
+#include <memory>
 #include <cstddef>
 
 namespace praxis::trajectory {

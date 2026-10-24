@@ -30,16 +30,6 @@ constexpr double built_shaft_girth = 0.008;
 constexpr double built_head_length = 0.02;
 constexpr double built_head_radius = 0.01;
 
-// A third column with both parts away from zero, so either block of the pair can be decomposed.
-jacobian with_a_third(const jacobian &two)
-{
-    jacobian three(6, 3);
-    three.leftCols<2>() = two;
-    three.col(2)        = twist_of(Eigen::Vector3d::UnitX(), Eigen::Vector3d::UnitY());
-
-    return three;
-}
-
 }
 
 TEST_CASE("telling a column count raises two arrows per column, all under one subtree of the decoration", "[manipulator][drawing]")
@@ -114,11 +104,12 @@ TEST_CASE("with the space Jacobian shown every arrow stands at the space origin 
 TEST_CASE("flipping the one Jacobian field moves every arrow and moves both ellipsoids with them", "[manipulator][drawing]")
 {
     column_stage headless;
-    REQUIRE(headless.shown.set_jacobian_columns(3u).has_value());
+    REQUIRE(headless.shown.set_jacobian_columns(2u).has_value());
     headless.shown.set_manipulability_ellipsoids(ellipsoid_view::velocity);
     headless.shown.set_ellipsoid_scale(jacobian_block::angular, angular_scale);
     headless.shown.set_ellipsoid_scale(jacobian_block::linear, linear_scale);
-    headless.put(published_columns(with_a_third(two_columns(1.0)), with_a_third(two_columns_exchanged()), elsewhere, decomposed_both(Eigen::Vector3d(1.0, 0.6, 0.2))));
+    headless.put(
+            published_columns(two_columns(1.0), two_columns_exchanged(), elsewhere, decomposed_both(Eigen::Vector3d(1.0, 0.6, 0.2)), decomposed_both(Eigen::Vector3d(0.5, 0.3, 0.1))));
     headless.draw();
 
     const Eigen::Vector3d in_space = arrow_at(headless.arrow(0u, jacobian_block::linear));
@@ -132,7 +123,7 @@ TEST_CASE("flipping the one Jacobian field moves every arrow and moves both elli
     CHECK((arrow_at(headless.arrow(0u, jacobian_block::linear)) - in_space).norm() > 0.1);
     CHECK((arrow_at(headless.arrow(1u, jacobian_block::angular)) - elsewhere).norm() < placed_back);
     CHECK((body_extents(headless.body(jacobian_block::linear)) - spread).norm() > placed_back);
-    CHECK((body_extents(headless.body(jacobian_block::angular)) - angular_scale * Eigen::Vector3d(3.0, 2.0, 1.0)).norm() < read_back);
+    CHECK((body_extents(headless.body(jacobian_block::angular)) - 0.5 * angular_scale * Eigen::Vector3d(1.0, 0.6, 0.2)).norm() < read_back);
 }
 
 TEST_CASE("an arrow points along its own three rows of its own column and is as long as their norm times that part's scale", "[manipulator][drawing]")
@@ -193,6 +184,22 @@ TEST_CASE("a Jacobian the arm declines to publish leaves every arrow undrawn", "
     column_stage headless;
     REQUIRE(headless.shown.set_jacobian_columns(2u).has_value());
     headless.put(published_columns(praxis::unexpected(refusal::not_implemented), two_columns(1.0), Eigen::Vector3d(Eigen::Vector3d::Zero())));
+    headless.draw();
+
+    CHECK_FALSE(drawn(headless.arrow(0u, jacobian_block::angular)));
+    CHECK_FALSE(drawn(headless.arrow(1u, jacobian_block::linear)));
+}
+
+TEST_CASE("a body Jacobian the arm declines to publish takes down every body column standing", "[manipulator][drawing]")
+{
+    column_stage headless;
+    REQUIRE(headless.shown.set_jacobian_columns(2u).has_value());
+    headless.shown.set_jacobian_frame(jacobian_frame::body);
+    headless.put(published_columns(two_columns(1.0), two_columns(1.0), elsewhere));
+    headless.draw();
+    REQUIRE(drawn(headless.arrow(0u, jacobian_block::angular)));
+
+    headless.put(published_columns(two_columns(1.0), praxis::unexpected(refusal::not_implemented), elsewhere));
     headless.draw();
 
     CHECK_FALSE(drawn(headless.arrow(0u, jacobian_block::angular)));

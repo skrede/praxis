@@ -46,12 +46,12 @@ TEST_CASE("the_time_scaling_slots_default_to_refusing_rather_than_to_a_sample_re
     REQUIRE(ops.trapezoidal_from_acceleration_duration != nullptr);
     REQUIRE(ops.trapezoidal_within_bounds != nullptr);
 
-    CHECK(ops.cubic(0.25, 2.0).error() == refusal::not_implemented);
-    CHECK(ops.quintic(0.25, 2.0).error() == refusal::not_implemented);
-    CHECK(ops.trapezoidal_from_velocity_acceleration(0.25, 1.0, 4.0).error() == refusal::not_implemented);
-    CHECK(ops.trapezoidal_from_velocity_duration(0.25, 1.5, 1.0).error() == refusal::not_implemented);
-    CHECK(ops.trapezoidal_from_acceleration_duration(0.25, 1.25, 4.0).error() == refusal::not_implemented);
-    CHECK(ops.trapezoidal_within_bounds(0.25, 2.0, 1.0, 4.0).error() == refusal::not_implemented);
+    CHECK(refused(ops.cubic(0.25, 2.0)) == refusal::not_implemented);
+    CHECK(refused(ops.quintic(0.25, 2.0)) == refusal::not_implemented);
+    CHECK(refused(ops.trapezoidal_from_velocity_acceleration(0.25, 1.0, 4.0)) == refusal::not_implemented);
+    CHECK(refused(ops.trapezoidal_from_velocity_duration(0.25, 1.5, 1.0)) == refusal::not_implemented);
+    CHECK(refused(ops.trapezoidal_from_acceleration_duration(0.25, 1.25, 4.0)) == refusal::not_implemented);
+    CHECK(refused(ops.trapezoidal_within_bounds(0.25, 2.0, 1.0, 4.0)) == refusal::not_implemented);
 }
 
 TEST_CASE("a_scaling_bound_into_the_seam_reports_its_endpoint_conditions_and_both_derivatives")

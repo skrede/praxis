@@ -11,6 +11,8 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <span>
+#include <array>
+#include <vector>
 #include <cstddef>
 #include <cstdint>
 #include <string_view>
@@ -78,6 +80,27 @@ TEST_CASE("the_printed_via_point_slot_is_judged_agreeing_by_the_via_point_row_at
         INFO("seed offset " << offset);
         require_agreed(judged_via_slot(printed, default_seed + offset), "trajectory.joint_space_via_points");
     }
+}
+
+TEST_CASE("a_via_point_slot_taking_an_interior_knot_into_the_segment_it_ends_agrees_at_a_sample_landing_on_that_knot")
+{
+    constexpr std::size_t ending_form = 2u;
+    REQUIRE(via_slot_forms[ending_form].lookup == segment_lookup::linear_scan);
+
+    constexpr double span = 1.4;
+    const double knot     = span * 3.0 / 7.0;
+    const std::vector<trajectory::via_point> via{{0.0, trajectory::configuration::Constant(1, 0.0), trajectory::configuration::Constant(1, 0.0)},
+                                                 {knot, trajectory::configuration::Constant(1, 1.0), trajectory::configuration::Constant(1, 0.8)},
+                                                 {span, trajectory::configuration::Constant(1, 0.3), trajectory::configuration::Constant(1, 0.0)}};
+    const auto ending    = literal_via_slots().at(ending_form)(via);
+    const auto beginning = trajectory::baseline().trajectory.joint_space_via_points(via);
+    REQUIRE(ending.has_value());
+    REQUIRE(beginning.has_value());
+
+    const tolerance_pair allowed{1.0e-10, 1.0e-10};
+    const std::array<double, 1> knots{knot};
+    CHECK(trajectory::driven(**ending, **beginning, residual_kind::element_wise, allowed, knots).verdict == agreement::agreed);
+    CHECK(trajectory::driven(**ending, **beginning, residual_kind::element_wise, allowed).verdict == agreement::differed);
 }
 
 TEST_CASE("every_literal_schedule_is_judged_agreeing_by_the_schedule_row")

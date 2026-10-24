@@ -100,7 +100,9 @@ struct arm_snapshot
     // Both are taken at the configuration this same publication carries.
     expected<jacobian, refusal> space_jacobian;
     expected<jacobian, refusal> body_jacobian;
-    // Each is taken over the Jacobian published above it and at the same configuration.
+    // Both are taken at the same configuration: the space ones over the space Jacobian published above
+    // them, and the body ones over that body Jacobian re-expressed at the tool, where the body
+    // drawings stand.
     jacobian_manipulability space_manipulability;
     jacobian_manipulability body_manipulability;
     // The distinct configurations the most recent requesting command's solves answered, in the order

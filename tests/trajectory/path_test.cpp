@@ -55,9 +55,9 @@ TEST_CASE("the_path_slots_default_to_refusing_rather_than_to_a_pose_a_bound_path
     REQUIRE(ops.screw != nullptr);
     REQUIRE(ops.decoupled != nullptr);
 
-    CHECK(ops.joint_straight_line(start, end, 0.5).error() == refusal::not_implemented);
-    CHECK(ops.screw(inert_screw, inert_frames, transform::Identity(), endpoints(), 0.5).error() == refusal::not_implemented);
-    CHECK(ops.decoupled(inert_screw, inert_frames, transform::Identity(), endpoints(), 0.5).error() == refusal::not_implemented);
+    CHECK(refused(ops.joint_straight_line(start, end, 0.5)) == refusal::not_implemented);
+    CHECK(refused(ops.screw(inert_screw, inert_frames, transform::Identity(), endpoints(), 0.5)) == refusal::not_implemented);
+    CHECK(refused(ops.decoupled(inert_screw, inert_frames, transform::Identity(), endpoints(), 0.5)) == refusal::not_implemented);
 }
 
 TEST_CASE("a_configuration_space_path_bound_into_the_seam_meets_the_endpoint_conditions")
