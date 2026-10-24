@@ -1,14 +1,16 @@
 # praxis
 
-A C++20 library for teaching the mathematics of serial manipulators. Every capability a student is
-meant to implement is a seam: an injected operation the library calls through, with an inert default
+A C++20 library for teaching the mathematics of robotics: rigid motions, serial manipulators,
+trajectory generation and the iterative solves beneath them. Every capability a student is meant to
+implement is a seam: an injected operation the library calls through, with an inert default
 already in place, so the library builds and runs whether or not the student has written anything yet.
 Filling a seam is writing one function and naming it in a designated initializer — no subclassing, no
 rebuild of the library, and no graphics context needed to test it.
 
-A demonstration application ships beside the library: it registers the presets the extensions
-publish, loads a robot description, renders the arm, and drives all of it through the same seams a
-student fills, so an implementation can be seen as well as tested.
+Three demonstration applications ship beside the library, `rigid_demo`, `manipulator_demo` and
+`optimization_demo`. Each offers the scenarios one preset target composes, renders them, and drives
+all of it through the same seams a student fills, so an implementation can be seen as well as tested;
+only `manipulator_demo` loads a robot description and renders an arm.
 
 ## Modules
 

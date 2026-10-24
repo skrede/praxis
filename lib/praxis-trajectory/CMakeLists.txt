@@ -44,14 +44,13 @@ praxis_add_module(trajectory
     PUBLIC_LIBS
     praxis::extension
     praxis::evaluation
-    praxis::scene
     praxis::rigid_motion
     Eigen3::Eigen
     PRIVATE_LIBS
     spdlog::spdlog
 )
 
-# The renderer and the GUI library arrive with the scene this extension's preset composes against, so
+# The renderer and the GUI library arrive through praxis::rigid_motion's public link to the scene, so
 # both are published surface here and neither is on the list. The logging dependency is on it even
 # though this module links it: the assertion is that a private link never reaches the published
 # interface, and the same holds for the model library.
