@@ -1,3 +1,5 @@
+#include "../presets/scratch_directory.h"
+
 #include "demo_documents.h"
 #include "demo_configuration.h"
 
@@ -82,7 +84,7 @@ presets::arm_scenario opened(const config::document &values)
 // what composes, which is the list the run opens on.
 std::vector<std::string> offered_names(const config::document &values)
 {
-    const demo::documents mine(PRAXIS_SHIPPED_MACHINE_DIR, std::filesystem::temp_directory_path() / "praxis-shipped-presets-unwritten");
+    const demo::documents mine(PRAXIS_SHIPPED_MACHINE_DIR, praxis::fixture::shared_scratch_directory() / "shipped_presets_unwritten");
 
     return presets::register_arms(std::make_shared<scene::preset_registry>(), demo::preset_locations(values, mine), {}, nullptr, nullptr);
 }
@@ -224,7 +226,7 @@ TEST_CASE("the demonstration document names exactly the preset documents that ar
 
 TEST_CASE("a demonstration document carrying a preset with no name lists only the presets a name addresses", "[examples][documents]")
 {
-    const std::filesystem::path where = std::filesystem::temp_directory_path() / "praxis-shipped-presets-unnamed";
+    const std::filesystem::path where = praxis::fixture::shared_scratch_directory() / "shipped_presets_unnamed";
     std::filesystem::create_directories(where);
     std::ofstream(where / demonstration_document, std::ios::binary | std::ios::trunc)
             << "<demonstration><presets><preset/><preset name=\"plain-kr6r\" document=\"kr6r.xml\"/></presets></demonstration>\n";
@@ -250,7 +252,7 @@ TEST_CASE("every shipped preset reads neither rate switch and offers no velocity
 
 TEST_CASE("the shipped velocity kinematics document saved with its frame moved differs from it in that value alone", "[examples][documents]")
 {
-    const std::filesystem::path directory = std::filesystem::temp_directory_path() / "praxis-shipped-velocity-saved";
+    const std::filesystem::path directory = praxis::fixture::shared_scratch_directory() / "shipped_velocity_saved";
     const std::filesystem::path copy      = directory / "kr6r-velocity-kinematics.xml";
     std::filesystem::create_directories(directory);
     std::filesystem::copy_file(std::filesystem::path(PRAXIS_SHIPPED_MACHINE_DIR) / copy.filename(), copy, std::filesystem::copy_options::overwrite_existing);

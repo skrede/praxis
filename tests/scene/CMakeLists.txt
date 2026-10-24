@@ -18,11 +18,10 @@ set_tests_properties(preset_lifetime_test preset_composition_test PROPERTIES TIM
 
 # The canvas's hidden-window parameter hides a window on a machine that has a display; it does not
 # remove the display requirement, because the renderer needs a graphics context the null platform
-# does not supply. So this one is registered only when it is asked for, and a run either built it
-# and ran it or did not build it.
+# does not supply.
 if (PRAXIS_BUILD_DISPLAY_TESTS)
-    praxis_add_test(display_teardown_test.cpp LIBS praxis::scene)
-    praxis_add_test(display_visualizer_test.cpp LIBS praxis::scene)
-    praxis_add_test(display_plot_window_test.cpp LIBS praxis::scene)
-    praxis_add_test(display_opening_view_test.cpp LIBS praxis::scene)
+    praxis_add_display_test(display_teardown_test.cpp HEADERS scratch_rooted.h ../presets/scratch_directory.h LIBS praxis::scene)
+    praxis_add_display_test(display_visualizer_test.cpp HEADERS scratch_rooted.h ../presets/scratch_directory.h LIBS praxis::scene)
+    praxis_add_display_test(display_plot_window_test.cpp HEADERS scratch_rooted.h ../presets/scratch_directory.h LIBS praxis::scene)
+    praxis_add_display_test(display_opening_view_test.cpp LIBS praxis::scene)
 endif ()

@@ -1,3 +1,5 @@
+#include "../presets/scratch_directory.h"
+
 #include "praxis/config/error.h"
 #include "praxis/config/store.h"
 #include "praxis/config/writer.h"
@@ -27,7 +29,7 @@ declaration described()
 
 std::filesystem::path scratch()
 {
-    const std::filesystem::path directory = std::filesystem::temp_directory_path() / "praxis-config-root-collection";
+    const std::filesystem::path directory = praxis::fixture::shared_scratch_directory() / "config_root_collection";
     std::filesystem::create_directories(directory);
     return directory;
 }

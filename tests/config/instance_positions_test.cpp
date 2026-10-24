@@ -1,3 +1,5 @@
+#include "../presets/scratch_directory.h"
+
 #include "captured_log.h"
 
 #include "praxis/config/error.h"
@@ -48,7 +50,7 @@ std::string within(std::string_view collection, std::string_view instances)
 
 std::filesystem::path written(std::string_view name, std::string_view collection, std::string_view body)
 {
-    const std::filesystem::path directory = std::filesystem::temp_directory_path() / "praxis-config-instance-positions";
+    const std::filesystem::path directory = praxis::fixture::shared_scratch_directory() / "config_instance_positions";
     std::filesystem::create_directories(directory);
     const std::filesystem::path where = directory / (std::string(name) + (grouped(collection) ? "-group.xml" : "-root.xml"));
     std::ofstream(where, std::ios::binary | std::ios::trunc) << body;

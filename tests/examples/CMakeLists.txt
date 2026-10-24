@@ -1,19 +1,19 @@
 # The demonstration's own sources carry no interface and link without the applications around them,
 # so a suite compiles them beside its cases the way a module's suite compiles the module. A source is
 # named relative to this directory, which is what the declared-source gate resolves against.
-praxis_add_test(demo_documents_test.cpp HEADERS scratch_documents.h LIBS praxis::config spdlog::spdlog)
+praxis_add_test(demo_documents_test.cpp HEADERS scratch_documents.h ../presets/scratch_directory.h LIBS praxis::config spdlog::spdlog)
 target_sources(demo_documents_test PRIVATE ../../examples/demo_documents.cpp)
 target_include_directories(demo_documents_test PRIVATE ${PROJECT_SOURCE_DIR}/examples)
 
-praxis_add_test(demo_write_back_test.cpp HEADERS scratch_documents.h LIBS praxis::scene praxis::config spdlog::spdlog)
+praxis_add_test(demo_write_back_test.cpp HEADERS scratch_documents.h ../presets/scratch_directory.h LIBS praxis::scene praxis::config spdlog::spdlog)
 target_sources(demo_write_back_test PRIVATE ../../examples/demo_documents.cpp ../../examples/demo_write_back.cpp)
 target_include_directories(demo_write_back_test PRIVATE ${PROJECT_SOURCE_DIR}/examples)
 
-praxis_add_test(demo_leaving_test.cpp HEADERS scratch_documents.h LIBS praxis::scene praxis::config spdlog::spdlog)
+praxis_add_test(demo_leaving_test.cpp HEADERS scratch_documents.h ../presets/scratch_directory.h LIBS praxis::scene praxis::config spdlog::spdlog)
 target_sources(demo_leaving_test PRIVATE ../../examples/demo_documents.cpp ../../examples/demo_write_back.cpp)
 target_include_directories(demo_leaving_test PRIVATE ${PROJECT_SOURCE_DIR}/examples)
 
-praxis_add_test(shipped_presets_test.cpp LIBS praxis::scene praxis::manipulator_presets praxis::manipulator praxis::rigid_motion praxis::trajectory praxis::config spdlog::spdlog)
+praxis_add_test(shipped_presets_test.cpp HEADERS ../presets/scratch_directory.h LIBS praxis::scene praxis::manipulator_presets praxis::manipulator praxis::rigid_motion praxis::trajectory praxis::config spdlog::spdlog)
 target_sources(shipped_presets_test PRIVATE ../../examples/demo_documents.cpp ../../examples/demo_write_back.cpp ../../examples/demo_configuration.cpp)
 target_include_directories(shipped_presets_test PRIVATE ${PROJECT_SOURCE_DIR}/examples)
 
@@ -21,11 +21,11 @@ target_include_directories(shipped_presets_test PRIVATE ${PROJECT_SOURCE_DIR}/ex
 # resolves them from too.
 target_compile_definitions(shipped_presets_test PRIVATE PRAXIS_SHIPPED_MACHINE_DIR="${PROJECT_SOURCE_DIR}/examples/manipulator")
 
-praxis_add_test(demo_machine_test.cpp HEADERS scratch_documents.h LIBS praxis::scene praxis::manipulator_presets praxis::manipulator praxis::rigid_motion praxis::trajectory praxis::config spdlog::spdlog)
+praxis_add_test(demo_machine_test.cpp HEADERS scratch_documents.h ../presets/scratch_directory.h LIBS praxis::scene praxis::manipulator_presets praxis::manipulator praxis::rigid_motion praxis::trajectory praxis::config spdlog::spdlog)
 target_sources(demo_machine_test PRIVATE ../../examples/demo_documents.cpp)
 target_include_directories(demo_machine_test PRIVATE ${PROJECT_SOURCE_DIR}/examples)
 
-praxis_add_test(shipped_scenarios_test.cpp HEADERS scratch_documents.h LIBS praxis::scene praxis::manipulator_presets praxis::manipulator praxis::rigid_motion praxis::trajectory praxis::config praxis::scheduler spdlog::spdlog)
+praxis_add_test(shipped_scenarios_test.cpp HEADERS scratch_documents.h ../presets/scratch_directory.h LIBS praxis::scene praxis::manipulator_presets praxis::manipulator praxis::rigid_motion praxis::trajectory praxis::config praxis::scheduler spdlog::spdlog)
 target_sources(shipped_scenarios_test PRIVATE ../../examples/demo_documents.cpp ../../examples/demo_write_back.cpp ../../examples/demo_configuration.cpp)
 target_include_directories(shipped_scenarios_test PRIVATE ${PROJECT_SOURCE_DIR}/examples)
 target_compile_definitions(shipped_scenarios_test PRIVATE PRAXIS_SHIPPED_MACHINE_DIR="${PROJECT_SOURCE_DIR}/examples/manipulator")
@@ -39,22 +39,22 @@ endif ()
 
 set_tests_properties(shipped_scenarios_test PROPERTIES TIMEOUT 60)
 
-praxis_add_test(shipped_optimization_test.cpp HEADERS scratch_documents.h offered_optimization.h LIBS praxis::scene praxis::optimization_presets praxis::optimization praxis::config praxis::scheduler spdlog::spdlog praxis_test_support)
+praxis_add_test(shipped_optimization_test.cpp HEADERS scratch_documents.h offered_optimization.h ../presets/scratch_directory.h LIBS praxis::scene praxis::optimization_presets praxis::optimization praxis::config praxis::scheduler spdlog::spdlog praxis_test_support)
 target_sources(shipped_optimization_test PRIVATE ../../examples/demo_documents.cpp ../../examples/demo_write_back.cpp ../../examples/demo_configuration.cpp
     ../../examples/optimization/optimization_offered.cpp)
 target_include_directories(shipped_optimization_test PRIVATE ${PROJECT_SOURCE_DIR}/examples)
 target_compile_definitions(shipped_optimization_test PRIVATE PRAXIS_SHIPPED_OPTIMIZATION_DIR="${PROJECT_SOURCE_DIR}/examples/optimization")
 
-praxis_add_test(shipped_optimization_minimum_test.cpp HEADERS scratch_documents.h offered_optimization.h LIBS praxis::scene praxis::optimization_presets praxis::optimization praxis::config praxis::scheduler spdlog::spdlog praxis_test_support)
+praxis_add_test(shipped_optimization_minimum_test.cpp HEADERS scratch_documents.h offered_optimization.h ../presets/scratch_directory.h LIBS praxis::scene praxis::optimization_presets praxis::optimization praxis::config praxis::scheduler spdlog::spdlog praxis_test_support)
 target_sources(shipped_optimization_minimum_test PRIVATE ../../examples/demo_documents.cpp ../../examples/demo_write_back.cpp ../../examples/demo_configuration.cpp
     ../../examples/optimization/optimization_offered.cpp)
 target_include_directories(shipped_optimization_minimum_test PRIVATE ${PROJECT_SOURCE_DIR}/examples)
 target_compile_definitions(shipped_optimization_minimum_test PRIVATE PRAXIS_SHIPPED_OPTIMIZATION_DIR="${PROJECT_SOURCE_DIR}/examples/optimization")
 
 # The standing windows are built by the visualizer, which needs a renderer and so a display; this case
-# reads where they and a shipped preset's windows land, and is registered only when display suites are.
+# reads where they and a shipped preset's windows land, and is registered with the display suites.
 if (PRAXIS_BUILD_DISPLAY_TESTS)
-    praxis_add_test(display_optimization_placement_test.cpp HEADERS scratch_documents.h offered_optimization.h LIBS praxis::scene praxis::optimization_presets praxis::optimization praxis::config praxis::scheduler spdlog::spdlog praxis_test_support)
+    praxis_add_display_test(display_optimization_placement_test.cpp HEADERS scratch_documents.h offered_optimization.h ../presets/scratch_directory.h LIBS praxis::scene praxis::optimization_presets praxis::optimization praxis::config praxis::scheduler spdlog::spdlog praxis_test_support)
     target_sources(display_optimization_placement_test PRIVATE ../../examples/demo_documents.cpp ../../examples/demo_write_back.cpp ../../examples/demo_configuration.cpp
         ../../examples/optimization/optimization_offered.cpp)
     target_include_directories(display_optimization_placement_test PRIVATE ${PROJECT_SOURCE_DIR}/examples)

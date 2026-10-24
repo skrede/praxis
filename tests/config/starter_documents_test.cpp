@@ -1,3 +1,5 @@
+#include "../presets/scratch_directory.h"
+
 #include "praxis/config/error.h"
 #include "praxis/config/store.h"
 #include "praxis/config/writer.h"
@@ -20,7 +22,7 @@ namespace {
 
 std::filesystem::path fresh(const std::string &name)
 {
-    const std::filesystem::path directory = std::filesystem::weakly_canonical(std::filesystem::temp_directory_path()) / "praxis-config-starter";
+    const std::filesystem::path directory = std::filesystem::weakly_canonical(praxis::fixture::shared_scratch_directory()) / "config_starter";
     std::filesystem::create_directories(directory);
     std::filesystem::remove(directory / name);
     return directory / name;

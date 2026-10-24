@@ -1,3 +1,5 @@
+#include "scratch_rooted.h"
+
 #include "praxis/scene/preset.h"
 #include "praxis/scene/stencil.h"
 #include "praxis/scene/log_buffer.h"
@@ -81,7 +83,7 @@ struct stage
             : loop(inline_workers)
             , body{}
             , asked()
-            , view(std::make_shared<preset_registry>(), loop)
+            , view(std::make_shared<preset_registry>(), loop, praxis::fixture::scratch_rooted())
     {
     }
 

@@ -20,7 +20,7 @@ include(GNUInstallDirs)
 
 option(PRAXIS_BUILD_TESTS "Build unit tests" ${PROJECT_IS_TOP_LEVEL})
 option(PRAXIS_BUILD_EXAMPLES "Build the demo application" ${PROJECT_IS_TOP_LEVEL})
-option(PRAXIS_BUILD_DISPLAY_TESTS "Build the tests that need a display" OFF)
+option(PRAXIS_BUILD_DISPLAY_TESTS "Build and run the tests that need a display, under a virtual X server where xvfb-run is installed" ${PROJECT_IS_TOP_LEVEL})
 option(PRAXIS_ENABLE_CTAGS_GATES "Check the public surface, which needs Universal Ctags" ${PROJECT_IS_TOP_LEVEL})
 option(PRAXIS_BUILD_CONSUMER_TESTS "Check what a consuming project rebuilds, which configures and builds a project of its own" OFF)
 

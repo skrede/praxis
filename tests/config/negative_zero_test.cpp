@@ -1,3 +1,5 @@
+#include "../presets/scratch_directory.h"
+
 #include "captured_log.h"
 
 #include "praxis/config/error.h"
@@ -49,7 +51,7 @@ binding authored(const std::filesystem::path &where)
 
 std::filesystem::path scratch(const std::string &name)
 {
-    return std::filesystem::temp_directory_path() / "praxis-config-negative-zero" / name;
+    return praxis::fixture::shared_scratch_directory() / "config_negative_zero" / name;
 }
 
 std::string text_of(const std::filesystem::path &where)

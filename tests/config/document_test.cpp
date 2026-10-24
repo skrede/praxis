@@ -1,3 +1,5 @@
+#include "../presets/scratch_directory.h"
+
 #include "held_home.h"
 
 #include "praxis/config/error.h"
@@ -22,7 +24,7 @@ namespace {
 
 std::filesystem::path scratch()
 {
-    const std::filesystem::path directory = std::filesystem::temp_directory_path() / "praxis-config-document";
+    const std::filesystem::path directory = praxis::fixture::shared_scratch_directory() / "config_document";
     std::filesystem::create_directories(directory);
     // The library answers resolved paths, and a temporary directory is not always its own resolved
     // form: macOS reaches it through a symlink and Windows through an abbreviated component. A

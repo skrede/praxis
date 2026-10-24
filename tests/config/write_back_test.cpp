@@ -1,3 +1,5 @@
+#include "../presets/scratch_directory.h"
+
 #include "captured_log.h"
 
 #include "praxis/config/error.h"
@@ -260,7 +262,7 @@ private:
 
 std::filesystem::path scratch()
 {
-    const std::filesystem::path directory = std::filesystem::temp_directory_path() / "praxis-config-write-back";
+    const std::filesystem::path directory = praxis::fixture::shared_scratch_directory() / "config_write_back";
     std::filesystem::create_directories(directory);
     return directory;
 }

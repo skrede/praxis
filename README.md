@@ -73,14 +73,14 @@ cmake --build build -j
 ```
 
 Five options gate what is built and what is checked, and one cache value selects the language
-standard. Three of the options default to on when praxis is the top-level project, so a project that
+standard. Four of the options default to on when praxis is the top-level project, so a project that
 adds praxis gets none of them:
 
 | Option | Default | Effect |
 | ------ | ------- | ------ |
 | `PRAXIS_BUILD_TESTS` | top-level | the unit tests, run with `ctest --test-dir build` |
 | `PRAXIS_BUILD_EXAMPLES` | top-level | the `rigid_demo`, `manipulator_demo` and `optimization_demo` executables |
-| `PRAXIS_BUILD_DISPLAY_TESTS` | off | the tests that need a display, on top of the rest |
+| `PRAXIS_BUILD_DISPLAY_TESTS` | top-level | the tests that need a display, run under `xvfb-run` where it is installed and on the machine's own display where it is not |
 | `PRAXIS_BUILD_CONSUMER_TESTS` | off | the rebuild-avoidance gate, which configures and builds a consuming project of its own |
 | `PRAXIS_ENABLE_CTAGS_GATES` | top-level | the public-surface gate, which needs Universal Ctags |
 | `PRAXIS_CXX_STANDARD` | `20` | the language standard this tree compiles at; 20 is the floor, the default, and the only value this tree is tested at |

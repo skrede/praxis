@@ -7,6 +7,28 @@ function(praxis_add_test SOURCE)
     add_test(NAME ${name} COMMAND ${name})
 endfunction()
 
+# A test needing a display runs under a virtual X server where xvfb-run is installed, so it runs
+# wherever the rest of the suite does, and on the machine's own display where it is not. The servers
+# are started one at a time because xvfb-run's choice of a free server number races.
+if (PRAXIS_BUILD_DISPLAY_TESTS)
+    find_program(PRAXIS_XVFB_RUN xvfb-run)
+endif ()
+
+function(praxis_add_display_test SOURCE)
+    cmake_parse_arguments(ARG "" "" "LIBS;HEADERS" ${ARGN})
+    get_filename_component(name ${SOURCE} NAME_WE)
+    add_executable(${name} ${SOURCE} ${ARG_HEADERS})
+    praxis_target_warnings(${name})
+    target_link_libraries(${name} PRIVATE Catch2::Catch2WithMain ${ARG_LIBS})
+    if (NOT PRAXIS_XVFB_RUN)
+        add_test(NAME ${name} COMMAND ${name})
+        return()
+    endif ()
+
+    add_test(NAME ${name} COMMAND ${PRAXIS_XVFB_RUN} --auto-servernum "--server-args=-screen 0 1920x1080x24" $<TARGET_FILE:${name}>)
+    set_tests_properties(${name} PROPERTIES RESOURCE_LOCK praxis_virtual_display ENVIRONMENT_MODIFICATION "WAYLAND_DISPLAY=unset:")
+endfunction()
+
 # A probe is a translation unit that must NOT compile, so it is excluded from the ordinary build and
 # the test builds that one target: a build command returns non-zero exactly when the compile fails.
 # The exit status alone cannot separate that from a target that does not exist or a listfile that no

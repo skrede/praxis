@@ -1,3 +1,5 @@
+#include "../presets/scratch_directory.h"
+
 #include "praxis/config/error.h"
 #include "praxis/config/store.h"
 #include "praxis/config/document.h"
@@ -35,7 +37,7 @@ declaration described()
 
 expected<document, error> folded(const std::string &name, std::string_view body)
 {
-    const std::filesystem::path directory = std::filesystem::temp_directory_path() / "praxis-config-scoped";
+    const std::filesystem::path directory = praxis::fixture::shared_scratch_directory() / "config_scoped";
     std::filesystem::create_directories(directory);
     const std::filesystem::path where = directory / name;
 
@@ -171,7 +173,7 @@ TEST_CASE("a collection declared directly under the root reads its instances by 
 {
     declaration shape("probe");
     shape.collection("station", "name").field("station/width", field_kind::integer, "0");
-    const std::filesystem::path directory = std::filesystem::temp_directory_path() / "praxis-config-scoped";
+    const std::filesystem::path directory = praxis::fixture::shared_scratch_directory() / "config_scoped";
     std::filesystem::create_directories(directory);
     std::ofstream(directory / "root.xml", std::ios::trunc) << "<probe><station name=\"alpha\" width=\"10\"/><station/><station name=\"beta\" width=\"90\"/></probe>\n";
 

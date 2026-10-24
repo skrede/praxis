@@ -1,3 +1,5 @@
+#include "../presets/scratch_directory.h"
+
 #include "captured_log.h"
 
 #include "praxis/config/error.h"
@@ -42,7 +44,7 @@ constexpr std::string_view misspelled = "<probe><window titel=\"b\" width=\"3\"/
 
 std::filesystem::path written(const std::string &name, std::string_view body)
 {
-    const std::filesystem::path directory = std::filesystem::weakly_canonical(std::filesystem::temp_directory_path()) / "praxis-config-undeclared";
+    const std::filesystem::path directory = std::filesystem::weakly_canonical(praxis::fixture::shared_scratch_directory()) / "config_undeclared";
     std::filesystem::create_directories(directory);
     const std::filesystem::path where = directory / name;
     std::ofstream(where, std::ios::binary | std::ios::trunc) << body;

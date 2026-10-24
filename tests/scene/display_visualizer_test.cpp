@@ -1,3 +1,5 @@
+#include "scratch_rooted.h"
+
 #include "praxis/scene/preset.h"
 #include "praxis/scene/stencil.h"
 #include "praxis/scene/visualizer.h"
@@ -87,7 +89,7 @@ struct stage
 {
     stage()
             : loop(inline_workers)
-            , view(std::make_shared<preset_registry>(), loop)
+            , view(std::make_shared<preset_registry>(), loop, praxis::fixture::scratch_rooted())
     {
     }
 
@@ -125,7 +127,7 @@ bool drawn_panel(const std::string &settings, const std::string &title)
 TEST_CASE("the visualizer draws a frame on the strand it reports as its executor", "[scene][display]")
 {
     scheduler loop(inline_workers);
-    visualizer view(std::make_shared<preset_registry>(), loop);
+    visualizer view(std::make_shared<preset_registry>(), loop, praxis::fixture::scratch_rooted());
 
     bool drawn = false;
     REQUIRE(view.executor().post([&view, &drawn] { drawn = view.render_once(); }).has_value());
@@ -192,7 +194,7 @@ TEST_CASE("a drawn frame puts both the selector and the work panel on screen", "
 
 TEST_CASE("a window the visualizer was not asked for is not stood at all", "[scene][display]")
 {
-    const std::filesystem::path root = std::filesystem::temp_directory_path() / "praxis-windows-not-asked-for";
+    const std::filesystem::path root = praxis::fixture::shared_scratch_directory() / "windows_not_asked_for";
     std::filesystem::remove_all(root);
     std::filesystem::create_directories(root);
 
@@ -233,7 +235,10 @@ TEST_CASE("a visualizer opens at the size it is given and answers what it was le
 
     scheduler loop(inline_workers);
     visualizer view(std::make_shared<preset_registry>(), loop,
-                    {.view = visualizer::projection::perspective, .messages = nullptr, .window = {.width = asked_width, .height = asked_height, .x = 120, .y = 80}, .root = {}});
+                    {.view     = visualizer::projection::perspective,
+                     .messages = nullptr,
+                     .window   = {.width = asked_width, .height = asked_height, .x = 120, .y = 80},
+                     .root     = praxis::fixture::shared_scratch_directory()});
 
     bool drawn = false;
     REQUIRE(view.executor().post([&view, &drawn] { drawn = view.render_once(); }).has_value());

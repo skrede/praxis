@@ -1,3 +1,5 @@
+#include "../presets/scratch_directory.h"
+
 #include "read_back.h"
 
 #include "praxis/config/error.h"
@@ -55,7 +57,7 @@ void require_each_side_reads(std::span<const pair_of> pairs)
 
 std::filesystem::path carrying_zero()
 {
-    const std::filesystem::path directory = std::filesystem::temp_directory_path() / "praxis-config-value-identity";
+    const std::filesystem::path directory = praxis::fixture::shared_scratch_directory() / "config_value_identity";
     std::filesystem::create_directories(directory);
 
     const std::filesystem::path where = directory / "zero.xml";

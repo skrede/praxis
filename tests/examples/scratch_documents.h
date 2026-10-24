@@ -1,6 +1,8 @@
 #ifndef HPP_GUARD_PRAXIS_TESTS_EXAMPLES_SCRATCH_DOCUMENTS_H
 #define HPP_GUARD_PRAXIS_TESTS_EXAMPLES_SCRATCH_DOCUMENTS_H
 
+#include "../presets/scratch_directory.h"
+
 #include <string>
 #include <cstddef>
 #include <fstream>
@@ -28,7 +30,7 @@ class scratch
 {
 public:
     explicit scratch(std::string_view named)
-            : m_root(std::filesystem::temp_directory_path() / ("praxis-demo-documents-" + std::string(named)))
+            : m_root(praxis::fixture::shared_scratch_directory() / ("demo_documents_" + std::string(named)))
     {
         std::filesystem::remove_all(m_root);
         std::filesystem::create_directories(seeds());

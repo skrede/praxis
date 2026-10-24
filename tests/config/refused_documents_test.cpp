@@ -1,3 +1,5 @@
+#include "../presets/scratch_directory.h"
+
 #include "praxis/config/error.h"
 #include "praxis/config/store.h"
 #include "praxis/config/writer.h"
@@ -49,7 +51,7 @@ constexpr std::array written_twice{twice{"<probe><window><title>one</title><titl
 
 std::filesystem::path written(const std::string &name, std::string_view body)
 {
-    const std::filesystem::path directory = std::filesystem::weakly_canonical(std::filesystem::temp_directory_path()) / "praxis-config-refused";
+    const std::filesystem::path directory = std::filesystem::weakly_canonical(praxis::fixture::shared_scratch_directory()) / "config_refused";
     std::filesystem::create_directories(directory);
     const std::filesystem::path where = directory / name;
 
