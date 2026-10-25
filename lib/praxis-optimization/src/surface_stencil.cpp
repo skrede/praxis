@@ -1,5 +1,6 @@
 #include "level_curve.h"
 #include "surface_mesh.h"
+#include "surface_keyed.h"
 #include "drawn_iterates.h"
 #include "surface_levels.h"
 #include "surface_figures.h"
@@ -17,11 +18,13 @@
 
 #include <Eigen/Core>
 
+#include <array>
 #include <memory>
 #include <vector>
 #include <cstddef>
 #include <cstdint>
 #include <utility>
+#include <algorithm>
 #include <initializer_list>
 
 namespace praxis::optimization {
@@ -53,10 +56,11 @@ void hang(threepp::Object3D &under, std::initializer_list<std::shared_ptr<threep
 
 // The scene's frame is y-up and the surface is written z-up, so everything hangs under one root
 // carrying that quarter turn.
-surface_stencil::surface_stencil(threepp::Scene &parent, scenario_reader seen, std::shared_ptr<const scenario_view> drawn)
+surface_stencil::surface_stencil(threepp::Scene &parent, scenario_reader seen, std::shared_ptr<const scenario_view> drawn, std::shared_ptr<std::vector<scene::key_entry>> keyed)
         : m_scene(parent)
         , m_seen(std::move(seen))
         , m_view(std::move(drawn))
+        , m_keyed(std::move(keyed))
         , m_root(threepp::Group::create())
         , m_field(threepp::Mesh::create(field_geometry(surface_samples), lit(surface_tone, true)))
         , m_iterates(threepp::Group::create())
@@ -76,6 +80,7 @@ surface_stencil::surface_stencil(threepp::Scene &parent, scenario_reader seen, s
         , m_placed()
         , m_heights{0.0, 0.0}
         , m_iterate_marks()
+        , m_marked()
 {
     m_root->rotation.x = -threepp::math::PI / 2.f;
     m_field->name      = "surface";
@@ -100,6 +105,13 @@ void surface_stencil::tear_down()
 }
 
 void surface_stencil::render() const
+{
+    draw();
+    if(m_keyed != nullptr)
+        write_key();
+}
+
+void surface_stencil::draw() const
 {
     const scenario_view shown_parts = m_view != nullptr ? *m_view : scenario_view{};
     m_field->visible                = shown_parts.field;
@@ -143,17 +155,41 @@ void surface_stencil::place_iterates(const std::shared_ptr<const scenario_snapsh
     m_placed                               = shown;
     const std::vector<drawn_iterate> drawn = drawn_iterates(*shown, placement_of(shown->ranges, *shown->grid), iterate_spacing);
     hold_marks(*m_iterates, m_iterate_marks, drawn.size(), marks_look{"iterate", iterate_tone, m_sphere, m_iterate_material});
-    if(m_iterate_marks == nullptr)
-        return;
-
     std::vector<Eigen::Vector3d> centers;
-    std::vector<std::uint32_t> tones;
+    m_marked.clear();
     for(const drawn_iterate &mark : drawn)
     {
         centers.push_back(mark.at);
-        tones.push_back(mark.iterate == shown->step ? selected_iterate_tone : iterate_tone);
+        m_marked.push_back(mark.iterate == shown->step ? selected_iterate_tone : iterate_tone);
     }
-    write_marks(*m_iterate_marks, centers, tones);
+    if(m_iterate_marks != nullptr)
+        write_marks(*m_iterate_marks, centers, m_marked);
+}
+
+// A floor marker stands for each iterate drawn on the field, so the field's tones say which are drawn.
+void surface_stencil::write_key() const
+{
+    threepp::Object3D &map = *m_levels->object();
+    const auto marked      = [this](std::uint32_t tone) { return std::ranges::find(m_marked, tone) != m_marked.end(); };
+    const bool on_field    = shown_through(*m_iterates);
+    const bool on_floor    = shown_through(*map.getObjectByName("iterates on the floor"));
+    const std::array<keyed_figure, 16> figures{keyed_figure{shown_through(*m_field) && m_field->geometry()->drawRange.count > 0, "f(x, y)", surface_tone},
+                                               keyed_figure{on_field && marked(iterate_tone), "Iterates", iterate_tone},
+                                               keyed_figure{on_field && marked(selected_iterate_tone), "x_k", selected_iterate_tone},
+                                               keyed_figure{shown_through(*m_zero_curve), "zero curve", zero_curve_tone},
+                                               keyed_figure{shown_through(*map.getObjectByName("level curves")), "level curves", level_curve_tone},
+                                               keyed_figure{shown_through(*m_patch), "tangent plane at x_k", tangent_tone},
+                                               keyed_figure{shown_through(*m_zero_line), "zero line", tangent_zero_tone},
+                                               keyed_figure{shown_through(*m_nearest), "nearest point", tangent_zero_tone},
+                                               keyed_figure{shown_through(*m_recorded), "x_(k+1)", next_iterate_line_tone},
+                                               keyed_figure{shown_through(*map.getObjectByName("gradient at x_k")), "gradient at x_k", gradient_tone},
+                                               keyed_figure{shown_through(*map.getObjectByName("step taken")), "step taken", floor_step_tone},
+                                               keyed_figure{on_floor && marked(iterate_tone), "iterates on the floor", floor_iterate_tone},
+                                               keyed_figure{on_floor && marked(selected_iterate_tone), "x_k on the floor", floor_selected_iterate_tone},
+                                               keyed_figure{shown_through(*m_box), "bounds", box_tone},
+                                               keyed_figure{shown_through(*m_plane), "tangent plane at p", linearization_point_tone},
+                                               keyed_figure{shown_through(*m_central), "central difference at p", central_difference_tone}};
+    *m_keyed = drawn_entries(figures);
 }
 
 }

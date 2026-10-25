@@ -6,6 +6,7 @@
 #include "praxis/optimization/compose_scenario.h"
 
 #include "praxis/scene/stencil.h"
+#include "praxis/scene/key_window.h"
 
 #include <threepp/math/Vector3.hpp>
 
@@ -101,7 +102,8 @@ std::shared_ptr<scene::preset> composed_over(const scene::preset_site &site, std
     if(!owned->with([](scenario_state &state) { state.run(); }))
         return refused(kind, "its work strand admits no run");
 
-    const scenario_window_inputs built{published->reader(), dimension, composed.checks_derivative, opened, registered_names, owned, std::make_shared<scenario_view>()};
+    auto keyed = std::make_shared<std::vector<scene::key_entry>>();
+    const scenario_window_inputs built{published->reader(), dimension, composed.checks_derivative, opened, registered_names, owned, std::make_shared<scenario_view>(), std::move(keyed)};
     std::vector<std::shared_ptr<scene::imgui_window>> windows = composed.windows ? composed.windows(built) : std::vector<std::shared_ptr<scene::imgui_window>>{};
 
     auto preset        = std::make_shared<scene::preset>(drawn(built), std::move(windows), site.add_window, site.remove_window);
@@ -122,7 +124,7 @@ std::shared_ptr<scene::preset> compose_curve_scenario(const scene::preset_site &
 std::shared_ptr<scene::preset> compose_surface_scenario(const scene::preset_site &site, std::vector<registered_surface> surfaces, const capabilities &solving,
                                                         const scenario_settings &opened, const scenario_composition &composed)
 {
-    const auto drawing                    = [&site](const scenario_window_inputs &built) { return std::make_shared<surface_stencil>(site.scene, built.seen, built.drawn); };
+    const auto drawing                    = [&site](const scenario_window_inputs &built) { return std::make_shared<surface_stencil>(site.scene, built.seen, built.drawn, built.keyed); };
     std::shared_ptr<scene::preset> preset = composed_over(site, std::move(surfaces), solving, opened, composed, "surface", drawing);
     if(preset != nullptr)
         preset->opening_view = surface_opening_view();

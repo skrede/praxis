@@ -2126,6 +2126,7 @@ lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	opened	me
 lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	registered	member	-	typename:std::vector<std::string>
 lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	scenario	member	-	typename:std::weak_ptr<owned_scenario>
 lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	drawn	member	-	typename:std::shared_ptr<scenario_view>
+lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	keyed	member	-	typename:std::shared_ptr<std::vector<scene::key_entry>>
 lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	scenario_window_composer	typedef	-	-
 lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	scenario_composition	struct	-	-
 lib/praxis-optimization/include/praxis/optimization/compose_scenario.h	windows	member	-	typename:scenario_window_composer
@@ -2440,16 +2441,20 @@ lib/praxis-optimization/include/praxis/optimization/solver.h	optimization	namesp
 lib/praxis-optimization/include/praxis/optimization/solver.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/solver.h	solver_ops	struct	-	-
 lib/praxis-optimization/include/praxis/optimization/solver.h	solve	member	-	typename:expected<Eigen::VectorXd,refusal> (*)(const problem & p,const Eigen::VectorXd & x0,std::uint32_t max_iterations,std::vector<Eigen::VectorXd> & iterates)
+lib/praxis-optimization/include/praxis/optimization/surface_key.h	optimization	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/surface_key.h	praxis	namespace	-	-
+lib/praxis-optimization/include/praxis/optimization/surface_key.h	surface_key	prototype	(const scenario_window_inputs & inputs,std::string name)	typename:std::shared_ptr<scene::key_window>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	surface_stencil	class	-	-
-lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	surface_stencil	prototype	(threepp::Scene & parent,scenario_reader seen,std::shared_ptr<const scenario_view> drawn)	-
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	surface_stencil	prototype	(threepp::Scene & parent,scenario_reader seen,std::shared_ptr<const scenario_view> drawn,std::shared_ptr<std::vector<scene::key_entry>> keyed)	-
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	initialize	prototype	()	typename:expected<void,refusal>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	tear_down	prototype	()	typename:void
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	render	prototype	() const	typename:void
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_scene	member	-	typename:threepp::Scene &
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_seen	member	-	typename:scenario_reader
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_view	member	-	typename:std::shared_ptr<const scenario_view>
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_keyed	member	-	typename:std::shared_ptr<std::vector<scene::key_entry>>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_root	member	-	typename:std::shared_ptr<threepp::Group>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_field	member	-	typename:std::shared_ptr<threepp::Mesh>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_iterates	member	-	typename:std::shared_ptr<threepp::Group>
@@ -2469,6 +2474,9 @@ lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_sampled	
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_placed	member	-	typename:std::shared_ptr<const scenario_snapshot>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_heights	member	-	typename:interval
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_iterate_marks	member	-	typename:std::shared_ptr<threepp::InstancedMesh>
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_marked	member	-	typename:std::vector<std::uint32_t>
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	draw	prototype	() const	typename:void
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	write_key	prototype	() const	typename:void
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	resample	prototype	(const scenario_snapshot & shown) const	typename:void
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	place_iterates	prototype	(const std::shared_ptr<const scenario_snapshot> & shown) const	typename:void
 lib/praxis-rigid_motion/include/praxis/rigid_motion/angles.h	praxis	namespace	-	-
@@ -3133,6 +3141,16 @@ lib/praxis-scene/include/praxis/scene/imgui_window.h	m_initialized	member	-	type
 lib/praxis-scene/include/praxis/scene/imgui_window.h	m_plots	member	-	typename:plot_context
 lib/praxis-scene/include/praxis/scene/imgui_window.h	m_layout	member	-	typename:placed_layout
 lib/praxis-scene/include/praxis/scene/imgui_window.h	m_windows	member	-	typename:std::vector<std::shared_ptr<imgui_window>>
+lib/praxis-scene/include/praxis/scene/key_window.h	praxis	namespace	-	-
+lib/praxis-scene/include/praxis/scene/key_window.h	scene	namespace	-	-
+lib/praxis-scene/include/praxis/scene/key_window.h	key_entry	struct	-	-
+lib/praxis-scene/include/praxis/scene/key_window.h	label	member	-	typename:std::string
+lib/praxis-scene/include/praxis/scene/key_window.h	tone	member	-	typename:std::uint32_t
+lib/praxis-scene/include/praxis/scene/key_window.h	key_source	typedef	-	-
+lib/praxis-scene/include/praxis/scene/key_window.h	key_window	class	-	-
+lib/praxis-scene/include/praxis/scene/key_window.h	key_window	prototype	(std::string name,key_source source)	-
+lib/praxis-scene/include/praxis/scene/key_window.h	render	prototype	()	typename:void
+lib/praxis-scene/include/praxis/scene/key_window.h	m_source	member	-	typename:key_source
 lib/praxis-scene/include/praxis/scene/labeled_value_window.h	praxis	namespace	-	-
 lib/praxis-scene/include/praxis/scene/labeled_value_window.h	scene	namespace	-	-
 lib/praxis-scene/include/praxis/scene/labeled_value_window.h	labeled_value	struct	-	-

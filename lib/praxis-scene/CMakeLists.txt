@@ -4,6 +4,7 @@ praxis_add_module(scene
     include/praxis/scene/preset.h
     include/praxis/scene/stencil.h
     include/praxis/scene/widgets.h
+    include/praxis/scene/key_window.h
     include/praxis/scene/log_buffer.h
     include/praxis/scene/plot_window.h
     include/praxis/scene/visualizer.h
@@ -19,6 +20,7 @@ praxis_add_module(scene
     src/plot_view.h
     src/plot_key.cpp
     src/plot_view.cpp
+    src/key_window.cpp
     src/log_buffer.cpp
     src/visualizer.cpp
     src/composition.cpp

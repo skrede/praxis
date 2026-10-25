@@ -5,6 +5,7 @@
 #include "praxis/optimization/scenario_snapshot.h"
 
 #include "praxis/scene/stencil.h"
+#include "praxis/scene/key_window.h"
 
 #include "praxis/compat/expected.h"
 
@@ -22,6 +23,8 @@
 #include <threepp/core/BufferGeometry.hpp>
 
 #include <memory>
+#include <vector>
+#include <cstdint>
 
 namespace praxis::optimization {
 
@@ -43,11 +46,12 @@ class level_map;
 // and no step construction: its level curves, its gradient at x_k and its step are drawn as a map on
 // the field instead, "level map", or with the floor projection on a floor beneath the field with its
 // iterates projected there. Everything is read from the publication, so nothing here evaluates the
-// function, and nothing here picks: the seed is typed. The view says which of these is drawn.
+// function, and nothing here picks: the seed is typed. The view says which of these is drawn. Each
+// frame rewrites `keyed` to name, in its tone and in the key's order, every figure that frame shows.
 class surface_stencil : public scene::stencil
 {
 public:
-    surface_stencil(threepp::Scene &parent, scenario_reader seen, std::shared_ptr<const scenario_view> drawn);
+    surface_stencil(threepp::Scene &parent, scenario_reader seen, std::shared_ptr<const scenario_view> drawn, std::shared_ptr<std::vector<scene::key_entry>> keyed);
     ~surface_stencil() override;
 
     expected<void, refusal> initialize() override;
@@ -59,6 +63,7 @@ private:
     threepp::Scene &m_scene;
     scenario_reader m_seen;
     std::shared_ptr<const scenario_view> m_view;
+    std::shared_ptr<std::vector<scene::key_entry>> m_keyed;
     std::shared_ptr<threepp::Group> m_root;
     std::shared_ptr<threepp::Mesh> m_field;
     std::shared_ptr<threepp::Group> m_iterates;
@@ -80,7 +85,10 @@ private:
     mutable std::shared_ptr<const scenario_snapshot> m_placed;
     mutable interval m_heights;
     mutable std::shared_ptr<threepp::InstancedMesh> m_iterate_marks;
+    mutable std::vector<std::uint32_t> m_marked;
 
+    void draw() const;
+    void write_key() const;
     void resample(const scenario_snapshot &shown) const;
     void place_iterates(const std::shared_ptr<const scenario_snapshot> &shown) const;
 };

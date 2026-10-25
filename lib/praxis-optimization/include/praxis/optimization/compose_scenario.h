@@ -8,6 +8,7 @@
 #include "praxis/optimization/scenario_snapshot.h"
 
 #include "praxis/scene/preset.h"
+#include "praxis/scene/key_window.h"
 #include "praxis/scene/preset_site.h"
 #include "praxis/scene/imgui_window.h"
 
@@ -23,7 +24,8 @@ namespace praxis::optimization {
 // window has nothing it could evaluate or solve on the render strand: it reads the publication and
 // asks for a run through the gate. `opened` is what the composition opened at, which a window holding
 // settings of its own starts from, and `checks_derivative` is the composition's own. `drawn` is what
-// the scenario's drawing shows, which a window may switch.
+// the scenario's drawing shows, which a window may switch. `keyed` names each figure a surface's
+// drawing showed on its last frame, written by the drawing and read by a window on the frames' strand.
 struct scenario_window_inputs
 {
     scenario_reader seen;
@@ -33,6 +35,7 @@ struct scenario_window_inputs
     std::vector<std::string> registered;
     std::weak_ptr<owned_scenario> scenario;
     std::shared_ptr<scenario_view> drawn;
+    std::shared_ptr<std::vector<scene::key_entry>> keyed;
 };
 
 // Invoked once per composition, after the publisher and the gated state exist and before the preset

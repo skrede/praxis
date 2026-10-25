@@ -13,6 +13,7 @@ praxis_add_module(optimization
     include/praxis/optimization/scenario_view.h
     include/praxis/optimization/settings_keys.h
     include/praxis/optimization/scenario_state.h
+    include/praxis/optimization/surface_key.h
     include/praxis/optimization/surface_stencil.h
     include/praxis/optimization/display_window.h
     include/praxis/optimization/function_window.h
@@ -42,6 +43,7 @@ praxis_add_module(optimization
     src/surface_levels.cpp
     src/map_placement.cpp
     src/surface_overlay.cpp
+    src/surface_key.cpp
     src/surface_stencil.cpp
     src/display_window.cpp
     src/function_window.cpp
@@ -68,6 +70,7 @@ praxis_add_module(optimization
     src/surface_figures.h
     src/surface_levels.h
     src/map_placement.h
+    src/surface_keyed.h
     src/surface_overlay.h
     src/curve_overlays.h
     src/curve_objective.h

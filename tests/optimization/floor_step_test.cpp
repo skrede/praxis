@@ -9,6 +9,8 @@
 #include "praxis/optimization/surface_stencil.h"
 #include "praxis/optimization/scenario_snapshot.h"
 
+#include "praxis/scene/key_window.h"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <threepp/math/Vector3.hpp>
@@ -22,6 +24,7 @@
 #include <Eigen/Core>
 
 #include <cmath>
+#include <memory>
 #include <string>
 #include <vector>
 #include <cstdint>
@@ -158,12 +161,14 @@ TEST_CASE("a surface with nothing published draws no level map on its floor", "[
 {
     threepp::Scene scene;
     const auto published = std::make_shared<scenario_publisher>();
-    surface_stencil drawn(scene, published->reader(), std::make_shared<scenario_view>());
+    const auto keyed     = std::make_shared<std::vector<scene::key_entry>>();
+    surface_stencil drawn(scene, published->reader(), std::make_shared<scenario_view>(), keyed);
     REQUIRE(drawn.initialize().has_value());
     drawn.render();
 
     CHECK_FALSE(drawn_visible(scene, "level map"));
     CHECK_FALSE(drawn_visible(scene, "gradient at x_k"));
     CHECK_FALSE(drawn_visible(scene, "step taken"));
+    CHECK(keyed->empty());
     drawn.tear_down();
 }
