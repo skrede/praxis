@@ -1,7 +1,7 @@
 #include "drawn_graph.h"
-#include "drawn_surface.h"
 #include "composed_curve.h"
 #include "minimized_stage.h"
+#include "scenario_defaults.h"
 
 #include "praxis/optimization/slots.h"
 #include "praxis/optimization/problem.h"
@@ -16,18 +16,17 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <threepp/objects/Mesh.hpp>
-
-#include <threepp/materials/interfaces.hpp>
-
 #include <Eigen/Core>
 
 #include <cmath>
 #include <memory>
 #include <string>
 #include <vector>
+#include <cstddef>
 #include <cstdint>
+#include <iomanip>
 #include <optional>
+#include <algorithm>
 
 using namespace praxis;
 using namespace praxis::fixture;
@@ -58,19 +57,42 @@ std::optional<std::uint32_t> tone_of(const scene::plot_frame &frame, const std::
     return drawn->tone;
 }
 
-threepp::Color worn(threepp::Scene &scene, const std::string &name)
-{
-    auto *drawn = scene.getObjectByName<threepp::Mesh>(name);
-    REQUIRE(drawn != nullptr);
-    const auto *material = dynamic_cast<const threepp::MaterialWithColor *>(drawn->material().get());
-    REQUIRE(material != nullptr);
-
-    return material->color;
-}
-
 scenario_window_composer graph_only()
 {
     return [](const scenario_window_inputs &offered) { return std::vector<std::shared_ptr<scene::imgui_window>>{curve_graph(offered, "Graph")}; };
+}
+
+// The graph alone at step 0 with the derivative check on, Show on and p at 0.
+scene::plot_frame checked_at_p(const registered_curve &curve, const scenario_settings &settings)
+{
+    scheduler::scheduler loop(scheduler::inline_workers);
+    staged built(loop);
+    opened taken = open_composing(built.site, {curve}, baseline(), settings, graph_only(), true);
+    REQUIRE(settled(loop, taken) != nullptr);
+    taken.inputs->drawn->linearization = true;
+    command(taken.inputs->scenario, [](scenario_state &state) { state.linearize(Eigen::VectorXd::Constant(1, 0.0)); });
+    REQUIRE(loop.drain().has_value());
+    const scene::plot_frame frame = drawn_now(taken);
+    taken.composed->tear_down();
+    REQUIRE(named(frame, "central difference at p") != nullptr);
+
+    return frame;
+}
+
+// Whether the linearization point p and its tangent may share one tone.
+constexpr bool p_and_its_tangent_may_share = true;
+
+void check_pairwise_distinct(const scene::plot_frame &frame)
+{
+    for(std::size_t at = 0; at < frame.series.size(); ++at)
+        for(std::size_t other = at + 1; other < frame.series.size(); ++other)
+        {
+            const auto [first, second] = std::minmax(frame.series[at].name, frame.series[other].name);
+            INFO(first << " and " << second << " share 0x" << std::hex << std::setw(6) << std::setfill('0') << frame.series[at].tone.value_or(0u));
+            const bool allowed =
+                    (first == "x_(k+1)" && second == "zero of the tangent") || (p_and_its_tangent_may_share && first == "linearization point p" && second == "tangent at p");
+            CHECK((allowed || frame.series[at].tone != frame.series[other].tone));
+        }
 }
 
 }
@@ -168,25 +190,25 @@ TEST_CASE("the box's ends and the central difference at p wear their tones on th
     toned_cubic boxed(registered_curve("boxed", &cubic_value, &cubic_slope, box{Eigen::VectorXd::Constant(1, -1.0), Eigen::VectorXd::Constant(1, 2.5)}), 0.5);
     CHECK(tone_of(boxed.drained(), "bounds") == 0x4b0082u);
 
-    graph_stage checked(registered_curve("cubic", &cubic_value, [](double x) { return -cubic_slope(x); }), graph_only(), true);
-    checked.taken.inputs->drawn->linearization = true;
-    command(checked.taken.inputs->scenario, [](scenario_state &state) { state.linearize(Eigen::VectorXd::Constant(1, 0.0)); });
-    CHECK(tone_of(checked.drained(), "central difference at p") == 0x00ffffu);
+    const scene::plot_frame checked = checked_at_p(registered_curve("cubic", &cubic_value, [](double x) { return -cubic_slope(x); }), opening());
+    CHECK(tone_of(checked, "central difference at p") == 0x808000u);
 }
 
-TEST_CASE("the surface's plane at p wears the linearization tone and the step's plane the tangent's", "[optimization][surface][tone]")
+TEST_CASE("a converged run with a disagreeing derivative check wears no tone twice outside the allowed pairs", "[optimization][graph][objective][tone][pairs]")
 {
-    scheduler::scheduler loop(scheduler::inline_workers);
-    staged built(loop);
-    const registered_surface circle("circle", [](double x, double y) { return x * x + y * y - 1.0; }, [](double x, double y) { return Eigen::Vector2d(2.0 * x, 2.0 * y); });
-    opened taken = open_surface_with(built.site, {circle}, baseline(),
-                                     scenario_settings{"circle", {interval{-2.0, 2.0}, interval{-2.0, 2.0}}, Eigen::Vector2d(-2.0, -2.0), 70u, 0u, {}, {}}, {}, true);
-    REQUIRE(settled(loop, taken) != nullptr);
-    command(taken.inputs->scenario, [](scenario_state &state) { state.linearize(Eigen::Vector2d(0.0, 0.0)); });
-    REQUIRE(loop.drain().has_value());
+    const scene::plot_frame root = checked_at_p(registered_curve("cubic", &cubic_value, [](double x) { return 2.0 * cubic_slope(x); }), opening());
+    REQUIRE(named(root, "root") != nullptr);
+    check_pairwise_distinct(root);
 
-    CHECK(worn(*built.scene, "tangent plane at p") == threepp::Color(0xffffffu));
-    CHECK(worn(*built.scene, "central difference at p") == threepp::Color(0x00ffffu));
-    CHECK(worn(*built.scene, "tangent plane") == threepp::Color(0xf0e68cu));
-    taken.composed->tear_down();
+    const registered_curve doubled(quartic_name, &quartic, [](double x) { return 2.0 * quartic_slope(x); }, &quartic_curvature);
+    const scene::plot_frame descended = checked_at_p(doubled, minimum_from(quartic_name, 2.0, minimizer_slot::gradient_descent, 0.05, 50u));
+    REQUIRE(named(descended, "stationary point") != nullptr);
+    check_pairwise_distinct(descended);
+}
+
+TEST_CASE("the ring, the central difference and the floor's selected iterate wear three tones", "[optimization][tone][pairs]")
+{
+    CHECK(optimization::answer_tone != optimization::central_difference_tone);
+    CHECK(optimization::answer_tone != optimization::floor_selected_iterate_tone);
+    CHECK(optimization::central_difference_tone != optimization::floor_selected_iterate_tone);
 }

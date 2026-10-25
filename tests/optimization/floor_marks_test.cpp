@@ -119,7 +119,7 @@ TEST_CASE("the Display window's Iterates switch hides the floor markers", "[opti
     CHECK(drawn_visible(drawn.scene(), "iterates on the floor"));
 }
 
-TEST_CASE("the floor marker of the selected step's iterate wears cyan", "[optimization][surface][objective]")
+TEST_CASE("the floor marker of the selected step's iterate wears chartreuse", "[optimization][surface][objective]")
 {
-    CHECK(floor_selected_iterate_tone == 0x00ffffu);
+    CHECK(floor_selected_iterate_tone == 0x7fff00u);
 }
