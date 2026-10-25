@@ -79,10 +79,8 @@ inline constexpr double opening_elevation_radians = 0.9599310885968813;
 inline constexpr double opening_azimuth_radians   = 0.0;
 inline constexpr double opening_distance          = 1.6;
 
-// The tones a surface, a curve and what is drawn on them wear, as 0xRRGGBB. The tangent at x_k (a
-// plane on a surface, a line on a curve, and a curve's quadratic model at x_k) wears tangent_tone, and
-// its zero (the zero line and the nearest point, a curve's zero of the tangent, and the model's vertex)
-// wears tangent_zero_tone.
+// The tones a surface, a curve and what is drawn on them wear, as 0xRRGGBB. The tangent at x_k wears
+// tangent_tone, and its zero, from which x_(k+1) is drawn, tangent_zero_tone.
 inline constexpr std::uint32_t surface_tone          = 0x4682b4;
 inline constexpr std::uint32_t curve_tone            = 0x6495ed;
 inline constexpr std::uint32_t iterate_tone          = 0xff4500;
@@ -96,6 +94,9 @@ inline constexpr std::uint32_t level_curve_tone      = 0x0000cd;
 inline constexpr std::uint32_t floor_iterate_tone    = 0x000000;
 inline constexpr std::uint32_t gradient_tone         = 0xffd700;
 inline constexpr std::uint32_t floor_step_tone       = 0x8b0000;
+
+// The tone of the line drawn on a surface from the zero plane up to x_(k+1), as 0xRRGGBB.
+inline constexpr std::uint32_t next_iterate_line_tone = tangent_zero_tone;
 
 // The tone the floor marker of the selected step's iterate wears, as 0xRRGGBB.
 inline constexpr std::uint32_t floor_selected_iterate_tone = 0x00ffff;

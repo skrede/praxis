@@ -24,6 +24,8 @@ enum class plot_mark : std::uint8_t
 // A curve whose two spans differ in length is drawn to the shorter of them.
 struct plot_series
 {
+    plot_series(std::string called, std::vector<double> abscissae, std::vector<double> ordinates, plot_mark marked, std::optional<std::uint32_t> toned = std::nullopt);
+
     std::string name;
     std::vector<double> abscissa;
     std::vector<double> ordinate;
@@ -31,7 +33,7 @@ struct plot_series
     plot_mark mark;
     // The color the series is drawn and keyed in, as 0xRRGGBB; absent, the series takes the plotting
     // library's next colormap color.
-    std::optional<std::uint32_t> tone = std::nullopt;
+    std::optional<std::uint32_t> tone;
 };
 
 struct plot_limits

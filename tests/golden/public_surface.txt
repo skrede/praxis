@@ -3188,6 +3188,7 @@ lib/praxis-scene/include/praxis/scene/plot_window.h	markers	enumerator	-	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	segments	enumerator	-	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	ring	enumerator	-	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	plot_series	struct	-	-
+lib/praxis-scene/include/praxis/scene/plot_window.h	plot_series	prototype	(std::string called,std::vector<double> abscissae,std::vector<double> ordinates,plot_mark marked,std::optional<std::uint32_t> toned=std::nullopt)	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	name	member	-	typename:std::string
 lib/praxis-scene/include/praxis/scene/plot_window.h	abscissa	member	-	typename:std::vector<double>
 lib/praxis-scene/include/praxis/scene/plot_window.h	ordinate	member	-	typename:std::vector<double>

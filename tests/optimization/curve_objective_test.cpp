@@ -107,7 +107,8 @@ TEST_CASE("a descent-minimized curve draws the tangent at the selected step and 
     REQUIRE(stepped != nullptr);
     REQUIRE(stepped->ordinate.size() == 2u);
     CHECK((stepped->abscissa[0] == next && stepped->abscissa[1] == next));
-    CHECK(near(stepped->ordinate[0], quartic(2.0) + quartic_slope(2.0) * (next - 2.0)));
+    const interval span = drawn_span(shown, 2u);
+    CHECK(near(stepped->ordinate[0], std::clamp(quartic(2.0) + quartic_slope(2.0) * (next - 2.0), span.lower, span.upper)));
     CHECK(near(stepped->ordinate[1], quartic(next)));
     for(const char *name : {"quadratic model at x_k", "vertex", "zero of the tangent"})
         CHECK(named(shown, name) == nullptr);

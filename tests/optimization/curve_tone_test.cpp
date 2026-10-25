@@ -87,7 +87,7 @@ TEST_CASE("every series the cubic's graph draws wears the tone of what it draws"
     }
     CHECK(tone_of(frame, "g(x)") == 0x6495edu);
     CHECK(tone_of(frame, "Iterates") == 0xff4500u);
-    CHECK(tone_of(frame, "x_(k+1)") == 0xff4500u);
+    CHECK(tone_of(frame, "x_(k+1)") == 0x008080u);
     CHECK(tone_of(frame, "x_k") == 0xff00ffu);
     CHECK(tone_of(frame, "tangent at x_k") == 0xf0e68cu);
     CHECK(tone_of(frame, "zero of the tangent") == 0x008080u);
@@ -131,14 +131,14 @@ TEST_CASE("a minimized curve wears the tangent's tones by role under both method
     const scene::plot_frame modeled = newton.at_step(0u);
     CHECK(tone_of(modeled, "quadratic model at x_k") == 0xf0e68cu);
     CHECK(tone_of(modeled, "vertex") == 0x008080u);
-    CHECK(tone_of(modeled, "x_(k+1)") == 0xff4500u);
+    CHECK(tone_of(modeled, "x_(k+1)") == 0x008080u);
     CHECK(tone_of(modeled, "stationary point") == 0x00ffffu);
     CHECK(named(modeled, "root") == nullptr);
 
     graph_stage descent(quartic_curve(), baseline(), minimum_from(quartic_name, 2.0, minimizer_slot::gradient_descent, 0.05, 50u));
     const scene::plot_frame descended = descent.at_step(0u);
     CHECK(tone_of(descended, "tangent at x_k") == 0xf0e68cu);
-    CHECK(tone_of(descended, "x_(k+1)") == 0xff4500u);
+    CHECK(tone_of(descended, "x_(k+1)") == 0x008080u);
 }
 
 TEST_CASE("a run stopped at its limit or refused rings nothing", "[optimization][graph][tone]")

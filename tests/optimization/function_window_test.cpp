@@ -112,12 +112,12 @@ void take_entry(tests::imgui_frame &frames, const drawing &draw, std::size_t ent
 
 }
 
-TEST_CASE("the function window's source selector offers the registered functions and a typed one", "[optimization][function]")
+TEST_CASE("the function window's source selector reads Preset and Manual, in that order", "[optimization][function]")
 {
     const std::span<const char *const> labels = function_source_labels();
 
     REQUIRE(labels.size() == 2u);
-    CHECK(std::string(labels[0]) == "Registered");
+    CHECK(std::string(labels[0]) == "Preset");
     CHECK(std::string(labels[1]) == "Manual");
     CHECK(static_cast<std::size_t>(function_source::registered) == 0u);
     CHECK(static_cast<std::size_t>(function_source::manual) == 1u);

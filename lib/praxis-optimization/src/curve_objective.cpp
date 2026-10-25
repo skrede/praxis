@@ -12,6 +12,7 @@
 #include <cstddef>
 #include <utility>
 #include <optional>
+#include <algorithm>
 
 namespace praxis::optimization {
 
@@ -62,11 +63,11 @@ std::optional<quadratic_model> newton_model(const scenario_snapshot &shown)
 }
 
 template<typename Model>
-void add_next(const scenario_run &run, std::size_t k, const Model &model, std::vector<scene::plot_series> &drawn)
+void add_next(const scenario_run &run, std::size_t k, const Model &model, const interval &span, std::vector<scene::plot_series> &drawn)
 {
     const double next   = coordinate(run.iterates[k + 1]);
     const double landed = k + 1 < run.objectives.size() ? answered(run.objectives[k + 1]) : unanswered;
-    drawn.push_back(scene::plot_series{"x_(k+1)", {next, next}, {model(next), landed}, scene::plot_mark::segments, iterate_tone});
+    drawn.push_back(scene::plot_series{"x_(k+1)", {next, next}, {std::clamp(model(next), span.lower, span.upper), landed}, scene::plot_mark::segments, tangent_zero_tone});
 }
 
 }
@@ -97,7 +98,7 @@ void add_newton_model(const scenario_snapshot &shown, const interval &span, std:
         model.ordinate.push_back(y >= span.lower && y <= span.upper ? y : unanswered);
     }
     drawn.push_back(std::move(model));
-    add_next(shown.run, shown.step, *q, drawn);
+    add_next(shown.run, shown.step, *q, span, drawn);
 }
 
 void add_descent_tangent(const scenario_snapshot &shown, const interval &span, std::vector<scene::plot_series> &drawn)
@@ -113,7 +114,7 @@ void add_descent_tangent(const scenario_snapshot &shown, const interval &span, s
 
     if(std::optional<scene::plot_series> line = tangent("tangent at x_k", tangent_tone, at, shown.ranges.front(), span))
         drawn.push_back(std::move(*line));
-    add_next(run, k, [&at](double x) { return at.g + at.slope * (x - at.x); }, drawn);
+    add_next(run, k, [&at](double x) { return at.g + at.slope * (x - at.x); }, span, drawn);
 }
 
 }

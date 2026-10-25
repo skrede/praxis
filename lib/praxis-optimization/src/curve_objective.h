@@ -14,11 +14,11 @@ namespace praxis::optimization {
 void add_vertex(const scenario_snapshot &shown, std::vector<scene::plot_series> &drawn);
 
 // The quadratic model at the selected step, sampled over the range and broken where it leaves the span,
-// and the recorded x_(k+1) as a segment from the model's value there to f.
+// and the recorded x_(k+1) as a segment from the model's value there, held to the span, to f.
 void add_newton_model(const scenario_snapshot &shown, const interval &span, std::vector<scene::plot_series> &drawn);
 
 // The tangent of f at the selected step, and the recorded x_(k+1) as a segment from the tangent's value
-// there to f.
+// there, held to the span, to f.
 void add_descent_tangent(const scenario_snapshot &shown, const interval &span, std::vector<scene::plot_series> &drawn);
 
 }

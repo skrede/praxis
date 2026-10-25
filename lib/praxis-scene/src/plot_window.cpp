@@ -145,6 +145,15 @@ void render_frames(const plot_reading &shown, const plot_pick &pick, plot_legend
 
 }
 
+plot_series::plot_series(std::string called, std::vector<double> abscissae, std::vector<double> ordinates, plot_mark marked, std::optional<std::uint32_t> toned)
+        : name(std::move(called))
+        , abscissa(std::move(abscissae))
+        , ordinate(std::move(ordinates))
+        , mark(marked)
+        , tone(toned)
+{
+}
+
 plot_window::plot_window(std::string name, std::function<void()> controls, plot_source source)
         : plot_window(std::move(name), std::move(controls), std::move(source), plot_pick())
 {

@@ -21,7 +21,7 @@ namespace praxis::optimization {
 
 namespace {
 
-constexpr std::array<const char *, 2> source_labels{"Registered", "Manual"};
+constexpr std::array<const char *, 2> source_labels{"Preset", "Manual"};
 
 constexpr std::array<const char *, 2> lower_labels{"x min", "y min"};
 constexpr std::array<const char *, 2> upper_labels{"x max", "y max"};

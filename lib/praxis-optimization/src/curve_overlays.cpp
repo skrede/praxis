@@ -77,7 +77,7 @@ void add_step(const scenario_snapshot &shown, const interval &span, std::vector<
     if(k + 1 < run.errors.size())
     {
         const double next = coordinate(run.iterates[k + 1]);
-        drawn.push_back(scene::plot_series{"x_(k+1)", {next, next}, {0.0, value_of(run.errors[k + 1])}, scene::plot_mark::segments, iterate_tone});
+        drawn.push_back(scene::plot_series{"x_(k+1)", {next, next}, {0.0, value_of(run.errors[k + 1])}, scene::plot_mark::segments, tangent_zero_tone});
     }
 }
 

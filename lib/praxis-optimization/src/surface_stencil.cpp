@@ -68,7 +68,7 @@ surface_stencil::surface_stencil(threepp::Scene &parent, scenario_reader seen, s
         , m_patch(plane_patch("tangent plane", tangent_tone, patch_corners, false))
         , m_zero_line(overlay_lines("zero line", tangent_zero_tone, 2u, true))
         , m_nearest(overlay_point("nearest point", tangent_zero_tone, m_sphere))
-        , m_recorded(overlay_lines("x_(k+1)", iterate_tone, 2u, true))
+        , m_recorded(overlay_lines("x_(k+1)", next_iterate_line_tone, 2u, true))
         , m_plane(plane_patch("tangent plane at p", linearization_point_tone, plane_corners, false))
         , m_central(plane_patch("central difference at p", central_difference_tone, plane_corners, true))
         , m_levels(std::make_unique<level_map>(m_sphere))
