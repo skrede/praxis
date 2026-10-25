@@ -41,6 +41,7 @@ target_include_directories(optimization_manual_save_test PRIVATE ${PROJECT_SOURC
 praxis_add_test(optimization_window_placement_test.cpp HEADERS scratch_directory.h scenario_placements.h composed_optimization.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config praxis_test_support)
 target_include_directories(optimization_window_placement_test PRIVATE ${PROJECT_SOURCE_DIR}/presets/optimization)
 praxis_add_test(curve_graph_legend_test.cpp HEADERS composed_optimization.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config implot praxis_test_support)
+praxis_add_test(curve_graph_view_test.cpp HEADERS composed_optimization.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config implot praxis_test_support)
 praxis_add_test(surface_seed_clear_test.cpp HEADERS composed_optimization.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config praxis_test_support)
 target_include_directories(surface_seed_clear_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src)
 praxis_add_test(next_iterate_drawing_test.cpp HEADERS composed_optimization.h ../optimization/composed_curve.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config praxis_test_support)
@@ -51,6 +52,7 @@ praxis_add_test(unplaced_windows_test.cpp HEADERS described_arm.h composed_panel
 # The shipped documents are read from beside the demonstration's sources.
 target_compile_definitions(optimization_scenarios_test PRIVATE PRAXIS_SHIPPED_OPTIMIZATION_DIR="${PROJECT_SOURCE_DIR}/examples/optimization")
 target_compile_definitions(curve_graph_legend_test PRIVATE PRAXIS_SHIPPED_OPTIMIZATION_DIR="${PROJECT_SOURCE_DIR}/examples/optimization")
+target_compile_definitions(curve_graph_view_test PRIVATE PRAXIS_SHIPPED_OPTIMIZATION_DIR="${PROJECT_SOURCE_DIR}/examples/optimization")
 target_compile_definitions(surface_seed_clear_test PRIVATE PRAXIS_SHIPPED_OPTIMIZATION_DIR="${PROJECT_SOURCE_DIR}/examples/optimization")
 target_compile_definitions(next_iterate_drawing_test PRIVATE PRAXIS_SHIPPED_OPTIMIZATION_DIR="${PROJECT_SOURCE_DIR}/examples/optimization")
 

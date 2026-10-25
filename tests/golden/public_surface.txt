@@ -3220,6 +3220,7 @@ lib/praxis-scene/include/praxis/scene/plot_window.h	m_pick	member	-	typename:plo
 lib/praxis-scene/include/praxis/scene/plot_window.h	m_legend	member	-	typename:plot_legend
 lib/praxis-scene/include/praxis/scene/plot_window.h	m_source	member	-	typename:plot_source
 lib/praxis-scene/include/praxis/scene/plot_window.h	m_controls	member	-	typename:std::function<void ()>
+lib/praxis-scene/include/praxis/scene/plot_window.h	m_views	member	-	typename:std::vector<std::optional<plot_limits>>
 lib/praxis-scene/include/praxis/scene/preset.h	praxis	namespace	-	-
 lib/praxis-scene/include/praxis/scene/preset.h	scene	namespace	-	-
 lib/praxis-scene/include/praxis/scene/preset.h	camera_view	struct	-	-

@@ -1,5 +1,6 @@
 #include "plot_key.h"
 #include "plot_ring.h"
+#include "plot_view.h"
 
 #include "praxis/scene/plot_window.h"
 
@@ -38,11 +39,10 @@ float shared_height(std::size_t count, float keys)
     return std::max(share, ImPlot::GetStyle().PlotMinSize.y);
 }
 
-void setup_axes(const plot_frame &shown, const std::string &abscissa_label)
+void setup_axes(const plot_frame &shown, const std::string &abscissa_label, bool fitted)
 {
-    const ImPlotAxisFlags fitted = shown.abscissa_limits ? ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_RangeFit : ImPlotAxisFlags_None;
-    ImPlot::SetupAxes(abscissa_label.c_str(), shown.ordinate_label.c_str(), ImPlotAxisFlags_None, fitted);
-    if(shown.abscissa_limits)
+    ImPlot::SetupAxes(abscissa_label.c_str(), shown.ordinate_label.c_str(), ImPlotAxisFlags_None, fitted ? ImPlotAxisFlags_AutoFit | ImPlotAxisFlags_RangeFit : ImPlotAxisFlags_None);
+    if(fitted && shown.abscissa_limits)
         ImPlot::SetupAxisLimits(ImAxis_X1, shown.abscissa_limits->lower, shown.abscissa_limits->upper, ImPlotCond_Always);
     if(shown.logarithmic_ordinate)
         ImPlot::SetupAxisScale(ImAxis_Y1, ImPlotScale_Log10);
@@ -106,11 +106,13 @@ void report_pick(const plot_pick &pick, std::size_t index)
 
 // The panel's title already names what is drawn, so each plot's own title is hidden; the index still
 // stands in the identifier, because plots sharing one identifier are one plot to the library.
-void render_frame(const plot_frame &shown, const std::string &abscissa_label, std::size_t index, float height, const plot_pick &pick, std::optional<plot_key> &key)
+void render_frame(const plot_frame &shown, const std::string &abscissa_label, std::size_t index, float height, const plot_pick &pick, std::optional<plot_key> &key, plot_view &view)
 {
-    if(ImPlot::BeginPlot(("##plot" + std::to_string(index)).c_str(), ImVec2(-1.f, height), key ? ImPlotFlags_NoLegend : ImPlotFlags_None))
+    const std::string id = "##plot" + std::to_string(index);
+    const bool fitted    = shows_fitted(view, shown, id.c_str());
+    if(ImPlot::BeginPlot(id.c_str(), ImVec2(-1.f, height), key ? ImPlotFlags_NoLegend : ImPlotFlags_None))
     {
-        setup_axes(shown, abscissa_label);
+        setup_axes(shown, abscissa_label, fitted);
         for(const plot_series &curve : shown.series)
         {
             render_curve(curve);
@@ -128,7 +130,7 @@ void render_frame(const plot_frame &shown, const std::string &abscissa_label, st
         key->draw();
 }
 
-void render_frames(const plot_reading &shown, const plot_pick &pick, plot_legend legend)
+void render_frames(const plot_reading &shown, const plot_pick &pick, plot_legend legend, std::vector<plot_view> &views)
 {
     if(shown.frames.empty())
         return;
@@ -139,8 +141,9 @@ void render_frames(const plot_reading &shown, const plot_pick &pick, plot_legend
         keyed += keys[index].emplace(shown.frames[index].series, ImGui::GetContentRegionAvail().x).height();
 
     const float height = shared_height(shown.frames.size(), keyed);
+    views.resize(shown.frames.size());
     for(std::size_t index = 0; index < shown.frames.size(); ++index)
-        render_frame(shown.frames[index], shown.abscissa_label, index, height, pick, keys[index]);
+        render_frame(shown.frames[index], shown.abscissa_label, index, height, pick, keys[index], views[index]);
 }
 
 }
@@ -165,6 +168,7 @@ plot_window::plot_window(std::string name, std::function<void()> controls, plot_
         , m_legend(plot_legend::inside_north_west)
         , m_source(std::move(source))
         , m_controls(std::move(controls))
+        , m_views()
 {
 }
 
@@ -186,7 +190,7 @@ void plot_window::render()
     else if(ImPlot::GetCurrentContext() == nullptr)
         ImGui::TextUnformatted(absent_context_line);
     else
-        render_frames(shown, m_pick, m_legend);
+        render_frames(shown, m_pick, m_legend, m_views);
 
     ImGui::End();
 }

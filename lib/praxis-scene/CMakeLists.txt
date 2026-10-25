@@ -16,7 +16,9 @@ praxis_add_module(scene
     src/plot_key.h
     src/preset.cpp
     src/plot_ring.h
+    src/plot_view.h
     src/plot_key.cpp
+    src/plot_view.cpp
     src/log_buffer.cpp
     src/visualizer.cpp
     src/composition.cpp
