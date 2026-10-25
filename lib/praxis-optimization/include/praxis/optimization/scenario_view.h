@@ -18,7 +18,7 @@ struct scenario_view
             , gradient(true)
             , step(true)
             , bounds(true)
-            , linearization(true)
+            , linearization(false)
             , floor_projection(false)
     {
     }

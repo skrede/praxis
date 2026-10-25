@@ -48,7 +48,7 @@ Eigen::Vector2d swapped_gradient(double x, double y)
     return Eigen::Vector2d(2.0 * y, 2.0 * x);
 }
 
-// A surface with the Linearization window, run from a seed on the zero curve so the step draws nothing.
+// A surface with the Linearization window and Show on, run from a seed on the zero curve so the step draws nothing.
 struct linearized_surface
 {
     scheduler::scheduler loop;
@@ -71,6 +71,7 @@ struct linearized_surface
                       checks_derivative))
     {
         static_cast<void>(settled(loop, taken));
+        taken.inputs->drawn->linearization = true;
     }
 
     ~linearized_surface()

@@ -35,7 +35,7 @@ registered_curve wrong_by_sign()
     return registered_curve("cubic", &cubic_value, [](double x) { return -cubic_slope(x); });
 }
 
-// The graph and the Linearization window over one curve, the window kept for the case to draw.
+// The graph and the Linearization window over one curve with Show on, the window kept for the case to draw.
 struct linearizing_stage
 {
     std::shared_ptr<linearization_window> panel;
@@ -45,6 +45,7 @@ struct linearizing_stage
             : panel()
             , stage(curve, composer(panel), checks_derivative)
     {
+        stage.taken.inputs->drawn->linearization = true;
     }
 
     static scenario_window_composer composer(std::shared_ptr<linearization_window> &kept)
@@ -191,7 +192,7 @@ TEST_CASE("with the check not opted in, nothing of it is evaluated, written or d
 TEST_CASE("a composition leaving the Linearization window out composes, runs and draws no tangent at a point", "[optimization][linearization]")
 {
     graph_stage stage(cubic(), baseline(), opening());
-
+    stage.taken.inputs->drawn->linearization = true;
     REQUIRE(stage.ran != nullptr);
     CHECK_FALSE(stage.ran->linearization.has_value());
     CHECK_FALSE(stage.ran->run.refused.has_value());

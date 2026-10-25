@@ -1,4 +1,5 @@
 #include "imgui_frame.h"
+#include "panel_labels.h"
 #include "composed_optimization.h"
 
 #include "praxis/optimization/registered.h"
@@ -28,7 +29,8 @@ using namespace praxis::fixture;
 
 namespace {
 
-const char *const graph_name = "Graph##curve";
+const char *const graph_name         = "Graph##curve";
+const char *const linearization_name = "Linearization##curve";
 
 double cubic(double x)
 {
@@ -81,6 +83,12 @@ std::shared_ptr<scene::imgui_window> graph_of(const composed_optimization &compo
     return nullptr;
 }
 
+void switch_show_on(const composed_optimization &composed)
+{
+    tests::imgui_frame frames;
+    press_on(frames, composed.draw(linearization_name), linearization_name, "Show");
+}
+
 drawn_graph read_back(std::string written)
 {
     const ImPlotPlot &plot   = *ImPlot::GetCurrentContext()->Plots.GetByIndex(0);
@@ -91,12 +99,13 @@ drawn_graph read_back(std::string written)
 }
 
 // The Graph at the rectangle its opening placement gives it on a 1920 x 1080 work area at font
-// scale 1, drawn once more into the log so what it writes as text is read.
+// scale 1 with the Linearization window's Show on, drawn once more into the log so what it writes as text is read.
 drawn_graph drawn_at_opening(const std::string &document, const std::string &preset)
 {
     const composed_optimization composed(config::resolve(document, PRAXIS_SHIPPED_OPTIMIZATION_DIR), shipped_curves(), preset);
     const std::shared_ptr<scene::imgui_window> graph = graph_of(composed);
     REQUIRE(graph->opening().has_value());
+    switch_show_on(composed);
 
     tests::imgui_frame frames;
     const scene::window_rectangle at = scene::opening_rectangle(*graph->opening(), ImVec2(0.f, 0.f), ImVec2(1920.f, 1080.f), 13.f);

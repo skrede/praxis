@@ -122,41 +122,40 @@ Eigen::VectorXd reset_point(const std::shared_ptr<scene::imgui_window> &panel, s
 
 }
 
-TEST_CASE("the Linearization window's Show switch hides and shows the point and its tangents on a curve", "[optimization][graph][linearization]")
+TEST_CASE("the Linearization window's Show switch starts off and shows then hides the point and its tangents on a curve", "[optimization][graph][linearization]")
 {
     std::shared_ptr<scene::imgui_window> panel;
     graph_stage stage(wrong_by_sign(), graph_and_linearization(panel), true);
+    const scene::plot_frame opening = stage.drained();
     for(const char *name : named_at_p)
-        REQUIRE(named(stage.drained(), name) != nullptr);
-
-    press_show(panel);
-    const scene::plot_frame hidden = stage.drained();
-    for(const char *name : named_at_p)
-        CHECK(named(hidden, name) == nullptr);
-    CHECK(named(hidden, "Iterates") != nullptr);
+        CHECK(named(opening, name) == nullptr);
+    CHECK(named(opening, "Iterates") != nullptr);
 
     press_show(panel);
     const scene::plot_frame shown = stage.drained();
     for(const char *name : named_at_p)
         CHECK(named(shown, name) != nullptr);
+
+    press_show(panel);
+    const scene::plot_frame hidden = stage.drained();
+    for(const char *name : named_at_p)
+        CHECK(named(hidden, name) == nullptr);
 }
 
-TEST_CASE("the Linearization window's Show switch hides and shows the planes at the point on a surface", "[optimization][surface][linearization]")
+TEST_CASE("the Linearization window's Show switch starts off and shows then hides the planes at the point on a surface", "[optimization][surface][linearization]")
 {
     linearized_surface viewed;
     threepp::Scene &scene = *viewed.built.scene;
-    REQUIRE(drawn_visible(scene, "tangent plane at p"));
-    REQUIRE(drawn_visible(scene, "central difference at p"));
-
-    viewed.show();
     CHECK_FALSE(drawn_visible(scene, "tangent plane at p"));
     CHECK_FALSE(drawn_visible(scene, "central difference at p"));
     CHECK(drawn_visible(scene, "surface"));
     CHECK(drawn_visible(scene, "tangent plane"));
-
     viewed.show();
     CHECK(drawn_visible(scene, "tangent plane at p"));
     CHECK(drawn_visible(scene, "central difference at p"));
+    viewed.show();
+    CHECK_FALSE(drawn_visible(scene, "tangent plane at p"));
+    CHECK_FALSE(drawn_visible(scene, "central difference at p"));
 }
 
 TEST_CASE("a surface draws its planes at the point and no object for the point itself", "[optimization][surface][linearization]")

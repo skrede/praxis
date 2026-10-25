@@ -39,12 +39,13 @@ scenario_settings from(std::string selected, double seed, std::uint32_t limit)
     return scenario_settings{std::move(selected), {interval{-3.0, 3.0}}, Eigen::VectorXd::Constant(1, seed), limit, 0u, {}, {}};
 }
 
-// The cubic solved from -2.25, linearized at the range's middle.
+// The cubic solved from -2.25, linearized at the range's middle with Show on.
 struct toned_cubic : graph_stage
 {
     explicit toned_cubic(const registered_curve &curve = cubic(), double seed = -2.25, std::uint32_t limit = 70u)
             : graph_stage(curve, baseline(), from(curve.name, seed, limit))
     {
+        taken.inputs->drawn->linearization = true;
         command(taken.inputs->scenario, [](scenario_state &state) { state.linearize(Eigen::VectorXd::Constant(1, 0.0)); });
     }
 };
@@ -168,6 +169,7 @@ TEST_CASE("the box's ends and the central difference at p wear their tones on th
     CHECK(tone_of(boxed.drained(), "bounds") == 0x4b0082u);
 
     graph_stage checked(registered_curve("cubic", &cubic_value, [](double x) { return -cubic_slope(x); }), graph_only(), true);
+    checked.taken.inputs->drawn->linearization = true;
     command(checked.taken.inputs->scenario, [](scenario_state &state) { state.linearize(Eigen::VectorXd::Constant(1, 0.0)); });
     CHECK(tone_of(checked.drained(), "central difference at p") == 0x00ffffu);
 }
