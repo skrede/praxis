@@ -6,6 +6,7 @@
 
 #include "praxis/optimization/registered.h"
 #include "praxis/optimization/curve_graph.h"
+#include "praxis/optimization/surface_key.h"
 #include "praxis/optimization/capabilities.h"
 #include "praxis/optimization/solve_window.h"
 #include "praxis/optimization/display_window.h"
@@ -48,8 +49,7 @@ struct offered_functions
     std::vector<optimization::registered_surface> surfaces;
 };
 
-// In the enumeration's own order, which is what indexing the composer table below by an enumerator
-// relies on.
+// In the enumeration's own order, which indexing the composer table below by an enumerator relies on.
 constexpr std::array<const char *, 2> scenario_spellings{"curve", "surface"};
 
 // The GUI library keys a window by its whole name and shows only what precedes "##", so the two
@@ -86,7 +86,8 @@ std::vector<std::shared_ptr<scene::imgui_window>> surface_windows(const optimiza
 {
     const auto named = [](std::string_view title) { return scenario_name(title, optimization_scenario::surface); };
     return placed({std::make_shared<optimization::function_window>(named("Function"), inputs), std::make_shared<optimization::display_window>(named("Display"), inputs),
-                   std::make_shared<optimization::solve_window>(named("Solve"), inputs), std::make_shared<optimization::linearization_window>(named("Linearization"), inputs)},
+                   std::make_shared<optimization::solve_window>(named("Solve"), inputs), std::make_shared<optimization::linearization_window>(named("Linearization"), inputs),
+                   optimization::surface_key(inputs, named("Key"))},
                   2u);
 }
 
@@ -109,8 +110,7 @@ using composer_factory = optimization_composer (*)(const optimization::capabilit
 
 constexpr std::array<composer_factory, 2> offered_scenarios{&curve_composer, &surface_composer};
 
-// The scenario's own document is located and read where it is composed, so a document saved since
-// the registration is the one opened.
+// The scenario's own document is located and read where it is composed, so a document saved since the registration is the one opened.
 scene::preset_registry::factory optimization_factory(config::location registered, document_route located, composed_route announced, optimization_composer compose)
 {
     return [registered = std::move(registered), located = std::move(located), announced = std::move(announced), compose = std::move(compose)](const scene::preset_site &site)

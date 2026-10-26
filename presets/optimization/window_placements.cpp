@@ -20,7 +20,7 @@ struct titled_placement
     scene::opening_placement at;
 };
 
-constexpr std::array<titled_placement, 9> placements{{
+constexpr std::array<titled_placement, 10> placements{{
         {"Function", 1u, {window_corner::top_left, 1.f, 10.f, 35.f, 15.f}},
         {"Function", 2u, {window_corner::top_left, 1.f, 10.f, 35.f, 19.f}},
         {"Graph", 1u, {window_corner::top_left, 37.f, 16.f, 23.f, 23.f}},
@@ -30,6 +30,7 @@ constexpr std::array<titled_placement, 9> placements{{
         {"Solve", 2u, {window_corner::bottom_right, 1.f, 20.f, 36.f, 19.f}},
         {"Linearization", 1u, {window_corner::bottom_right, 1.f, 1.f, 39.f, 14.f}},
         {"Linearization", 2u, {window_corner::bottom_right, 1.f, 1.f, 39.f, 18.f}},
+        {"Key", 2u, {window_corner::bottom_right, 40.f, 0.f, 12.f, 17.f}},
 }};
 
 }

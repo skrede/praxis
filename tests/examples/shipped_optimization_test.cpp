@@ -43,7 +43,7 @@ using namespace offered_optimization;
 namespace {
 
 const std::vector<std::string> curve_windows{"Function##curve", "Graph##curve", "Display##curve", "Solve##curve", "Linearization##curve"};
-const std::vector<std::string> surface_windows{"Function##surface", "Display##surface", "Solve##surface", "Linearization##surface"};
+const std::vector<std::string> surface_windows{"Function##surface", "Display##surface", "Solve##surface", "Linearization##surface", "Key##surface"};
 
 // Each shipped preset by the name it registers under, and whether its scenario is a surface.
 constexpr std::array<std::pair<std::string_view, bool>, 6> shipped_scenarios{{{"Root finding: a cubic", false},

@@ -75,19 +75,15 @@ std::unique_ptr<keyed_surface> composed(posed from)
 
 std::vector<std::string> opened_with(posed from)
 {
-    const std::vector<std::string> root{"f(x, y)", "Iterates", "x_k", "zero curve", "tangent plane at x_k", "zero line", "nearest point", "x_(k+1)"};
+    const std::vector<std::string> root{"f(x, y)", "Iterates", "x_k", "zero curve", "tangent at x_k", "zero line", "nearest point", "x_(k+1)"};
     const std::vector<std::string> minimum{"f(x, y)", "Iterates", "x_k", "level curves", "gradient at x_k", "step taken"};
     const auto with = [](std::vector<std::string> listed, std::initializer_list<std::string> added)
     {
         listed.insert(listed.end(), added);
         return listed;
     };
-    const std::array<std::vector<std::string>, 6> opened{root,
-                                                         with(root, {"bounds"}),
-                                                         with(root, {"tangent plane at p", "central difference at p"}),
-                                                         with(root, {"tangent plane at p"}),
-                                                         minimum,
-                                                         with(minimum, {"iterates on the floor", "x_k on the floor"})};
+    const std::array<std::vector<std::string>, 6> opened{
+            root, with(root, {"bounds"}), with(root, {"tangent at p", "difference at p"}), with(root, {"tangent at p"}), minimum, with(minimum, {"floor iterates", "x_k on the floor"})};
 
     return opened[static_cast<std::size_t>(from)];
 }
@@ -110,10 +106,10 @@ std::vector<keyed_state> keyed_states()
             {posed::boxed, &scenario_view::field, {"f(x, y)"}},
             {posed::boxed, &scenario_view::iterates, {"Iterates", "x_k"}},
             {posed::boxed, &scenario_view::zero_curve, {"zero curve"}},
-            {posed::boxed, &scenario_view::step, {"tangent plane at x_k", "zero line", "nearest point", "x_(k+1)"}},
+            {posed::boxed, &scenario_view::step, {"tangent at x_k", "zero line", "nearest point", "x_(k+1)"}},
             {posed::boxed, &scenario_view::bounds, {"bounds"}},
             {posed::floored, &scenario_view::field, {"f(x, y)"}},
-            {posed::floored, &scenario_view::iterates, {"Iterates", "x_k", "iterates on the floor", "x_k on the floor"}},
+            {posed::floored, &scenario_view::iterates, {"Iterates", "x_k", "floor iterates", "x_k on the floor"}},
             {posed::floored, &scenario_view::level_curves, {"level curves"}},
             {posed::floored, &scenario_view::gradient, {"gradient at x_k"}},
             {posed::floored, &scenario_view::step, {"step taken"}}};
@@ -149,6 +145,7 @@ void check_keyed(keyed_surface &keyed, const std::vector<std::string> &expected)
     const drawn_key drawn = drawn_rows(*keyed.key);
     CHECK(drawn.lines == expected);
     CHECK(drawn.swatches == swatches);
+    CHECK(drawn.outlined == swatches.size());
 }
 
 }

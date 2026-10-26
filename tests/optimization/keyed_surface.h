@@ -112,15 +112,15 @@ struct worn_figure
 inline constexpr std::array<std::pair<const char *, const char *>, 12> named_figures{{{"surface", "f(x, y)"},
                                                                                       {"zero curve", "zero curve"},
                                                                                       {"level curves", "level curves"},
-                                                                                      {"tangent plane", "tangent plane at x_k"},
+                                                                                      {"tangent plane", "tangent at x_k"},
                                                                                       {"zero line", "zero line"},
                                                                                       {"nearest point", "nearest point"},
                                                                                       {"x_(k+1)", "x_(k+1)"},
                                                                                       {"gradient at x_k", "gradient at x_k"},
                                                                                       {"step taken", "step taken"},
                                                                                       {"box", "bounds"},
-                                                                                      {"tangent plane at p", "tangent plane at p"},
-                                                                                      {"central difference at p", "central difference at p"}}};
+                                                                                      {"tangent plane at p", "tangent at p"},
+                                                                                      {"central difference at p", "difference at p"}}};
 
 inline threepp::Color worn(threepp::Object3D &figure)
 {
@@ -156,7 +156,7 @@ inline std::vector<worn_figure> shown_figures(threepp::Scene &scene)
         if(drawn_visible(scene, name) && (std::string(name) != "surface" || field_of(scene).triangles > 0u))
             shown.push_back(worn_figure{label, worn(*scene.getObjectByName(name))});
     add_marks(scene, "iterates", {"Iterates", "x_k"}, selected_iterate_tone, shown);
-    add_marks(scene, "iterates on the floor", {"iterates on the floor", "x_k on the floor"}, floor_selected_iterate_tone, shown);
+    add_marks(scene, "iterates on the floor", {"floor iterates", "x_k on the floor"}, floor_selected_iterate_tone, shown);
 
     return shown;
 }

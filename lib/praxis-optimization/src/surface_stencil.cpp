@@ -178,17 +178,17 @@ void surface_stencil::write_key() const
                                                keyed_figure{on_field && marked(selected_iterate_tone), "x_k", selected_iterate_tone},
                                                keyed_figure{shown_through(*m_zero_curve), "zero curve", zero_curve_tone},
                                                keyed_figure{shown_through(*map.getObjectByName("level curves")), "level curves", level_curve_tone},
-                                               keyed_figure{shown_through(*m_patch), "tangent plane at x_k", tangent_tone},
+                                               keyed_figure{shown_through(*m_patch), "tangent at x_k", tangent_tone},
                                                keyed_figure{shown_through(*m_zero_line), "zero line", tangent_zero_tone},
                                                keyed_figure{shown_through(*m_nearest), "nearest point", tangent_zero_tone},
                                                keyed_figure{shown_through(*m_recorded), "x_(k+1)", next_iterate_line_tone},
                                                keyed_figure{shown_through(*map.getObjectByName("gradient at x_k")), "gradient at x_k", gradient_tone},
                                                keyed_figure{shown_through(*map.getObjectByName("step taken")), "step taken", floor_step_tone},
-                                               keyed_figure{on_floor && marked(iterate_tone), "iterates on the floor", floor_iterate_tone},
+                                               keyed_figure{on_floor && marked(iterate_tone), "floor iterates", floor_iterate_tone},
                                                keyed_figure{on_floor && marked(selected_iterate_tone), "x_k on the floor", floor_selected_iterate_tone},
                                                keyed_figure{shown_through(*m_box), "bounds", box_tone},
-                                               keyed_figure{shown_through(*m_plane), "tangent plane at p", linearization_point_tone},
-                                               keyed_figure{shown_through(*m_central), "central difference at p", central_difference_tone}};
+                                               keyed_figure{shown_through(*m_plane), "tangent at p", linearization_point_tone},
+                                               keyed_figure{shown_through(*m_central), "difference at p", central_difference_tone}};
     *m_keyed = drawn_entries(figures);
 }
 

@@ -54,9 +54,9 @@ target_compile_definitions(shipped_optimization_minimum_test PRIVATE PRAXIS_SHIP
 # The standing windows are built by the visualizer, which needs a renderer and so a display; this case
 # reads where they and a shipped preset's windows land, and is registered with the display suites.
 if (PRAXIS_BUILD_DISPLAY_TESTS)
-    praxis_add_display_test(display_optimization_placement_test.cpp HEADERS scratch_documents.h offered_optimization.h ../presets/scratch_directory.h LIBS praxis::scene praxis::optimization_presets praxis::optimization praxis::config praxis::scheduler spdlog::spdlog praxis_test_support)
+    praxis_add_display_test(display_optimization_placement_test.cpp HEADERS scratch_documents.h offered_optimization.h ../presets/scratch_directory.h ../presets/standing_windows.h LIBS praxis::scene praxis::optimization_presets praxis::optimization praxis::config praxis::scheduler spdlog::spdlog praxis_test_support)
     target_sources(display_optimization_placement_test PRIVATE ../../examples/demo_documents.cpp ../../examples/demo_write_back.cpp ../../examples/demo_configuration.cpp
         ../../examples/optimization/optimization_offered.cpp)
-    target_include_directories(display_optimization_placement_test PRIVATE ${PROJECT_SOURCE_DIR}/examples)
+    target_include_directories(display_optimization_placement_test PRIVATE ${PROJECT_SOURCE_DIR}/examples ${PROJECT_SOURCE_DIR}/tests/presets ${PROJECT_SOURCE_DIR}/presets/optimization)
     target_compile_definitions(display_optimization_placement_test PRIVATE PRAXIS_SHIPPED_OPTIMIZATION_DIR="${PROJECT_SOURCE_DIR}/examples/optimization")
 endif ()

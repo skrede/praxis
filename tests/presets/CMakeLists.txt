@@ -42,8 +42,11 @@ praxis_add_test(optimization_window_placement_test.cpp HEADERS scratch_directory
 target_include_directories(optimization_window_placement_test PRIVATE ${PROJECT_SOURCE_DIR}/presets/optimization)
 praxis_add_test(curve_graph_legend_test.cpp HEADERS composed_optimization.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config implot praxis_test_support)
 praxis_add_test(curve_graph_view_test.cpp HEADERS composed_optimization.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config implot praxis_test_support)
-praxis_add_test(surface_seed_clear_test.cpp HEADERS composed_optimization.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config praxis_test_support)
-target_include_directories(surface_seed_clear_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src)
+praxis_add_test(surface_seed_clear_test.cpp HEADERS composed_optimization.h standing_windows.h figure_clearance.h ../examples/offered_optimization.h ../examples/scratch_documents.h scratch_directory.h
+    LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config spdlog::spdlog praxis_test_support)
+target_sources(surface_seed_clear_test PRIVATE ../../examples/demo_documents.cpp ../../examples/demo_write_back.cpp ../../examples/demo_configuration.cpp
+    ../../examples/optimization/optimization_offered.cpp)
+target_include_directories(surface_seed_clear_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src ${PROJECT_SOURCE_DIR}/examples ${PROJECT_SOURCE_DIR}/tests/examples)
 praxis_add_test(next_iterate_drawing_test.cpp HEADERS composed_optimization.h ../optimization/composed_curve.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config praxis_test_support)
 target_include_directories(next_iterate_drawing_test PRIVATE ${PROJECT_SOURCE_DIR}/presets/optimization ${PROJECT_SOURCE_DIR}/tests/optimization)
 praxis_add_test(optimization_placement_switch_test.cpp HEADERS scratch_directory.h scenario_placements.h composed_optimization.h LIBS praxis::optimization_presets praxis::optimization praxis::scene praxis::scheduler praxis::config praxis_test_support)

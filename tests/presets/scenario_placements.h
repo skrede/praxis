@@ -37,11 +37,12 @@ inline constexpr std::array<pinned_placement, 5> curve_placements{{
         {"Linearization##curve", "Linearization", {scene::window_corner::bottom_right, 1.f, 1.f, 39.f, 14.f}},
 }};
 
-inline constexpr std::array<pinned_placement, 4> surface_placements{{
+inline constexpr std::array<pinned_placement, 5> surface_placements{{
         {"Function##surface", "Function", {scene::window_corner::top_left, 1.f, 10.f, 35.f, 19.f}},
         {"Display##surface", "Display", {scene::window_corner::top_left, 37.f, 1.f, 12.f, 15.f}},
         {"Solve##surface", "Solve", {scene::window_corner::bottom_right, 1.f, 20.f, 36.f, 19.f}},
         {"Linearization##surface", "Linearization", {scene::window_corner::bottom_right, 1.f, 1.f, 39.f, 18.f}},
+        {"Key##surface", "Key", {scene::window_corner::bottom_right, 40.f, 0.f, 12.f, 17.f}},
 }};
 
 inline config::location placed_document(const std::string &file, const char *body)

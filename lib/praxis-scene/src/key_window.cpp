@@ -20,7 +20,10 @@ void draw_entry(const key_entry &entry)
 {
     const float side    = ImGui::GetTextLineHeight();
     const ImVec2 corner = ImGui::GetCursorScreenPos();
-    ImGui::GetWindowDrawList()->AddRectFilled(corner, ImVec2(corner.x + side, corner.y + side), opaque(entry.tone));
+    const ImVec2 far(corner.x + side, corner.y + side);
+    ImDrawList &list = *ImGui::GetWindowDrawList();
+    list.AddRectFilled(corner, far, opaque(entry.tone));
+    list.AddRect(corner, far, ImGui::GetColorU32(ImGuiCol_Text));
     ImGui::Dummy(ImVec2(side, side));
     ImGui::SameLine(0.f, ImGui::GetStyle().ItemInnerSpacing.x);
     ImGui::TextUnformatted(entry.label.c_str());

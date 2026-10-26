@@ -1,9 +1,14 @@
 #include "scratch_documents.h"
 #include "offered_optimization.h"
 
+#include "standing_windows.h"
+
 #include "demo_write_back.h"
 
+#include "window_placements.h"
+
 #include "praxis/scene/visualizer.h"
+#include "praxis/scene/imgui_window.h"
 
 #include "praxis/scheduler/scheduler.h"
 
@@ -12,9 +17,11 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
+#include <cmath>
 #include <string>
 #include <vector>
 #include <cstddef>
+#include <optional>
 #include <algorithm>
 #include <string_view>
 
@@ -52,9 +59,32 @@ void draw_frame(scene::visualizer &view, scheduler::scheduler &loop)
     REQUIRE(drawn);
 }
 
+// Where the standing windows' rules and a composed window's placement put each drawn window.
+std::optional<drawn_window> expected_for(const drawn_window &drawn, const std::vector<std::string> &presets)
+{
+    for(const fixture::standing_window &standing : fixture::standing_windows(presets))
+        if(standing.name == drawn.name)
+            return drawn_window{standing.name, standing.position, standing.size};
+
+    const std::size_t split                          = drawn.name.find("##");
+    const std::optional<scene::opening_placement> at = presets::scenario_window_placement(drawn.name.substr(0, split), drawn.name.ends_with("##surface") ? 2u : 1u);
+    if(split == std::string::npos || !at)
+        return std::nullopt;
+
+    const ImGuiViewport &viewport    = *ImGui::GetMainViewport();
+    const scene::window_rectangle in = scene::opening_rectangle(*at, viewport.WorkPos, viewport.WorkSize, ImGui::GetFontSize());
+    return drawn_window{drawn.name, in.position, in.size};
+}
+
+struct opened
+{
+    std::vector<drawn_window> drawn;
+    std::vector<std::optional<drawn_window>> expected;
+};
+
 // The windows a shipped preset's first frames put on screen in the demonstration's own arrangement:
 // its registration, its save route and a 1280 x 720 window at font scale 1 with no layout file.
-std::vector<drawn_window> opened_first(const std::string &named)
+opened opened_first(const std::string &named)
 {
     const scratch where("display-optimization-placement");
     const offered shipped(where);
@@ -70,7 +100,10 @@ std::vector<drawn_window> opened_first(const std::string &named)
     REQUIRE(ImGui::GetFontSize() == 13.f);
     REQUIRE(ImGui::GetMainViewport()->WorkSize.x == 1280.f);
     REQUIRE(ImGui::GetMainViewport()->WorkSize.y == 720.f);
-    return drawn_windows();
+    opened first{drawn_windows(), {}};
+    for(const drawn_window &window : first.drawn)
+        first.expected.push_back(expected_for(window, shipped.names));
+    return first;
 }
 
 bool spans_cross(float start, float extent, float other_start, float other_extent)
@@ -114,10 +147,31 @@ TEST_CASE("every shipped optimization preset opens its windows apart from each o
     for(const std::string &named : names)
     {
         INFO(named);
-        const std::vector<drawn_window> drawn = opened_first(named);
+        const std::vector<drawn_window> drawn = opened_first(named).drawn;
         const auto curve                      = std::ranges::count_if(drawn, [](const drawn_window &window) { return window.name.ends_with("##curve"); });
         const auto surface                    = std::ranges::count_if(drawn, [](const drawn_window &window) { return window.name.ends_with("##surface"); });
-        CHECK(((curve == 5 && surface == 0) || (curve == 0 && surface == 4)));
+        CHECK(((curve == 5 && surface == 0) || (curve == 0 && surface == 5)));
         check_apart(drawn);
+    }
+}
+
+TEST_CASE("every window a shipped surface opens is drawn where the standing windows' rules and its placement put it", "[examples][optimization][display]")
+{
+    for(const std::string named : {"Root finding: a paraboloid", "Minimization: (x^2 + 10y^2)/2", "Typed: x^2 + ay^2 - 1"})
+    {
+        const opened first = opened_first(named);
+        REQUIRE(first.drawn.size() == 9u);
+        for(std::size_t at = 0; at < first.drawn.size(); ++at)
+        {
+            const drawn_window &drawn = first.drawn[at];
+            INFO(named << ": " << drawn.name << " drawn at " << drawn.position.x << ", " << drawn.position.y << " sized " << drawn.size.x << " x " << drawn.size.y);
+            REQUIRE(first.expected[at].has_value());
+            const drawn_window &expected = *first.expected[at];
+            INFO("expected at " << expected.position.x << ", " << expected.position.y << " sized " << expected.size.x << " x " << expected.size.y);
+            CHECK(std::abs(drawn.position.x - expected.position.x) <= 0.5f);
+            CHECK(std::abs(drawn.position.y - expected.position.y) <= 0.5f);
+            CHECK(std::abs(drawn.size.x - expected.size.x) <= 0.5f);
+            CHECK(std::abs(drawn.size.y - expected.size.y) <= 0.5f);
+        }
     }
 }
