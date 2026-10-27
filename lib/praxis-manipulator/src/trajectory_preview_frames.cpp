@@ -17,9 +17,8 @@ constexpr const char *nothing_previewed = "Ask for a preview to see the motion i
 constexpr const char *nothing_traveled  = "This motion stands where it began, so there is no timing to draw.";
 constexpr const char *nothing_chosen    = "Choose a curve to draw.";
 
-// What the one curve is named where the motion answers for no choice, and so carries no marker
-// saying which choice it is: no choice governs it.
-constexpr const char *own_timing = "Its own timing";
+// The one curve of a motion no time scaling governs: a via-point motion fits its own timing.
+constexpr const char *via_point_timing = "Via points";
 
 std::string named(std::size_t which, time_scaling_choice chosen)
 {
@@ -58,7 +57,7 @@ scene::plot_frame frame_of(const char *ordinate, const preview_run &shown, time_
     scene::plot_frame frame{.ordinate_label = ordinate, .logarithmic_ordinate = false, .series = std::vector<scene::plot_series>(), .abscissa_limits = std::nullopt};
     if(!stands_beside(shown))
     {
-        frame.series.push_back(curve_of(own_timing, shown.parameter, shown, value));
+        frame.series.push_back(curve_of(via_point_timing, shown.parameter, shown, value));
 
         return frame;
     }
