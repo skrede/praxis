@@ -37,8 +37,10 @@ inline std::vector<std::string> logged_lines(const std::string &logged)
     std::vector<std::string> lines;
     for(std::size_t from = 0, to = 0; from < logged.size(); from = to + 1u)
     {
-        to                       = std::min(logged.find('\n', from), logged.size());
-        const std::string spoken = logged.substr(from, to - from);
+        to = std::min(logged.find('\n', from), logged.size());
+        // ImGui ends a logged line with "\r\n" on Windows.
+        const std::size_t ended  = to > from && logged[to - 1u] == '\r' ? to - 1u : to;
+        const std::string spoken = logged.substr(from, ended - from);
         if(spoken.find_first_not_of(' ') != std::string::npos)
             lines.push_back(spoken.substr(spoken.find_first_not_of(' ')));
     }
