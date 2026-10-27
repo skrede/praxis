@@ -65,11 +65,11 @@ expected<joint_vector, refusal> midway_along(const rigid_motion::capabilities &s
     const expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> motion =
             task_space_motion(manipulator::baseline().motion, spatial.screw, spatial.frame, scaled, solver, three_link_arm().limits, at, from, to, shape);
     if(!motion)
-        return unexpected(motion.error());
+        return praxis::unexpected(motion.error());
 
     const expected<trajectory::trajectory_sample, refusal> midway = (*motion)->sample(0.5 * (*motion)->duration());
     if(!midway)
-        return unexpected(midway.error());
+        return praxis::unexpected(midway.error());
 
     return midway->position;
 }

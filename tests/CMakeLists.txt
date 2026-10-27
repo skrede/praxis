@@ -12,6 +12,7 @@ endfunction()
 # are started one at a time because xvfb-run's choice of a free server number races.
 if (PRAXIS_BUILD_DISPLAY_TESTS)
     find_program(PRAXIS_XVFB_RUN xvfb-run)
+    add_custom_target(praxis_display_tests)
 endif ()
 
 function(praxis_add_display_test SOURCE)
@@ -20,13 +21,15 @@ function(praxis_add_display_test SOURCE)
     add_executable(${name} ${SOURCE} ${ARG_HEADERS})
     praxis_target_warnings(${name})
     target_link_libraries(${name} PRIVATE Catch2::Catch2WithMain ${ARG_LIBS})
+    add_dependencies(praxis_display_tests ${name})
     if (NOT PRAXIS_XVFB_RUN)
         add_test(NAME ${name} COMMAND ${name})
+        set_tests_properties(${name} PROPERTIES LABELS display)
         return()
     endif ()
 
     add_test(NAME ${name} COMMAND ${PRAXIS_XVFB_RUN} --auto-servernum "--server-args=-screen 0 1920x1080x24" $<TARGET_FILE:${name}>)
-    set_tests_properties(${name} PROPERTIES RESOURCE_LOCK praxis_virtual_display ENVIRONMENT_MODIFICATION "WAYLAND_DISPLAY=unset:")
+    set_tests_properties(${name} PROPERTIES LABELS display RESOURCE_LOCK praxis_virtual_display ENVIRONMENT_MODIFICATION "WAYLAND_DISPLAY=unset:")
 endfunction()
 
 # A probe is a translation unit that must NOT compile, so it is excluded from the ordinary build and

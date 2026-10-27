@@ -37,7 +37,7 @@ expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> joined(cons
 {
     const expected<std::vector<trajectory::via_point>, refusal> schedule = trajectory.via_point_schedule(rows, j0, limits);
     if(!schedule)
-        return unexpected(schedule.error());
+        return praxis::unexpected(schedule.error());
 
     return trajectory.joint_space_via_points(*schedule);
 }
@@ -55,7 +55,7 @@ expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> seeded_forw
     {
         const expected<joint_vector, refusal> reached = motion.task_space_pose(solver, pose, seed);
         if(!reached)
-            return unexpected(reached.error());
+            return praxis::unexpected(reached.error());
 
         seed = *reached;
         rows.push_back(seed);
@@ -75,7 +75,7 @@ expected<std::unique_ptr<trajectory::trajectory_generator>, refusal> seeded_from
     {
         const expected<joint_vector, refusal> reached = motion.task_space_pose(solver, waypoints[i], rows.back());
         if(!reached)
-            return unexpected(reached.error());
+            return praxis::unexpected(reached.error());
 
         rows.push_back(*reached);
     }

@@ -85,7 +85,7 @@ expected<jacobian, refusal> refusing_on_second(const rigid_motion::screw_ops &sc
                                                std::span<const screw_axis> space_screws, const joint_vector &theta)
 {
     if(body_jacobian_calls++ > 0)
-        return unexpected(refusal::degenerate);
+        return praxis::unexpected(refusal::degenerate);
 
     return manipulator::body_jacobian(screw, frames, forward, m, space_screws, theta);
 }
@@ -98,7 +98,7 @@ expected<jacobian, refusal> one_column_short(const rigid_motion::screw_ops &, co
 
 expected<transform, refusal> refusing_its_input(const rigid_motion::screw_ops &, const rigid_motion::frame_ops &, const transform &, std::span<const screw_axis>, const joint_vector &)
 {
-    return unexpected(refusal::unsupported_input);
+    return praxis::unexpected(refusal::unsupported_input);
 }
 
 forward_kinematics_ops counted_forward()

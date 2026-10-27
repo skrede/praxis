@@ -46,7 +46,7 @@ expected<void, refusal> refusing_a_non_finite_stop(const rigid_motion::screw_ops
     if(!own || own->allFinite())
         return solved;
     answer.solutions.clear();
-    return unexpected(refusal::no_solution);
+    return praxis::unexpected(refusal::no_solution);
 }
 
 template<std::size_t... I>
@@ -63,10 +63,10 @@ expected<twist, refusal> body_error(const rigid_motion::screw_ops &screw, const 
 {
     const expected<transform, refusal> tsb = forward.body_forward_kinematics(screw, frames, chain.home, chain.space_screws, theta);
     if(!tsb)
-        return unexpected(tsb.error());
+        return praxis::unexpected(tsb.error());
     const expected<pose_reading, refusal> logarithm = screw.matrix_logarithm_se3(frames.inverse(*tsb) * desired);
     if(!logarithm)
-        return unexpected(logarithm.error());
+        return praxis::unexpected(logarithm.error());
     return twist(logarithm->first * logarithm->second);
 }
 
@@ -82,12 +82,12 @@ expected<void, refusal> body_frame_literal(const rigid_motion::screw_ops &screw,
     {
         const expected<jacobian, refusal> jb = differential.body_jacobian(screw, frames, forward, chain.home, chain.space_screws, theta);
         if(!jb)
-            return unexpected(jb.error());
+            return praxis::unexpected(jb.error());
         theta += step_along<step::cod>(*jb, *v);
         v = body_error(screw, frames, forward, chain, desired, theta);
     }
     if(!v || outside(*v, parameters))
-        return unexpected(refusal::no_solution);
+        return praxis::unexpected(refusal::no_solution);
     answer.solutions.push_back(theta);
     return {};
 }

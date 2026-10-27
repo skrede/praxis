@@ -170,11 +170,10 @@ jobs:
       - name: Build the tests that need a display
         run: |
           set -eu
-          cmake --build build -j 4 \
-            --target display_teardown_test display_visualizer_test display_plot_window_test
+          cmake --build build -j 4 --target praxis_display_tests
 
       - name: Test
         run: |
           set -eu
           xvfb-run -a -s "-screen 0 1280x1024x24" \
-            ctest --test-dir build -R '^display_' --output-on-failure --no-tests=error
+            ctest --test-dir build -L '^display$' --output-on-failure --no-tests=error

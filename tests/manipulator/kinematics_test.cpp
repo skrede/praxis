@@ -43,7 +43,7 @@ expected<void, refusal> frames_recording_inverse_kinematics(const rigid_motion::
 
 expected<Eigen::VectorXd, refusal> marked_solve(const optimization::problem &, const Eigen::VectorXd &, std::uint32_t, std::vector<Eigen::VectorXd> &)
 {
-    return unexpected(refusal::not_implemented);
+    return praxis::unexpected(refusal::not_implemented);
 }
 
 decltype(optimization::solver_ops::solve) handed_solve = nullptr;

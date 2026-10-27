@@ -101,10 +101,11 @@ if (TARGET praxis_manipulator)
 
     # One probe per accessor, so reverting a single deleted overload turns exactly one test red. A view
     # taken off a temporary composition would outlive the operations it points into, and the deleted
-    # overload is the only rejected expression in each unit.
-    praxis_add_failing_compile(kinematics_forward_capability.cpp DIAGNOSTIC "deleted function" LIBS praxis::manipulator)
-    praxis_add_failing_compile(kinematics_differential_capability.cpp DIAGNOSTIC "deleted function" LIBS praxis::manipulator)
-    praxis_add_failing_compile(kinematics_inverse_capability.cpp DIAGNOSTIC "deleted function" LIBS praxis::manipulator)
+    # overload is the only rejected expression in each unit. Clang calls these accessors a deleted
+    # member function, where GCC and MSVC write deleted function.
+    praxis_add_failing_compile(kinematics_forward_capability.cpp DIAGNOSTIC "deleted (member )?function" LIBS praxis::manipulator)
+    praxis_add_failing_compile(kinematics_differential_capability.cpp DIAGNOSTIC "deleted (member )?function" LIBS praxis::manipulator)
+    praxis_add_failing_compile(kinematics_inverse_capability.cpp DIAGNOSTIC "deleted (member )?function" LIBS praxis::manipulator)
 
     # A bound solve is handed the maps its own mathematics reads, a solver of residual problems and the
     # chain it solves over, and none of those carries an inverse-kinematics solve, so a slot body asking

@@ -119,7 +119,7 @@ expected<jacobian, refusal> resized_body_jacobian(const rigid_motion::screw_ops 
 expected<transform, refusal> refusing_past_the_seed(const rigid_motion::screw_ops &screw, const transform &m, std::span<const screw_axis> space_screws, const joint_vector &theta)
 {
     if(theta != seed)
-        return unexpected(refusal::degenerate);
+        return praxis::unexpected(refusal::degenerate);
     return forward_kinematics(screw, m, space_screws, theta);
 }
 

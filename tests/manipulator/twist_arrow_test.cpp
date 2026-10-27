@@ -210,11 +210,11 @@ TEST_CASE("the twist is hidden where the shown Jacobian is refused or its width 
     const Eigen::Matrix<double, 6, 1> third = twist_of(Eigen::Vector3d(0.0, 1.0, 0.0), Eigen::Vector3d(1.0, 0.0, 0.0));
     const jacobian wider                    = of_columns({two_columns(1.0).col(0), two_columns(1.0).col(1), third});
     hidden_once(published_columns(wider, wider, elsewhere), jacobian_frame::space);
-    hidden_once(published_columns(two_columns(1.0), two_columns(1.0), unexpected(refusal::unsupported_input)), jacobian_frame::space);
-    hidden_once(published_columns(two_columns(1.0), unexpected(refusal::not_implemented), elsewhere), jacobian_frame::body);
+    hidden_once(published_columns(two_columns(1.0), two_columns(1.0), praxis::unexpected(refusal::unsupported_input)), jacobian_frame::space);
+    hidden_once(published_columns(two_columns(1.0), praxis::unexpected(refusal::not_implemented), elsewhere), jacobian_frame::body);
 
     arm_snapshot unturned     = published_columns(two_columns(1.0), two_columns(1.0), elsewhere);
-    unturned.tool_orientation = unexpected(refusal::unsupported_input);
+    unturned.tool_orientation = praxis::unexpected(refusal::unsupported_input);
     hidden_once(unturned, jacobian_frame::body);
 }
 

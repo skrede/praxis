@@ -87,7 +87,7 @@ expected<Eigen::VectorXd, refusal> leaving(const problem &, const Eigen::VectorX
 {
     iterates = {x0, Eigen::Vector2d(3.0, 0.0), Eigen::Vector2d(0.5, 0.0)};
 
-    return unexpected(refusal::no_solution);
+    return praxis::unexpected(refusal::no_solution);
 }
 
 scenario_settings descended(const Eigen::Vector2d &seed)

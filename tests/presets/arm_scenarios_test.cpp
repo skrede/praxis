@@ -189,7 +189,7 @@ manipulator::arm_snapshot at_no_turn(const transform &pose)
     const transform identity               = transform::Identity();
     const Eigen::Vector3d at               = pose.block<3, 1>(0, 3);
     const rotation turned                  = pose.topLeftCorner<3, 3>();
-    const auto none                        = unexpected(refusal::not_implemented);
+    const auto none                        = praxis::unexpected(refusal::not_implemented);
     const manipulator::jacobian_manipulability neither{none, none};
 
     return {joints, {}, identity, identity, identity, at, at, turned, turned, {}, 1.0, false, {}, {}, none, none, neither, neither, {}, {}, nullptr, nullptr, {}, {}, true};
