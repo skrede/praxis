@@ -82,8 +82,12 @@ std::vector<std::string> opened_with(posed from)
         listed.insert(listed.end(), added);
         return listed;
     };
-    const std::array<std::vector<std::string>, 6> opened{
-            root, with(root, {"bounds"}), with(root, {"tangent at p", "difference at p"}), with(root, {"tangent at p"}), minimum, with(minimum, {"floor iterates", "x_k on the floor"})};
+    const std::array<std::vector<std::string>, 6> opened{root,
+                                                         with(root, {"bounds"}),
+                                                         with(root, {"p", "tangent at p", "difference at p"}),
+                                                         with(root, {"p", "tangent at p"}),
+                                                         minimum,
+                                                         with(minimum, {"floor iterates", "x_k on the floor"})};
 
     return opened[static_cast<std::size_t>(from)];
 }
@@ -101,6 +105,7 @@ std::vector<keyed_state> keyed_states()
     return {{posed::root, nullptr, {}},
             {posed::wrong_at_p, nullptr, {}},
             {posed::right_at_p, nullptr, {}},
+            {posed::wrong_at_p, &scenario_view::linearization, {"p", "tangent at p", "difference at p"}},
             {posed::boxed, nullptr, {}},
             {posed::floored, nullptr, {}},
             {posed::boxed, &scenario_view::field, {"f(x, y)"}},
@@ -115,13 +120,14 @@ std::vector<keyed_state> keyed_states()
             {posed::floored, &scenario_view::step, {"step taken"}}};
 }
 
-// Only the tangent's zero, its nearest point and x_(k+1) may share a tone.
+// Only the tangent's zero, its nearest point and x_(k+1) may share a tone, and p with its tangent.
 void check_apart(const std::vector<scene::key_entry> &entries)
 {
     const auto grouped = [](const std::string &label) { return label == "zero line" || label == "nearest point" || label == "x_(k+1)"; };
+    const auto at_p    = [](const std::string &label) { return label == "p" || label == "tangent at p"; };
     for(std::size_t i = 0; i < entries.size(); ++i)
         for(std::size_t j = i + 1u; j < entries.size(); ++j)
-            CHECK((entries[i].tone != entries[j].tone || (grouped(entries[i].label) && grouped(entries[j].label))));
+            CHECK((entries[i].tone != entries[j].tone || (grouped(entries[i].label) && grouped(entries[j].label)) || (at_p(entries[i].label) && at_p(entries[j].label))));
 }
 
 void check_keyed(keyed_surface &keyed, const std::vector<std::string> &expected)

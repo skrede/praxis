@@ -2468,6 +2468,7 @@ lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_zero_lin
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_nearest	member	-	typename:std::shared_ptr<threepp::Mesh>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_recorded	member	-	typename:std::shared_ptr<threepp::Object3D>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_plane	member	-	typename:std::shared_ptr<threepp::Mesh>
+lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_point	member	-	typename:std::shared_ptr<threepp::Mesh>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_central	member	-	typename:std::shared_ptr<threepp::Mesh>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_levels	member	-	typename:std::unique_ptr<level_map>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_sampled	member	-	typename:std::shared_ptr<const scenario_grid>

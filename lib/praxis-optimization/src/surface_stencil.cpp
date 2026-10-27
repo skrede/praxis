@@ -74,6 +74,7 @@ surface_stencil::surface_stencil(threepp::Scene &parent, scenario_reader seen, s
         , m_nearest(overlay_point("nearest point", tangent_zero_tone, m_sphere))
         , m_recorded(overlay_lines("x_(k+1)", next_iterate_line_tone, 2u, true))
         , m_plane(plane_patch("tangent plane at p", linearization_point_tone, plane_corners, false))
+        , m_point(overlay_point("linearization point p", linearization_point_tone, m_sphere))
         , m_central(plane_patch("central difference at p", central_difference_tone, plane_corners, true))
         , m_levels(std::make_unique<level_map>(m_sphere))
         , m_sampled()
@@ -86,8 +87,9 @@ surface_stencil::surface_stencil(threepp::Scene &parent, scenario_reader seen, s
     m_field->name      = "surface";
     m_iterates->name   = "iterates";
     m_step->name       = "step";
+    lay_over_field(*m_point, true);
     hang(*m_step, {m_patch, m_zero_line, m_nearest, m_recorded});
-    hang(*m_root, {m_field, m_iterates, m_zero_curve, m_box, m_step, m_plane, m_central, m_levels->object()});
+    hang(*m_root, {m_field, m_iterates, m_zero_curve, m_box, m_step, m_plane, m_point, m_central, m_levels->object()});
 }
 
 surface_stencil::~surface_stencil() = default;
@@ -132,9 +134,9 @@ void surface_stencil::draw() const
     m_box->visible = m_box->visible && shown_parts.bounds;
     place_iterates(shown);
     draw_step(step_figures{*m_patch, *m_zero_line, *m_nearest, *m_recorded}, *shown, placed);
-    draw_planes(point_figures{*m_plane, *m_central}, *shown, placed, m_heights);
-    m_plane->visible   = m_plane->visible && shown_parts.linearization;
-    m_central->visible = m_central->visible && shown_parts.linearization;
+    draw_planes(point_figures{*m_plane, *m_central, *m_point}, *shown, placed, m_heights);
+    for(threepp::Mesh *at_p : {m_plane.get(), m_central.get(), m_point.get()})
+        at_p->visible = at_p->visible && shown_parts.linearization;
 }
 
 // The field, its zero curve and the heights the planes are held to change only with the samples.
@@ -173,7 +175,7 @@ void surface_stencil::write_key() const
     const auto marked      = [this](std::uint32_t tone) { return std::ranges::find(m_marked, tone) != m_marked.end(); };
     const bool on_field    = shown_through(*m_iterates);
     const bool on_floor    = shown_through(*map.getObjectByName("iterates on the floor"));
-    const std::array<keyed_figure, 16> figures{keyed_figure{shown_through(*m_field) && m_field->geometry()->drawRange.count > 0, "f(x, y)", surface_tone},
+    const std::array<keyed_figure, 17> figures{keyed_figure{shown_through(*m_field) && m_field->geometry()->drawRange.count > 0, "f(x, y)", surface_tone},
                                                keyed_figure{on_field && marked(iterate_tone), "Iterates", iterate_tone},
                                                keyed_figure{on_field && marked(selected_iterate_tone), "x_k", selected_iterate_tone},
                                                keyed_figure{shown_through(*m_zero_curve), "zero curve", zero_curve_tone},
@@ -187,6 +189,7 @@ void surface_stencil::write_key() const
                                                keyed_figure{on_floor && marked(iterate_tone), "floor iterates", floor_iterate_tone},
                                                keyed_figure{on_floor && marked(selected_iterate_tone), "x_k on the floor", floor_selected_iterate_tone},
                                                keyed_figure{shown_through(*m_box), "bounds", box_tone},
+                                               keyed_figure{shown_through(*m_point), "p", linearization_point_tone},
                                                keyed_figure{shown_through(*m_plane), "tangent at p", linearization_point_tone},
                                                keyed_figure{shown_through(*m_central), "difference at p", central_difference_tone}};
     *m_keyed = drawn_entries(figures);

@@ -42,6 +42,8 @@ target_include_directories(curve_tone_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/pra
 praxis_add_test(surface_tone_test.cpp HEADERS composed_curve.h drawn_surface.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
 praxis_add_test(surface_key_test.cpp HEADERS key_rows.h composed_curve.h drawn_surface.h keyed_surface.h minimized_surface.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
 target_include_directories(surface_key_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src)
+praxis_add_test(surface_linearization_point_test.cpp HEADERS composed_curve.h drawn_surface.h keyed_surface.h minimized_surface.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
+target_include_directories(surface_linearization_point_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src)
 praxis_add_test(surface_objective_test.cpp HEADERS composed_curve.h drawn_surface.h minimized_surface.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)
 target_include_directories(surface_objective_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-optimization/src)
 praxis_add_test(surface_opening_view_test.cpp HEADERS composed_curve.h drawn_surface.h minimized_surface.h LIBS praxis::optimization praxis::scene praxis::scheduler spdlog::spdlog praxis_test_support)

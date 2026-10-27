@@ -41,7 +41,8 @@ class level_map;
 // "zero line", the point of it nearest x_k, "nearest point", and the recorded x_(k+1) as "x_(k+1)", a
 // line from the zero plane up to the surface. A problem carrying a box draws it, "box", on the zero
 // plane. A point asked for by the Linearization window draws the tangent plane there, "tangent plane
-// at p", over the ranges and held to the field's heights, and where the check disagrees the central
+// at p", over the ranges and held to the field's heights, the point itself on the surface at f(p),
+// "linearization point p", where it lies within the ranges, and where the check disagrees the central
 // difference's plane, "central difference at p", in wire. A run in the minimum form draws no zero curve
 // and no step construction: its level curves, its gradient at x_k and its step are drawn as a map on
 // the field instead, "level map", or with the floor projection on a floor beneath the field with its
@@ -77,6 +78,7 @@ private:
     std::shared_ptr<threepp::Mesh> m_nearest;
     std::shared_ptr<threepp::Object3D> m_recorded;
     std::shared_ptr<threepp::Mesh> m_plane;
+    std::shared_ptr<threepp::Mesh> m_point;
     std::shared_ptr<threepp::Mesh> m_central;
     std::unique_ptr<level_map> m_levels;
 

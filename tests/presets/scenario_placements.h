@@ -42,7 +42,7 @@ inline constexpr std::array<pinned_placement, 5> surface_placements{{
         {"Display##surface", "Display", {scene::window_corner::top_left, 37.f, 1.f, 12.f, 15.f}},
         {"Solve##surface", "Solve", {scene::window_corner::bottom_right, 1.f, 20.f, 36.f, 19.f}},
         {"Linearization##surface", "Linearization", {scene::window_corner::bottom_right, 1.f, 1.f, 39.f, 18.f}},
-        {"Key##surface", "Key", {scene::window_corner::bottom_right, 40.f, 0.f, 12.f, 17.f}},
+        {"Key##surface", "Key", {scene::window_corner::bottom_right, 40.f, 0.f, 12.f, 19.f}},
 }};
 
 inline config::location placed_document(const std::string &file, const char *body)

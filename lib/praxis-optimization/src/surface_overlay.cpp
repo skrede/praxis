@@ -75,6 +75,7 @@ void draw_planes(const point_figures &drawn, const scenario_snapshot &shown, con
 {
     drawn.plane.visible   = false;
     drawn.central.visible = false;
+    drawn.point.visible   = false;
     if(!shown.linearization)
         return;
 
@@ -86,6 +87,8 @@ void draw_planes(const point_figures &drawn, const scenario_snapshot &shown, con
     const double f = -(*at.error)[0];
     const interval held{std::min(heights.lower, f), std::max(heights.upper, f)};
     write_polygon(drawn.plane, tangent_plane_over(at.point, f, at.jacobian->row(0).transpose(), shown.ranges, held), placed);
+    if(within_ranges(shown.ranges, at.point))
+        place_point(drawn.point, Eigen::Vector3d(at.point[0], at.point[1], f), placed);
     if(at.check && at.check->disagrees && at.check->central.rows() == 1 && at.check->central.cols() == 2)
         write_polygon(drawn.central, tangent_plane_over(at.point, f, at.check->central.row(0).transpose(), shown.ranges, held), placed);
 }

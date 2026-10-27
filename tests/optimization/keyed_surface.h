@@ -109,7 +109,7 @@ struct worn_figure
     threepp::Color color;
 };
 
-inline constexpr std::array<std::pair<const char *, const char *>, 12> named_figures{{{"surface", "f(x, y)"},
+inline constexpr std::array<std::pair<const char *, const char *>, 13> named_figures{{{"surface", "f(x, y)"},
                                                                                       {"zero curve", "zero curve"},
                                                                                       {"level curves", "level curves"},
                                                                                       {"tangent plane", "tangent at x_k"},
@@ -119,6 +119,7 @@ inline constexpr std::array<std::pair<const char *, const char *>, 12> named_fig
                                                                                       {"gradient at x_k", "gradient at x_k"},
                                                                                       {"step taken", "step taken"},
                                                                                       {"box", "bounds"},
+                                                                                      {"linearization point p", "p"},
                                                                                       {"tangent plane at p", "tangent at p"},
                                                                                       {"central difference at p", "difference at p"}}};
 

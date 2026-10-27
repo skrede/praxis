@@ -102,7 +102,7 @@ inline constexpr std::uint32_t next_iterate_line_tone = tangent_zero_tone;
 inline constexpr std::uint32_t floor_selected_iterate_tone = 0x7fff00;
 
 // The tone of the linearization at p, as 0xRRGGBB: a curve's point and its tangent, and a surface's
-// plane at p.
+// point and plane at p.
 inline constexpr std::uint32_t linearization_point_tone = 0xffffff;
 
 // The tone the central difference at p wears, as 0xRRGGBB: a line on a curve, a wire plane on a surface.

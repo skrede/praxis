@@ -34,11 +34,13 @@ struct step_figures
 void draw_step(const step_figures &drawn, const scenario_snapshot &shown, const field_placement &placed);
 
 // The tangent plane at the Linearization point, and where the check disagrees, the plane of the
-// central difference, each over the ranges and held to the field's heights and f(p).
+// central difference, each over the ranges and held to the field's heights and f(p); and the point
+// itself at f(p), where it lies within the ranges.
 struct point_figures
 {
     threepp::Mesh &plane;
     threepp::Mesh &central;
+    threepp::Object3D &point;
 };
 
 void draw_planes(const point_figures &drawn, const scenario_snapshot &shown, const field_placement &placed, const interval &heights);

@@ -158,7 +158,7 @@ TEST_CASE("the Linearization window's Show switch starts off and shows then hide
     CHECK_FALSE(drawn_visible(scene, "central difference at p"));
 }
 
-TEST_CASE("a surface draws its planes at the point and no object for the point itself", "[optimization][surface][linearization]")
+TEST_CASE("a surface draws its planes at the point and the point itself", "[optimization][surface][linearization]")
 {
     linearized_surface viewed;
     std::vector<std::string> at_p;
@@ -170,7 +170,7 @@ TEST_CASE("a surface draws its planes at the point and no object for the point i
             });
 
     std::ranges::sort(at_p);
-    CHECK(at_p == std::vector<std::string>{"central difference at p", "tangent plane at p"});
+    CHECK(at_p == std::vector<std::string>{"central difference at p", "linearization point p", "tangent plane at p"});
 }
 
 TEST_CASE("the Linearization window's Reset asks for the middle of the ranges the latest publication carries", "[optimization][linearization]")

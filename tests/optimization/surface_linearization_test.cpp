@@ -150,6 +150,8 @@ TEST_CASE("the y slider moves the point along its range and leaves x where it wa
     CHECK(at.point[1] != 0.5);
     CHECK((at.point[1] >= -2.0 && at.point[1] <= 2.0));
     CHECK(-(*at.error)[0] == circle_value(at.point[0], at.point[1]));
+    const placement standing = placement_of(field_of(*staged_surface.built.scene), *staged_surface.taken.inputs->seen.read());
+    CHECK((drawn_position(*staged_surface.built.scene, "linearization point p") - standing.at(at.point[0], at.point[1], circle_value(at.point[0], at.point[1]))).norm() <= 1.0e-4);
 }
 
 TEST_CASE("with the check opted in, a gradient with its components swapped is stated and both planes are drawn", "[optimization][surface][linearization]")
