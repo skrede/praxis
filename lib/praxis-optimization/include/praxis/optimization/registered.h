@@ -6,6 +6,7 @@
 #include <Eigen/Core>
 
 #include <string>
+#include <vector>
 #include <optional>
 #include <functional>
 
@@ -20,8 +21,12 @@ struct registered_curve
     registered_curve(std::string called, std::function<double(double)> g, std::function<double(double)> slope, std::function<double(double)> second);
     registered_curve(std::string called, std::function<double(double)> g, std::function<double(double)> slope, std::function<double(double)> second, box region);
 
+    // A copy offered only under the forms named; a function is otherwise offered under every form.
+    registered_curve offered_under(std::vector<problem_form> named) const;
+
     std::string name;
     std::optional<box> bounds;
+    std::vector<problem_form> forms;
     std::function<double(double)> value;
     std::function<double(double)> derivative;
     std::function<double(double)> second_derivative;
@@ -48,8 +53,12 @@ struct registered_surface
     registered_surface(std::string called, std::function<double(double, double)> f, std::function<Eigen::Vector2d(double, double)> slope,
                        std::function<Eigen::Matrix2d(double, double)> curvature, box region);
 
+    // A copy offered only under the forms named; a function is otherwise offered under every form.
+    registered_surface offered_under(std::vector<problem_form> named) const;
+
     std::string name;
     std::optional<box> bounds;
+    std::vector<problem_form> forms;
     std::function<double(double, double)> value;
     std::function<Eigen::Vector2d(double, double)> gradient;
     std::function<Eigen::Matrix2d(double, double)> hessian;

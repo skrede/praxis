@@ -2209,6 +2209,9 @@ lib/praxis-optimization/include/praxis/optimization/problem.h	objective	member	-
 lib/praxis-optimization/include/praxis/optimization/problem.h	gradient	member	-	typename:std::function<expected<Eigen::VectorXd,refusal> (const Eigen::VectorXd & x)>
 lib/praxis-optimization/include/praxis/optimization/problem.h	hessian	member	-	typename:std::function<expected<Eigen::MatrixXd,refusal> (const Eigen::VectorXd & x)>
 lib/praxis-optimization/include/praxis/optimization/problem.h	stationary	member	-	typename:std::function<bool (const Eigen::VectorXd & gradient)>
+lib/praxis-optimization/include/praxis/optimization/problem.h	problem_form	enum	-	typename:std::uint8_t
+lib/praxis-optimization/include/praxis/optimization/problem.h	root	enumerator	-	-
+lib/praxis-optimization/include/praxis/optimization/problem.h	minimum	enumerator	-	-
 lib/praxis-optimization/include/praxis/optimization/projected/solver.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/projected/solver.h	praxis	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/projected/solver.h	projected	namespace	-	-
@@ -2220,8 +2223,10 @@ lib/praxis-optimization/include/praxis/optimization/registered.h	registered_curv
 lib/praxis-optimization/include/praxis/optimization/registered.h	registered_curve	prototype	(std::string called,std::function<double (double)> g,std::function<double (double)> slope,box region)	-
 lib/praxis-optimization/include/praxis/optimization/registered.h	registered_curve	prototype	(std::string called,std::function<double (double)> g,std::function<double (double)> slope,std::function<double (double)> second)	-
 lib/praxis-optimization/include/praxis/optimization/registered.h	registered_curve	prototype	(std::string called,std::function<double (double)> g,std::function<double (double)> slope,std::function<double (double)> second,box region)	-
+lib/praxis-optimization/include/praxis/optimization/registered.h	offered_under	prototype	(std::vector<problem_form> named) const	typename:registered_curve
 lib/praxis-optimization/include/praxis/optimization/registered.h	name	member	-	typename:std::string
 lib/praxis-optimization/include/praxis/optimization/registered.h	bounds	member	-	typename:std::optional<box>
+lib/praxis-optimization/include/praxis/optimization/registered.h	forms	member	-	typename:std::vector<problem_form>
 lib/praxis-optimization/include/praxis/optimization/registered.h	value	member	-	typename:std::function<double (double)>
 lib/praxis-optimization/include/praxis/optimization/registered.h	derivative	member	-	typename:std::function<double (double)>
 lib/praxis-optimization/include/praxis/optimization/registered.h	second_derivative	member	-	typename:std::function<double (double)>
@@ -2232,8 +2237,10 @@ lib/praxis-optimization/include/praxis/optimization/registered.h	registered_surf
 lib/praxis-optimization/include/praxis/optimization/registered.h	registered_surface	prototype	(std::string called,std::function<double (double,double)> f,std::function<Eigen::Vector2d (double,double)> slope,box region)	-
 lib/praxis-optimization/include/praxis/optimization/registered.h	registered_surface	prototype	(std::string called,std::function<double (double,double)> f,std::function<Eigen::Vector2d (double,double)> slope,std::function<Eigen::Matrix2d (double,double)> curvature)	-
 lib/praxis-optimization/include/praxis/optimization/registered.h	registered_surface	prototype	(std::string called,std::function<double (double,double)> f,std::function<Eigen::Vector2d (double,double)> slope,std::function<Eigen::Matrix2d (double,double)> curvature,box region)	-
+lib/praxis-optimization/include/praxis/optimization/registered.h	offered_under	prototype	(std::vector<problem_form> named) const	typename:registered_surface
 lib/praxis-optimization/include/praxis/optimization/registered.h	name	member	-	typename:std::string
 lib/praxis-optimization/include/praxis/optimization/registered.h	bounds	member	-	typename:std::optional<box>
+lib/praxis-optimization/include/praxis/optimization/registered.h	forms	member	-	typename:std::vector<problem_form>
 lib/praxis-optimization/include/praxis/optimization/registered.h	value	member	-	typename:std::function<double (double,double)>
 lib/praxis-optimization/include/praxis/optimization/registered.h	gradient	member	-	typename:std::function<Eigen::Vector2d (double,double)>
 lib/praxis-optimization/include/praxis/optimization/registered.h	hessian	member	-	typename:std::function<Eigen::Matrix2d (double,double)>
@@ -2288,9 +2295,6 @@ lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	scenario
 lib/praxis-optimization/include/praxis/optimization/scenario_snapshot.h	scenario_reader	typedef	-	typename:scheduler::snapshot_reader<std::shared_ptr<const scenario_snapshot>>
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	optimization	namespace	-	-
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	praxis	namespace	-	-
-lib/praxis-optimization/include/praxis/optimization/scenario_state.h	problem_form	enum	-	typename:std::uint8_t
-lib/praxis-optimization/include/praxis/optimization/scenario_state.h	root	enumerator	-	-
-lib/praxis-optimization/include/praxis/optimization/scenario_state.h	minimum	enumerator	-	-
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	objective_settings	struct	-	-
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	form	member	-	typename:problem_form
 lib/praxis-optimization/include/praxis/optimization/scenario_state.h	method	member	-	typename:minimizer_slot

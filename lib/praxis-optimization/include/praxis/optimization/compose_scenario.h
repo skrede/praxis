@@ -50,11 +50,12 @@ struct scenario_composition
     bool checks_derivative = false;
 };
 
+// Each offers only the functions registered for the form the settings state, in the order handed.
 // Each answers nothing, and logs why, where the settings' source is registered and they select a
-// function the list does not register, carry other than one range and one seed coordinate per
-// variable, carry a range that is not finite or whose minimum does not lie below its maximum or a seed
-// that is not finite, or the work strand admits no run. A typed text opens with one parameter per
-// letter it uses; one that does not read is kept, and nothing is drawn or solved from it.
+// function that list does not hold, carry other than one range and one seed coordinate per variable,
+// carry a range that is not finite or whose minimum does not lie below its maximum or a seed that is
+// not finite, or the work strand admits no run. A typed text opens with one parameter per letter it
+// uses; one that does not read is kept, and nothing is drawn or solved from it.
 std::shared_ptr<scene::preset> compose_curve_scenario(const scene::preset_site &site, std::vector<registered_curve> curves, const capabilities &solving, const scenario_settings &opened,
                                                       const scenario_composition &composed);
 

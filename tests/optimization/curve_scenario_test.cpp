@@ -113,7 +113,7 @@ TEST_CASE("settings naming a function the list does not register compose nothing
 
     CHECK(taken.composed == nullptr);
     CHECK_FALSE(taken.inputs.has_value());
-    CHECK_THAT(captured.text(), Catch::Matchers::ContainsSubstring("it opens at 'absent', which is not registered (registered: 'cubic', 'other')"));
+    CHECK_THAT(captured.text(), Catch::Matchers::ContainsSubstring("it opens at 'absent', which is not registered for the root form (registered: 'cubic', 'other')"));
 }
 
 TEST_CASE("a work strand that admits no run composes nothing and says so", "[optimization][scenario]")

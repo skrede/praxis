@@ -23,14 +23,6 @@
 
 namespace praxis::optimization {
 
-// Whether a scenario's function is solved for a root or minimized. The order is the document's
-// spellings', which is what reading a spelling back as an index and casting relies on.
-enum class problem_form : std::uint8_t
-{
-    root,
-    minimum
-};
-
 // The minimizer a run in the minimum form is solved by, and the step length gradient descent takes.
 struct objective_settings
 {

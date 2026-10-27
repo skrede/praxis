@@ -31,6 +31,15 @@ std::vector<problem> posed_all(const std::vector<registered> &functions, posing 
     return posed;
 }
 
+// The functions a scenario in that form lists and indexes, in the order handed.
+template<typename registered>
+std::vector<registered> offered_in(std::vector<registered> functions, problem_form form)
+{
+    std::erase_if(functions, [form](const registered &function) { return std::ranges::find(function.forms, form) == function.forms.end(); });
+
+    return functions;
+}
+
 inline std::optional<std::size_t> index_of(const std::vector<std::string> &names, const std::string &name)
 {
     const auto found = std::find(names.begin(), names.end(), name);

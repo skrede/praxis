@@ -45,9 +45,9 @@ std::span<const char *const> optimization_scenario_labels();
 using optimization_composer = std::function<std::shared_ptr<scene::preset>(const scene::preset_site &, const config::document &)>;
 
 // The capabilities and the registered functions are copied into the composer, so neither argument
-// need outlive the call. The document selects one of the functions its scenario takes, curves or
-// surfaces, by its name. A composer checking derivatives has the Linearization window compare each
-// registered derivative with a central difference of its function.
+// need outlive the call. The document selects by name one of the functions its scenario takes, curves
+// or surfaces, among those offered under the form it states. A composer checking derivatives has the
+// Linearization window compare each registered derivative with a central difference of its function.
 optimization_composer composer_for(optimization_scenario scenario, const optimization::capabilities &solving, std::vector<optimization::registered_curve> curves,
                                    std::vector<optimization::registered_surface> surfaces, bool checks_derivative);
 

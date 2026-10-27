@@ -6,6 +6,7 @@
 
 #include <cmath>
 #include <string>
+#include <vector>
 #include <utility>
 #include <optional>
 #include <functional>
@@ -17,6 +18,11 @@ namespace {
 bool inside(const Eigen::VectorXd &e, double tolerance)
 {
     return e.size() == 1 && std::abs(e[0]) < tolerance;
+}
+
+std::vector<problem_form> every_form()
+{
+    return {problem_form::root, problem_form::minimum};
 }
 
 }
@@ -34,6 +40,7 @@ registered_curve::registered_curve(std::string called, std::function<double(doub
 registered_curve::registered_curve(std::string called, std::function<double(double)> g, std::function<double(double)> slope, std::function<double(double)> second)
         : name(std::move(called))
         , bounds(std::nullopt)
+        , forms(every_form())
         , value(std::move(g))
         , derivative(std::move(slope))
         , second_derivative(std::move(second))
@@ -43,10 +50,19 @@ registered_curve::registered_curve(std::string called, std::function<double(doub
 registered_curve::registered_curve(std::string called, std::function<double(double)> g, std::function<double(double)> slope, std::function<double(double)> second, box region)
         : name(std::move(called))
         , bounds(std::move(region))
+        , forms(every_form())
         , value(std::move(g))
         , derivative(std::move(slope))
         , second_derivative(std::move(second))
 {
+}
+
+registered_curve registered_curve::offered_under(std::vector<problem_form> named) const
+{
+    registered_curve offered = *this;
+    offered.forms            = std::move(named);
+
+    return offered;
 }
 
 problem curve_problem(const registered_curve &curve, double tolerance)
@@ -87,6 +103,7 @@ registered_surface::registered_surface(std::string called, std::function<double(
                                        std::function<Eigen::Matrix2d(double, double)> curvature)
         : name(std::move(called))
         , bounds(std::nullopt)
+        , forms(every_form())
         , value(std::move(f))
         , gradient(std::move(slope))
         , hessian(std::move(curvature))
@@ -97,10 +114,19 @@ registered_surface::registered_surface(std::string called, std::function<double(
                                        std::function<Eigen::Matrix2d(double, double)> curvature, box region)
         : name(std::move(called))
         , bounds(std::move(region))
+        , forms(every_form())
         , value(std::move(f))
         , gradient(std::move(slope))
         , hessian(std::move(curvature))
 {
+}
+
+registered_surface registered_surface::offered_under(std::vector<problem_form> named) const
+{
+    registered_surface offered = *this;
+    offered.forms              = std::move(named);
+
+    return offered;
 }
 
 problem surface_problem(const registered_surface &surface, double tolerance)

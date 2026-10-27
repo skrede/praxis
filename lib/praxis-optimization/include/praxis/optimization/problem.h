@@ -7,6 +7,7 @@
 
 #include <Eigen/Core>
 
+#include <cstdint>
 #include <optional>
 #include <functional>
 
@@ -33,6 +34,14 @@ struct problem
     std::function<expected<Eigen::VectorXd, refusal>(const Eigen::VectorXd &x)> gradient = {};
     std::function<expected<Eigen::MatrixXd, refusal>(const Eigen::VectorXd &x)> hessian  = {};
     std::function<bool(const Eigen::VectorXd &gradient)> stationary                      = {};
+};
+
+// Whether a scenario's function is solved for a root or minimized. The order is the document's
+// spellings', which is what reading a spelling back as an index and casting relies on.
+enum class problem_form : std::uint8_t
+{
+    root,
+    minimum
 };
 
 }

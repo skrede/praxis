@@ -2,6 +2,7 @@
 #include "scenario_defaults.h"
 #include "scenario_admission.h"
 
+#include "praxis/optimization/settings_keys.h"
 #include "praxis/optimization/surface_stencil.h"
 #include "praxis/optimization/compose_scenario.h"
 
@@ -64,7 +65,8 @@ std::shared_ptr<scene::preset> refused(const char *kind, const std::string &why)
 std::optional<std::string> unopenable(const std::vector<std::string> &registered, const scenario_settings &opened, std::size_t dimension)
 {
     if(opened.typed.source != function_source::manual && std::find(registered.begin(), registered.end(), opened.selected) == registered.end())
-        return "it opens at '" + opened.selected + "', which is not registered (registered: " + listed(registered) + ")";
+        return std::format("it opens at '{}', which is not registered for the {} form (registered: {})", opened.selected,
+                           form_spellings.at(static_cast<std::size_t>(opened.objective.form)), listed(registered));
     if(opened.ranges.size() != dimension || static_cast<std::size_t>(opened.seed.size()) != dimension)
         return std::format("it opens over {} ranges from a seed of {} coordinates, and its functions take {}", opened.ranges.size(), opened.seed.size(), dimension);
     if(!drawable(opened.ranges, dimension))
@@ -118,14 +120,15 @@ std::shared_ptr<scene::preset> composed_over(const scene::preset_site &site, std
 std::shared_ptr<scene::preset> compose_curve_scenario(const scene::preset_site &site, std::vector<registered_curve> curves, const capabilities &solving, const scenario_settings &opened,
                                                       const scenario_composition &composed)
 {
-    return composed_over(site, std::move(curves), solving, opened, composed, "curve", [](const scenario_window_inputs &) { return std::make_shared<empty_stencil>(); });
+    return composed_over(site, offered_in(std::move(curves), opened.objective.form), solving, opened, composed, "curve",
+                         [](const scenario_window_inputs &) { return std::make_shared<empty_stencil>(); });
 }
 
 std::shared_ptr<scene::preset> compose_surface_scenario(const scene::preset_site &site, std::vector<registered_surface> surfaces, const capabilities &solving,
                                                         const scenario_settings &opened, const scenario_composition &composed)
 {
     const auto drawing                    = [&site](const scenario_window_inputs &built) { return std::make_shared<surface_stencil>(site.scene, built.seen, built.drawn, built.keyed); };
-    std::shared_ptr<scene::preset> preset = composed_over(site, std::move(surfaces), solving, opened, composed, "surface", drawing);
+    std::shared_ptr<scene::preset> preset = composed_over(site, offered_in(std::move(surfaces), opened.objective.form), solving, opened, composed, "surface", drawing);
     if(preset != nullptr)
         preset->opening_view = surface_opening_view();
 
