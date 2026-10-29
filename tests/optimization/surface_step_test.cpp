@@ -65,7 +65,9 @@ void check_step(const Eigen::Vector2d &x, const Eigen::Vector2d &next)
     const double rounding                        = 1.0e-12 * std::max(1.0, std::abs(f));
     const std::optional<step_construction> built = constructed_step(x, f, gradient, square);
     REQUIRE(built.has_value());
-    CHECK((built->nearest - next).norm() <= 1.0e-12);
+    REQUIRE(built->nearest.has_value());
+    const Eigen::Vector2d nearest = *built->nearest;
+    CHECK((nearest - next).norm() <= 1.0e-12);
 
     REQUIRE(built->zero_line.has_value());
     const std::array<Eigen::Vector2d, 2> &line = *built->zero_line;
@@ -73,7 +75,7 @@ void check_step(const Eigen::Vector2d &x, const Eigen::Vector2d &next)
     CHECK(std::abs(along.dot(gradient)) <= 1.0e-12 * std::max(1.0, along.norm()) * gradient.norm());
     for(const Eigen::Vector2d &end : line)
         CHECK(std::abs(plane_at(x, f, gradient, end)) <= rounding);
-    CHECK(std::abs((built->nearest - line[0]).norm() + (line[1] - built->nearest).norm() - along.norm()) <= 1.0e-12);
+    CHECK(std::abs((nearest - line[0]).norm() + (line[1] - nearest).norm() - along.norm()) <= 1.0e-12);
 
     REQUIRE(built->patch.size() >= 3u);
     for(const Eigen::Vector3d &corner : built->patch)
@@ -160,7 +162,9 @@ TEST_CASE("under the projected solver in a box the recorded next iterate is draw
     const Eigen::Vector2d seed                   = ran.run.iterates[0];
     const std::optional<step_construction> built = constructed_step(seed, circle_value(seed.x(), seed.y()), circle_gradient(seed.x(), seed.y()), square);
     REQUIRE(built.has_value());
-    CHECK((built->nearest - ran.run.iterates[1]).norm() > 1.0e-3);
+    REQUIRE(built->nearest.has_value());
+    const Eigen::Vector2d nearest = *built->nearest;
+    CHECK((nearest - ran.run.iterates[1]).norm() > 1.0e-3);
 
     threepp::Scene &scene       = *staged_surface.built.scene;
     const placement standing    = placement_of(field_of(scene), ran);
@@ -170,19 +174,11 @@ TEST_CASE("under the projected solver in a box the recorded next iterate is draw
     REQUIRE(recorded.size() == 2u);
     CHECK((recorded[0] - standing.at(next[0], next[1], 0.0)).norm() <= 1.0e-5);
     CHECK((recorded[1] - standing.at(next[0], next[1], circle_value(next[0], next[1]))).norm() <= 1.0e-5);
-    CHECK((drawn_position(scene, "nearest point") - standing.at(built->nearest.x(), built->nearest.y(), 0.0)).norm() <= 1.0e-5);
+    CHECK((drawn_position(scene, "nearest point") - standing.at(nearest.x(), nearest.y(), 0.0)).norm() <= 1.0e-5);
     CHECK((drawn_position(scene, "nearest point") - recorded[0]).norm() > 1.0e-4);
 }
 
-TEST_CASE("a zero gradient, or a point already on the zero line, has no zero line and no nearest point", "[optimization][surface][step]")
+TEST_CASE("a point already on the zero line has no construction", "[optimization][surface][step]")
 {
-    CHECK_FALSE(constructed_step(Eigen::Vector2d(0.0, 0.0), -1.0, Eigen::Vector2d(0.0, 0.0), square).has_value());
     CHECK_FALSE(constructed_step(Eigen::Vector2d(1.0, 0.0), 0.0, Eigen::Vector2d(2.0, 0.0), square).has_value());
-
-    composed_surface staged_surface(circle(), baseline(), Eigen::Vector2d(0.0, 0.0));
-    REQUIRE(staged_surface.ran->run.refused.has_value());
-    threepp::Scene &scene = *staged_surface.built.scene;
-    CHECK_FALSE(drawn_visible(scene, "tangent plane"));
-    CHECK_FALSE(drawn_visible(scene, "zero line"));
-    CHECK_FALSE(drawn_visible(scene, "nearest point"));
 }

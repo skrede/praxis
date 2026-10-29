@@ -67,8 +67,8 @@ void draw_step(const step_figures &drawn, const scenario_snapshot &shown, const 
                                                   Eigen::Vector3d((*built->zero_line)[1].x(), (*built->zero_line)[1].y(), 0.0)};
         write_points(drawn.zero_line, line, placed);
     }
-    if(within_ranges(shown.ranges, built->nearest))
-        place_point(drawn.nearest, Eigen::Vector3d(built->nearest.x(), built->nearest.y(), 0.0), placed);
+    if(built->nearest && within_ranges(shown.ranges, *built->nearest))
+        place_point(drawn.nearest, Eigen::Vector3d(built->nearest->x(), built->nearest->y(), 0.0), placed);
 }
 
 void draw_planes(const point_figures &drawn, const scenario_snapshot &shown, const field_placement &placed)

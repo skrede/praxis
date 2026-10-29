@@ -79,6 +79,17 @@ std::optional<std::array<Eigen::Vector2d, 2>> held(std::optional<std::array<Eige
     return segment;
 }
 
+std::vector<Eigen::Vector3d> patch_about(const Eigen::Vector2d &x, double f, const Eigen::Vector2d &gradient, const Eigen::Vector2d &along, double half,
+                                         std::span<const interval> ranges)
+{
+    const Eigen::Vector2d across(-along.y(), along.x());
+    std::vector<Eigen::Vector2d> square{x - half * (along + across), x + half * (along - across), x + half * (along + across), x - half * (along - across)};
+    for(const half_plane &kept : within(ranges))
+        square = clipped(square, kept);
+
+    return lifted(square, x, f, gradient);
+}
+
 }
 
 bool within_ranges(std::span<const interval> ranges, const Eigen::VectorXd &x)
@@ -96,25 +107,24 @@ bool within_ranges(std::span<const interval> ranges, const Eigen::VectorXd &x)
 std::optional<step_construction> constructed_step(const Eigen::Vector2d &x, double f, const Eigen::Vector2d &gradient, std::span<const interval> ranges)
 {
     const double squared = gradient.squaredNorm();
-    if(!x.allFinite() || !std::isfinite(f) || !std::isfinite(squared) || squared == 0.0 || f == 0.0 || ranges.size() != 2u)
+    if(!x.allFinite() || !std::isfinite(f) || !std::isfinite(squared) || f == 0.0 || ranges.size() != 2u)
         return std::nullopt;
+
+    // A square about a point within the ranges covers them whole once its half-side passes their
+    // diagonal, so a larger one would only lose precision where it is held to them.
+    const double reach = std::hypot(ranges[0].upper - ranges[0].lower, ranges[1].upper - ranges[1].lower);
+    if(squared == 0.0)
+        return step_construction{patch_about(x, f, gradient, Eigen::Vector2d::UnitX(), reach, ranges), std::nullopt, std::nullopt};
 
     const Eigen::Vector2d along   = gradient / std::sqrt(squared);
     const Eigen::Vector2d across  = Eigen::Vector2d(-along.y(), along.x());
     const Eigen::Vector2d nearest = x - gradient * (f / squared);
-    const double reach            = std::hypot(ranges[0].upper - ranges[0].lower, ranges[1].upper - ranges[1].lower);
-    // A square about a point within the ranges covers them whole once its half-side passes their
-    // diagonal, so a larger one would only lose precision where it is held to them.
-    const double half = std::min(tangent_patch * std::abs(f) / std::sqrt(squared), reach);
-
-    std::vector<Eigen::Vector2d> square{x - half * (along + across), x + half * (along - across), x + half * (along + across), x - half * (along - across)};
-    for(const half_plane &kept : within(ranges))
-        square = clipped(square, kept);
+    const double half             = std::min(tangent_patch * std::abs(f) / std::sqrt(squared), reach);
 
     const std::array<Eigen::Vector2d, 2> crossing{nearest - half * across, nearest + half * across};
     const bool reached = (nearest - x).norm() <= half;
 
-    return step_construction{lifted(square, x, f, gradient), reached ? held(crossing, ranges) : std::nullopt, nearest};
+    return step_construction{patch_about(x, f, gradient, along, half, ranges), reached ? held(crossing, ranges) : std::nullopt, nearest};
 }
 
 std::vector<Eigen::Vector3d> tangent_plane_over(const Eigen::Vector2d &p, double f, const Eigen::Vector2d &gradient, std::span<const interval> ranges)
