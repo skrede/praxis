@@ -34,6 +34,8 @@ struct plot_series
     // The color the series is drawn and keyed in, as 0xRRGGBB; absent, the series takes the plotting
     // library's next colormap color.
     std::optional<std::uint32_t> tone;
+    // A series not fitted is drawn but left out of fitting the axes.
+    bool fitted;
 };
 
 struct plot_limits

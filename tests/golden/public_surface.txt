@@ -2477,7 +2477,6 @@ lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_central	
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_levels	member	-	typename:std::unique_ptr<level_map>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_sampled	member	-	typename:std::shared_ptr<const scenario_grid>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_placed	member	-	typename:std::shared_ptr<const scenario_snapshot>
-lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_heights	member	-	typename:interval
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_iterate_marks	member	-	typename:std::shared_ptr<threepp::InstancedMesh>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	m_marked	member	-	typename:std::vector<std::uint32_t>
 lib/praxis-optimization/include/praxis/optimization/surface_stencil.h	draw	prototype	() const	typename:void
@@ -3217,6 +3216,7 @@ lib/praxis-scene/include/praxis/scene/plot_window.h	abscissa	member	-	typename:s
 lib/praxis-scene/include/praxis/scene/plot_window.h	ordinate	member	-	typename:std::vector<double>
 lib/praxis-scene/include/praxis/scene/plot_window.h	mark	member	-	typename:plot_mark
 lib/praxis-scene/include/praxis/scene/plot_window.h	tone	member	-	typename:std::optional<std::uint32_t>
+lib/praxis-scene/include/praxis/scene/plot_window.h	fitted	member	-	typename:bool
 lib/praxis-scene/include/praxis/scene/plot_window.h	plot_limits	struct	-	-
 lib/praxis-scene/include/praxis/scene/plot_window.h	lower	member	-	typename:double
 lib/praxis-scene/include/praxis/scene/plot_window.h	upper	member	-	typename:double

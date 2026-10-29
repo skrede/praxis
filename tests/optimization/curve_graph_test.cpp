@@ -105,9 +105,7 @@ TEST_CASE("the selected step draws the tangent at x_k, its zero and the recorded
     const scene::plot_series *tangent = named(frame, "tangent at x_k");
     REQUIRE(tangent != nullptr);
     check_on_line(*tangent, x, cubic_value(x), cubic_slope(x));
-    const interval span = drawn_span(frame, 2u);
-    for(const double y : tangent->ordinate)
-        CHECK((y >= span.lower - 1.0e-9 && y <= span.upper + 1.0e-9));
+    CHECK(std::abs(tangent->abscissa[0] + tangent->abscissa[1] - 2.0 * x) <= 2.0e-9 * std::max(1.0, std::abs(x)));
 
     const scene::plot_series *zero = named(frame, "zero of the tangent");
     REQUIRE(zero != nullptr);

@@ -41,10 +41,9 @@ std::shared_ptr<threepp::Material> lit(std::uint32_t tone, bool both_sides)
     return material;
 }
 
-// Sutherland-Hodgman leaves at most eight corners of a square held to a rectangle, and six of a
-// rectangle held between two parallel lines.
+// Sutherland-Hodgman leaves at most eight corners of a square held to a rectangle.
 constexpr std::size_t patch_corners = 8u;
-constexpr std::size_t plane_corners = 6u;
+constexpr std::size_t plane_corners = 4u;
 
 void hang(threepp::Object3D &under, std::initializer_list<std::shared_ptr<threepp::Object3D>> figures)
 {
@@ -79,7 +78,6 @@ surface_stencil::surface_stencil(threepp::Scene &parent, scenario_reader seen, s
         , m_levels(std::make_unique<level_map>(m_sphere))
         , m_sampled()
         , m_placed()
-        , m_heights{0.0, 0.0}
         , m_iterate_marks()
         , m_marked()
 {
@@ -134,18 +132,17 @@ void surface_stencil::draw() const
     m_box->visible = m_box->visible && shown_parts.bounds;
     place_iterates(shown);
     draw_step(step_figures{*m_patch, *m_zero_line, *m_nearest, *m_recorded}, *shown, placed);
-    draw_planes(point_figures{*m_plane, *m_central, *m_point}, *shown, placed, m_heights);
+    draw_planes(point_figures{*m_plane, *m_central, *m_point}, *shown, placed);
     for(threepp::Mesh *at_p : {m_plane.get(), m_central.get(), m_point.get()})
         at_p->visible = at_p->visible && shown_parts.linearization;
 }
 
-// The field, its zero curve and the heights the planes are held to change only with the samples.
+// The field and its zero curve change only with the samples.
 void surface_stencil::resample(const scenario_snapshot &shown) const
 {
     const field_placement placed = placement_of(shown.ranges, *shown.grid);
     write_field(*m_field->geometry(), *shown.grid, shown.ranges, placed);
     write_points(*m_zero_curve, ends_at(level_curve(*shown.grid, shown.ranges, 0.0), 0.0), placed);
-    m_heights = height_span(*shown.grid);
     m_sampled = shown.grid;
 }
 

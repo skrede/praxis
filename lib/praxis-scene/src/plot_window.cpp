@@ -59,12 +59,13 @@ ImVec4 color_of(std::uint32_t tone)
 void render_curve(const plot_series &curve)
 {
     ImPlotSpec spec;
+    spec.Flags = curve.fitted ? ImPlotItemFlags_None : ImPlotItemFlags_NoFit;
     if(curve.tone)
         spec.LineColor = color_of(*curve.tone);
     if(curve.mark == plot_mark::line || curve.mark == plot_mark::segments)
     {
         if(curve.mark == plot_mark::segments)
-            spec.Flags = ImPlotLineFlags_Segments;
+            spec.Flags |= ImPlotLineFlags_Segments;
         ImPlot::PlotLine(curve.name.c_str(), curve.abscissa.data(), curve.ordinate.data(), drawn_length(curve), spec);
         return;
     }
@@ -154,6 +155,7 @@ plot_series::plot_series(std::string called, std::vector<double> abscissae, std:
         , ordinate(std::move(ordinates))
         , mark(marked)
         , tone(toned)
+        , fitted(true)
 {
 }
 

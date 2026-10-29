@@ -34,8 +34,8 @@ struct step_figures
 void draw_step(const step_figures &drawn, const scenario_snapshot &shown, const field_placement &placed);
 
 // The tangent plane at the Linearization point, and where the check disagrees, the plane of the
-// central difference, each over the ranges and held to the field's heights and f(p); and the point
-// itself at f(p), where it lies within the ranges.
+// central difference, each over a rectangle with the ranges' widths centered on p, held to the
+// ranges; and the point itself at f(p), where it lies within the ranges.
 struct point_figures
 {
     threepp::Mesh &plane;
@@ -43,7 +43,7 @@ struct point_figures
     threepp::Object3D &point;
 };
 
-void draw_planes(const point_figures &drawn, const scenario_snapshot &shown, const field_placement &placed, const interval &heights);
+void draw_planes(const point_figures &drawn, const scenario_snapshot &shown, const field_placement &placed);
 
 // The box's four sides on the zero plane as pairs of points, each bound held to its range, so an
 // infinite one stands at the range's edge; nothing where the box leaves no area within the ranges.

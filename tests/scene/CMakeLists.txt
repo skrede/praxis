@@ -13,6 +13,7 @@ praxis_add_test(labeled_value_window_test.cpp LIBS praxis::scene praxis_test_sup
 praxis_add_test(plot_window_test.cpp LIBS praxis::scene implot praxis_test_support)
 praxis_add_test(plot_pick_test.cpp LIBS praxis::scene implot praxis_test_support)
 praxis_add_test(plot_view_test.cpp LIBS praxis::scene implot praxis_test_support)
+praxis_add_test(plot_fit_test.cpp LIBS praxis::scene implot praxis_test_support)
 praxis_add_test(plot_legend_test.cpp LIBS praxis::scene implot praxis_test_support)
 praxis_add_test(plot_tone_test.cpp LIBS praxis::scene implot praxis_test_support)
 target_include_directories(plot_tone_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-scene/src)

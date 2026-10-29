@@ -117,18 +117,24 @@ std::optional<step_construction> constructed_step(const Eigen::Vector2d &x, doub
     return step_construction{lifted(square, x, f, gradient), reached ? held(crossing, ranges) : std::nullopt, nearest};
 }
 
-std::vector<Eigen::Vector3d> tangent_plane_over(const Eigen::Vector2d &p, double f, const Eigen::Vector2d &gradient, std::span<const interval> ranges, const interval &heights)
+std::vector<Eigen::Vector3d> tangent_plane_over(const Eigen::Vector2d &p, double f, const Eigen::Vector2d &gradient, std::span<const interval> ranges)
 {
     if(!p.allFinite() || !std::isfinite(f) || !gradient.allFinite() || ranges.size() != 2u)
         return {};
 
-    std::vector<Eigen::Vector2d> region{Eigen::Vector2d(ranges[0].lower, ranges[1].lower), Eigen::Vector2d(ranges[0].upper, ranges[1].lower),
-                                        Eigen::Vector2d(ranges[0].upper, ranges[1].upper), Eigen::Vector2d(ranges[0].lower, ranges[1].upper)};
-    const double offset = gradient.dot(p) - f;
-    for(const half_plane &kept : {half_plane{gradient, heights.upper + offset}, half_plane{-gradient, -(heights.lower + offset)}})
-        region = clipped(region, kept);
+    Eigen::Vector2d lower;
+    Eigen::Vector2d upper;
+    for(Eigen::Index axis = 0; axis < 2; ++axis)
+    {
+        const interval &range = ranges[static_cast<std::size_t>(axis)];
+        const double half     = (range.upper - range.lower) / 2.0;
+        lower[axis]           = std::max(range.lower, p[axis] - half);
+        upper[axis]           = std::min(range.upper, p[axis] + half);
+        if(!(lower[axis] < upper[axis]))
+            return {};
+    }
 
-    return lifted(region, p, f, gradient);
+    return lifted({lower, Eigen::Vector2d(upper.x(), lower.y()), upper, Eigen::Vector2d(lower.x(), upper.y())}, p, f, gradient);
 }
 
 }

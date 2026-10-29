@@ -71,7 +71,7 @@ void draw_step(const step_figures &drawn, const scenario_snapshot &shown, const 
         place_point(drawn.nearest, Eigen::Vector3d(built->nearest.x(), built->nearest.y(), 0.0), placed);
 }
 
-void draw_planes(const point_figures &drawn, const scenario_snapshot &shown, const field_placement &placed, const interval &heights)
+void draw_planes(const point_figures &drawn, const scenario_snapshot &shown, const field_placement &placed)
 {
     drawn.plane.visible   = false;
     drawn.central.visible = false;
@@ -83,14 +83,12 @@ void draw_planes(const point_figures &drawn, const scenario_snapshot &shown, con
     if(at.point.size() != 2 || !at.error || at.error->size() != 1 || !at.jacobian || at.jacobian->rows() != 1 || at.jacobian->cols() != 2)
         return;
 
-    // The samples need not reach f(p), at a minimum between them say, and the planes pass through it.
     const double f = -(*at.error)[0];
-    const interval held{std::min(heights.lower, f), std::max(heights.upper, f)};
-    write_polygon(drawn.plane, tangent_plane_over(at.point, f, at.jacobian->row(0).transpose(), shown.ranges, held), placed);
+    write_polygon(drawn.plane, tangent_plane_over(at.point, f, at.jacobian->row(0).transpose(), shown.ranges), placed);
     if(within_ranges(shown.ranges, at.point))
         place_point(drawn.point, Eigen::Vector3d(at.point[0], at.point[1], f), placed);
     if(at.check && at.check->disagrees && at.check->central.rows() == 1 && at.check->central.cols() == 2)
-        write_polygon(drawn.central, tangent_plane_over(at.point, f, at.check->central.row(0).transpose(), shown.ranges, held), placed);
+        write_polygon(drawn.central, tangent_plane_over(at.point, f, at.check->central.row(0).transpose(), shown.ranges), placed);
 }
 
 std::vector<Eigen::Vector3d> box_outline(const std::optional<box> &bounds, std::span<const interval> ranges)

@@ -39,12 +39,12 @@ double slope_of(const expected<Eigen::MatrixXd, refusal> &jacobian);
 // The ordinates the plot is fitted to: those of finite points lying within the held range.
 std::optional<interval> finite_span(const std::vector<scene::plot_series> &drawn, const interval &range);
 
-// Held to the range and to the ordinates the plot is fitted to, so a steep line widens neither axis.
+// As wide as the part of the line within the range and the ordinates the plot is fitted to, centered on its point, and left out of the fit.
 std::optional<scene::plot_series> tangent(std::string name, std::uint32_t tone, const linearized &at, const interval &range, const interval &span);
 
 void add_step(const scenario_snapshot &shown, const interval &span, std::vector<scene::plot_series> &drawn);
 
-// The point is drawn before the span is taken, so its tangents are held to an ordinate range holding it.
+// The point is drawn before the span is taken, so the span holds it.
 std::optional<linearized> linearized_point(const std::optional<scenario_linearization> &at, std::vector<scene::plot_series> &drawn);
 
 void add_linearization(const std::optional<scenario_linearization> &at, const linearized &here, const interval &range, const interval &span, std::vector<scene::plot_series> &drawn);

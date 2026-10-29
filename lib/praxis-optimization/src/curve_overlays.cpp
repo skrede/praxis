@@ -56,7 +56,11 @@ std::optional<scene::plot_series> tangent(std::string name, std::uint32_t tone, 
     if(!(from < to))
         return std::nullopt;
 
-    return scene::plot_series{std::move(name), {from, to}, {at.g + at.slope * (from - at.x), at.g + at.slope * (to - at.x)}, scene::plot_mark::line, tone};
+    const double half = (to - from) / 2.0;
+    scene::plot_series line{std::move(name), {at.x - half, at.x + half}, {at.g - at.slope * half, at.g + at.slope * half}, scene::plot_mark::line, tone};
+    line.fitted = false;
+
+    return line;
 }
 
 void add_step(const scenario_snapshot &shown, const interval &span, std::vector<scene::plot_series> &drawn)

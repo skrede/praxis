@@ -85,7 +85,6 @@ private:
     // Written while drawing, which the base class asks for on a const stencil.
     mutable std::shared_ptr<const scenario_grid> m_sampled;
     mutable std::shared_ptr<const scenario_snapshot> m_placed;
-    mutable interval m_heights;
     mutable std::shared_ptr<threepp::InstancedMesh> m_iterate_marks;
     mutable std::vector<std::uint32_t> m_marked;
 

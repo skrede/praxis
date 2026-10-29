@@ -32,9 +32,9 @@ struct step_construction
 // on the zero line.
 std::optional<step_construction> constructed_step(const Eigen::Vector2d &x, double f, const Eigen::Vector2d &gradient, std::span<const interval> ranges);
 
-// The tangent plane at p over the ranges, held to the heights between the bounds of `heights`: a
-// convex polygon in order, empty where nothing of the plane is left.
-std::vector<Eigen::Vector3d> tangent_plane_over(const Eigen::Vector2d &p, double f, const Eigen::Vector2d &gradient, std::span<const interval> ranges, const interval &heights);
+// The tangent plane at p over a rectangle with the ranges' widths, centered on p and held to the
+// ranges: four corners in order, empty where nothing of it lies within them.
+std::vector<Eigen::Vector3d> tangent_plane_over(const Eigen::Vector2d &p, double f, const Eigen::Vector2d &gradient, std::span<const interval> ranges);
 
 }
 
