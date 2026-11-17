@@ -38,14 +38,6 @@ namespace praxis::presets {
 
 namespace {
 
-struct arm_capabilities
-{
-    manipulator::capabilities arm;
-    trajectory::capabilities shapes;
-    rigid_motion::capabilities motions;
-    optimization::capabilities solving;
-};
-
 // Where one arm keeps a chain somebody supplied, asked of the caller's route by the name the arm's
 // own document carried. An arm naming no such document keeps nothing, and the scenario reading this
 // opens at a chain nobody supplied.
@@ -134,9 +126,22 @@ std::vector<std::string> register_arms(const std::shared_ptr<scene::preset_regis
                                        std::span<const std::filesystem::path> roots, document_route located, composed_route announced, const manipulator::capabilities &arm,
                                        const trajectory::capabilities &shapes, const rigid_motion::capabilities &motions, const optimization::capabilities &solving)
 {
+    const arm_capabilities every{arm, shapes, motions, solving};
+
+    return register_arms(registry, documents, roots, std::move(located), std::move(announced), [every](arm_scenario_kind) { return every; });
+}
+
+std::vector<std::string> register_arms(const std::shared_ptr<scene::preset_registry> &registry, std::span<const config::location> documents,
+                                       std::span<const std::filesystem::path> roots, document_route located, composed_route announced, const capability_route &capabilities_for)
+{
     if(registry == nullptr)
     {
         spdlog::error("praxis: no arm was registered, because no registry was supplied");
+        return {};
+    }
+    if(!capabilities_for)
+    {
+        spdlog::error("praxis: no arm was registered, because no capabilities were supplied for its scenarios");
         return {};
     }
 
@@ -154,7 +159,7 @@ std::vector<std::string> register_arms(const std::shared_ptr<scene::preset_regis
             continue;
 
         registered.push_back(*named);
-        registry->register_preset(*named, arm_factory(at, searched, located, announced, arm_capabilities{arm, shapes, motions, solving}, composer_for(*scenario)));
+        registry->register_preset(*named, arm_factory(at, searched, located, announced, capabilities_for(*scenario), composer_for(*scenario)));
     }
 
     return registered;

@@ -446,6 +446,47 @@ TEST_CASE("a play through an arm registered with capabilities of its own enters 
     CHECK_FALSE(stage.unloaded);
 }
 
+TEST_CASE("a play through an arm registered through a capability route enters the solve the route answered for its scenario", "[presets][comparison]")
+{
+    const described_arm described(6, "six");
+    const std::array<config::location, 1> documents{comparison_document(described)};
+    const std::array<std::filesystem::path, 1> roots{described.directory};
+
+    std::vector<presets::arm_scenario_kind> asked;
+    const presets::capability_route route = [&asked](presets::arm_scenario_kind scenario)
+    {
+        asked.push_back(scenario);
+
+        return presets::arm_capabilities{recording_solves(), trajectory::baseline(), rigid_motion::baseline(), marked_solving};
+    };
+
+    const auto registry = std::make_shared<scene::preset_registry>();
+    REQUIRE(presets::register_arms(registry, documents, roots, {}, {}, route).size() == 1u);
+    CHECK(asked == std::vector<presets::arm_scenario_kind>{presets::arm_scenario_kind::path_comparison});
+
+    opened_comparison stage;
+    REQUIRE(stage.open(registry->load_preset("Compared")) != nullptr);
+
+    choose(comparison_of(stage), manipulator::compared_path::screw);
+    press_at(*stage.panel("Comparison"), play_control);
+    REQUIRE(stage.loop.drain().has_value());
+
+    CHECK(solves_entered > 0u);
+    CHECK(handed_solve == &marked_solve);
+    CHECK_FALSE(stage.unloaded);
+}
+
+TEST_CASE("a registration handed no capability route registers nothing", "[presets][comparison]")
+{
+    const described_arm described(6, "six");
+    const std::array<config::location, 1> documents{comparison_document(described)};
+    const std::array<std::filesystem::path, 1> roots{described.directory};
+
+    const auto registry = std::make_shared<scene::preset_registry>();
+    CHECK(presets::register_arms(registry, documents, roots, {}, {}, presets::capability_route()).empty());
+    CHECK(registry->load_preset("Compared") == nullptr);
+}
+
 TEST_CASE("a play through an arm composed with a solver of its own hands that solver to the solve", "[presets][comparison]")
 {
     const described_arm described(6, "six");

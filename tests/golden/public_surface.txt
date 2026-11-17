@@ -3810,8 +3810,15 @@ presets/include/praxis/presets/arm_registration.h	arm_keyspace	prototype	()	type
 presets/include/praxis/presets/arm_registration.h	arm_scenario_labels	prototype	()	typename:std::span<const char * const>
 presets/include/praxis/presets/arm_registration.h	arm_binding	prototype	(const std::filesystem::path & named,const std::filesystem::path & beside)	typename:config::binding
 presets/include/praxis/presets/arm_registration.h	read_arm	prototype	(const config::document & values,std::span<const std::filesystem::path> roots)	typename:arm_scenario
+presets/include/praxis/presets/arm_registration.h	arm_capabilities	struct	-	-
+presets/include/praxis/presets/arm_registration.h	arm	member	-	typename:manipulator::capabilities
+presets/include/praxis/presets/arm_registration.h	shapes	member	-	typename:trajectory::capabilities
+presets/include/praxis/presets/arm_registration.h	motions	member	-	typename:rigid_motion::capabilities
+presets/include/praxis/presets/arm_registration.h	solving	member	-	typename:optimization::capabilities
+presets/include/praxis/presets/arm_registration.h	capability_route	typedef	-	-
 presets/include/praxis/presets/arm_registration.h	register_arms	prototype	(const std::shared_ptr<scene::preset_registry> & registry,std::span<const config::location> documents,std::span<const std::filesystem::path> roots,document_route located,composed_route announced)	typename:std::vector<std::string>
 presets/include/praxis/presets/arm_registration.h	register_arms	prototype	(const std::shared_ptr<scene::preset_registry> & registry,std::span<const config::location> documents,std::span<const std::filesystem::path> roots,document_route located,composed_route announced,const manipulator::capabilities & arm,const trajectory::capabilities & shapes,const rigid_motion::capabilities & motions,const optimization::capabilities & solving)	typename:std::vector<std::string>
+presets/include/praxis/presets/arm_registration.h	register_arms	prototype	(const std::shared_ptr<scene::preset_registry> & registry,std::span<const config::location> documents,std::span<const std::filesystem::path> roots,document_route located,composed_route announced,const capability_route & capabilities_for)	typename:std::vector<std::string>
 presets/include/praxis/presets/arm_scenarios.h	praxis	namespace	-	-
 presets/include/praxis/presets/arm_scenarios.h	presets	namespace	-	-
 presets/include/praxis/presets/arm_scenarios.h	arm_scenario_kind	enum	-	typename:std::uint8_t
