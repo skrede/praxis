@@ -214,6 +214,10 @@ void robot_controller::open_traversed_run()
 {
     m_traversed.clear();
     m_traversed_run.reset();
+
+    const expected<transform, refusal> standing = m_robot.tool_pose();
+    if(standing)
+        m_traversed.push_back(*standing);
 }
 
 std::shared_ptr<const preview_run> robot_controller::preview() const

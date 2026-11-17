@@ -13,6 +13,7 @@
 
 #include <Eigen/Core>
 
+#include <span>
 #include <array>
 #include <vector>
 #include <cstddef>
@@ -23,10 +24,18 @@ namespace praxis::manipulator {
 
 namespace {
 
-// The second end a comparison opens at, per joint and in degrees. A joint beyond these opens where
-// the first end does, so the pair carries the arm's own width and only its first five values are
-// written out.
-constexpr std::array<double, 5> opening_offset{120.0, -45.0, 30.0, 90.0, 90.0};
+// The two ends a comparison opens at, per joint and in degrees. A joint beyond the first end's values
+// opens at zero, and one beyond the second end's opens where the first end does.
+constexpr std::array<double, 7> opening_first_degrees{105.0, -45.0, 75.0, 30.0, 45.0, -90.0, -30.0};
+constexpr std::array<double, 5> opening_second_degrees{120.0, -45.0, 30.0, 90.0, 90.0};
+
+joint_vector opened_at(std::span<const double> degrees, joint_vector taken)
+{
+    for(std::size_t joint = 0; joint < degrees.size() && joint < static_cast<std::size_t>(taken.size()); ++joint)
+        taken[static_cast<Eigen::Index>(joint)] = degrees[joint] * radians_per_degree;
+
+    return taken;
+}
 
 double along(std::size_t step)
 {
@@ -97,16 +106,12 @@ expected<std::vector<joint_vector>, refusal> configurations_along(const trajecto
 
 joint_vector path_comparison_window::opening_first(std::size_t joints)
 {
-    return joint_vector::Zero(static_cast<Eigen::Index>(joints));
+    return opened_at(opening_first_degrees, joint_vector::Zero(static_cast<Eigen::Index>(joints)));
 }
 
 joint_vector path_comparison_window::opening_second(std::size_t joints)
 {
-    joint_vector taken = joint_vector::Zero(static_cast<Eigen::Index>(joints));
-    for(std::size_t joint = 0; joint < joints && joint < opening_offset.size(); ++joint)
-        taken[static_cast<Eigen::Index>(joint)] = opening_offset[joint] * radians_per_degree;
-
-    return taken;
+    return opened_at(opening_second_degrees, opening_first(joints));
 }
 
 // The two task-space shapes run between the poses the forward map answers at the two ends, and the

@@ -181,12 +181,13 @@ praxis_add_test(solver_route_row_test.cpp LIBS praxis::manipulator praxis::evalu
 praxis_add_test(task_waypoint_non_finite_test.cpp LIBS praxis::manipulator praxis::evaluation praxis::trajectory)
 praxis_add_test(waypoint_turns_test.cpp LIBS praxis::manipulator praxis::trajectory spdlog::spdlog praxis_test_support)
 target_include_directories(waypoint_turns_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-manipulator/src)
+praxis_add_test(path_comparison_opening_test.cpp LIBS praxis::manipulator praxis::trajectory praxis::optimization spdlog::spdlog praxis_test_support)
 
 # The descriptions are deployed beside the demonstration executable, which a configure without the
 # demonstration never creates; a test reading them skips when the directory it is pointed at is not
 # there.
 if (TARGET manipulator_demo)
-    foreach (reader screw_chain_test baseline_modeling_test chain_placement_test)
+    foreach (reader screw_chain_test baseline_modeling_test chain_placement_test path_comparison_opening_test)
         target_compile_definitions(${reader} PRIVATE PRAXIS_DEMO_RESOURCE_DIR="$<TARGET_FILE_DIR:manipulator_demo>/urdf")
     endforeach ()
 endif ()
@@ -194,7 +195,7 @@ endif ()
 # A Catch2 binary whose every case skipped exits 4 -- its "no tests ran" code -- which is a failure
 # to ctest unless the run code is declared a skip. A run with one case executed exits 0 as usual, so
 # this only ever fires for the configuration that deploys no descriptions.
-set_tests_properties(screw_chain_test baseline_modeling_test chain_placement_test PROPERTIES SKIP_RETURN_CODE 4)
+set_tests_properties(screw_chain_test baseline_modeling_test chain_placement_test path_comparison_opening_test PROPERTIES SKIP_RETURN_CODE 4)
 
 # A case that drains a scheduler hangs rather than failing if the gate stops posting.
 set_tests_properties(arm_snapshot_test published_manipulability_test published_iterates_test solution_publication_test multi_start_test window_lifetime_test node_ownership_test robot_stencil_models_test robot_decoration_test solution_figures_test ellipsoid_drawing_test ellipsoid_reading_test part_switch_test rate_switch_test highlighted_column_test column_arrow_drawing_test weighted_column_test twist_arrow_test teardown_lifetime_test tool_axes_test tool_transform_guard_test model_file_test screw_jog_value_test pose_orientation_value_test transform_window_angle_value_test trajectory_recording_window_test trajectory_recording_test robot_controller_test preset_composition_tolerance_test compose_arm_joint_guard_test refusal_standing_test refused_pose_slot_test unpublished_arm_test joint_control_window_test task_space_window_test tool_jog_window_test screw_jog_window_test idle_window_test pose_seeding_test shared_pose_configuration_test screw_jog_configuration_test ik_solutions_window_test ik_seed_window_test ik_iterate_window_test ik_convergence_window_test edited_list_window_test robot_view_window_test tool_drawing_test screw_modeling_window_test pose_path_test trajectory_preview_window_test joint_curve_window_test path_comparison_window_test velocity_kinematics_window_test velocity_configuration_test render_controls_window_test render_configuration_test supplied_chain_markers_test supplied_pose_reading_test float_held_offers_test control_parameters_window_test PROPERTIES TIMEOUT 30)
