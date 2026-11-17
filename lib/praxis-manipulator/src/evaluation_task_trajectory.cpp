@@ -1,3 +1,4 @@
+#include "joint_turns.h"
 #include "evaluation_cases.h"
 #include "evaluation_tables.h"
 
@@ -26,6 +27,9 @@ constexpr evaluation::residual_kind waypoint_kind = evaluation::residual_kind::e
 constexpr std::size_t waypoints_per_case = 3u;
 constexpr double waypoint_step_radians   = 0.05;
 
+// Draws one case may take before it is answered as unusable.
+constexpr std::size_t draws_per_case = 8u;
+
 const task_trajectory_ops &trajectories_of(const void *value)
 {
     return *static_cast<const task_trajectory_ops *>(value);
@@ -42,7 +46,7 @@ struct waypoint_case
 
 // Drawn from one source in this order and no other: a solve case, then one short step per joint per
 // waypoint. Each pose is the chain driven to the configuration those steps reach.
-std::optional<waypoint_case> drawn_waypoints(evaluation::case_source &drawn)
+std::optional<waypoint_case> drawn_once(evaluation::case_source &drawn)
 {
     std::optional<solve_case> solved = drawn_solve(drawn);
     if(!solved)
@@ -63,6 +67,40 @@ std::optional<waypoint_case> drawn_waypoints(evaluation::case_source &drawn)
     }
 
     return waypoint_case{std::move(solved->solver), std::move(waypoints), solved->standing};
+}
+
+// Whether each answer the shared solve gives, seeded by the one before, already lies inside the
+// limits with no joint a whole turn from where it could stand nearer its seed. A refusal is the
+// factory's to answer for.
+bool resolved_as_answered(const waypoint_case &example)
+{
+    joint_vector seed = example.seed;
+    for(const transform &pose : example.waypoints)
+    {
+        const expected<joint_vector, refusal> reached = shared_motion().task_space_pose(example.solver, pose, seed);
+        if(!reached)
+            return true;
+
+        const std::optional<joint_vector> turned = turned_within_limits(example.solver.space_chain(), *reached, seed);
+        if(!turned || *turned != *reached)
+            return false;
+
+        seed = *reached;
+    }
+
+    return true;
+}
+
+std::optional<waypoint_case> drawn_waypoints(evaluation::case_source &drawn)
+{
+    for(std::size_t draw = 0; draw < draws_per_case; ++draw)
+    {
+        std::optional<waypoint_case> example = drawn_once(drawn);
+        if(!example || resolved_as_answered(*example))
+            return example;
+    }
+
+    return std::nullopt;
 }
 
 // The two prepared motions are compared by what they compute, through the comparison the trajectory

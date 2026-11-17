@@ -126,6 +126,8 @@ praxis_add_module(manipulator
     src/joint_curve_window.cpp
     src/joint_naming.h
     src/joint_naming.cpp
+    src/joint_turns.h
+    src/joint_turns.cpp
     src/joint_waypoints_configuration.cpp
     src/kinematics.cpp
     src/kinematics_configuration.cpp

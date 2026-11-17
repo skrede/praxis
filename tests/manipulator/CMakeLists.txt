@@ -179,6 +179,8 @@ praxis_add_test(solver_adapters_test.cpp LIBS praxis::manipulator praxis::evalua
 praxis_add_test(solver_adapter_row_test.cpp LIBS praxis::manipulator praxis::evaluation praxis_test_support)
 praxis_add_test(solver_route_row_test.cpp LIBS praxis::manipulator praxis::evaluation praxis_test_support)
 praxis_add_test(task_waypoint_non_finite_test.cpp LIBS praxis::manipulator praxis::evaluation praxis::trajectory)
+praxis_add_test(waypoint_turns_test.cpp LIBS praxis::manipulator praxis::trajectory spdlog::spdlog praxis_test_support)
+target_include_directories(waypoint_turns_test PRIVATE ${PROJECT_SOURCE_DIR}/lib/praxis-manipulator/src)
 
 # The descriptions are deployed beside the demonstration executable, which a configure without the
 # demonstration never creates; a test reading them skips when the directory it is pointed at is not
